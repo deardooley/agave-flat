@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+  
+<suite name="iPlant Profile Service API" verbose="1" parallel="false">
+   <test name="profiles" >
+       <packages></packages>
+   </test>
+
+</suite>

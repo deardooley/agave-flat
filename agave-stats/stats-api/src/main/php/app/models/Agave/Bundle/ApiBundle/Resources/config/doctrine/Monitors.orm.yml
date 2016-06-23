@@ -1,0 +1,88 @@
+Agave\Bundle\ApiBundle\Entity\Monitors:
+    type: entity
+    table: monitors
+    indexes:
+        FKEC66EE59438E5D43:
+            columns:
+                - system
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+        uuid:
+            columns:
+                - uuid
+        system:
+            columns:
+                - system
+                - owner
+                - tenant_id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        isActive:
+            type: boolean
+            nullable: true
+            column: is_active
+        created:
+            type: datetime
+            nullable: false
+        frequency:
+            type: integer
+            nullable: true
+            unsigned: false
+        internalUsername:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+            column: internal_username
+        lastSuccess:
+            type: datetime
+            nullable: true
+            column: last_success
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        nextUpdateTime:
+            type: datetime
+            nullable: false
+            column: next_update_time
+        owner:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+        updateSystemStatus:
+            type: boolean
+            nullable: true
+            column: update_system_status
+        uuid:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+    manyToOne:
+        system:
+            targetEntity: Systems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                system:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.iplantc.agave</groupId>
+		<artifactId>auth</artifactId>
+		<version>2.1.8</version>
+	</parent>
+	<artifactId>auth-api</artifactId>
+	<name>iPlant Agave API Auth Services API Endpoints</name>
+	<description>This is the auth service used to generated, manage, and validate authentication tokens used by all API services.</description>
+	<packaging>jar</packaging>
+
+	<scm>
+		<connection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-auth.git</connection>
+		<developerConnection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-auth.git</developerConnection>
+		<url>https://bitbucket.org/agaveapi/agave-auth</url>
+	</scm>
+
+	<properties>
+		<force.check.update>false</force.check.update>
+		<service.war.name>auth</service.war.name>
+	</properties>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/config.php</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>src/main/php</directory>
+				<filtering>false</filtering>
+			</resource>
+		</resources>
+		<plugins>
+			<!-- The web assemby -->
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+			</plugin>
+
+			<!-- Don't deploy the war -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-install-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

@@ -1,0 +1,1 @@
+{"id":"mode","order":"5","value":{"default":"auto","visible":true,"validator":"{auto|protein|nucleo}","type":"string","required":true},"details":{"visible":true,"description":"Specify if the sequence is amino acids or nucleotides.","label":"Sequence type: "},"semantics": {"ontology": ["xs:string"]}}

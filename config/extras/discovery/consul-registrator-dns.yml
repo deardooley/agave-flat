@@ -1,0 +1,38 @@
+#############################################################
+#  OPTIONAL: Service discovery via Consol
+#############################################################
+
+dns:
+  image: phensley/docker-dns:latest
+  command: --domain docker.example.com
+  name: dns
+  ports:
+    - 5080:53
+  volumes:
+    - /var/run/docker.sock:/docker.sock
+
+consul:
+  image: gliderlabs/docker-consul
+  restart: always
+  ports:
+    - "192.168.99.100:8300:8300"
+    - "192.168.99.100:8301:8301"
+    - "192.168.99.100:8301:8301/udp"
+    - "192.168.99.100:8302:8302"
+    - "192.168.99.100:8302:8302/udp"
+    - "192.168.99.100:8400:8400"
+    - "192.168.99.100:8500:8500"
+    - "172.17.42.1:53:53/udp"
+  hostname: sandbox1
+  name: consul
+  command: -advertise=172.17.42.1 -server -bootstrap -ui-dir /ui
+ 
+registrator:
+  image: gliderlabs/registrator:latest
+  command: -internal consul://192.168.99.100:8500
+  hostname: docker.example.com
+  restart: always
+  net: host
+  volumes:
+    - /var/run/docker.sock:/tmp/docker.sock
+    

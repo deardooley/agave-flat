@@ -1,0 +1,52 @@
+#############################################################
+#  OPTIONAL: Logspout log aggregation into ELK stack
+#############################################################
+
+elasticsearch:
+  image: elasticsearch:latest
+  restart: always
+  ports:
+    - "9200:9200"
+  tags:
+    - elk
+    - staging
+
+logstash:
+  image: logstash:latest
+  command: logstash -f /etc/logstash/conf.d/logstash.conf
+  restart: always
+  volumes:
+    - /apps/logstash/config:/etc/logstash/conf.d
+  ports:
+    - "5000:5000"
+  links:
+    - elasticsearch
+  tags:
+    - elk
+    - staging
+
+kibana:
+  image: kibana
+  restart: always
+  volumes:
+    - /apps/kibana/config/kibana.yml:/opt/kibana/config/kibana.yml
+  ports:
+    - "5601:5601"
+  links:
+    - elasticsearch
+  tags:
+    - elk
+    - staging
+
+# The logspout container should be deployed to every Docker host to get
+# comprehensive log aggregation into your ELK stack.
+logspout:
+  image: 'gliderlabs/logspout'
+  entrypoint: '/bin/sh'
+  command: '-c ''/bin/logspout syslog://$LOGSTASH_PORT_12345_UDP_ADDR:12345'''
+  restart: always
+  volumes:
+    - '/var/run/docker.sock:/tmp/docker.sock'
+  links:
+    - logstash
+

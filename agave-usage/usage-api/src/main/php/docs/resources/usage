@@ -1,0 +1,371 @@
+{
+    "apiVersion": "2.1.0-reb586",
+    "apis": [
+      {
+        "description": "Query for monthly job activity",
+        "operations": [
+          {
+            "method": "GET",
+            "nickname": "getJobUsage",
+            "notes": "",
+            "parameters":[],
+            "summary": "List job data by year and month",
+            "type": "MultipleUsageResponse"
+          }
+        ],
+        "path": "/usage/jobs"
+      },
+      {
+        "description": "Query for monthly data activity",
+        "operations": [
+          {
+            "method": "GET",
+            "nickname": "getDataUsage",
+            "notes": "",
+            "parameters":[],
+            "summary": "List data usage by year and month",
+            "type": "MultipleUsageResponse"
+          }
+        ],
+        "path": "/usage/data"
+      },
+      {
+        "description": "Query for monthly user counts",
+        "operations": [
+          {
+            "method": "GET",
+            "nickname": "getUserUsage",
+            "notes": "",
+            "parameters":[],
+            "summary": "List user counts by year and month",
+            "type": "MultipleUsageResponse"
+          }
+        ],
+        "path": "/usage/users"
+      },
+      {
+        "description": "Query for monthly request activity",
+        "operations": [
+          {
+            "method": "GET",
+            "nickname": "getRequestUsage",
+            "notes": "",
+            "parameters":[],
+            "summary": "List request counts by year and month",
+            "type": "MultipleUsageResponse"
+          }
+        ],
+        "path": "/usage/requests"
+      },
+      {
+        "description": "Query for monthly ip activity",
+        "operations": [
+          {
+            "method": "GET",
+            "nickname": "getIpUsage",
+            "notes": "",
+            "parameters":[],
+            "summary": "List ip usage by year and month",
+            "type": "MultipleIpUsageResponse"
+          }
+        ],
+        "path": "/usage/ip"
+      },
+      {
+        "description": "Query for monthly compute hours used",
+        "operations": [
+          {
+            "method": "GET",
+            "nickname": "getCpuUsage",
+            "notes": "",
+            "parameters":[],
+            "summary": "List cpu hours used by year and month",
+            "type": "MultipleUsageResponse"
+          }
+        ],
+        "path": "/usage/hours"
+      }
+    ],
+    "basePath": "http://agaveapi.co",
+    "models": {
+        "MultipleUsageResponse": {
+            "id": "MultipleUsageResponse",
+            "name": "",
+            "properties": {
+                "foundation": {
+                    "description": "Container for usage info from Foundation API",
+                    "type": "UsageSummary"
+                },
+                "agave": {
+                    "description": "Container for usage info from Agave API",
+                    "type": "UsageSummary"
+                }
+            }
+        },
+        "UsageSummary": {
+            "id": "UsageSummary",
+            "name": "",
+            "properties": {
+                "units": {
+                    "description": "The units this type of usage is measured in",
+                    "type": "string"
+                },
+                "usage": {
+                    "description": "Container for yearly rollup of usage information",
+                    "type": "AnnualSummary"
+                }
+            }
+        },
+        "AnnualSummary": {
+            "id": "AnnualSummary",
+            "name": "",
+            "properties": {
+                "2011": {
+                    "description": "Monthly rollup of usage information",
+                    "type": "MonthlySummary"
+                },
+                "2012": {
+                    "description": "Monthly rollup of usage information",
+                    "type": "MonthlySummary"
+                },
+                "2013": {
+                    "description": "Monthly rollup of usage information",
+                    "type": "MonthlySummary"
+                },
+                "2014": {
+                    "description": "Monthly rollup of usage information",
+                    "type": "MonthlySummary"
+                },
+                "2015": {
+                    "description": "Monthly rollup of usage information",
+                    "type": "MonthlySummary"
+                }
+            }
+        },
+        "MonthlySummary": {
+            "id": "MonthlySummary",
+            "name": "",
+            "properties": {
+                "1": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "2": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "3": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "4": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "5": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "6": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "7": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "8": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "9": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "10": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "11": {
+                    "description": "Single month usage",
+                    "type": "int"
+                },
+                "12": {
+                    "description": "Single month usage",
+                    "type": "int"
+                }
+            }
+        },
+        "UsageRecord": {
+            "id": "UsageRecord",
+            "name": "",
+            "properties": {
+                "month": {
+                    "description": "Container for usage info from Foundation API",
+                    "type": "int"
+                },
+                "value": {
+                    "description": "Recorded usage value for this month",
+                    "type": "int"
+                },
+                "meta": {
+                    "description": "Optional data for usage record",
+                    "type": "string"
+                }
+            }
+        },
+        "MultipleIpUsageResponse": {
+            "id": "MultipleIpUsageResponse",
+            "name": "",
+            "properties": {
+                "foundation": {
+                    "description": "Container for usage info from Foundation API",
+                    "type": "IpUsageSummary"
+                },
+                "agave": {
+                    "description": "Container for usage info from Agave API",
+                    "type": "IpUsageSummary"
+                }
+            }
+        },
+        "IpUsageSummary": {
+            "id": "IpUsageSummary",
+            "name": "",
+            "properties": {
+                "units": {
+                    "description": "The units this type of usage is measured in",
+                    "type": "string"
+                },
+                "usage": {
+                    "description": "Container for yearly rollup of usage information",
+                    "type": "IpAnnualSummary"
+                }
+            }
+        },
+        "IpAnnualSummary": {
+            "id": "IpAnnualSummary",
+            "name": "",
+            "properties": {
+                "2011": {
+                    "description": "Monthly rollup of usage information",
+                    "type": "IpMonthlySummary"
+                },
+                "2012": {
+                    "description": "Monthly rollup of usage information",
+                    "type": "IpMonthlySummary"
+                },
+                "2013": {
+                    "description": "Monthly rollup of usage information",
+                    "type": "IpMonthlySummary"
+                },
+                "2014": {
+                    "description": "Monthly rollup of usage information",
+                    "type": "IpMonthlySummary"
+                },
+                "2015": {
+                    "description": "Monthly rollup of usage information",
+                    "type": "IpMonthlySummary"
+                }
+            }
+        },
+        "IpMonthlySummary": {
+            "id": "IpMonthlySummary",
+            "name": "",
+            "properties": {
+                "1": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                },
+                "2": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                },
+                "3": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                },
+                "4": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                },
+                "5": {
+                    "description": "Single month usage",
+                    "type": "array",
+                    "items": {
+                      "$ref": "IpUsageRecord"
+                    }
+                },
+                "6": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                },
+                "7": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                },
+                "8": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                },
+                "9": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                },
+                "10": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                },
+                "11": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                },
+                "12": {
+                    "description": "Single month usage",
+                    "type": "IpUsageRecord"
+                }
+            }
+        },
+        "IpUsageRecord": {
+            "id": "IpUsageRecord",
+            "name": "",
+            "properties": {
+                "0.0.0.0": {
+                    "description": "Total request from this ip address",
+                    "type": "IpUsageData"
+                }
+            }
+        },
+        "IpUsageData": {
+            "id": "IpUsageData",
+            "name": "",
+            "properties": {
+                "requests": {
+                    "description": "Total request from this ip address",
+                    "type": "int"
+                },
+                "lat": {
+                    "description": "Latitude",
+                    "type": "int"
+                },
+                "lng": {
+                    "description": "Longitude",
+                    "type": "int"
+                },
+                "country": {
+                    "description": "Country of the ip address",
+                    "type": "string"
+                },
+                "city": {
+                    "description": "City of the ip address",
+                    "type": "string"
+                },
+                "region": {
+                    "description": "State or region of the ip address",
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "resourcePath": "/usage/",
+    "swaggerVersion": "1.2"
+}

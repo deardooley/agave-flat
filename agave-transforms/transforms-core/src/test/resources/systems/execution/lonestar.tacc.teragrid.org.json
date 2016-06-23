@@ -1,0 +1,60 @@
+{
+	"id": "lonestar4.tacc.teragrid.org",
+	"name": "TACC Lonestar",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "The TACC Dell Linux Cluster (Lonestar) is a powerful, multi-use cyberinfrastructure HPC and remote visualization resource.\\n\\nLonestar contains 22,656 cores within 1,888 Dell PowerEdgeM610 compute blades (nodes), 16 PowerEdge R610 compute-I/Oserver-nodes, and 2 PowerEdge M610 (3.3GHz) login nodes. Each compute node has 24GB of memory, and the login/development nodes have 16GB. The system storage includes a 1000TB parallel (SCRATCH) Lustre file system, and 276TB of local compute-node disk space (146GB/node). Lonestar also provides access to five large memory (1TB) nodes, and eight nodes containing two NVIDIA GPU's, giving users access to high-throughput computing and remote visualization capabilities respectively.\\n\\nA QDR InfiniBand switch fabric interconnects the nodes (I/Oand compute) through a fat-tree topology, with a point-to-point bandwidth of 40GB/sec (unidirectional speed).\\n\\nCompute nodes have two processors, each a Xeon 5680 series 3.33GHz hex-core processor with a 12MB unified L3 cache. Peak performancefor the 12 cores is 160 GFLOPS. Eight GPU nodes contain two NVIDIA M2070 GPU's contained in two Dell C6100 servers. The new Westmere microprocessor (basically similar to the Nehalem processor family, but using 32nm technology) has the following features: hex-core, shared L3 cache per socket, Integrated Memory Controller, larger L1 caches, Macro Ops Fusion, double-speed integer units, Advanced Smart Cache, and new SSE4.2 instructions. The memory system has 3 channels and uses 1333 MHz DIMMS.",
+	"site": "tacc.xsede.org",
+	"executionType": "HPC",
+	"default": false,
+	"queues": [
+		{
+			"name": "normal",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": "#$ -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "login1.ls4.tacc.utexas.edu",
+		"port": 22,
+		"protocol": "GSISSH",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": "",
+			"type": "X509",
+			"server": {
+				"id": "myproxy.teragrid.org",
+				"name": "XSEDE MyProxy Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"storage": {
+		"host": "gridftp1.ls4.tacc.utexas.edu",
+		"port": 2811,
+		"protocol": "GRIDFTP",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": "",
+			"type": "X509",
+			"server": {
+				"id": "myproxy.teragrid.org",
+				"name": "XSEDE MyProxy Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"scheduler": "SGE",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

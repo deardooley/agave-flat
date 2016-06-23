@@ -1,0 +1,45 @@
+{
+	"id": "execute.example.com",
+	"name": "My Second Example System",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "My example system used for testing",
+	"site": "my.site",
+	"executionType": "CLI",
+	"default": true,
+	"queues": [
+		{
+			"name": "testqueue",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": ""
+		}
+	],
+	"login": {
+		"host": "docker.example.com",
+		"port": 10022,
+		"protocol": "SSH",
+		"auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+	},
+	"storage":{
+      "host":"docker.example.com",
+      "port":10022,
+      "protocol":"SFTP",
+      "rootDir":"/",
+      "homeDir":"/home/testuser",
+      "auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+    },
+    "scratchDir": "scratch",
+	"workDir": "scratch",
+	"scheduler": "FORK",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

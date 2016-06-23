@@ -1,0 +1,64 @@
+{
+	"id": "ssh-tunnel.example.com",
+	"name": "SSH Example",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample ssh execution system.",
+	"site": "example.com",
+	"executionType": "HPC",
+	"default": false,
+	"scratchDir": "/tmp",
+	"workDir": "/tmp",
+	"queues": [
+		{
+			"name": "normal",
+			"mappedName": "normal",
+			"description": "The default system queue for all jobs",
+			"maxJobs": 100,
+			"maxUserJobs": 10,
+			"maxNodes": 256,
+			"maxProcessorsPerNode": 16,
+			"maxMemoryPerNode": "2048GB",
+			"maxRequestedTime": "24:00:00",
+			"customDirectives": "#$ -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "sftphidden",
+		"port": 10044,
+		"protocol": "SSH",
+		"auth": {
+			"username": "testuser",
+			"publicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDEku9xcrHFMLObmrgQjIoLzbHiVbcW/05BL9WTExUVp/+7LhNCOfdDHqXVYicD6sf4UdR8o/c8FWMjtSBrjErqoUh4IaXRexD40DkhXHEXKy+AZnLDBK/EbA7Xpfg1STf7sZIwthEv7gzg6rbK/u+5WcOGHX+HN8MwREtS8Xt6hBAAJXXgvE8GaUEl/eoTQD1VOv4jbcFgS2okQRxY57AV9lLCy9Fbm2VCxhV4fH9OheO5ySJbcaqF32P5SpfgxY6w3wdUExPGYgSffwdtoHJBoe2aqW6woYxxa5P1oV5M08zIBrRQrN3qp7hmU6fyPPk/+NnDSh6Av1pHodC6i5+1 devops@example.com",
+			"privateKey": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAxJLvcXKxxTCzm5q4EIyKC82x4lW3Fv9OQS/VkxMVFaf/uy4T\nQjn3Qx6l1WInA+rH+FHUfKP3PBVjI7Uga4xK6qFIeCGl0XsQ+NA5IVxxFysvgGZy\nwwSvxGwO16X4NUk3+7GSMLYRL+4M4Oq2yv7vuVnDhh1/hzfDMERLUvF7eoQQACV1\n4LxPBmlBJf3qE0A9VTr+I23BYEtqJEEcWOewFfZSwsvRW5tlQsYVeHx/ToXjucki\nW3Gqhd9j+UqX4MWOsN8HVBMTxmIEn38HbaByQaHtmqlusKGMcWuT9aFeTNPMyAa0\nUKzd6qe4ZlOn8jz5P/jZw0oegL9aR6HQuouftQIDAQABAoIBAQCL6Jy9nUmDtO8Q\n4CUDulOCpStnkWRX3OygnuAe5uUJ3eG5IskYSNOBFS4o2sw0EIW1auCWucj9HafL\nQV5KzbaAmrxOrHwtxa7FuMYAxZ/EQrtzYvdpcEt9vP8vY3Ru0Kck4DTRsLQ47fCC\noOvrPVn4DTiJmzMqVXj6QJFv/mnJPzbeFcgAdmQs1t5YgUnOKgGRutdPuQzjasct\n9jpywQIU/Lokw/9HXAxQ8wYh8LltmLkIAM70LZ219X+jW0M3pH9mPoR+qe8P8DD+\nvoYND904st6I9RWNpfFaC0yVo9bMaQUi1GvZ5m18uZnmR8vCz1YeiGVKVkNRg3sb\nq1GQBA2dAoGBAPVGKa0XNPyXDKvKZviFecpLe4qsYGHR6pvrI1hox8QMsk213G3V\nW3DLs+yN6oXAl8ueRQueNel5UShQDUuu8WVr+8bh0eMHnPUdp1W72SSR0LUbAoc2\naogZjYefGOF6l2rg9u+3u1wz9q++dwlxfV0ONOgwnvRzLNKmNetf7N07AoGBAM0r\nk3aETvh0JEXY5k7AxIZCaXMh9dHc9f7GEa73qb6BbqhGNFDL57HJycTqNAqLWCEj\nHjt+gUN4DZRUi4028Jy0g5C43UGSqim4MKHtz0KIE4XqweuNGOiKLiEk9JIuIHi8\nDXFT5646ZJQyB8zyXxaky+tHg8myYtEiT5uu5mfPAoGBAIz9D+fXdzXa/gWiCx7A\nWwnV6eYEwEJ6kAmgWGjxkiM3ySaya0sXYcCs13ga+7x2wMri532OLB9RBT3PBlWC\n8nACanAgTq3aKncb3JyDpoZG61mvdPyUYxho19olsf+qoG9ncYrKaoDNvfe33GUp\nP47GI9N0X2rU6ecMc+Ig+d8RAoGAIHB1XlXJDqt+WLTUpTsBV6EEfzmtXkMred7j\nSODLq91XG7AN8YBr38Zh6oqFM+2YP5UH4Kw9z+cZbox3jBpVrNE1xBoWkZmY4gPH\nXLL3BDPzskbN5mpmt82xQXhQWxSD+dLx5Ss5BGkjIfNPHG5t7myb+VVTVv6ndR2R\nrLHYqC0CgYAl+ZtbVyEe3BLlI/+CMv5xSz23RiHS7Gtq8W9DuDEa93c2gm1AeXS2\nv+XY/WvLin8V5NyIkDMLwhOdPgWHoi27Tkr73MtQit7AIK66UxydjTF4mXEthpSF\n/ZRodeQLTBOzfsczG/xqbYodaitvTym3SqbCnR0I6+xGp2HY9KUpEQ==\n-----END RSA PRIVATE KEY-----\n",
+			"type": "SSHKEYS"
+		},
+		"proxy":{
+			"name":"Example proxy to sftp storage server",
+			"host":"docker.example.com",
+			"port":10033
+		}
+	},
+	"storage": {
+		"host": "sftphidden",
+		"port": 10044,
+		"protocol": "SFTP",
+		"rootDir": "/",
+		"homeDir": "/home/testuser",
+		"auth": {
+			"username": "testuser",
+			"publicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDEku9xcrHFMLObmrgQjIoLzbHiVbcW/05BL9WTExUVp/+7LhNCOfdDHqXVYicD6sf4UdR8o/c8FWMjtSBrjErqoUh4IaXRexD40DkhXHEXKy+AZnLDBK/EbA7Xpfg1STf7sZIwthEv7gzg6rbK/u+5WcOGHX+HN8MwREtS8Xt6hBAAJXXgvE8GaUEl/eoTQD1VOv4jbcFgS2okQRxY57AV9lLCy9Fbm2VCxhV4fH9OheO5ySJbcaqF32P5SpfgxY6w3wdUExPGYgSffwdtoHJBoe2aqW6woYxxa5P1oV5M08zIBrRQrN3qp7hmU6fyPPk/+NnDSh6Av1pHodC6i5+1 devops@example.com",
+			"privateKey": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAxJLvcXKxxTCzm5q4EIyKC82x4lW3Fv9OQS/VkxMVFaf/uy4T\nQjn3Qx6l1WInA+rH+FHUfKP3PBVjI7Uga4xK6qFIeCGl0XsQ+NA5IVxxFysvgGZy\nwwSvxGwO16X4NUk3+7GSMLYRL+4M4Oq2yv7vuVnDhh1/hzfDMERLUvF7eoQQACV1\n4LxPBmlBJf3qE0A9VTr+I23BYEtqJEEcWOewFfZSwsvRW5tlQsYVeHx/ToXjucki\nW3Gqhd9j+UqX4MWOsN8HVBMTxmIEn38HbaByQaHtmqlusKGMcWuT9aFeTNPMyAa0\nUKzd6qe4ZlOn8jz5P/jZw0oegL9aR6HQuouftQIDAQABAoIBAQCL6Jy9nUmDtO8Q\n4CUDulOCpStnkWRX3OygnuAe5uUJ3eG5IskYSNOBFS4o2sw0EIW1auCWucj9HafL\nQV5KzbaAmrxOrHwtxa7FuMYAxZ/EQrtzYvdpcEt9vP8vY3Ru0Kck4DTRsLQ47fCC\noOvrPVn4DTiJmzMqVXj6QJFv/mnJPzbeFcgAdmQs1t5YgUnOKgGRutdPuQzjasct\n9jpywQIU/Lokw/9HXAxQ8wYh8LltmLkIAM70LZ219X+jW0M3pH9mPoR+qe8P8DD+\nvoYND904st6I9RWNpfFaC0yVo9bMaQUi1GvZ5m18uZnmR8vCz1YeiGVKVkNRg3sb\nq1GQBA2dAoGBAPVGKa0XNPyXDKvKZviFecpLe4qsYGHR6pvrI1hox8QMsk213G3V\nW3DLs+yN6oXAl8ueRQueNel5UShQDUuu8WVr+8bh0eMHnPUdp1W72SSR0LUbAoc2\naogZjYefGOF6l2rg9u+3u1wz9q++dwlxfV0ONOgwnvRzLNKmNetf7N07AoGBAM0r\nk3aETvh0JEXY5k7AxIZCaXMh9dHc9f7GEa73qb6BbqhGNFDL57HJycTqNAqLWCEj\nHjt+gUN4DZRUi4028Jy0g5C43UGSqim4MKHtz0KIE4XqweuNGOiKLiEk9JIuIHi8\nDXFT5646ZJQyB8zyXxaky+tHg8myYtEiT5uu5mfPAoGBAIz9D+fXdzXa/gWiCx7A\nWwnV6eYEwEJ6kAmgWGjxkiM3ySaya0sXYcCs13ga+7x2wMri532OLB9RBT3PBlWC\n8nACanAgTq3aKncb3JyDpoZG61mvdPyUYxho19olsf+qoG9ncYrKaoDNvfe33GUp\nP47GI9N0X2rU6ecMc+Ig+d8RAoGAIHB1XlXJDqt+WLTUpTsBV6EEfzmtXkMred7j\nSODLq91XG7AN8YBr38Zh6oqFM+2YP5UH4Kw9z+cZbox3jBpVrNE1xBoWkZmY4gPH\nXLL3BDPzskbN5mpmt82xQXhQWxSD+dLx5Ss5BGkjIfNPHG5t7myb+VVTVv6ndR2R\nrLHYqC0CgYAl+ZtbVyEe3BLlI/+CMv5xSz23RiHS7Gtq8W9DuDEa93c2gm1AeXS2\nv+XY/WvLin8V5NyIkDMLwhOdPgWHoi27Tkr73MtQit7AIK66UxydjTF4mXEthpSF\n/ZRodeQLTBOzfsczG/xqbYodaitvTym3SqbCnR0I6+xGp2HY9KUpEQ==\n-----END RSA PRIVATE KEY-----\n",
+			"type": "SSHKEYS"
+		},
+		"proxy":{
+			"name":"Example proxy to sftp storage server",
+			"host":"docker.example.com",
+			"port":10033
+		}
+	},
+	"scheduler": "SGE",
+	"environment": "",
+	"startupScript": ".bashrc"
+}

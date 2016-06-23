@@ -1,0 +1,21 @@
+{
+	"id": "sftp.example.com",
+	"name": "SFTP Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example storage sytem accessible via sftp.",
+	"site": "example.com",
+	"storage": {
+		"host": "iplant-ssh.tacc.utexas.edu",
+		"port": 22,
+		"protocol": "SFTP",
+		"rootDir": "/tmp",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "PASSWORD"
+		}
+		
+	},
+	"default": false
+}

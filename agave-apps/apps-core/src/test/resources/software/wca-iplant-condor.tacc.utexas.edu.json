@@ -1,0 +1,80 @@
+{  
+   "id":"wordcount-1.00",
+   "name":"wordcount",
+   "icon":"http://example.com/icon.jpg",
+   "parallelism":"SERIAL",
+   "version":"1.00",
+   "helpURI":"http://www.gnu.org/s/coreutils/manual/html_node/wc-invocation.html",
+   "label":"wordcount",
+   "shortDescription":"Count words in a file",
+   "longDescription":"",
+   "author":"${iplant.community.username}",
+   "datePublished":"",
+   "tags":[  
+      "textutils",
+      "gnu"
+   ],
+   "ontology":[  
+      "http://sswapmeet.sswap.info/algorithms/wc"
+   ],
+   "executionSystem":"execute.example.com",
+   "executionType":"CLI",
+   "defaultQueue":"testqueue",
+   "deploymentSystem":"storage.example.com",
+   "deploymentPath":"applications/wordcount-1.00",
+   "templatePath":"wrapper.sh",
+   "testPath":"test.sh",
+   "checkpointable":false,
+   "available":true,
+   "modules":[  
+      "purge",
+      "load TACC"
+   ],
+   "inputs":[  
+      {  
+         "id":"query1",
+         "defaultValue":"read1.fq",
+         "value":{  
+            "validator":"",
+            "default":"read1.fq",
+            "visible":true,
+            "required":false
+         },
+         "details":{  
+            "label":"File to count words in: ",
+            "description":"",
+            "visible":true
+         },
+         "semantics":{  
+            "ontology":[  
+               "http://sswapmeet.sswap.info/util/TextDocument"
+            ],
+            "minCardinality":1,
+            "fileTypes":[  
+               "text-0"
+            ]
+         }
+      }
+   ],
+   "outputs":[  
+      {  
+         "id":"outputWC",
+         "value":{  
+            "default":"wc_out.txt",
+            "validator": null
+         },
+         "details":{  
+            "label":"Text file",
+            "description":"Results of WC"
+         },
+         "semantics":{  
+            "ontology":[  
+               "http://sswapmeet.sswap.info/util/TextDocument"
+            ],
+            "minCardinality": 1,
+            "maxCardinality": 1,
+            "fileType":"text-0"
+         }
+      }
+   ]
+}

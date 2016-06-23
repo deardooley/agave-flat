@@ -1,0 +1,40 @@
+<transform>
+
+	<name>ClustalW</name>
+	<version>1.8</version>
+	<fileExtensions>aln</fileExtensions>
+	<pattern>^CLUSTAL W</pattern>
+	<description>ClustalW multiple sequence alignment</description>	<descriptionURI>http://www.bioperl.org/wiki/ClustalW_multiple_alignment_format</descriptionURI>
+	<tags>alignment,nucleotide,peptide,amino acid,base pair,codon,msa</tags>
+	
+	<encodingChain>
+		<name>ClustalW</name>
+		<filters>
+			<filter>
+				<name>ClustalW-self</name>
+				<description>ClustalW in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>ClustalW</name>
+			<version>1.8</version>
+			<description>Export to ClustalW</description>
+			<filters>
+				<filter>
+					<name>ClustalW-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>ClustalW in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

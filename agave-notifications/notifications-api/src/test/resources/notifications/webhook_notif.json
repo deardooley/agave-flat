@@ -1,0 +1,5 @@
+{
+	"url" : "http://postbin.ryanbigg.com/04aac512?username=${USERNAME}&status=${STATUS}",
+	"event" : "SENT",
+	"associatedUuid" : "abc1234-abc1234-abc1234-abc1234-011"
+}

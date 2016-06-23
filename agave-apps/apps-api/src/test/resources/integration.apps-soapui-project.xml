@@ -1,0 +1,1550 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project activeEnvironment="Default" name="integration.apps" resourceRoot="${projectDir}" soapui-version="5.0.0" abortOnError="false" runType="SEQUENTIAL" xmlns:con="http://eviware.com/soapui/config">
+    <con:settings/>
+    <con:interface xsi:type="con:RestService" wadlVersion="http://wadl.dev.java.net/2009/02" name="apps" type="rest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <con:settings/>
+
+        
+        <con:definitionCache type="TEXT" rootPart=""/><con:endpoints>
+            <con:endpoint>http://localhost:8182</con:endpoint>
+        </con:endpoints>
+        <con:resource name="apps" path="/apps/">
+            <con:settings/>
+            <con:parameters/>
+            <con:method name="list apps" method="GET">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="RESPONSE">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element xmlns:apps="http://localhost/apps/">apps:Response</con:element>
+                </con:representation>
+                <con:request name="Request 1" mediaType="application/json">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters/>
+                </con:request>
+            </con:method>
+            <con:method name="register or update an app" method="POST">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="REQUEST">
+                    <con:mediaType>application/json</con:mediaType>
+                    <con:params/>
+                </con:representation>
+                <con:representation type="FAULT">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>400</con:status>
+                    <con:params/>
+                    <con:element xmlns:apps="http://localhost/apps/">apps:Fault</con:element>
+                </con:representation>
+                <con:representation type="REQUEST">
+                    <con:mediaType>multipart/form-data</con:mediaType>
+                    <con:params/>
+                </con:representation>
+                <con:representation type="RESPONSE">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>201</con:status>
+                    <con:params/>
+                    <con:element xmlns:apps="http://localhost/apps/">apps:Response</con:element>
+                </con:representation>
+                <con:request name="Request 1" mediaType="multipart/form-data" postQueryString="false">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:attachment>
+                        <con:name>blastx.json</con:name>
+                        <con:contentType>text/javascript</con:contentType>
+                        <con:contentId>fileToUpload</con:contentId>
+                        <con:url>testdata/software/stevewc-2.0-stampede.json
+                        </con:url>
+                        <con:id>4c4fc1f6-8a71-44e2-8bff-4552a56f34cc</con:id>
+                    </con:attachment>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters/>
+                </con:request>
+            </con:method>
+        </con:resource>
+        <con:resource name="appid" path="/apps/{appId}">
+            <con:settings/>
+            <con:parameters>
+                <con:parameter>
+                    <con:name>appId</con:name>
+                    <con:value/>
+                    <con:style>TEMPLATE</con:style>
+                    <con:default/>
+                </con:parameter>
+                <con:parameter>
+                    <con:name>action</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+                <con:parameter>
+                    <con:name>name</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+                <con:parameter>
+                    <con:name>version</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+                <con:parameter>
+                    <con:name>system</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+            </con:parameters>
+            <con:resource name="pems" path="pems">
+                <con:settings/>
+                <con:parameters>
+                    <con:parameter>
+                        <con:name>appId</con:name>
+                        <con:value>appId</con:value>
+                        <con:style>TEMPLATE</con:style>
+                        <con:default>appId</con:default>
+                    </con:parameter>
+                    <con:parameter>
+                        <con:name>username</con:name>
+                        <con:value/>
+                        <con:style>QUERY</con:style>
+                        <con:default/>
+                        <con:description xsi:nil="true"/>
+                    </con:parameter>
+                    <con:parameter>
+                        <con:name>permission</con:name>
+                        <con:value/>
+                        <con:style>QUERY</con:style>
+                        <con:default/>
+                        <con:description xsi:nil="true"/>
+                    </con:parameter>
+                </con:parameters>
+                <con:resource name="username" path="{username}">
+                    <con:settings/>
+                    <con:parameters>
+                        <con:parameter>
+                            <con:name>username</con:name>
+                            <con:value>username</con:value>
+                            <con:style>TEMPLATE</con:style>
+                            <con:default>username</con:default>
+                        </con:parameter>
+                    </con:parameters>
+                    <con:method name="list pems by username" method="GET">
+                        <con:settings/>
+                        <con:parameters/>
+                        <con:representation type="RESPONSE">
+                            <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                            <con:status>200</con:status>
+                            <con:params/>
+                            <con:element xmlns:jst="http://localhost/apps/steve-blastx-stampede-ncbi-db-2.2.26/pems/jstubbs">
+                                jst:Response
+                            </con:element>
+                        </con:representation>
+                        <con:request name="Request 1" mediaType="application/json">
+                            <con:settings>
+                                <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                    key="x-jwt-assertion-iplantc-org"
+                                    value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                    xmlns="http://eviware.com/soapui/config"/>
+                                </con:setting>
+                            </con:settings>
+                            <con:endpoint>http://localhost:8182</con:endpoint>
+                            <con:request/>
+                            <con:credentials>
+                                <con:authType>Global HTTP Settings</con:authType>
+                            </con:credentials>
+                            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                            <con:jmsPropertyConfig/>
+                            <con:parameters>
+                                <con:entry key="username" value="jstubbs"/>
+                                <con:entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26"/>
+                            </con:parameters>
+                            <con:parameterOrder>
+                                <con:entry>appId</con:entry>
+                                <con:entry>username</con:entry>
+                                <con:entry>action</con:entry>
+                                <con:entry>name</con:entry>
+                                <con:entry>version</con:entry>
+                                <con:entry>system</con:entry>
+                                <con:entry>permission</con:entry>
+                            </con:parameterOrder>
+                        </con:request>
+                    </con:method>
+                    <con:method name="change pems for username" method="POST">
+                        <con:settings/>
+                        <con:parameters/>
+                        <con:representation type="REQUEST">
+                            <con:mediaType>application/x-www-form-urlencoded</con:mediaType>
+                            <con:params/>
+                        </con:representation>
+                        <con:representation type="RESPONSE">
+                            <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                            <con:status>201</con:status>
+                            <con:params/>
+                            <con:element xmlns:jst="http://localhost/apps/steve-blastx-stampede-ncbi-db-2.2.26/pems/jstubbs">
+                                jst:Response
+                            </con:element>
+                        </con:representation>
+                        <con:request name="Request 1" mediaType="application/json" postQueryString="false">
+                            <con:settings>
+                                <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                    key="x-jwt-assertion-iplantc-org"
+                                    value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                    xmlns="http://eviware.com/soapui/config"/>
+                                </con:setting>
+                            </con:settings>
+                            <con:endpoint>http://localhost:8182</con:endpoint>
+                            <con:request/>
+                            <con:credentials>
+                                <con:authType>Global HTTP Settings</con:authType>
+                            </con:credentials>
+                            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                            <con:jmsPropertyConfig/>
+                            <con:parameters/>
+                            <con:parameterOrder>
+                                <con:entry>appId</con:entry>
+                                <con:entry>username</con:entry>
+                                <con:entry>action</con:entry>
+                                <con:entry>name</con:entry>
+                                <con:entry>version</con:entry>
+                                <con:entry>system</con:entry>
+                                <con:entry>permission</con:entry>
+                            </con:parameterOrder>
+                        </con:request>
+                    </con:method>
+                    <con:method name="delete pems for username" method="DELETE">
+                        <con:settings/>
+                        <con:parameters/>
+                        <con:request name="Request 1" mediaType="application/json">
+                            <con:settings>
+                                <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                    key="x-jwt-assertion-iplantc-org"
+                                    value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                    xmlns="http://eviware.com/soapui/config"/>
+                                </con:setting>
+                            </con:settings>
+                            <con:endpoint>http://localhost:8182</con:endpoint>
+                            <con:request/>
+                            <con:credentials>
+                                <con:authType>Global HTTP Settings</con:authType>
+                            </con:credentials>
+                            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                            <con:jmsPropertyConfig/>
+                            <con:parameters>
+                                <con:entry key="username" value="jstubbs"/>
+                                <con:entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26"/>
+                            </con:parameters>
+                            <con:parameterOrder>
+                                <con:entry>appId</con:entry>
+                                <con:entry>username</con:entry>
+                                <con:entry>action</con:entry>
+                                <con:entry>name</con:entry>
+                                <con:entry>version</con:entry>
+                                <con:entry>system</con:entry>
+                                <con:entry>permission</con:entry>
+                            </con:parameterOrder>
+                        </con:request>
+                    </con:method>
+                </con:resource>
+                <con:method name="list pems for app" method="GET">
+                    <con:settings/>
+                    <con:parameters/>
+                    <con:representation type="RESPONSE">
+                        <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                        <con:status>200</con:status>
+                        <con:params/>
+                        <con:element xmlns:pems="http://localhost/apps/steve-blastx-stampede-ncbi-db-2.2.26/pems">
+                            pems:Response
+                        </con:element>
+                    </con:representation>
+                    <con:request name="Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                            <con:entry>username</con:entry>
+                            <con:entry/>
+                        </con:parameterOrder>
+                    </con:request>
+                </con:method>
+                <con:method name="update pems for app" method="POST">
+                    <con:settings/>
+                    <con:parameters/>
+                    <con:representation type="REQUEST">
+                        <con:mediaType>application/json</con:mediaType>
+                        <con:params/>
+                    </con:representation>
+                    <con:representation type="FAULT">
+                        <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                        <con:status>400</con:status>
+                        <con:params/>
+                        <con:element xmlns:pems="http://localhost/apps/steve-blastx-stampede-ncbi-db-2.2.26/pems">
+                            pems:Fault
+                        </con:element>
+                    </con:representation>
+                    <con:representation type="REQUEST">
+                        <con:mediaType>application/x-www-form-urlencoded</con:mediaType>
+                        <con:params/>
+                    </con:representation>
+                    <con:representation type="RESPONSE">
+                        <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                        <con:status>201</con:status>
+                        <con:params/>
+                        <con:element xmlns:pems="http://localhost/apps/steve-blastx-stampede-ncbi-db-2.2.26/pems">
+                            pems:Response
+                        </con:element>
+                    </con:representation>
+                    <con:request name="Request 1" mediaType="application/x-www-form-urlencoded" postQueryString="true">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <con:entry key="username" value="jstubbs"/>
+                            <con:entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26"/>
+                            <con:entry key="permission" value="ALL"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>username</con:entry>
+                            <con:entry>permission</con:entry>
+                            <con:entry>system</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>action</con:entry>
+                        </con:parameterOrder>
+                    </con:request>
+                </con:method>
+                <con:method name="delete all pems for app" method="DELETE">
+                    <con:settings/>
+                    <con:parameters/>
+                    <con:request name="Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                            <con:entry>username</con:entry>
+                            <con:entry>permission</con:entry>
+                        </con:parameterOrder>
+                    </con:request>
+                </con:method>
+            </con:resource>
+            <con:method name="get app by id" method="GET">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="RESPONSE">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element xmlns:blas="http://localhost/apps/blastx-stampede-ncbi-db-2.2.26u1">
+                        blas:Response
+                    </con:element>
+                </con:representation>
+                <con:representation type="FAULT">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>404</con:status>
+                    <con:params/>
+                    <con:element xmlns:stev="http://localhost/apps/steve-blastx-stampede-ncbi-db-2.2.26u1">
+                        stev:Fault
+                    </con:element>
+                </con:representation>
+                <con:request name="Request 1" mediaType="application/json">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters>
+                        <entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26" xmlns="http://eviware.com/soapui/config"/>
+                    </con:parameters>
+                    <con:parameterOrder>
+                        <con:entry>appId</con:entry>
+                        <con:entry>action</con:entry>
+                        <con:entry>name</con:entry>
+                        <con:entry>version</con:entry>
+                        <con:entry>system</con:entry>
+                    </con:parameterOrder>
+                </con:request>
+            </con:method>
+            <con:method name="update app" method="POST">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="FAULT">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>403 404 400 500</con:status>
+                    <con:params/>
+                    <con:element xmlns:blas="http://localhost/apps/blastx-stampede-ncbi-db-2.2.26u1">
+                        blas:Fault
+                    </con:element>
+                </con:representation>
+                <con:representation type="REQUEST">
+                    <con:mediaType>application/json</con:mediaType>
+                    <con:params/>
+                </con:representation>
+                <con:representation type="REQUEST">
+                    <con:mediaType>multipart/form-data</con:mediaType>
+                    <con:params/>
+                </con:representation>
+                <con:representation type="RESPONSE">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element xmlns:stev="http://localhost/apps/steve-blastx-stampede-ncbi-db-2.2.26">
+                        stev:Response
+                    </con:element>
+                </con:representation>
+                <con:request name="Request 1" mediaType="multipart/form-data" postQueryString="false">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:attachment>
+                        <con:name>blastx.json</con:name>
+                        <con:contentType>text/javascript</con:contentType>
+                        <con:contentId>fileToUpload</con:contentId>
+                        <con:url>testdata/software/stevewc-2.0-stampede.json
+                        </con:url>
+                        <con:id>ef909b0a-18ed-41b5-94ae-2431659cfb0d</con:id>
+                    </con:attachment>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters>
+                        <entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26" xmlns="http://eviware.com/soapui/config"/>
+                    </con:parameters>
+                    <con:parameterOrder>
+                        <con:entry>appId</con:entry>
+                        <con:entry>action</con:entry>
+                        <con:entry>name</con:entry>
+                        <con:entry>version</con:entry>
+                        <con:entry>system</con:entry>
+                    </con:parameterOrder>
+                </con:request>
+            </con:method>
+            <con:method name="app admin functtions" method="PUT">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="FAULT">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>400 500 404</con:status>
+                    <con:params/>
+                    <con:element xmlns:blas="http://localhost/apps/blastx-stampede-ncbi-db-2.2.26u1">
+                        blas:Fault
+                    </con:element>
+                </con:representation>
+                <con:representation type="REQUEST">
+                    <con:mediaType>application/json</con:mediaType>
+                    <con:params/>
+                </con:representation>
+                <con:representation type="REQUEST">
+                    <con:mediaType>application/x-www-form-urlencoded</con:mediaType>
+                    <con:params/>
+                </con:representation>
+                <con:representation type="RESPONSE">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element xmlns:stev="http://localhost/apps/stevewc-2.0">stev:Response
+                    </con:element>
+                </con:representation>
+                <con:request name="Request 1" mediaType="application/x-www-form-urlencoded" postQueryString="true">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters>
+                        <con:entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26"/>
+                        <con:entry key="name" value="testclone-steve-blastx-stampede-ncbi-db-2.2.26"/>
+                        <con:entry key="action" value="clone"/>
+                        <con:entry key="version" value="3.0"/>
+                    </con:parameters>
+                    <con:parameterOrder>
+                        <con:entry>appId</con:entry>
+                        <con:entry>action</con:entry>
+                        <con:entry>name</con:entry>
+                        <con:entry>version</con:entry>
+                        <con:entry>system</con:entry>
+                    </con:parameterOrder>
+                </con:request>
+            </con:method>
+            <con:method name="delete app" method="DELETE">
+                <con:settings/>
+                <con:parameters/>
+                <con:request name="Request 1" mediaType="application/json">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters/>
+                    <con:parameterOrder>
+                        <con:entry>appId</con:entry>
+                        <con:entry>action</con:entry>
+                        <con:entry>name</con:entry>
+                        <con:entry>version</con:entry>
+                        <con:entry>system</con:entry>
+                    </con:parameterOrder>
+                </con:request>
+            </con:method>
+        </con:resource>
+        <con:resource name="name" path="/apps/name/{name}">
+            <con:settings/>
+            <con:parameters>
+                <con:parameter>
+                    <con:name>name</con:name>
+                    <con:value>name</con:value>
+                    <con:style>TEMPLATE</con:style>
+                    <con:default>name</con:default>
+                </con:parameter>
+            </con:parameters>
+            <con:method name="list apps by name" method="GET">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="RESPONSE">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element xmlns:blas="http://localhost/apps/name/blastx">blas:Response
+                    </con:element>
+                </con:representation>
+                <con:request name="Request 1" mediaType="application/json">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters>
+                        <entry key="name" value="blastx" xmlns="http://eviware.com/soapui/config"/>
+                    </con:parameters>
+                </con:request>
+            </con:method>
+        </con:resource>
+        <con:resource name="tag" path="/apps/tag/{tag}">
+            <con:settings/>
+            <con:parameters>
+                <con:parameter>
+                    <con:name>tag</con:name>
+                    <con:value/>
+                    <con:style>TEMPLATE</con:style>
+                    <con:default/>
+                </con:parameter>
+            </con:parameters>
+            <con:method name="search tags" method="GET">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="RESPONSE">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element xmlns:ass="http://localhost/apps/tag/assembler">ass:Response
+                    </con:element>
+                </con:representation>
+                <con:request name="Request 1" mediaType="application/json">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters>
+                        <entry key="tag" value="assembler" xmlns="http://eviware.com/soapui/config"/>
+                    </con:parameters>
+                    <con:parameterOrder>
+                        <con:entry>tag</con:entry>
+                    </con:parameterOrder>
+                </con:request>
+            </con:method>
+        </con:resource>
+        <con:resource name="ontology" path="/apps/ontology/{term}">
+            <con:settings/>
+            <con:parameters>
+                <con:parameter disableUrlEncoding="false">
+                    <con:name>term</con:name>
+                    <con:value/>
+                    <con:style>TEMPLATE</con:style>
+                    <con:default/>
+                </con:parameter>
+            </con:parameters>
+            <con:method name="search ontology" method="GET">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="FAULT">
+                    <con:mediaType xsi:nil="true"/>
+                    <con:status>400</con:status>
+                    <con:params/>
+                    <con:element>data</con:element>
+                </con:representation>
+                <con:representation type="FAULT">
+                    <con:mediaType xsi:nil="true"/>
+                    <con:status>400</con:status>
+                    <con:params/>
+                    <con:element>data</con:element>
+                </con:representation>
+                <con:representation type="RESPONSE">
+                    <con:mediaType>text/html</con:mediaType>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element>html</con:element>
+                </con:representation>
+                <con:representation type="FAULT">
+                    <con:mediaType xsi:nil="true"/>
+                    <con:status>400</con:status>
+                    <con:params/>
+                    <con:element>data</con:element>
+                </con:representation>
+                <con:representation type="FAULT">
+                    <con:mediaType xsi:nil="true"/>
+                    <con:status>400</con:status>
+                    <con:params/>
+                    <con:element>data</con:element>
+                </con:representation>
+                <con:representation type="FAULT">
+                    <con:mediaType xsi:nil="true"/>
+                    <con:status>400</con:status>
+                    <con:params/>
+                    <con:element>data</con:element>
+                </con:representation>
+                <con:representation type="FAULT">
+                    <con:mediaType xsi:nil="true"/>
+                    <con:status>400</con:status>
+                    <con:params/>
+                    <con:element>data</con:element>
+                </con:representation>
+                <con:request name="Request 1" mediaType="application/json">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters>
+                        <entry key="term" value="http://sswapmeet.sswap.info/algorithms/wc" xmlns="http://eviware.com/soapui/config"/>
+                    </con:parameters>
+                    <con:parameterOrder>
+                        <con:entry>term</con:entry>
+                    </con:parameterOrder>
+                </con:request>
+            </con:method>
+        </con:resource>
+        <con:resource name="form" path="/apps/{uniqueName}/form">
+            <con:settings/>
+            <con:parameters>
+                <con:parameter>
+                    <con:name>uniqueName</con:name>
+                    <con:value/>
+                    <con:style>TEMPLATE</con:style>
+                    <con:default/>
+                </con:parameter>
+            </con:parameters>
+            <con:method name="generate form" method="GET">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="RESPONSE">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element xmlns:form="http://localhost/apps/blastx-stampede-ncbi-db-2.2.26/form">
+                        form:Response
+                    </con:element>
+                </con:representation>
+                <con:request name="Request 1" mediaType="application/json">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters>
+                        <entry key="uniqueName" value="blastx-stampede-ncbi-db-2.2.26" xmlns="http://eviware.com/soapui/config"/>
+                    </con:parameters>
+                    <con:parameterOrder>
+                        <con:entry>uniqueName</con:entry>
+                    </con:parameterOrder>
+                </con:request>
+            </con:method>
+        </con:resource>
+        <con:resource name="system" path="/apps/system/{systemId}">
+            <con:settings/>
+            <con:parameters>
+                <con:parameter>
+                    <con:name>systemId</con:name>
+                    <con:value>data.iplantcollaborative.org</con:value>
+                    <con:style>TEMPLATE</con:style>
+                    <con:default>data.iplantcollaborative.org</con:default>
+                </con:parameter>
+            </con:parameters>
+            <con:method name="app system" method="GET">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="RESPONSE">
+                    <con:mediaType xsi:nil="true"/>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element>data</con:element>
+                </con:representation>
+                <con:representation type="RESPONSE">
+                    <con:mediaType xsi:nil="true"/>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element>data</con:element>
+                </con:representation>
+                <con:representation type="RESPONSE">
+                    <con:mediaType xsi:nil="true"/>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element>data</con:element>
+                </con:representation>
+                <con:representation type="RESPONSE">
+                    <con:mediaType>application/json;charset=UTF-8</con:mediaType>
+                    <con:status>200</con:status>
+                    <con:params/>
+                    <con:element xmlns:stev="http://localhost/apps/system/steve.ssh.example.com">
+                        stev:Response
+                    </con:element>
+                </con:representation>
+                <con:request name="Request 1" mediaType="application/json">
+                    <con:settings>
+                        <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                            key="x-jwt-assertion-iplantc-org"
+                            value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                            xmlns="http://eviware.com/soapui/config"/>
+                        </con:setting>
+                    </con:settings>
+                    <con:endpoint>http://localhost:8182</con:endpoint>
+                    <con:request/>
+                    <con:credentials>
+                        <con:authType>Global HTTP Settings</con:authType>
+                    </con:credentials>
+                    <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                    <con:jmsPropertyConfig/>
+                    <con:parameters>
+                        <entry key="systemId" value="steve.ssh.example.com" xmlns="http://eviware.com/soapui/config"/>
+                    </con:parameters>
+                    <con:parameterOrder>
+                        <con:entry>systemId</con:entry>
+                    </con:parameterOrder>
+                </con:request>
+            </con:method>
+        </con:resource>
+    </con:interface>
+    <con:testSuite name="apps TestSuite">
+        <con:settings/>
+        <con:runType>SEQUENTIAL</con:runType>
+        <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="apps TestCase" searchProperties="true" id="610fe0d0-23bc-4dbe-becd-fa94702b6bda">
+            <con:settings/>
+            <con:testStep type="restrequest" name="list apps - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/" methodName="list apps" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="list apps - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters/>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:testStep type="restrequest" name="register or update an app - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/" methodName="register or update an app" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="register or update an app - Request 1" mediaType="multipart/form-data" postQueryString="false">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200, 201</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:attachment>
+                            <con:name>blastx.json</con:name>
+                            <con:contentType>text/javascript</con:contentType>
+                            <con:contentId>fileToUpload</con:contentId>
+                            <con:url>testdata/software/stevewc-2.0-stampede.json</con:url>
+                            <con:id>4c4fc1f6-8a71-44e2-8bff-4552a56f34cc</con:id>
+                        </con:attachment>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters/>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:properties/>
+        </con:testCase>
+        <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="appId TestCase" searchProperties="true" id="5f274955-9912-415f-91b7-c5f5a9497319">
+            <con:settings/>
+            <con:testStep type="restrequest" name="get app by id - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}" methodName="get app by id" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="get app by id - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:testStep type="restrequest" name="update app - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}" methodName="update app" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="update app - Request 1" mediaType="multipart/form-data" postQueryString="true">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200, 201</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:attachment>
+                            <con:name>steve-blastx.json</con:name>
+                            <con:contentType>text/javascript</con:contentType>
+                            <con:contentId>fileToUpload</con:contentId>
+                            <con:url>testdata/software/stevewc-2.0-stampede.json                             </con:url>
+                            <con:id>18eda6e8-da40-412f-b64f-76b61df71e27</con:id>
+                        </con:attachment>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:testStep type="restrequest" name="app admin clone - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}" methodName="app admin functtions" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="app admin clone - Request 1" mediaType="application/x-www-form-urlencoded" postQueryString="true">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>400</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <con:entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26"/>
+                            <con:entry key="name" value="testclone-steve-blastx-stampede-ncbi-db-2.2.26"/>
+                            <con:entry key="action" value="clone"/>
+                            <con:entry key="version" value="3.0"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:testStep type="restrequest" name="app admin publish - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}" methodName="app admin functtions" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="app admin publish - Request 1" mediaType="application/x-www-form-urlencoded" postQueryString="true">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <con:entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26"/>
+                            <con:entry key="action" value="publish"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:testStep type="restrequest" name="delete app - Request 1" disabled="true">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}" methodName="delete app" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="delete app - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters/>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:properties/>
+        </con:testCase>
+        <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="pems TestCase" searchProperties="true" id="e2212451-aae2-4130-b0fb-bc64500a2847">
+            <con:settings/>
+            <con:testStep type="restrequest" name="list pems for app - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}/pems" methodName="list pems for app" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="list pems for app - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                            <con:entry>username</con:entry>
+                            <con:entry>permission</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:testStep type="restrequest" name="update pems for app - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}/pems" methodName="update pems for app" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="update pems for app - Request 1" mediaType="application/x-www-form-urlencoded" postQueryString="true">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200, 201</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <con:entry key="username" value="jstubbs"/>
+                            <con:entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26"/>
+                            <con:entry key="permission" value="ALL"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>username</con:entry>
+                            <con:entry>permission</con:entry>
+                            <con:entry>system</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>action</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:testStep type="restrequest" name="delete all pems for app - Request 1" disabled="true">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}/pems" methodName="delete all pems for app" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="delete all pems for app - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                            <con:entry>username</con:entry>
+                            <con:entry>permission</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:properties/>
+        </con:testCase>
+        <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="username TestCase" searchProperties="true" id="cbbb72f1-a99b-4844-b8b1-eed9323f6ced">
+            <con:settings/>
+            <con:testStep type="restrequest" name="list pems by username - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}/pems/{username}" methodName="list pems by username" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="list pems by username - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200
+                                </codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <con:entry key="username" value="jstubbs"/>
+                            <con:entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>username</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                            <con:entry>permission</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:testStep type="restrequest" name="change pems for username - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}/pems/{username}" methodName="change pems for username" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="change pems for username - Request 1" mediaType="application/x-www-form-urlencoded" postQueryString="true">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200, 201
+                                </codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <con:entry key="username" value="jstubbs"/>
+                            <con:entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26"/>
+                            <con:entry key="permission" value="READ"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>username</con:entry>
+                            <con:entry>permission</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:testStep type="restrequest" name="delete pems for username - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{appId}/pems/{username}" methodName="delete pems for username" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="delete pems for username - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <con:entry key="username" value="jstubbs"/>
+                            <con:entry key="appId" value="steve-blastx-stampede-ncbi-db-2.2.26"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>appId</con:entry>
+                            <con:entry>username</con:entry>
+                            <con:entry>action</con:entry>
+                            <con:entry>name</con:entry>
+                            <con:entry>version</con:entry>
+                            <con:entry>system</con:entry>
+                            <con:entry>permission</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:properties/>
+        </con:testCase>
+        <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="name search TestCase" searchProperties="true" id="fecd0147-0a5f-47c8-b2ed-91f47b58ee28">
+            <con:settings/>
+            <con:testStep type="restrequest" name="list apps by name - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/name/{name}" methodName="list apps by name" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="list apps by name - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="name" value="blastx" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:properties/>
+        </con:testCase>
+        <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="tag TestCase" searchProperties="true" id="4952ea20-8ef8-408c-aaf9-fda9b7025718">
+            <con:settings/>
+            <con:testStep type="restrequest" name="search tags Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/tag/{tag}" methodName="search tags" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="search tags Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="tag" value="assembler" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>tag</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:properties/>
+        </con:testCase>
+        <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="ontology TestCase" searchProperties="true" id="812448e7-12ab-467e-8dea-232218bf0b6c">
+            <con:settings/>
+            <con:testStep type="restrequest" name="search ontology - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/ontology/{term}" methodName="search ontology" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="search ontology - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="term" value="http://sswapmeet.sswap.info/algorithms/wc" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>term</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:properties/>
+        </con:testCase>
+        <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="generate form TestCase" searchProperties="true" id="66321487-43ff-4bdc-815a-cb7e1180ae25">
+            <con:settings/>
+            <con:testStep type="restrequest" name="generate form - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/{uniqueName}/form" methodName="generate form" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="generate form - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Simple Contains" name="Contains">
+                            <con:configuration>
+                                <token/>
+                                <ignoreCase>false</ignoreCase>
+                                <useRegEx>false</useRegEx>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:assertion type="Simple Contains" name="Contains form">
+                            <con:configuration>
+                                <token>&lt;form name=</token>
+                                <ignoreCase>false</ignoreCase>
+                                <useRegEx>false</useRegEx>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="uniqueName" value="blastx-stampede-ncbi-db-2.2.26" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>uniqueName</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:properties/>
+        </con:testCase>
+        <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="system TestCase" searchProperties="true" id="a9a72c63-a1ad-4966-84d4-5f5d0c7ec212">
+            <con:settings/>
+            <con:testStep type="restrequest" name="app system - Request 1">
+                <con:settings/>
+                <con:config service="apps" resourcePath="/apps/system/{systemId}" methodName="app system" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                    <con:restRequest name="app system - Request 1" mediaType="application/json">
+                        <con:settings>
+                            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                                key="x-jwt-assertion-iplantc-org"
+                                value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                                xmlns="http://eviware.com/soapui/config"/>
+                            </con:setting>
+                        </con:settings>
+                        <con:endpoint>http://localhost:8182</con:endpoint>
+                        <con:request/>
+                        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes">
+                            <con:configuration>
+                                <codes>200</codes>
+                            </con:configuration>
+                        </con:assertion>
+                        <con:credentials>
+                            <con:authType>Global HTTP Settings</con:authType>
+                        </con:credentials>
+                        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                        <con:jmsPropertyConfig/>
+                        <con:parameters>
+                            <entry key="systemId" value="steve.ssh.example.com" xmlns="http://eviware.com/soapui/config"/>
+                        </con:parameters>
+                        <con:parameterOrder>
+                            <con:entry>systemId</con:entry>
+                        </con:parameterOrder>
+                    </con:restRequest>
+                </con:config>
+            </con:testStep>
+            <con:properties/>
+        </con:testCase>
+        <con:properties/>
+    </con:testSuite>
+    <con:properties/>
+    <con:wssContainer/>
+    <con:oAuth2ProfileContainer/><con:sensitiveInformation/>
+</con:soapui-project>

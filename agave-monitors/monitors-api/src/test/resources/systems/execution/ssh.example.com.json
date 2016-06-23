@@ -1,0 +1,50 @@
+{
+	"id": "ssh.example.com",
+	"name": "SSH",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample ssh execution system.",
+	"site": "tacc.xsede.org",
+	"executionType": "HPC",
+	"default": false,
+	"queues": [
+		{
+			"name": "normal",
+			"maxJobs": 100,
+			"maxUserJobs": 10,
+			"maxNodes": 256,
+			"maxProcessorsPerNode": 16,
+			"maxMemoryPerNode": "2048GB",
+			"maxRequestedTime": "24:00:00",
+			"customDirectives": "#$ -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "iplant-ssh.tacc.utexas.edu",
+		"port": 22,
+		"protocol": "SSH",
+		"scratchDir": "/tmp",
+		"workDir": "/tmp",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": "",
+			"type": "PASSWORD"
+		}
+	},
+	"storage": {
+		"host": "iplant-ssh.tacc.utexas.edu",
+		"port": 22,
+		"protocol": "SFTP",
+		"rootDir": "/tmp",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "PASSWORD"
+		}
+	},
+	"scheduler": "SGE",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

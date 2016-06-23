@@ -1,0 +1,34 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+  
+<suite name="iPlant Monitor Service" verbose="5" parallel="false" thread-count="1">
+  <test name="model" >
+  	<packages>
+        <package name="org.iplantc.service.monitor.model" />
+    </packages>
+  </test>
+  <test name="dao" >
+  	<classes>
+        <class name="org.iplantc.service.monitor.dao.MonitorDaoTest" />
+    </classes>
+  </test>
+  <test name="checkDao" >
+  	<classes>
+        <class name="org.iplantc.service.monitor.dao.MonitorCheckDaoTest" />
+    </classes>
+  </test>
+  <test name="manager" >
+  	<packages>
+        <package name="org.iplantc.service.monitor.manager" />
+    </packages>
+  </test>
+  <test name="queue" >
+  	<packages>
+        <package name="org.iplantc.service.monitor.queue" />
+    </packages>
+  </test>
+  <test name="events" >
+  	<packages>
+        <package name="org.iplantc.service.monitor.events" />
+    </packages>
+  </test>
+</suite>

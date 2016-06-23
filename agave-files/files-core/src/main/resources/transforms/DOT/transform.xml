@@ -1,0 +1,41 @@
+<transform>
+
+	<name>DOT</name>
+	<version>0</version>
+	<fileExtensions>gv,dot</fileExtensions>
+	<pattern></pattern>
+	<description>DOT graph description language</description>
+	<descriptionURI>http://www.graphviz.org/doc/info/lang.html</descriptionURI>
+	<tags>network,graph,graphviz</tags>
+	
+	<encodingChain>
+		<name>DOT</name>
+		<filters>
+			<filter>
+				<name>DOT-self</name>
+				<description>DOT in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>DOT</name>
+			<version>0</version>
+			<description>Export to DOT</description>
+			<filters>
+				<filter>
+					<name>DOT-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>DOT in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

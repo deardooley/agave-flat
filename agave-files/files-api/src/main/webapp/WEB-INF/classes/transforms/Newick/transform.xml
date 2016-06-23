@@ -1,0 +1,41 @@
+<transform>
+
+	<name>Newick</name>
+	<version>0</version>
+	<fileExtensions>nwk,newick,txt</fileExtensions>
+	<pattern>newick*</pattern>
+	<description>Newick</description>
+	<descriptionURI>http://evolution.genetics.washington.edu/phylip/newick_doc.html</descriptionURI>
+	<tags>phylogeny,tree,systematics</tags>
+	
+	<encodingChain>
+		<name>Newick</name>
+		<filters>
+			<filter>
+				<name>Newick-self</name>
+				<description>Newick in-place encoder</description>
+				<handle>newick-encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Newick</name>
+			<version>0</version>
+			<description>Export to Newick</description>
+			<filters>
+				<filter>
+					<name>Newick-self</name>
+					<handle>newick-decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Newick in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

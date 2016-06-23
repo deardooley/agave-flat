@@ -1,0 +1,55 @@
+<transform>
+
+	<name>FASTQ-Illumina</name>
+	<version>0</version>
+	<fileExtensions>fastq,fq,fastqillumina</fileExtensions>
+	<pattern>^@</pattern>
+	<description>FASTQ (Illumina 1.3+)</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/FASTQ_format</descriptionURI>
+	<tags>sequence,sequencing,nucleotide,base pair,illumina</tags>
+	
+	<encodingChain>
+		<name>FASTQ-Illumina</name>
+		<filters>
+			<filter>
+				<name>FASTQ-Illumina-self</name>
+				<description>FASTQ-Illumina in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>FASTQ-Illumina</name>
+			<version>0</version>
+			<description>Export to FASTQ</description>
+			<filters>
+				<filter>
+					<name>FASTQ-Illumina-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ-Illumina in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+		
+		<decodingChain>
+			<name>FASTQ</name>
+			<version>0</version>
+			<description>FASTQ-Illumina->FASTQ (Sanger)</description>
+			<filters>
+				<filter>
+					<name>FASTQ-Illumina->FASTQ</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ-Illumina->FASTQ translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

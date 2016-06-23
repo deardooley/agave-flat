@@ -1,0 +1,27 @@
+{  
+   "id":"mode",
+   "details":{  
+      "description":"Specify if the sequence is amino acids or nucleotides.",
+      "label":"Sequence type: ",
+      "argument":"",
+      "showArgument":false,
+      "repeatArgument":false
+   },
+   "semantics":{  
+      "minCardinality": 0,
+      "maxCardinality":-1,
+      "ontology":[  
+         "xs:string",
+         "xs:normalizedString"
+      ]
+   },
+   "value":{  
+      "default":"steve",
+      "visible":true,
+      "required":false,
+      "validator":"",
+      "order": 0,
+      "enquote": false,
+      "type":"string"
+   }
+}

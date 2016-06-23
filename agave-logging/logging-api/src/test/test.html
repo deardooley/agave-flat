@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Usage Service Test</title>
+<style type="text/css">
+	select {
+		padding: 5px;
+		height: 22px;
+		border-radius: 10px 10px;
+		border: 1px solid #333;
+		width: 150px;
+	}
+	input {
+		height: 22px;
+		border-radius: 10px 10px;
+		border: 1px solid #333;
+		width: 140px;
+		padding: 2px 5px;
+	}
+	
+	html {
+		font-size: 16px;
+		font-family:Arial, Helvetica, sans-serif;
+	}
+	label {
+		font-weight: bold;
+	}
+	div {
+		margin: 5px 0;
+	}
+	.red {
+		font-weight: bold;
+		color: red;
+		padding-left: 3px;
+	}
+</style>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+	getServiceKeys();
+	
+	$('#servicekey').change(function() {
+		getActivityKeys($(this).val());
+	});
+});
+
+function getServiceKeys() {
+	
+	$('#servicekey').html('<option value="">Loading...</option>');
+	
+	$.get('ajax.php', {action: 'service'}, function(data) {
+		if (data.status == 'success') {
+			//alert('retrieved listings');
+
+			var options = '<option value="">Select service</option>';
+
+			$(data.result).each(function() {
+				options += '<option value="' + this.ServiceKey + '" title="' + this.Description + '">' + this.ServiceKey + '</option>';
+			});
+		
+			$('#servicekey').html(options);
+			
+			getActivityKeys($('#servicekey').val());
+		} 
+		//else {
+		//	alert(data.message);
+		//}
+	}, "json");	
+}
+
+function getActivityKeys(serviceKey) {
+	
+	$('#activitykey').html('<option value="">Loading...</option>');
+	
+	$.get('ajax.php', {action: 'activity', key: serviceKey }, function(data) {
+		if (data.status == 'success') {
+			//alert('retrieved listings');
+
+			var options = "";
+
+			$(data.result).each(function() {
+				options += '<option value="' + this.ActivityKey + '" title="' + this.Description + '">' + this.ActivityKey + '</option>';
+			});
+		
+			$('#activitykey').html(options);
+		} 
+		//else {
+		//	alert(data.message);
+		//}
+	}, "json");	
+}
+</script>
+</head>
+
+<body>
+
+<div style="width:100%">
+	<div style="margin: 100px auto; width: 160px; border-radius: 15px 15px; border: 1px solid #000; padding: 15px;">
+		<form action="index.php" method="post">
+			<div style="width:100%">
+				<label for="username">Username<span class="red">*</span>:</label>
+			</div>
+			<div style="width:100%">
+				<input type="text" name="username" value="dooley"/>
+			</div>
+			<div style="width:100%">
+				<label for="servicekey">Service Key<span class="red">*</span>:</label>
+			</div>
+			<div style="width:100%">
+				<select id="servicekey" name="servicekey">
+					<option value="">Select service</option>
+				</select>
+			</div>
+			<div style="width:100%;">
+				<label for="activitykey">Activity Key<span class="red">*</span>:</label>
+			</div>
+			<div style="width:100%">
+				<select id="activitykey" name="activitykey">
+					<option value="">Select activity</option>
+				</select>
+			</div>
+			<div style="width:100%">
+				<label for="activitycontext">Activity Context:</label>
+			</div>
+			<div style="width:100%">
+				<input type="text" name="activitycontext" value="1B2KJHSDF092398JOLIKF89023K9230SDFR"/>
+			</div>
+			<div style="width:100%">
+				<label for="userip">User IP Address:</label>
+			</div>
+			<div style="width:100%">
+				<input type="text" name="userip" value="127.0.0.1"/>
+			</div>
+			<div style="width:100%; margin-top: 15px;">
+				<input type="submit" name="submit" title="submit" value="submit"/>
+			</div>
+			<div style="width:100%; margin-top: 15px;">
+				<span style="color:red;">* Required field</span>
+			</div>
+		</form>
+	</div>
+</div>
+
+</body>
+</html>

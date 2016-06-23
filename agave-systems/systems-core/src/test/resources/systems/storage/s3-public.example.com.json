@@ -1,0 +1,22 @@
+{   
+	"id": "s3.example.com",
+	"name": "Amazon S3 Public Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example storage system accessible via public readonly S3 bucket.",
+	"site": "amazon.com",
+    "storage": {
+        "container": "nasanex",
+        "homeDir": "/",
+        "rootDir": "/",
+        "host": "s3-website-us-east-1.amazonaws.com",
+        "port": 443,
+        "auth": {
+            "type": "APIKEYS",
+            "publicKey": "${aws.access.key}",
+			"privateKey": "${aws.secret.key}",
+        },
+        "protocol": "S3"
+    },
+    "default": false
+}

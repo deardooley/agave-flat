@@ -1,0 +1,41 @@
+<transform>
+
+	<name>TAB</name>
+	<version>0</version>
+	<fileExtensions>dat,tab,txt</fileExtensions>
+	<pattern></pattern>
+	<description>Tab-delimted text</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/Tab_delimited</descriptionURI>
+	<tags>data,tab,column,row</tags>
+	
+	<encodingChain>
+		<name>TAB</name>
+		<filters>
+			<filter>
+				<name>TAB-self</name>
+				<description>TAB in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>TAB</name>
+			<version>0</version>
+			<description>Export to TAB</description>
+			<filters>
+				<filter>
+					<name>TAB-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>TAB in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

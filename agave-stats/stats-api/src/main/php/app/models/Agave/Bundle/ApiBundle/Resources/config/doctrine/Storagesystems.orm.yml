@@ -1,0 +1,25 @@
+Agave\Bundle\ApiBundle\Entity\Storagesystems:
+    type: entity
+    table: storagesystems
+    indexes:
+        FKF983E1497871F82F:
+            columns:
+                - id
+    id: {  }
+    fields:
+        type:
+            type: string
+            nullable: false
+            length: 16
+            fixed: false
+    oneToOne:
+        id:
+            targetEntity: Systems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

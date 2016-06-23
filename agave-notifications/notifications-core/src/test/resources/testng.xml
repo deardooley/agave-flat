@@ -1,0 +1,29 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+  
+<suite name="iPlant Notification Service" verbose="5" parallel="false">
+  <test name="model" >
+  	<packages>
+        <package name="org.iplantc.service.notification.model" />
+    </packages>
+  </test>
+  <test name="dao" >
+  	<packages>
+        <package name="org.iplantc.service.notification.dao" />
+    </packages>
+  </test>
+  <!-- <test name="clients" >
+  	<packages>
+        <package name="org.iplantc.service.notification.email.clients" />
+    </packages>
+  </test> -->
+  <test name="events" >
+  	<packages>
+        <package name="org.iplantc.service.notification.events" />
+    </packages>
+  </test>
+  <test name="queue" >
+  	<packages>
+        <package name="org.iplantc.service.notification.queue" />
+    </packages>
+  </test>
+</suite>

@@ -1,0 +1,46 @@
+{
+	"id": "steve.ssh.example.com",
+	"name": "SSH",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample ssh execution system used by Steve",
+	"site": "tacc.local",
+	"executionType": "CLI",
+	"default": true,
+	"queues": [
+		{
+			"name": "normal",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": "#$ -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "iplant-ssh.tacc.utexas.edu",
+		"port": 22,
+		"protocol": "SSH",
+		"scratchDir": "scratch",
+		"workDir": "workdir",
+		"auth": {
+			"username": "sterry1",
+			"password": "{$default.password}",
+			"credential": "",
+			"type": "PASSWORD"
+		}
+	},
+	"storage": {
+		"host": "iplant-ssh.tacc.utexas.edu",
+		"port": 22,
+		"protocol": "SFTP",
+		"rootDir": "/home/sterry1",
+		"auth": {
+			"username": "sterry1",
+			"password": "{$default.password}",
+			"type": "PASSWORD"
+		}
+	},
+	"scheduler": "UNKNOWN",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

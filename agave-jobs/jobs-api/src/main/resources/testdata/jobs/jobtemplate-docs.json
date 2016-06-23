@@ -1,0 +1,37 @@
+{
+    "appId": "string",
+    "archive": "boolean",
+    "archivePath": "string",
+    "archiveSystem": "string",
+    "batchQueue": "string",
+    "endTime": "string",
+    "executionSystem": "string",
+    "id": "integer",
+    "inputs": {
+        "parameter1": "string"
+    },
+    "localId": "string",
+    "memoryPerNode": "string",
+    "message": "string",
+    "name": "string",
+    "nodeCount": "integer",
+    "notifications": [
+        {
+            "event": "string",
+            "persistent": "boolean",
+            "url": "integer"
+        }
+    ],
+    "outputPath": "String",
+    "owner": "string",
+    "parameters": {
+        "parameter1": "string"
+    },
+    "processorsPerNode": "integer",
+    "maxRunTime": "string",
+    "retries": "integer",
+    "startTime": "string",
+    "status": "string",
+    "submitTime": "string",
+    "workPath": "string"
+}

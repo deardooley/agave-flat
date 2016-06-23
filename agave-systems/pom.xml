@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.iplantc</groupId>
+		<artifactId>agave</artifactId>
+		<version>2.1.8</version>
+	</parent>
+	<groupId>org.iplantc.agave</groupId>
+	<artifactId>systems</artifactId>
+	<name>iPlant Agave API Systems Service Parent POM</name>
+	<description>This is the parent project for the Agave Systems services.</description>
+	<packaging>pom</packaging>
+	
+	<repositories>
+		<repository>
+			<id>renci.repository</id>
+			<name>renci.repository</name>
+			<url>https://maven.tacc.utexas.edu/nexus/content/repositories/renci.repository</url>
+		</repository>
+	</repositories>
+	
+	<scm>
+		<connection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-systems.git</connection>
+		<developerConnection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-systems.git</developerConnection>
+		<url>https://bitbucket.org/agaveapi/agave-systems</url>
+	</scm>
+
+	<modules>
+		<module>systems-core</module>
+		<module>systems-api</module>
+	</modules>
+</project>

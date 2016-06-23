@@ -1,0 +1,30 @@
+{
+	"id": "local.execution.example.com",
+	"name": "Local execution system",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample local execution system.",
+	"site": "localhost",
+	"executionType": "HPC",
+	"default": false,
+	"queues": [],
+	"login": {
+		"host": "localhost",
+		"port": 22,
+		"protocol": "LOCAL",
+		"auth": {
+			"type": "LOCAL"
+		}
+	},
+	"storage": {
+		"host": "localhost",
+		"port": 22,
+		"protocol": "LOCAL",
+		"auth": {
+			"type": "LOCAL"
+		}
+	},
+	"scheduler": "SGE",
+	"environment": "",
+	"startupScript": ".bashrc"
+}

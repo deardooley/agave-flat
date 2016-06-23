@@ -1,0 +1,96 @@
+###############################################################
+# Core Science APIs - Dev
+# lb-proxy.yml
+#
+# This is the base orchestration file to start Agave's Core Science
+# API proxy load balancer. The APIs are accessible behind  this
+# proxy which shields them from the outside world. Containers are assigned
+# static ports to enable rolling updates of each API as needed.
+# Containers performing data operations are assigned a partition
+# of the default GridFTP and FTP port ranges to enable proper
+# operation of the protocol from within each container.
+#
+# Make sure a.proxy.host and b.proxy.host point to the ip addresses
+# of the hosts on which the core services are running.
+#
+###############################################################
+
+version: '2'
+
+services:
+
+  traefik:
+    image: traefik:latest
+    command: --configFile=/traefik.toml
+    hostname: docker.example.com
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - './ssl:/ssl:ro'
+      - './traefik.toml:/traefik.toml:ro'
+    networks:
+      - backend
+
+  proxy:
+    image: agaveapi/apache-api-proxy:alpine
+    hostname: api.example.com
+    ports:
+      - '80:80'
+      - '443:443'
+    extra_hosts:
+      - "proxy.host:192.168.99.100"
+    environment:
+      - 'BALANCER_WHITELIST=all'
+      - 'STATUS_WHITELIST=all'
+      - 'LOG_TARGET_STDOUT=1'
+      - 'LOG_LEVEL_INFO=1'
+    volumes:
+      - './logs/proxy:/var/log/apache2'
+      - './ssl:/ssl:ro'
+    networks:
+      - frontend
+      - backend
+
+  proxy-balancer:
+    image: agaveapi/apache-api-proxy:balancer
+    hostname: api.docker.example.com
+    ports:
+      - '80:80'
+      - '443:443'
+    extra_hosts:
+      - "a.proxy.host:192.168.99.100"
+      - "b.proxy.host:192.168.99.100"
+    environment:
+      - 'BALANCER_WHITELIST=all'
+      - 'STATUS_WHITELIST=all'
+      - 'LOG_TARGET_STDOUT=1'
+      - 'LOG_LEVEL_INFO=1'
+    volumes:
+      - './logs/proxy:/var/log/apache2'
+      - './ssl:/ssl:ro'
+    networks:
+      - frontend
+      - backend
+
+  pushpin:
+    image: agaveapi/pushpin:1.6.0
+    extra_hosts:
+      - 'realtime.api.agave:192.168.99.100'
+    hostname: realtime.docker.example.com
+    mem_limit: 512m
+    restart: on-failure
+    ports:
+      - '7999:7999'
+      - '5561:5561'
+    networks:
+      - frontend
+      - backend
+
+networks:
+  backend:
+  internal:
+  frontend:

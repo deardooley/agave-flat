@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project activeEnvironment="Default" name="integration.notifications" resourceRoot="${projectDir}" soapui-version="4.6.4" abortOnError="false" runType="SEQUENTIAL" xmlns:con="http://eviware.com/soapui/config">
+    <con:settings/>
+    <con:interface xsi:type="con:RestService" wadlVersion="http://wadl.dev.java.net/2009/02" name="notifications" type="rest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <con:settings/>
+
+        <con:definitionCache type="TEXT" rootPart=""/><con:endpoints>
+        <con:endpoint>http://localhost:8182</con:endpoint>
+    </con:endpoints>
+        <con:resource name="notifications" path="/notifications/">
+            <con:settings/>
+            <con:parameters>
+                <con:parameter required="false">
+                    <con:name>associatedUuid</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+                <con:parameter required="false">
+                    <con:name>event</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+                <con:parameter required="false">
+                    <con:name>url</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+                <con:parameter>
+                    <con:name>persistent</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+            </con:parameters>
+            <con:method name="post a notification" method="POST">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="FAULT"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>400</con:status><con:params/><con:element xmlns:not="http://localhost/notifications/">not:Fault</con:element></con:representation><con:representation type="REQUEST"><con:mediaType>application/json</con:mediaType><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>201</con:status><con:params/><con:element xmlns:not="http://localhost/notifications/">not:Response</con:element></con:representation><con:representation type="REQUEST"><con:mediaType>application/x-www-form-urlencoded</con:mediaType><con:params/></con:representation><con:representation type="FAULT"><con:mediaType>application/json; charset=UTF-8</con:mediaType><con:status>500</con:status><con:params/><con:element xmlns:not="http://localhost/notifications/">not:Fault</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json; charset=UTF-8</con:mediaType><con:status>201</con:status><con:params/><con:element xmlns:not="http://localhost/notifications/">not:Response</con:element></con:representation><con:representation type="FAULT"><con:mediaType>text/html;charset=ISO-8859-1</con:mediaType><con:status>404</con:status><con:params/><con:element>html</con:element></con:representation><con:request name="Request 1" mediaType="application/x-www-form-urlencoded" postQueryString="true">
+                <con:settings>
+                    <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kd                         XNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+                </con:settings>
+                <con:endpoint>http://localhost:8182</con:endpoint>
+                <con:request/>
+                <con:credentials>
+                    <con:authType>Global HTTP Settings</con:authType>
+                </con:credentials>
+                <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                <con:jmsPropertyConfig/>
+                <con:parameters>
+                    <con:entry key="event" value="PENDING"/>
+                    <con:entry key="associatedUuid" value="0001396293654775-5056a550b8-0001-007"/>
+                    <con:entry key="url" value="sterry1@tacc.utexas.edu"/>
+                </con:parameters>
+                <con:parameterOrder>
+                    <con:entry>associatedUuid</con:entry>
+                    <con:entry>event</con:entry>
+                    <con:entry>url</con:entry>
+                    <con:entry>persistent</con:entry>
+                </con:parameterOrder>
+            </con:request>
+            </con:method>
+        </con:resource>
+        <con:resource name="notifications" path="/notifications/">
+            <con:settings/>
+            <con:parameters>
+                <con:parameter required="false">
+                    <con:name>associatedUuid</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+            </con:parameters>
+            <con:method name="list notifications" method="GET">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="RESPONSE"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:not="http://localhost/notifications/">not:Response</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json; charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:not="http://localhost/notifications/">not:Response</con:element></con:representation><con:request name="Request 1" mediaType="application/json" postQueryString="false">
+                <con:settings>
+                    <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kd
+                        XNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+                </con:settings>
+                <con:endpoint>http://localhost:8182</con:endpoint>
+                <con:request/>
+                <con:credentials>
+                    <con:authType>Global HTTP Settings</con:authType>
+                </con:credentials>
+                <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                <con:jmsPropertyConfig/>
+                <con:parameters/>
+                <con:parameterOrder>
+                    <con:entry>associatedUuid</con:entry>
+                </con:parameterOrder>
+            </con:request>
+            </con:method>
+        </con:resource>
+        <con:resource name="uuid" path="/notifications/{uuid}">
+            <con:settings/>
+            <con:parameters>
+                <con:parameter required="false">
+                    <con:name>associatedUuid</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+                <con:parameter required="false">
+                    <con:name>event</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+                <con:parameter required="false">
+                    <con:name>url</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+                <con:parameter>
+                    <con:name>persistent</con:name>
+                    <con:value/>
+                    <con:style>QUERY</con:style>
+                    <con:default/>
+                    <con:description xsi:nil="true"/>
+                </con:parameter>
+                <con:parameter>
+                    <con:name>uuid</con:name>
+                    <con:value/>
+                    <con:style>TEMPLATE</con:style>
+                    <con:default/>
+                </con:parameter>
+            </con:parameters>
+            <con:method name="change a notification" method="POST">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="FAULT"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>400</con:status><con:params/><con:element xmlns:not="http://localhost/notifications/">not:Fault</con:element></con:representation><con:representation type="REQUEST"><con:mediaType>application/json</con:mediaType><con:params/></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>201</con:status><con:params/><con:element xmlns:not="http://localhost/notifications/">not:Response</con:element></con:representation><con:representation type="REQUEST"><con:mediaType>application/x-www-form-urlencoded</con:mediaType><con:params/></con:representation><con:representation type="FAULT"><con:mediaType>application/json; charset=UTF-8</con:mediaType><con:status>403</con:status><con:params/><con:element xmlns:fef="http://localhost/notifications/0001396378102800-fef1e7b4171-0001-011">fef:Fault</con:element></con:representation><con:request name="Request 1" mediaType="application/x-www-form-urlencoded" postQueryString="true">
+                <con:settings>
+                    <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kd                         XNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+                </con:settings>
+                <con:endpoint>http://localhost:8182</con:endpoint>
+                <con:request/>
+                <con:credentials>
+                    <con:authType>Global HTTP Settings</con:authType>
+                </con:credentials>
+                <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                <con:jmsPropertyConfig/>
+                <con:parameters>
+  <con:entry key="event" value="STAGING"/>
+  <con:entry key="associatedUuid" value="0001396361777806-5056a550b8-0001-011"/>
+  <con:entry key="uuid" value="0001396378862813-fef1e7b4171-0001-011"/>
+  <con:entry key="url" value="sterry1@tacc.utexas.edu"/>
+</con:parameters>
+                <con:parameterOrder>
+                    <con:entry>associatedUuid</con:entry>
+                    <con:entry>event</con:entry>
+                    <con:entry>url</con:entry>
+                    <con:entry>persistent</con:entry>
+                    <con:entry>uuid</con:entry>
+                </con:parameterOrder>
+            </con:request>
+            </con:method>
+            <con:method name="get specific notification" method="GET">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="RESPONSE"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:not="http://localhost/notifications/">not:Response</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json; charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:fef="http://localhost/notifications/0001396378102800-fef1e7b4171-0001-011">fef:Response</con:element></con:representation><con:representation type="FAULT"><con:mediaType>application/json; charset=UTF-8</con:mediaType><con:status>404</con:status><con:params/><con:element xmlns:fef="http://localhost/notifications/0001396378102800-fef1e7b4171-0001-011">fef:Fault</con:element></con:representation><con:request name="Request 1" mediaType="application/json" postQueryString="false">
+                <con:settings>
+                    <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry
+                        key="x-jwt-assertion-iplantc-org"
+                        value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIs
+                        ICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI="
+                        xmlns="http://eviware.com/soapui/config"/>
+                    </con:setting>
+                </con:settings>
+                <con:endpoint>http://localhost:8182</con:endpoint>
+                <con:request/>
+                <con:credentials>
+                    <con:authType>Global HTTP Settings</con:authType>
+                </con:credentials>
+                <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                <con:jmsPropertyConfig/>
+                <con:parameters/>
+                <con:parameterOrder>
+                    <con:entry>associatedUuid</con:entry>
+                    <con:entry>event</con:entry>
+                    <con:entry>url</con:entry>
+                    <con:entry>persistent</con:entry>
+                    <con:entry>uuid</con:entry>
+                </con:parameterOrder>
+            </con:request>
+            </con:method>
+            <con:method name="delete a notification" method="DELETE">
+                <con:settings/>
+                <con:parameters/>
+                <con:representation type="FAULT"><con:mediaType>text/html;charset=utf-8</con:mediaType><con:status>405</con:status><con:params/><con:element>html</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:a55="http://localhost/notifications/0001396361777806-5056a550b8-0001-011">a55:Response</con:element></con:representation><con:representation type="FAULT"><con:mediaType>application/json;charset=UTF-8</con:mediaType><con:status>404</con:status><con:params/><con:element xmlns:a55="http://localhost/notifications/0001396361777806-5056a550b8-0001-011">a55:Fault</con:element></con:representation><con:representation type="RESPONSE"><con:mediaType>application/json; charset=UTF-8</con:mediaType><con:status>200</con:status><con:params/><con:element xmlns:fef="http://localhost/notifications/0001396378102800-fef1e7b4171-0001-011">fef:Response</con:element></con:representation><con:request name="Request 1" mediaType="application/json" postQueryString="false">
+                <con:settings>
+                    <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kd
+                        XNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+                </con:settings>
+                <con:endpoint>http://localhost:8182</con:endpoint>
+                <con:request/>
+                <con:credentials>
+                    <con:authType>Global HTTP Settings</con:authType>
+                </con:credentials>
+                <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+                <con:jmsPropertyConfig/>
+                <con:parameters><entry key="uuid" value="0001396361777806-5056a550b8-0001-011" xmlns="http://eviware.com/soapui/config"/></con:parameters>
+                <con:parameterOrder>
+                    <con:entry>associatedUuid</con:entry>
+                    <con:entry>event</con:entry>
+                    <con:entry>url</con:entry>
+                    <con:entry>persistent</con:entry>
+                    <con:entry>uuid</con:entry>
+                </con:parameterOrder>
+            </con:request>
+            </con:method>
+        </con:resource>
+    </con:interface>
+    <con:testSuite name="Notifications TestSuite"><con:settings/><con:runType>SEQUENTIAL</con:runType><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="TC notifications" searchProperties="true"><con:settings/><con:testStep type="restrequest" name="post a notification - Request 1"><con:settings/><con:config service="notifications" resourcePath="/notifications/" methodName="post a notification" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="post a notification - Request 1" mediaType="application/x-www-form-urlencoded" postQueryString="true">
+        <con:settings>
+            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kd                 XNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+        </con:settings>
+        <con:endpoint>http://localhost:8182</con:endpoint>
+        <con:request/>
+        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes"><con:configuration><codes>200, 201
+        </codes></con:configuration></con:assertion><con:credentials>
+        <con:authType>Global HTTP Settings</con:authType>
+    </con:credentials>
+        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+        <con:jmsPropertyConfig/>
+        <con:parameters>
+            <con:entry key="event" value="PENDING"/>
+            <con:entry key="associatedUuid" value="0001396293654775-5056a550b8-0001-007"/>
+            <con:entry key="url" value="sterry1@tacc.utexas.edu"/>
+        </con:parameters>
+        <con:parameterOrder>
+            <con:entry>associatedUuid</con:entry>
+            <con:entry>event</con:entry>
+            <con:entry>url</con:entry>
+            <con:entry>persistent</con:entry>
+        </con:parameterOrder>
+    </con:restRequest></con:config></con:testStep><con:testStep type="transfer" name="transferid"><con:settings/><con:config xsi:type="con:PropertyTransfersStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" ignoreEmpty="false" transferToAll="false" useXQuery="false" entitize="false" transferChildNodes="false"><con:name>transferid</con:name><con:sourceType>ResponseAsXml</con:sourceType><con:sourceStep>post a notification - Request 1</con:sourceStep><con:sourcePath>declare namespace tmp='http://localhost/notifications/'
+        //tmp:id/text()</con:sourcePath><con:targetType>muuid</con:targetType><con:targetStep>#TestSuite#</con:targetStep></con:transfers></con:config></con:testStep><con:testStep type="restrequest" name="list notifications - Request 1"><con:settings/><con:config service="notifications" resourcePath="/notifications/" methodName="list notifications" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="list notifications - Request 1" mediaType="application/json" postQueryString="false">
+        <con:settings>
+            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kd                 XNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+        </con:settings>
+        <con:endpoint>http://localhost:8182</con:endpoint>
+        <con:request/>
+        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes"><con:configuration><codes>200</codes></con:configuration></con:assertion><con:credentials>
+        <con:authType>Global HTTP Settings</con:authType>
+    </con:credentials>
+        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+        <con:jmsPropertyConfig/>
+        <con:parameters/>
+        <con:parameterOrder>
+            <con:entry>associatedUuid</con:entry>
+        </con:parameterOrder>
+    </con:restRequest></con:config></con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="TC notification by id" searchProperties="true"><con:settings/><con:testStep type="transfer" name="getuuidtransfer"><con:settings/><con:config xsi:type="con:PropertyTransfersStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" ignoreEmpty="false" transferToAll="false" useXQuery="false" entitize="false" transferChildNodes="false"><con:name>getuuid</con:name><con:sourceType>muuid</con:sourceType><con:sourceStep>#TestSuite#</con:sourceStep><con:targetType>uuid</con:targetType><con:targetStep>change a notification - Request 1</con:targetStep></con:transfers><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" entitize="false" transferToAll="false" transferChildNodes="false" useXQuery="false" ignoreEmpty="false"><con:name>getuuid</con:name><con:sourceType>muuid</con:sourceType><con:sourceStep>#TestSuite#</con:sourceStep><con:targetType>uuid</con:targetType><con:targetStep>get specific notification - Request 1</con:targetStep></con:transfers><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" disabled="false" entitize="false" ignoreEmpty="false" transferChildNodes="false" transferToAll="false" useXQuery="false"><con:name>getuuid</con:name><con:sourceType>muuid</con:sourceType><con:sourceStep>#TestSuite#</con:sourceStep><con:sourcePath xsi:nil="true"/><con:targetType>uuid</con:targetType><con:targetStep>delete a notification - Request 1</con:targetStep><con:targetPath xsi:nil="true"/></con:transfers></con:config></con:testStep><con:testStep type="restrequest" name="change a notification - Request 1"><con:settings/><con:config service="notifications" resourcePath="/notifications/{uuid}" methodName="change a notification" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="change a notification - Request 1" mediaType="application/x-www-form-urlencoded" postQueryString="true">
+        <con:settings>
+            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kd                 XNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+        </con:settings>
+        <con:endpoint>http://localhost:8182</con:endpoint>
+        <con:request/>
+        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes"><con:configuration><codes>200, 201
+        </codes></con:configuration></con:assertion><con:credentials>
+        <con:authType>Global HTTP Settings</con:authType>
+    </con:credentials>
+        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+        <con:jmsPropertyConfig/>
+        <con:parameters>
+  <con:entry key="event" value="STAGING"/>
+  <con:entry key="associatedUuid" value="0001396361777806-5056a550b8-0001-011"/>
+  <con:entry key="uuid" value="0001396378601968-fef1e7b4171-0001-011"/>
+  <con:entry key="url" value="sterry1@tacc.utexas.edu"/>
+</con:parameters>
+        <con:parameterOrder>
+            <con:entry>associatedUuid</con:entry>
+            <con:entry>event</con:entry>
+            <con:entry>url</con:entry>
+            <con:entry>persistent</con:entry>
+            <con:entry>uuid</con:entry>
+        </con:parameterOrder>
+    </con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="get specific notification - Request 1"><con:settings/><con:config service="notifications" resourcePath="/notifications/{uuid}" methodName="get specific notification" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="get specific notification - Request 1" mediaType="application/json" postQueryString="false">
+        <con:settings>
+            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kd                 XNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+        </con:settings>
+        <con:endpoint>http://localhost:8182</con:endpoint>
+        <con:request/>
+        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes"><con:configuration><codes>200</codes></con:configuration></con:assertion><con:credentials>
+        <con:authType>Global HTTP Settings</con:authType>
+    </con:credentials>
+        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+        <con:jmsPropertyConfig/>
+        <con:parameters><entry key="uuid" value="0001396378601968-fef1e7b4171-0001-011" xmlns="http://eviware.com/soapui/config"/></con:parameters>
+        <con:parameterOrder>
+            <con:entry>associatedUuid</con:entry>
+            <con:entry>event</con:entry>
+            <con:entry>url</con:entry>
+            <con:entry>persistent</con:entry>
+            <con:entry>uuid</con:entry>
+        </con:parameterOrder>
+    </con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="delete a notification - Request 1"><con:settings/><con:config service="notifications" resourcePath="/notifications/{uuid}" methodName="delete a notification" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="delete a notification - Request 1" mediaType="application/json" postQueryString="false">
+        <con:settings>
+            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kd                 XNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+        </con:settings>
+        <con:endpoint>http://localhost:8182</con:endpoint>
+        <con:request/>
+        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes"><con:configuration><codes>200</codes></con:configuration></con:assertion><con:credentials>
+        <con:authType>Global HTTP Settings</con:authType>
+    </con:credentials>
+        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+        <con:jmsPropertyConfig/>
+        <con:parameters><entry key="uuid" value="0001396378601968-fef1e7b4171-0001-011" xmlns="http://eviware.com/soapui/config"/></con:parameters>
+        <con:parameterOrder>
+            <con:entry>associatedUuid</con:entry>
+            <con:entry>event</con:entry>
+            <con:entry>url</con:entry>
+            <con:entry>persistent</con:entry>
+            <con:entry>uuid</con:entry>
+        </con:parameterOrder>
+    </con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="get specific notification - Request 2"><con:settings/><con:config service="notifications" resourcePath="/notifications/{uuid}" methodName="get specific notification" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="get specific notification - Request 2" mediaType="application/json" postQueryString="false">
+        <con:settings>
+            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;entry key="x-jwt-assertion-iplantc-org" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==.eyJpc3MiOiJ3c28yLm9yZy9wcm9kdWN0cy9hbSIsImV4cCI6MTM4NTQyMTIwODUyNiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9zdWJzY3JpYmVyIjoiSVBMQU5UQy9zdGVycnkxIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9hcHBsaWNhdGlvbmlkIjoiMTEiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9ubmFtZSI6InRlc3RBcHAiLCJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvYXBpY29udGV4dCI6Ii9oZWFkZXJzIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy92ZXJzaW9uIjoiMS4wIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aWVyIjoiVW5saW1pdGVkIiwiaHR0cDovL3dzbzIub3JnL2NsYWltcy9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvdXNlcnR5cGUiOiJBUFBMSUNBVElPTiIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kdXNlciI6ImlwbGFudGMvc3RlcnJ5MSIsImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvZW5kd                 XNlclRlbmFudElkIjoiLTEyMzQiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9lbWFpbGFkZHJlc3MiOiJzdGVycnkxQHRhY2MudXRleGFzLmVkdSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2Z1bGxuYW1lIjoiU3RldmUgVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9naXZlbm5hbWUiOiJTdGV2ZSIsICJodHRwOi8vd3NvMi5vcmcvY2xhaW1zL2xhc3RuYW1lIjoiVGVycnkiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy9wcmltYXJ5Q2hhbGxlbmdlUXVlc3Rpb24iOiJSZXNhIiwgImh0dHA6Ly93c28yLm9yZy9jbGFpbXMvcm9sZSI6IkludGVybmFsL2FnYXZlLWNvcmUsSW50ZXJuYWwvZXZlcnlvbmUiLCAiaHR0cDovL3dzbzIub3JnL2NsYWltcy90aXRsZSI6IlJlc2EifQ==.AH3w+0FLREo8//t7L9P3jRmMtCtCmT98TcAQbRLx2GsBsDkVYc4aH3kRBud8UjGsyV3UC9cBqR0ngFrn7elOsBPn31j0N32uSnefbxek627u5u6Ms3wDOBumOIX2bHa9EOi11PIvXvCcS9xEY1D2GursLpK8GKLtZ42AnIaphZI=" xmlns="http://eviware.com/soapui/config"/></con:setting>
+        </con:settings>
+        <con:endpoint>http://localhost:8182</con:endpoint>
+        <con:request/>
+        <con:assertion type="Valid HTTP Status Codes" name="Valid HTTP Status Codes"><con:configuration><codes>404</codes></con:configuration></con:assertion><con:credentials>
+        <con:authType>Global HTTP Settings</con:authType>
+    </con:credentials>
+        <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+        <con:jmsPropertyConfig/>
+        <con:parameters><entry key="uuid" value="0001396378102800-fef1e7b4171-0001-011" xmlns="http://eviware.com/soapui/config"/></con:parameters>
+        <con:parameterOrder>
+            <con:entry>associatedUuid</con:entry>
+            <con:entry>event</con:entry>
+            <con:entry>url</con:entry>
+            <con:entry>persistent</con:entry>
+            <con:entry>uuid</con:entry>
+        </con:parameterOrder>
+    </con:restRequest></con:config></con:testStep><con:properties><con:property><con:name>uuid</con:name><con:value/></con:property></con:properties></con:testCase><con:properties><con:property><con:name>muuid</con:name><con:value>0001396378601968-fef1e7b4171-0001-011</con:value></con:property></con:properties></con:testSuite><con:properties><con:property><con:name>uuid</con:name><con:value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></con:property></con:properties>
+    <con:wssContainer/>
+    <con:sensitiveInformation/>
+</con:soapui-project>

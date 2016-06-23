@@ -1,0 +1,14 @@
+{
+    "name": "wc-demo",
+    "appId": "wca-1.00",
+    "memoryPerNode": 1,
+    "notifications": [
+    	{ 
+    		"url" : "nryan@mlb.com",
+    		"event": "*"
+    	}
+    ],		
+    "inputs": {
+        "query1": "agave://demo.storage.example.com/apps/wc-1.00/picksumipsum.txt"
+    }
+}

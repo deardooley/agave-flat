@@ -1,0 +1,55 @@
+<transform>
+
+	<name>BlastN</name>
+	<version>2.0</version>
+	<fileExtensions>blastn,blast,txt</fileExtensions>
+	<pattern></pattern>
+	<description>NCBI BlastN alignment</description>
+	<descriptionURI>http://www.ncbi.nlm.nih.gov/bookshelf/br.fcgi?book%3Dhandbook%26part%3Dch16%23A615</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>BlastN</name>
+		<filters>
+			<filter>
+				<name>BlastN-self</name>
+				<description>BlastN in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>BlastN</name>
+			<version>2.0</version>
+			<description>Export to BlastN</description>
+			<filters>
+				<filter>
+					<name>BlastN-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>BlastN in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+		<decodingChain>
+			<name>SAM</name>
+			<version>0.12</version>
+			<description>Export to SAM</description>
+			<filters>
+				<filter>
+					<name>BlastN-SAM</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>BlastN->SAM translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

@@ -1,0 +1,30 @@
+{
+    "name": "head-demo",
+    "appId": "head-demo-1.00",
+    "queue": "default",
+    "nodeCount": 1,
+    "maxMemoryPerNode": 1,
+    "processorsPerNode": 1,
+    "requestedTime": "00:30:00",
+    "archive": true,
+    "archivePath": "archive/jobs/head-demo",
+    "archiveSystem": "demo.storage.example.com",
+    "notifications": [
+    	{ 
+    		"url" : "http://requestb.in/11pbi6m1?job_id=${JOB_ID}&status=${JOB_STATUS}",
+    		"event": "*",
+    		"persistent": true
+    	},
+    	{ 
+    		"url" : "nryan@mlb.com",
+    		"event": "FINISHED"
+    	}
+    ],
+    "parameters" : {
+    	"numberOfLines": 2,
+    	"numberOfBytes": 512
+    },		
+    "inputs": {
+		"inputFile": "agave://demo.storage.example.com/apps/head-1.00/inputs/picksumipsum.txt"
+    }
+}

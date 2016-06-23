@@ -1,0 +1,41 @@
+<transform>
+
+	<name>PAIR</name>
+	<version>0</version>
+	<fileExtensions>pair,pair.txt</fileExtensions>
+	<pattern></pattern>
+	<description>Nimblegen PAIR</description>
+	<descriptionURI></descriptionURI>
+	<tags>microarray,oligo,probe</tags>
+	
+	<encodingChain>
+		<name>PAIR</name>
+		<filters>
+			<filter>
+				<name>PAIR-self</name>
+				<description>PAIR in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>PAIR</name>
+			<version>0</version>
+			<description>Export to PAIR</description>
+			<filters>
+				<filter>
+					<name>PAIR-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>PAIR in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

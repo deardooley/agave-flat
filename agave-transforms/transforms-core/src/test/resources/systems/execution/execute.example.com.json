@@ -1,0 +1,57 @@
+{
+	"id": "execute.example.com",
+	"name": "My Second Example System",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "My example system used for testing",
+	"site": "my.site",
+	"executionType": "HPC",
+	"default": true,
+	"queues": [
+		{
+			"name": "testqueue",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": ""
+		}
+	],
+	"login": {
+		"host": "login.example.com",
+		"port": 22,
+		"protocol": "GSISSH",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": "",
+			"type": "X509",
+			"server": {
+				"name": "My Example Auth System",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"storage": {
+		"host": "login.example.com",
+		"port": 8211,
+		"protocol": "GRIDFTP",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": "",
+			"type": "X509",
+			"rootDir": "",
+			"server": {
+				"id": "my4.example.system",
+				"name": "My Example Auth System",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"scheduler": "CONDOR",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

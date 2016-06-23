@@ -1,0 +1,39 @@
+<transform>
+	<name>ASN</name>
+	<version>0</version>
+	<fileExtensions>asn</fileExtensions>
+	<pattern></pattern>
+	<description>Genbank ASN1</description>	<descriptionURI>http://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One</descriptionURI>
+	<tags>genbank,annotation,sequence,nucleotide,peptide,base pair,amino acid</tags>
+	
+	<encodingChain>
+		<name>ASN1</name>
+		<filters>
+			<filter>
+				<name>ASN1-self</name>
+				<description>ASN in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>ASN1</name>
+			<version>0</version>
+			<description>Export Genbank ASN1</description>
+			<filters>
+				<filter>
+					<name>ASN1-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>ASN1 in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

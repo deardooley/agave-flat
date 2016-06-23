@@ -1,0 +1,48 @@
+{
+	"name": "agaveapi/stats-api",
+	"description": "The Agave Platform Stats API",
+	"keywords": ["api", "agave", "science", "cloud", "docker", "data", "science-as-a-service"],
+	"license": "BSD-2Clause",
+	"type": "project",
+	"require": {
+		"laravel/framework": "4.2.*",
+		"mitchellvanw/laravel-doctrine": "0.5.*",
+		"symfony/yaml": "~3.0@dev",
+		"symfony/console": "2.5.x-dev",
+		"lcobucci/jwt": "3.1-dev",
+	  	"jlapp/swaggervel": "1.0.*"
+	},
+	"require-dev": {
+		"way/generators": "~2.0",
+		"fzaninotto/faker": "1.5.*@dev",
+		"nwidart/db-exporter": "1.0"
+	},
+	"autoload": {
+		"classmap": [
+			"app/commands",
+			"app/controllers",
+			"app/models",
+			"app/database/migrations",
+			"app/database/seeds",
+			"app/tests/TestCase.php",
+			"app/libraries"
+		]
+	},
+	"scripts": {
+		"post-install-cmd": [
+			"php artisan clear-compiled",
+			"php artisan optimize"
+		],
+		"post-update-cmd": [
+			"php artisan clear-compiled"
+		],
+		"post-create-project-cmd": [
+			"php artisan key:generate"
+		]
+	},
+	"config": {
+		"preferred-install": "dist"
+	},
+	"minimum-stability": "dev",
+	"prefer-stable": true
+}

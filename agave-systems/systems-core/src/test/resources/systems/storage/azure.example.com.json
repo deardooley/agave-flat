@@ -1,0 +1,23 @@
+{
+	"id": "azure.example.com",
+	"name": "Azure Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example storage system accessible via Microsoft's Azure blob store API.",
+	"site": "example.com",
+	"storage": {
+		"host": "${azure.host}",
+		"port": 80,
+		"protocol": "AZURE",
+		"homeDir": "/",
+		"rootDir": "/",
+		"auth": {
+			"publicKey": "${azure.account.name}",
+			"privateKey": "${azure.access.key}",
+			"type": "APIKEYS"
+		},
+		"container": "${azure.account.name}"
+		
+	},
+	"default": false
+}

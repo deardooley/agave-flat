@@ -1,0 +1,1358 @@
+{
+    "apiVersion": "${project.version}-r${buildNumber}",
+    "basePath": "${foundation.base.url}",
+    "resourcePath": "/apps/v2",
+    "produces":[
+		"application/json"
+	],
+    "apis": [
+        {
+            "description": "Register and update new applications.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "list",
+                    "notes": "If authenticated, private applications will be included in the response. If not, only public applications will be returned.",
+                    "parameters": [
+                    	{
+                            "allowMultiple": false,
+                            "description": "Whether to return only public apps.",
+                            "name": "publicOnly",
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "Whether to return only private apps.",
+                            "name": "privateOnly",
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Get a list of available applications.",
+                    "type": "MultipleApplicationResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "add",
+                    "notes": "This is a generic endpoint to add and update applications. If the name and version combination don't exist already, a new application is created. If the combination does exist, the applciation will be updated and the revision incremented.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The description of the app to add or update. ",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "ApplicationRequest",
+                            "defaultValue": "{\n\t\"name\": \"wc-demo\",\n\t\"parallelism\": \"SERIAL\",\n\t\"version\": \"1.00\",\n\t\"helpURI\": \"http: //www.gnu.org/s/coreutils/manual/html_node/wc-invocation.html\",\n\t\"label\": \"Word Count\",\n\t\"shortDescription\": \"Count words in a file\",\n\t\"longDescription\": \"\",\n\t\"tags\": [\n\t\t\"textutils\",\n\t\t\"gnu\"\n\t],\n\t\"ontology\": [\n\t\t\"http: //sswapmeet.sswap.info/algorithms/wc\"\n\t],\n\t\"defaultMemory\": 1,\n\t\"defaultProcessors\": 1,\n\t\"defaultQueue\": \"debug\",\n\t\"deploymentPath\": \"apps/wc-1.00\",\n\t\"deploymentSystem\": \"demo.storage.example.com\",\n\t\"executionSystem\": \"demo.execute.example.com\",\n\t\"executionType\": \"HPC\",\n\t\"templatePath\": \"wrapper.sh\",\n\t\"testPath\": \"wrapper.sh\",\n\t\"checkpointable\": false,\n\t\"modules\": [\n\t\t\"purge\",\n\t\t\"load TACC\"\n\t],\n\t\"inputs\": [\n\t\t{\n\t\t\t\"id\": \"query1\",\n\t\t\t\"value\": {\n\t\t\t\t\"default\": \"agave: //demo.storage.example.com/apps/wc-1.00/picksumipsum.txt\",\n\t\t\t\t\"validator\": \"\",\n\t\t\t\t\"required\": true,\n\t\t\t\t\"visible\": true\n\t\t\t},\n\t\t\t\"details\": {\n\t\t\t\t\"label\": \"File to count words in: \",\n\t\t\t\t\"description\": \"\"\n\t\t\t},\n\t\t\t\"semantics\": {\n\t\t\t\t\"ontology\": [\n\t\t\t\t\t\"http: //sswapmeet.sswap.info/util/TextDocument\"\n\t\t\t\t],\n\t\t\t\t\"minCardinality\": 1,\n\t\t\t\t\"maxCardinality\": 1,\n\t\t\t\t\"fileTypes\": [\n\t\t\t\t\t\"text-0\"\n\t\t\t\t]\n\t\t\t}\n\t\t}\n\t],\n\t\"parameters\": [\n\t\t{\n\t\t\t\"id\": \"printLongestLine\",\n\t\t\t\"value\": {\n\t\t\t\t\"default\": false,\n\t\t\t\t\"type\": \"string\",\n\t\t\t\t\"validator\": \"\",\n\t\t\t\t\"visible\": true,\n\t\t\t\t\"required\": false\n\t\t\t},\n\t\t\t\"details\": {\n\t\t\t\t\"label\": \"Print the length of the longest line\",\n\t\t\t\t\"description\": \"Command option -L\"\n\t\t\t},\n\t\t\t\"semantics\": {\n\t\t\t\t\"ontology\": [\n\t\t\t\t\t\"xs: boolean\"\n\t\t\t\t]\n\t\t\t}\n\t\t}\n\t]\n}"
+                        }
+                    ],
+                    "summary": "Register and update new applications.",
+                    "type": "SingleApplicationResponse"
+                }
+            ],
+            "path": "/apps/v2/"
+        },
+        {
+            "description": "Get application details",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "get",
+                    "notes": "If authenticated, private applications will be included in the response. If not, only public applications will be returned.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The id of the application. The application id is made up of the name and version separated by a dash.",
+                            "name": "appId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Get details of an application by it's unique id.",
+                    "type": "SingleApplicationResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "update",
+                    "notes": "If authenticated, private applications will be included in the response. If not, only public applications will be returned.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The id of the application. The application id is made up of the name and version separated by a dash.",
+                            "name": "appId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The description of the app to add or update. ",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "ApplicationRequest",
+                            "defaultValue": "{\n\t\"name\": \"wc-demo\",\n\t\"parallelism\": \"SERIAL\",\n\t\"version\": \"1.00\",\n\t\"helpURI\": \"http: //www.gnu.org/s/coreutils/manual/html_node/wc-invocation.html\",\n\t\"label\": \"Word Count\",\n\t\"shortDescription\": \"Count words in a file\",\n\t\"longDescription\": \"\",\n\t\"tags\": [\n\t\t\"textutils\",\n\t\t\"gnu\"\n\t],\n\t\"ontology\": [\n\t\t\"http: //sswapmeet.sswap.info/algorithms/wc\"\n\t],\n\t\"defaultMemory\": 1,\n\t\"defaultProcessors\": 1,\n\t\"defaultQueue\": \"debug\",\n\t\"deploymentPath\": \"apps/wc-1.00\",\n\t\"deploymentSystem\": \"demo.storage.example.com\",\n\t\"executionSystem\": \"demo.execute.example.com\",\n\t\"executionType\": \"HPC\",\n\t\"templatePath\": \"wrapper.sh\",\n\t\"testPath\": \"wrapper.sh\",\n\t\"checkpointable\": false,\n\t\"modules\": [\n\t\t\"purge\",\n\t\t\"load TACC\"\n\t],\n\t\"inputs\": [\n\t\t{\n\t\t\t\"id\": \"query1\",\n\t\t\t\"value\": {\n\t\t\t\t\"default\": \"agave: //demo.storage.example.com/apps/wc-1.00/picksumipsum.txt\",\n\t\t\t\t\"validator\": \"\",\n\t\t\t\t\"required\": true,\n\t\t\t\t\"visible\": true\n\t\t\t},\n\t\t\t\"details\": {\n\t\t\t\t\"label\": \"File to count words in: \",\n\t\t\t\t\"description\": \"\"\n\t\t\t},\n\t\t\t\"semantics\": {\n\t\t\t\t\"ontology\": [\n\t\t\t\t\t\"http: //sswapmeet.sswap.info/util/TextDocument\"\n\t\t\t\t],\n\t\t\t\t\"minCardinality\": 1,\n\t\t\t\t\"maxCardinality\": 1,\n\t\t\t\t\"fileTypes\": [\n\t\t\t\t\t\"text-0\"\n\t\t\t\t]\n\t\t\t}\n\t\t}\n\t],\n\t\"parameters\": [\n\t\t{\n\t\t\t\"id\": \"printLongestLine\",\n\t\t\t\"value\": {\n\t\t\t\t\"default\": false,\n\t\t\t\t\"type\": \"string\",\n\t\t\t\t\"validator\": \"\",\n\t\t\t\t\"visible\": true,\n\t\t\t\t\"required\": false\n\t\t\t},\n\t\t\t\"details\": {\n\t\t\t\t\"label\": \"Print the length of the longest line\",\n\t\t\t\t\"description\": \"Command option -L\"\n\t\t\t},\n\t\t\t\"semantics\": {\n\t\t\t\t\"ontology\": [\n\t\t\t\t\t\"xs: boolean\"\n\t\t\t\t]\n\t\t\t}\n\t\t}\n\t]\n}"
+                        }
+                    ],
+                    "summary": "Update an application.",
+                    "type": "SingleApplicationResponse"
+                },
+                {
+                    "method": "PUT",
+                    "nickname": "manage",
+                    "notes": "The PUT operation allows users to performan several management tasks on applications such as cloning a public app for use privately as well as publishing an app for public use. Note that only API administrators can publish applications. Cloning a public app will copy the deployment folder of the public app to your deploymentSystem. Cloning private apps will not.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The id of the application. The application id is made up of the name and version separated by a dash.",
+                            "name": "appId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The operation to perform.",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "ApplicationOperationRequest",
+                            "defaultValue": "{\n\t\"action\":\"clone\",\n\t\"name\": \"wc-demo-clone\",\n\t\"version\": \"1.0.0\",\n\t\"deploymentPath\": \"apps/wc-1.0.0-copy\",\n\t\"deploymentSystem\": \"demo.storage.example.com\",\n\t\"executionSystem\": \"demo.execute.example.com\"\n}"
+                        }
+                    ],
+                    "summary": "Edit an application.",
+                    "type": "SingleApplicationResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "delete",
+                    "notes": "Disables an application from further use. The application dependencies remain unchanged, however the application is not longer available from the registry. Once deleted, applications cannot be brought back into service.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The id of the application. The application id is made up of the name and version separated by a dash.",
+                            "name": "appId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Deletes an application.",
+                    "type": "EmptyApplicationResponse"
+                }
+            ],
+            "path": "/apps/v2/{appId}"
+        },
+        {
+            "description": "Get application permission details",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listPermissions",
+                    "notes": "Users must have read access to this application to view the permissions.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The id of the application. The application id is made up of the name and version separated by a dash.",
+                            "name": "appId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Get the permission ACL for this application.",
+                    "type": "ApplicationPermissionResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "updateApplicationPermissions",
+                    "notes": "To delete a single user, set their permission to NONE or an empty string",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The id of the application. The application id is made up of the name and version separated by a dash.",
+                            "name": "appId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The permission add or update. ",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "ApplicationPermissionRequest",
+                            "defaultValue": "{\n\t\"username\":\"\",\n\t\"permission\": \"READ_EXECUTE\"\n}"
+                        }
+                    ],
+                    "summary": "Add or update a user's permission for an application.",
+                    "type": "EmptyApplicationResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "deletePermissions",
+                    "notes": "This will reset the permissions such that only the user who registered the permission will be able to view it. Application owners cannot remote their own permissions from an application.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The id of the application. The application id is made up of the name and version separated by a dash.",
+                            "name": "appId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Deletes all permissions on an application.",
+                    "type": "EmptyApplicationResponse"
+                }
+            ],
+            "path": "/apps/v2/{appId}/pems"
+        },
+        {
+            "description": "Get application permission details for a specific user.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listPermissionsForUser",
+                    "notes": "Users must have read access to this application to view the permissions.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The id of the application. The application id is made up of the name and version separated by a dash.",
+                            "name": "appId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of the api user associated with the permission.",
+                            "name": "username",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Get a specific user's permissions for an application.",
+                    "type": "ApplicationPermissionResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "updatePermissionsForUser",
+                    "notes": "To delete a single user, use the DELETE operation or set their permission to NONE or an empty string",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The id of the application. The application id is made up of the name and version separated by a dash.",
+                            "name": "appId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of the api user associated with the permission",
+                            "name": "username",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The permission add or update. ",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "ApplicationPermissionRequest",
+                            "defaultValue": "{\n\t\"username\":\"\",\n\t\"permission\": \"READ_EXECUTE\"\n}"
+                        }
+                    ],
+                    "summary": "Add or update a user's permission for an application.",
+                    "type": "EmptyApplicationResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "deletePermissionsForUser",
+                    "notes": "This will remove all permissions on an application for a user. Application owners cannot remote their own permissions from an application.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The id of the application. The application id is made up of the name and version separated by a dash.",
+                            "name": "appId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of the api user associated with the permission",
+                            "name": "username",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Deletes all permissions for the given user on an application.",
+                    "type": "EmptyApplicationResponse"
+                }
+            ],
+            "path": "/apps/v2/{appId}/pems/{username}"
+        },
+        {
+            "description": "List applications matching the the given name",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listByName",
+                    "notes": "If authenticated, private applications will be included in the response. If not, only public applications will be returned.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The name of the application. This should not include the version number.",
+                            "name": "name",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "Whether to return only public apps.",
+                            "name": "publicOnly",
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "Whether to return only private apps.",
+                            "name": "privateOnly",
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Get a list of applications with the given name.",
+                    "type": "MultipleApplicationResponse"
+                }
+            ],
+            "path": "/apps/v2/name/{name}"
+        },
+        {
+            "description": "List applications matching the the given tag",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listByTag",
+                    "notes": "If authenticated, private applications will be included in the response. If not, only public applications will be returned.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The tag of the application.",
+                            "name": "tag",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "Whether to return only public apps.",
+                            "name": "publicOnly",
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "Whether to return only private apps.",
+                            "name": "privateOnly",
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Get a list of applications with the given tag.",
+                    "type": "MultipleApplicationResponse"
+                }
+            ],
+            "path": "/apps/v2/tag/{tag}"
+        },
+        {
+            "description": "List applications matching the the given ontological term",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listByOntologyTerm",
+                    "notes": "If authenticated, private applications will be included in the response. If not, only public applications will be returned.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The tag of the ontological term.",
+                            "name": "term",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "Whether to return only public apps.",
+                            "name": "publicOnly",
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "Whether to return only private apps.",
+                            "name": "privateOnly",
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Get a list of applications with the given ontological term.",
+                    "type": "MultipleApplicationResponse"
+                }
+            ],
+            "path": "/apps/v2/ontology/{term}"
+        },
+        {
+            "description": "Generate a HTML form to run this application.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "getJobSubmissionForm",
+                    "notes": "The form will vary from application to application as each application is different, but the basic structure will remain the same.",
+                    "parameters": [],
+                    "summary": "Get a submission form for the named application.",
+                    "type": "ApplicationFormResponse"
+                }
+            ],
+            "path": "/apps/v2/{uniqueName}/form"
+        },
+        {
+            "description": "List applications registered on the given system",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listBySystemId",
+                    "notes": "If authenticated, private applications will be included in the response. If not, only public applications will be returned.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The system in question",
+                            "name": "systemId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "Whether to return only public apps.",
+                            "name": "publicOnly",
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "Whether to return only private apps.",
+                            "name": "privateOnly",
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Get a list of applications with the given systemId as their executionHost.",
+                    "type": "MultipleApplicationResponse"
+                }
+            ],
+            "path": "/apps/v2/system/{systemId}"
+        }
+    ],
+    "models": {
+        "ACL": {
+            "id": "ACL",
+            "name": "",
+            "properties": {
+                "execute": {
+                    "description": "can execute",
+                    "type": "boolean"
+                },
+                "read": {
+                    "description": "can read",
+                    "type": "boolean"
+                },
+                "write": {
+                    "description": "can write",
+                    "type": "boolean"
+                }
+            }
+        },
+        "ApplicationSummary": {
+        	"id":"ApplicationSummary",
+        	"name": "",
+        	"properties": {
+        		"id": {
+            		"description": "Unique id of this app. Comprised of the app name-version.",
+                    "type": "string"
+                },
+                "executionSystem": {
+                    "description": "The system id of the execution system where this app should run.",
+                    "type": "string"
+                },
+                "lastModified": {
+                    "description": "The date this application was last modified in ISO 8601 format.",
+                    "format": "date-time",
+                    "type": "string"
+                },
+        		"name": {
+                    "description": "The name of the application. The name does not have to be unique, but the combination of name and version does.",
+                    "type": "string"
+                },
+        		"isPublic": {
+                    "description": "Whether the application is public or private.",
+                    "type": "boolean"
+                },
+       		 	"revision": {
+                    "description": "The number of times this application has been revised.",
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "shortDescription": {
+                    "description": "The short description of this application.",
+                    "type": "string"
+                },
+                "version": {
+                    "description": "The version of the application in #.#.# format. While the version does not need to be unique, the combination of name and version does have to be unique.",
+                    "type": "string"
+                }
+        	}
+        },
+        "Application": {
+            "id": "Application",
+            "name": "",
+            "properties": {
+            	"available": {
+                    "description": "Whether the application is available.",
+                    "type": "boolean"
+                },
+                "checkpointable": {
+                    "description": "Whether the application supports checkpointing.",
+                    "type": "boolean"
+                },
+                "defaultMaxRunTime": {
+                    "description": "The max execution time that should be used if none is given in a job description. Ignore if the system does not support schedulers.",
+                    "type": "string"
+                },
+                "defaultMemoryPerNode": {
+                    "description": "Default memory in GB to be used when running this app if no memory is given in the job request.",
+                    "type": "string"
+                },
+                "defaultNodeCount": {
+                    "description": "Default number of nodes to be used when running this app if no node count is given in the job request.",
+                    "type": "string"
+                },
+                "defaultProcessorsPerNode": {
+                    "description": "Default number of processors per node to be used when running this app if no processor count is given in the job request.",
+                    "type": "string"
+                },
+                "defaultQueue": {
+                    "description": "Default queue to use when submitting this job if none is provided in the job request. Can be left blank and a queue will be determined at run time.",
+                    "type": "string"
+                },
+                "deploymentPath": {
+                    "description": "The location in the user's default storage system containing the application wrapper and dependencies.",
+                    "type": "string"
+                },
+                "deploymentSystem": {
+                    "description": "The system id of the storage system where this app should run.",
+                    "type": "string"
+                },
+                "executionSystem": {
+                    "description": "The system id of the execution system where this app should run.",
+                    "type": "string"
+                },
+                "executionType": {
+                    "description": "The execution type of the application. If you're unsure, it's probably HPC.",
+                    "enum": [
+                        "ATMOSPHERE",
+                        "HPC",
+                        "CONDOR",
+                        "CLI"
+                    ],
+                    "type": "string"
+                },
+                "helpURI": {
+                    "description": "The URL where users can go for more information about the app.",
+                    "type": "string"
+                },
+                "id": {
+            		"description": "Unique id of this app. Comprised of the app name-version.",
+                    "type": "string"
+                },
+                "icon": {
+                    "description": "The icon to associate with this app.",
+                    "type": "string"
+                },
+                "inputs": {
+                    "description": "The inputs files for this application. ",
+                    "items": {
+                        "$ref": "ApplicationInput"
+                    },
+                    "type": "array"
+                },
+                "label": {
+                    "description": "The label to use when generating forms.",
+                    "type": "string"
+                },
+                "lastModified": {
+                    "description": "The date this application was last modified in ISO 8601 format.",
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "longDescription": {
+                    "description": "The full text description of this input to use when generating forms.",
+                    "type": "string"
+                },
+                "modules": {
+                    "description": "An array of modules to load prior to the execution of the application.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "name": {
+                    "description": "The name of the application. The name does not have to be unique, but the combination of name and version does.",
+                    "type": "string"
+                },
+                "ontology": {
+                    "description": "An array of ontology values describing this application.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "outputs": {
+                    "description": "The outputs files for this application. ",
+                    "items": {
+                        "$ref": "ApplicationOutput"
+                    },
+                    "type": "array"
+                },
+                "parallelism": {
+                    "description": "The parallelism type of the application. If you're unsure, it's probably SERIAL.",
+                    "enum": [
+                        "SERIAL",
+                        "PARALLEL",
+                        "PTHREAD"
+                    ],
+                    "type": "string"
+                },
+                "parameters": {
+                    "description": "The inputs parameters for this application. ",
+                    "items": {
+                        "$ref": "ApplicationParameter"
+                    },
+                    "type": "array"
+                },
+                "isPublic": {
+                    "description": "Whether the application is public or private.",
+                    "type": "boolean"
+                },
+                "revision": {
+                    "description": "The number of times this application has been revised.",
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "shortDescription": {
+                    "description": "The short description of this application.",
+                    "type": "string"
+                },
+                "tags": {
+                    "description": "An array of tags related to this application.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "templatePath": {
+                    "description": "The path to the wrapper script relative to the deploymentPath.",
+                    "type": "string"
+                },
+                "testPath": {
+                    "description": "The path to the test script relative to the deploymentPath.",
+                    "type": "string"
+                },
+                "uuid" : {
+                	"description": "The UUID of this application. UUID are 36 alphanumeric string.",
+                    "type": "string"
+                },
+                "version": {
+                    "description": "The version of the application in #.#.# format. While the version does not need to be unique, the combination of name and version does have to be unique.",
+                    "type": "string"
+                }
+            }
+        },
+        "ApplicationRequest": {
+            "id": "ApplicationRequest",
+            "name": "",
+            "properties": {
+              "available": {
+                  "description": "Whether the application is available.",
+                  "type": "boolean",
+                  "required": true
+              },
+              "checkpointable": {
+                  "description": "Whether the application supports checkpointing.",
+                  "type": "boolean"
+              },
+              "defaultMaxRunTime": {
+                  "description": "Default max run time to be used when running this app if no requested run time is given in the job request",
+                  "type": "string"
+              },
+              "defaultMemoryPerNode": {
+                  "description": "The default memory in GB to pass to the scheduler if none is given in the job description. This must be less than the max memory parameter in the target queue definition.",
+                  "type": "string"
+              },
+              "defaultNodeCount": {
+                  "description": "The number of nodes that should be used if none is given in a job description. Ignore if the system does not support schedulers.",
+                  "type": "string"
+              },
+              "defaultProcessorsPerNode": {
+                  "description": "The number of processors to pass to the scheduler if none are given in the job description. This must be 1 if the app is serial.",
+                  "type": "string"
+              },
+              "defaultQueue": {
+                  "description": "The queue on the execution system that should be used if none is given in a job description. Ignore if the system does not support schedulers.",
+                  "type": "string"
+              },
+              "deploymentPath": {
+                  "description": "The path to the folder on the deployment system containing the application wrapper and dependencies.",
+                  "type": "string",
+                  "required": true
+              },
+              "deploymentSystem": {
+                  "description": "The ID of the storage system where this app's assets should be stored.",
+                  "type": "string",
+                  "required": true
+              },
+              "executionSystem": {
+                  "description": "The ID of the execution system where this app should run.",
+                  "type": "string",
+                  "required": true
+              },
+              "executionType": {
+                  "description": "The execution type of the application. If you're unsure, it's probably HPC.",
+                  "enum": [
+                      "ATMOSPHERE",
+                      "HPC",
+                      "CONDOR",
+                      "CLI"
+                  ],
+                  "type": "string",
+                  "required": true
+              },
+              "helpURI": {
+                  "description": "The URL where users can go for more information about the app.",
+                  "type": "string"
+              },
+              "icon": {
+                  "description": "The icon to associate with this app.",
+                  "type": "string"
+              },
+              "inputs": {
+                  "description": "The inputs files for this application. ",
+                  "items": {
+                      "$ref": "ApplicationInput"
+                  },
+                  "type": "array",
+                  "required": true
+              },
+              "label": {
+                  "description": "The label to use when generating forms.",
+                  "type": "string"
+              },
+              "longDescription": {
+                  "description": "The full text description of this input to use when generating forms.",
+                  "type": "string"
+              },
+              "modules": {
+                  "description": "An array of modules to load prior to the execution of the application.",
+                  "items": {
+                      "type": "string"
+                  },
+                  "type": "array"
+              },
+              "name": {
+                  "description": "The name of the application. The name does not have to be unique, but the combination of name and version does.",
+                  "type": "string",
+                  "required": true
+              },
+              "ontology": {
+                  "description": "An array of ontology values describing this application.",
+                  "items": {
+                      "type": "string"
+                  },
+                  "type": "array"
+              },
+              "outputs": {
+                  "description": "The outputs files for this application. ",
+                  "items": {
+                      "$ref": "ApplicationOutput"
+                  },
+                  "type": "array"
+              },
+              "parallelism": {
+                  "description": "The parallelism type of the application. If you're unsure, it's probably SERIAL.",
+                  "enum": [
+                      "SERIAL",
+                      "PARALLEL",
+                      "PTHREAD"
+                  ],
+                  "type": "string"
+              },
+              "parameters": {
+                  "description": "The inputs parameters for this application. ",
+                  "items": {
+                      "$ref": "ApplicationParameter"
+                  },
+                  "type": "array",
+                  "required": true
+              },
+              "shortDescription": {
+                  "description": "The short description of this application.",
+                  "type": "string"
+              },
+              "tags": {
+                  "description": "An array of tags related to this application.",
+                  "items": {
+                      "type": "string"
+                  },
+                  "type": "array"
+              },
+              "templatePath": {
+                  "description": "The path to the wrapper script relative to the deploymentPath.",
+                  "type": "string",
+                  "required": true
+              },
+              "testPath": {
+                  "description": "The path to the test script relative to the deploymentPath.",
+                  "type": "string",
+                  "required": true
+              },
+              "version": {
+                  "description": "The version of the application in #.#.# format. While the version does not need to be unique, the combination of name and version does have to be unique.",
+                  "type": "string",
+                  "required": true
+              }
+          }
+        },
+        "ApplicationInput": {
+            "id": "ApplicationInput",
+            "name": "",
+            "properties": {
+                "details": {
+                    "description": "The details for this input. ",
+                    "type": "ApplicationInputDetails",
+                    "required": true
+                },
+                "id": {
+                    "description": "The id of this input. This will be the replacement string in your wrapper scripts.",
+                    "type": "string",
+                    "required": true
+                },
+                "semantics": {
+                    "description": "The ontologies for this input. ",
+                    "type": "ApplicationInputOntology",
+                    "required": true
+                },
+                "value": {
+                    "description": "The inputs files for this input. ",
+                    "type": "ApplicationInputValue",
+                    "required": true
+                }
+            }
+        },
+        "ApplicationInputDetails": {
+            "id": "ApplicationInputDetails",
+            "name": "",
+            "properties": {
+                "description": {
+                    "description": "Description of this input.",
+                    "type": "string"
+                },
+                "label": {
+                    "description": "The label for this input",
+                    "type": "string"
+                },
+                "argument": {
+                    "description": "The command line value of this input (ex -n, --name, -name, etc)",
+                    "type": "string"
+                },
+                "showArgument": {
+                    "description": "Whether the argument value should be passed into the wrapper at run time",
+                    "type": "boolean"
+                },
+                "repeatArgument": {
+                    "description": "Whether the argument value should be repeated in front of each user-supplied input before injection into the wrapper template at runtime",
+                    "type": "boolean"
+                }
+            }
+        },
+        "ApplicationInputValue": {
+            "id": "ApplicationInputValue",
+            "name": "",
+            "properties": {
+                "defaultValue": {
+                    "description": "The default value for this parameter. The type will be determined by the value.type field.",
+                    "type": "string"
+                },
+                "enquote": {
+                    "description": "Whether the argument value should be surrounded by quotation marks before injection into the wrapper template at runtime",
+                    "type": "boolean"
+                },
+                "order": {
+                    "description": "The order in which this parameter should be printed when generating an execution command for forked execution. This will also be the order in which paramters are returned in the response json.",
+                    "format": "int32",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "required": {
+                    "description": "Is this parameter required? If visible is false, this must be true.",
+                    "type": "boolean"
+                },
+                "validator": {
+                    "description": "The regular expression used to validate this parameter value. For enumerations, separate values with |",
+                    "type": "string"
+                },
+                "visible": {
+                    "description": "Should this parameter be visible? If not, there must be a default and it will be required.",
+                    "type": "boolean"
+                }
+            }
+        },
+        "ApplicationInputOntology": {
+            "id": "ApplicationInputOntology",
+            "name": "",
+            "properties": {
+                "fileTypes": {
+                    "description": "The file types acceptable for this input.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "minCardinality": {
+                    "description": "The minimum number of times this input may appear.",
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "maxCardinality": {
+                    "description": "The maximum number of times this input may appear. -1 is unlimited",
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "ontology": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array",
+                    "required": true
+                }
+            }
+        },
+        "ApplicationOutput": {
+            "id": "ApplicationOutput",
+            "name": "",
+            "properties": {
+                "details": {
+                    "description": "The details for this output. ",
+                    "type": "ApplicationParameterDetails",
+                    "required": true
+                },
+                "id": {
+                    "description": "The id of this output. This will be the replacement string in your wrapper scripts.",
+                    "type": "string",
+                    "required": true
+                },
+                "semantics": {
+                    "description": "The ontologies for this output. ",
+                    "type": "ApplicationOutputOntology",
+                    "required": true
+                },
+                "value": {
+                    "description": "The inputs files for this output. ",
+                    "type": "ApplicationParameterValue",
+                    "required": true
+                }
+            }
+        },
+        "ApplicationOutputOntology": {
+            "id": "ApplicationOutputOntology",
+            "name": "",
+            "properties": {
+                "fileTypes": {
+                    "description": "The file types acceptable for this output.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "maxCardinality": {
+                    "description": "The maximum number of times this output may appear.",
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "minCardinality": {
+                    "description": "The minimum number of times this output may appear. -1 is unlimited",
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "ontology": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            }
+        },
+        "ApplicationParameter": {
+            "id": "ApplicationParameter",
+            "name": "",
+            "properties": {
+                "details": {
+                    "description": "The details for this parameter. ",
+                    "type": "ApplicationParameterDetails",
+                    "required": true
+                },
+                "id": {
+                    "description": "The id of this parameter. This will be the replacement string in your wrapper scripts.",
+                    "type": "string",
+                    "required": true
+                },
+                "semantics": {
+                    "description": "The ontologies for this parameter. ",
+                    "type": "ApplicationParameterOntology",
+                    "required": true
+                },
+                "value": {
+                    "description": "The inputs files for this parameter. ",
+                    "type": "ApplicationParameterValue",
+                    "required": true
+                }
+            }
+        },
+        "ApplicationParameterDetails": {
+            "id": "ApplicationParameterDetails",
+            "name": "",
+            "properties": {
+                "description": {
+                    "description": "Description of this parameter.",
+                    "type": "string"
+                },
+                "label": {
+                    "description": "The label for this parameter",
+                    "type": "string"
+                },
+                "argument": {
+                    "description": "The command line value of this parameter (ex -n, --name, -name, etc)",
+                    "type": "string"
+                },
+                "showArgument": {
+                    "description": "Whether the argument value should be passed into the wrapper template at run time",
+                    "type": "boolean"
+                },
+                "repeatArgument": {
+                    "description": "Whether the argument value should be repeated in front of each user-supplied input before injection into the wrapper template at runtime",
+                    "type": "boolean"
+                }
+            }
+        },
+        "ApplicationParameterOntology": {
+            "id": "ApplicationParameterOntology",
+            "name": "",
+            "properties": {
+                "ontology": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "minCardinality": {
+                    "description": "The minimum number of times this input may appear.",
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "maxCardinality": {
+                    "description": "The maximum number of times this input may appear. -1 is unlimited",
+                    "format": "int32",
+                    "type": "integer"
+                }
+            }
+        },
+        "ApplicationParameterValue": {
+            "id": "ApplicationParameterValue",
+            "name": "",
+            "properties": {
+                "defaultValue": {
+                    "description": "The default value for this parameter. The type will be determined by the value.type field.",
+                    "type": "string"
+                },
+                "enumValues": {
+                	"description": "An array of enumerated object values.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "enquote": {
+                    "description": "Whether the argument value should be surrounded by quotation marks before injection into the wrapper template at runtime",
+                    "type": "boolean"
+                },
+                "order": {
+                    "description": "The order in which this parameter should be printed when generating an execution command for forked execution. This will also be the order in which paramters are returned in the response json.",
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "required": {
+                    "description": "Is this parameter required? If visible is false, this must be true.",
+                    "type": "boolean"
+                },
+                "type": {
+                    "description": "The type of this parameter value.",
+                    "enum": [
+                        "string",
+                        "number",
+                        "enumeration",
+                        "bool",
+                        "flag"
+                    ],
+                    "type": "string",
+                    "required": true
+                },
+                "validator": {
+                    "description": "The regular expression used to validate this parameter value. For enumerations, separate values with |",
+                    "type": "string"
+                },
+                "visible": {
+                    "description": "Should this parameter be visible? If not, there must be a default and it will be required.",
+                    "type": "boolean"
+                }
+            }
+        },
+        "ApplicationPermissionResponse": {
+            "id": "ApplicationPermissionResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "An array of permission objects for this application.",
+                    "items": {
+                        "$ref": "ApplicationPermission"
+                    },
+                    "type": "array"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "ApplicationFormResponse" : {
+        	"id": "ApplicationFormResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "HTML form representing a job submission request for this app",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "EmptyApplicationResponse": {
+            "id": "EmptyApplicationResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "empty result",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "MultipleApplicationResponse": {
+            "id": "MultipleApplicationResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "response body",
+                    "items": {
+                        "$ref": "ApplicationSummary"
+                    },
+                    "type": "array"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "ApplicationPermission": {
+            "id": "ApplicationPermission",
+            "name": "",
+            "properties": {
+                "permission": {
+                    "type": "ACL"
+                },
+                "username": {
+                    "description": "Username associate with this permission",
+                    "type": "string"
+                }
+            }
+        },
+        "ApplicationPermissionRequest": {
+          "id": "ApplicationPermissionRequest",
+          "name": "",
+          "properties": {
+              "username": {
+                  "description": "The username of the api user whose permission is to be set.",
+                  "type": "string",
+                  "required": true
+              },
+              "permission": {
+                  "description": "The permission to set",
+                  "type": "string",
+                  "required": true,
+                  "enum": [
+                    "READ",
+                    "WRITE",
+                    "EXECUTE",
+                    "READ_WRITE",
+                    "READ_EXECUTE",
+                    "WRITE_EXECUTE",
+                    "ALL",
+                    "NONE"
+                  ]
+              }
+          }
+        },
+        "SingleApplicationResponse": {
+            "id": "SingleApplicationResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "type": "Application"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "ApplicationOperationRequest": {
+          "id": "ApplicationOperationRequest",
+          "name": "",
+          "properties": {
+              "action": {
+                  "description": "Action to perform on the file or folder.",
+                  "type": "string",
+                  "required": true,
+                  "enum": [
+                      "publish",
+                      "clone"
+                  ]
+              },
+              "name": {
+                  "description": "Name of cloned app. Only used with the clone action.",
+                  "type": "string"
+              },
+              "version": {
+                  "description": "Version of the cloned app. Only used with the clone action.",
+                  "type": "string"
+              },
+              "deploymentPath": {
+                  "description": "Path to the on cloned app's deployment folder on its storage system. Only used with the clone action.",
+                  "type": "string"
+              },
+              "storageSystem": {
+                  "description": "Storage system on which the cloned app's assets resides. Only used with the clone action.",
+                  "type": "string"
+              },
+              "executionSystem": {
+                  "description": "System on which the clone apps should run. Only used with the clone action.",
+                  "type": "string"
+              }
+          }
+        }
+    }
+}

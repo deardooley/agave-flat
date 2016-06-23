@@ -1,0 +1,13 @@
+{
+	"url" : "http://realtime.docker.example.com:5561/publish",
+	"event" : "*",
+	"associatedUuid" : "*",
+	"persistent": true,
+	"policy": {
+		"retryStrategy": "immediate",
+		"retryDelay": 0,
+		"retryRate": 5,
+		"retryLimit": 10,
+		"saveOnFailure": false
+	}
+}

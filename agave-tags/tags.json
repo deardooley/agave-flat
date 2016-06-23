@@ -1,0 +1,1658 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Agave Tagging API",
+        "description": "This is the definition of a tagging api you used to create loose associations between API resources.",
+        "version": "0.1.0"
+    },
+    "host": "agave-mock-tags-api.getsandbox.com",
+    "schemes": [
+        "http"
+    ],
+    "basePath": "/",
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/tags/v2": {
+            "get": {
+                "operationId": "listTags",
+                "summary": "Available tags",
+                "description": "The Tags endpoint returns summary information about the available list of tags right now.",
+                "tags": [
+                    "Tag"
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "description": "Name of the tag for which to search",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "resourceType",
+                        "in": "query",
+                        "description": "Search for tags associated with one or resources of named type",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "resourceId",
+                        "in": "query",
+                        "description": "Id of tagged resource",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "lastModified",
+                        "in": "query",
+                        "description": "Date at which tag was modified in ISO8601 format",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "created",
+                        "in": "query",
+                        "description": "Date at which tag was created in ISO8601 format",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of responses. Default 100",
+                        "required": false,
+                        "type": "integer",
+                        "default": 100
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Number of results to skip by default",
+                        "required": false,
+                        "type": "integer",
+                        "default": 0
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An array of tags",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/TagSummary"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request, usually due to invalid resource type in the response query.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "addTag",
+                "summary": "Creat a new tag",
+                "description": "Creates a new tag",
+                "tags": [
+                    "Tag"
+                ],
+                "consumes": [
+                    "application/json",
+                    "multipart/form-data"
+                ],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "JSON Tag object",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Tag"
+                        }
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An array of tags",
+                        "schema": {
+                            "$ref": "#/definitions/Tag"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request, usually due to invalid resource type in the response query.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to the tagged resources to apply the tag.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/tags/v2/{tagId}": {
+            "get": {
+                "operationId": "getTagDetails",
+                "summary": "Tag Details",
+                "description": "Returns detailed information about the named tag",
+                "tags": [
+                    "Tag"
+                ],
+                "parameters": [
+                    {
+                        "name": "tagId",
+                        "in": "path",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag details",
+                        "schema": {
+                            "$ref": "#/definitions/Tag"
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to view this tag.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "put": {
+                "operationId": "updateTag",
+                "summary": "Update tag",
+                "description": "Updates the given tag with the updated information",
+                "tags": [
+                    "Tag"
+                ],
+                "consumes": [
+                    "application/json",
+                    "multipart/form-data"
+                ],
+                "parameters": [
+                    {
+                        "name": "tagId",
+                        "in": "path",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "description": "JSON Tag object",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Tag"
+                        }
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag details",
+                        "schema": {
+                            "$ref": "#/definitions/Tag"
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to view this tag.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "deleteTag",
+                "summary": "Delete tag",
+                "description": "Deletes the tag and all permissions",
+                "tags": [
+                    "Tag"
+                ],
+                "parameters": [
+                    {
+                        "name": "tagId",
+                        "in": "path",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to view this tag.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/tags/v2/{tagId}/history": {
+            "get": {
+                "operationId": "listTagHistory",
+                "summary": "Tag history",
+                "description": "Returns a list of items with the given tag.",
+                "tags": [
+                    "Tag",
+                    "History"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "tagId",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of responses. Default 100",
+                        "required": false,
+                        "type": "integer",
+                        "default": 100
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Number of results to skip by default",
+                        "required": false,
+                        "type": "integer",
+                        "default": 0
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag events",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/TagHistory"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/tags/v2/{tagId}/resources": {
+            "get": {
+                "operationId": "listTagResources",
+                "summary": "Tagged items",
+                "description": "Returns a list of items with the given tag.",
+                "tags": [
+                    "Tag",
+                    "Resource"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "tagId",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of responses. Default 100",
+                        "required": false,
+                        "type": "integer",
+                        "default": 100
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Number of results to skip by default",
+                        "required": false,
+                        "type": "integer",
+                        "default": 0
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag details",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/TagResource"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "addTagResource",
+                "summary": "Add resources to tag",
+                "description": "Adds the list of resources to the given tag",
+                "tags": [
+                    "Tag",
+                    "Resource"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "tagId",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "List of resource uuid to add",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TagResource"
+                        }
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag resources",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Tag"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "clearTagResources",
+                "summary": "Clear all tagged resources",
+                "description": "Removes all resources from the given tag",
+                "tags": [
+                    "Tag",
+                    "Resource"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "tagId",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/tags/v2/{tagId}/resources/{uuid}": {
+            "get": {
+                "operationId": "getTaggedResource",
+                "summary": "Get tagged item details",
+                "description": "Returns a list of items with the given tag.",
+                "tags": [
+                    "Tag",
+                    "Resource"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "tagId",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "uuid",
+                        "description": "Unique id of a resource",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag details",
+                        "schema": {
+                            "$ref": "#/definitions/TagResource"
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "put": {
+                "operationId": "updateTagResource",
+                "summary": "Add resource to tag",
+                "description": "Adds the resource with the given uuid to the given tag",
+                "tags": [
+                    "Tag",
+                    "Resource"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "tagId",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "uuid",
+                        "description": "Unique id of a resource",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "empty body",
+                        "required": false,
+                        "schema": {
+                            "$ref": "#/definitions/TagResource"
+                        }
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag details",
+                        "schema": {
+                            "$ref": "#/definitions/TagResource"
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "removeTagResource",
+                "summary": "Remove resource from tag",
+                "description": "Removes the given uuid from this tag",
+                "tags": [
+                    "Tag",
+                    "Resource"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "tagId",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "uuid",
+                        "description": "UUID of the resource to delete",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/tags/v2/{tagId}/pems": {
+            "get": {
+                "operationId": "listTagPermissions",
+                "summary": "List permissionss set for a given tag id",
+                "description": "Returns a list of permission objects set on this Tag",
+                "tags": [
+                    "Tag",
+                    "Permission"
+                ],
+                "parameters": [
+                    {
+                        "name": "tagId",
+                        "in": "path",
+                        "description": "Unique id of the system",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of responses. Default 100",
+                        "required": false,
+                        "type": "integer",
+                        "default": 100
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Number of results to skip by default",
+                        "required": false,
+                        "type": "integer",
+                        "default": 0
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Current Status of the system",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Permission"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "updateTagPermission",
+                "summary": "Grant permission",
+                "description": "Adds a permission for a given user to a given tag",
+                "tags": [
+                    "Tag",
+                    "Permission"
+                ],
+                "consumes": [
+                    "application/json",
+                    "multipart/form-data"
+                ],
+                "parameters": [
+                    {
+                        "name": "tagId",
+                        "in": "path",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "description": "Unique id of a resource",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Permission"
+                        }
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag details",
+                        "schema": {
+                            "$ref": "#/definitions/Permission"
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "clearTagPermissions",
+                "summary": "Clear tag permissions",
+                "description": "Removes all permissions save ownership from the given tag",
+                "tags": [
+                    "Tag",
+                    "Permission"
+                ],
+                "parameters": [
+                    {
+                        "name": "tagId",
+                        "in": "path",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/tags/v2/{tagId}/pems/{username}": {
+            "get": {
+                "operationId": "getTagPermissionForUser",
+                "summary": "List tag permissions for a user",
+                "description": "Returns the permission set on the given tag for a specific user.",
+                "tags": [
+                    "Tag",
+                    "Permission",
+                    "User"
+                ],
+                "parameters": [
+                    {
+                        "name": "tagId",
+                        "in": "path",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "description": "Valid username",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The user permission on this tag",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Permission"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "updateTagPermissionForUser",
+                "summary": "Update user permission on tag",
+                "description": "Resets the user permission on the given tag",
+                "tags": [
+                    "Tag",
+                    "Permission",
+                    "User"
+                ],
+                "consumes": [
+                    "application/json",
+                    "multipart/form-data"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "tagId",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "username",
+                        "description": "Valid username",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Valid permission value",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Permission"
+                        }
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag details",
+                        "schema": {
+                            "$ref": "#/definitions/Permission"
+                        }
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "deleteTagPermissionForUser",
+                "summary": "Remove user tag permission",
+                "description": "Removes permissions for the given user on the given tag",
+                "tags": [
+                    "Tag",
+                    "Permission",
+                    "User"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "tagId",
+                        "description": "Unique id of the tag",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "description": "Username to revoke permission",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "naked",
+                        "in": "query",
+                        "description": "If true return only the payload, not the standard response wrapper",
+                        "required": false,
+                        "type": "boolean",
+                        "default": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "description": "You do not have sufficient permissions to either the tag or resource.",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agaveImplicit": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agaveApplication": [
+                            "PRODUCTION"
+                        ]
+                    },
+                    {
+                        "agavePassword": [
+                            "PRODUCTION"
+                        ]
+                    }
+                ]
+            }
+        }
+    },
+    "securityDefinitions": {
+        "agaveImplicit": {
+            "type": "oauth2",
+            "authorizationUrl": "http://agave.iplantc.org/authorization",
+            "flow": "implicit",
+            "scopes": {
+                "PRODUCTION": "catchall scope for all core apis"
+            }
+        },
+        "agaveApplication": {
+            "type": "oauth2",
+            "tokenUrl": "http://agave.iplantc.org/token",
+            "flow": "application",
+            "scopes": {
+                "PRODUCTION": "catchall scope for all core apis"
+            }
+        },
+        "agavePassword": {
+            "type": "oauth2",
+            "tokenUrl": "http://agave.iplantc.org/token",
+            "flow": "password",
+            "scopes": {
+                "PRODUCTION": "catchall scope for all core apis"
+            }
+        }
+    },
+    "definitions": {
+        "TagSummary": {
+            "description": "Tag object without resource list",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "name of tag",
+                    "type": "string"
+                },
+                "created": {
+                    "description": "Date tag was created",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "lastUpdated": {
+                    "description": "Date tag was last updated",
+                    "type": "string",
+                    "format": "date-time"
+                }
+            }
+        },
+        "TagResource": {
+            "description": "Resource to which a tag has been associated",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "uuid of the API resource",
+                    "type": "string"
+                }
+            }
+        },
+        "Tag": {
+            "description": "Base tag object",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "uuid of this tag",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "name of tag",
+                    "type": "string"
+                },
+                "created": {
+                    "description": "Date tag was created",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "lastUpdated": {
+                    "description": "Date tag was last updated",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "resources": {
+                    "description": "The list of resource uuid associated with this tag",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TagResource"
+                    }
+                }
+            }
+        },
+        "TagHistory": {
+            "description": "Individual tag event",
+            "type": "object",
+            "properties": {
+                "created": {
+                    "description": "uuid of the referenced resource",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "event": {
+                    "description": "event that occurred on this tag",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "description of the event which occurred",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "unique identifier of the event",
+                    "type": "string"
+                }
+            }
+        },
+        "PermissionGrant": {
+            "description": "An individual permission grant given to a principal on a resource",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "The unique id of this permission",
+                    "type": "string"
+                },
+                "grant": {
+                    "description": "The permission given with this grant",
+                    "type": "string",
+                    "enum": [
+                        "READ",
+                        "WRITE",
+                        "SHARE",
+                        "PUBLISH",
+                        "OWNER",
+                        "NONE"
+                    ]
+                },
+                "lastUpdated": {
+                    "description": "The date the permission was last updated",
+                    "format": "date-time"
+                }
+            }
+        },
+        "Permission": {
+            "description": "A generic permission applied to any resource in the API",
+            "type": "object",
+            "properties": {
+                "username": {
+                    "description": "The username to whom this permission grant applies",
+                    "type": "string"
+                },
+                "internalUsername": {
+                    "description": "The internal user associated with this permission",
+                    "type": "string"
+                },
+                "grants": {
+                    "description": "The permissions granted to the user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/PermissionGrant"
+                    }
+                },
+                "created": {
+                    "description": "The date the permission was created",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "lastUpdated": {
+                    "description": "The date the permission was last updated",
+                    "format": "date-time"
+                },
+                "id": {
+                    "description": "The unique id of this permission",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "username",
+                "grants"
+            ]
+        },
+        "Error": {
+            "description": "Generic error response",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "fields": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

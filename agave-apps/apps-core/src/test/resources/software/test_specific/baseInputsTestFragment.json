@@ -1,0 +1,30 @@
+{  
+   "id":"inputSeqs",
+   "details":{  
+      "description":"Sequence file in multiple fasta format",
+      "label":"Sequences: ",
+      "argument":"",
+      "showArgument":false,
+      "repeatArgument":false
+   },
+   "semantics":{  
+      "minCardinality":0,
+      "maxCardinality":-1,
+      "fileTypes":[  
+         "fasta-0",
+         "fastq-0"
+      ],
+      "ontology":[  
+         "http://sswapmeet.sswap.info/sequence/FASTA",
+         "http://sswapmeet.sswap.info/sequence/FASTQ"
+      ]
+   },
+   "value":{  
+      "default":"steve",
+      "visible":true,
+      "required":false,
+      "validator":"",
+      "order":1,
+      "enquote":false
+   }
+}

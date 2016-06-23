@@ -1,0 +1,48 @@
+{
+	"id": "condor.example.com",
+	"name": "Open Science Grid",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample Condor system config",
+	"site": "example.com",
+	"executionType": "CONDOR",
+	"default": false,
+	"queues": [
+        {
+            "name": "condorqueue",
+            "maxJobs": 100,
+			"maxUserJobs": 10,
+			"maxNodes": 256,
+			"maxProcessorsPerNode": 16,
+			"maxMemoryPerNode": "2048GB",
+			"maxRequestedTime": "24:00:00",
+			"customDirectives": "",
+            "defaut":true
+        }
+    ],
+	"login": {
+		"host": "docker.example.com",
+		"port": 22,
+		"protocol": "SSH",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "PASSWORD"
+		}
+	},
+	"storage": {
+		"host": "docker.example.com",
+		"port": 22,
+		"protocol": "SFTP",
+		"rootDir":"/",
+		"homeDir": "/home/${iplant.community.username}",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "PASSWORD"
+		}
+	},
+	"scheduler": "CONDOR",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

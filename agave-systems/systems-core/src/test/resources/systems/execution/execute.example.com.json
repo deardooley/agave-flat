@@ -1,0 +1,52 @@
+{
+	"id": "execute.example.com",
+	"name": "My Example System",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "My example system used for testing",
+	"site": "my.site",
+	"executionType": "CLI",
+	"default": true,
+	"scratchDir": "/tmp",
+	"workDir": "/tmp",
+	"queues": [
+		{
+			"name": "testqueue",
+			"mappedName": "normal",
+			"description": "The default system queue for all jobs",
+			"maxJobs": 100,
+			"maxUserJobs": 10,
+			"maxNodes": 256,
+			"maxProcessorsPerNode": 16,
+			"maxMemoryPerNode": "2048GB",
+			"maxRequestedTime": "24:00:00",
+			"customDirectives": "",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "docker.example.com",
+		"port": 10022,
+		"protocol": "SSH",
+		"auth": {
+			"username": "testuser",
+			"password": "testuser",
+			"type": "PASSWORD"
+		}
+	},
+	"storage": {
+		"host": "docker.example.com",
+		"port": 10022,
+		"protocol": "SFTP",
+		"rootDir": "/",
+		"homeDir": "/home/testuser",
+		"auth": {
+			"username": "testuser",
+			"password": "testuser",
+			"type": "PASSWORD"
+		}
+	},
+	"scheduler": "FORK",
+	"environment": "",
+	"startupScript": ".bashrc"
+}

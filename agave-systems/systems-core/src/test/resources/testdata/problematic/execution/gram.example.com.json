@@ -1,0 +1,62 @@
+{
+	"id": "gram.example.com",
+	"name": "GRAM",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample gram execution system.",
+	"site": "tacc.xsede.org",
+	"executionType": "HPC",
+	"default": false,
+	"queues": [
+		{
+			"name": "normal",
+			"maxJobs": 100,
+			"maxUserJobs": 10,
+			"maxNodes": 256,
+			"maxProcessorsPerNode": 16,
+			"maxMemoryPerNode": "2048GB",
+			"maxRequestedTime": "24:00:00",
+			"customDirectives": "#$ -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "gridftp1.ls4.tacc.utexas.edu",
+		"port": 2119,
+		"protocol": "GRAM",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "X509",
+			"server": {
+				"id": "myproxy.teragrid.org",
+				"name": "XSEDE MyProxy Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"storage": {
+		"host": "gridftp1.ls4.tacc.utexas.edu",
+		"port": 2811,
+		"protocol": "GRIDFTP",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "X509",
+			"server": {
+				"id": "myproxy.teragrid.org",
+				"name": "XSEDE MyProxy Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"scheduler": "SGE",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

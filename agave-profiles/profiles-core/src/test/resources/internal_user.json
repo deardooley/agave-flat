@@ -1,0 +1,20 @@
+{	
+	"username": "deardooley3",
+	"email": "dooley3@tacc.utexas.edu",
+	"firstName": "Rion",
+	"lastName": "Dooley",
+	"position": "RESA IV",
+	"institution": "University of Texas",
+	"phone": "512-232-1234",
+	"fax": "512-475-9445",
+	"researchArea": "WCS",
+	"department": "TACC",
+	"city": "Austin",
+	"state": "TX",
+	"country": "USA",
+	"fundingAgencies": [
+		"iuser1", 
+		"iuser2"
+	],
+	"gender": "MALE"
+}

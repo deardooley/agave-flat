@@ -1,0 +1,98 @@
+
+{
+    "id": "jfs-wc-0.11",
+    "name": "wordCount",
+    "version": "0.11",
+    "icon":"http://example.com/icon.jpg",
+    "parallelism": "SERIAL",
+    "available": true,
+    "public": false,
+    "checkpointable": false,
+    "deploymentSystem": "sftp.stubbs.example.com",
+    "deploymentPath": "/home/jstubbs/applications/wc-0.11",
+    "executionHost": "ssh.execute.stubbs.example.com",
+    "executionType": "HPC",
+    "helpURI": "http://www.gnu.org/software/coreutils/manual/html_node/wc-invocation.html",
+    "executionSystem": "ssh.execute.stubbs.example2.com",
+    "templatePath": "wrapper.sh",
+    "testPath": "test.sh",
+    "inputs": [
+        {
+            "details": {
+                "description": "Select an input file",
+                "label": "Target File",
+                "visible": true
+            },
+            "id": "inputfile",
+            "semantics": {
+                "fileTypes": [
+                    "TEXT-0"
+                ],
+                "minCardinality": 1,
+                "ontology": [
+                    "0"
+                ]
+            },
+            "value": {
+                "default": "wc_test_data.txt",
+                "required": false,
+                "validator": "",
+                "visible": true
+            }
+        }
+    ],
+    "label": "WordCount",
+    "longDescription": "Count words in a file.",
+    "modules": [
+        ""
+    ],
+    "ontolog": [
+        ""
+    ],
+    "outputs": [
+        {
+            "defaultValue": "wc_out.txt",
+            "details": {
+                "description": "",
+                "label": ""
+            },
+            "id": "outputtextfile",
+            "semantics": {
+                "fileTypes": [
+                    ""
+                ],
+                "maxCardinality": 1,
+                "minCardinality": 1,
+                "ontology": [
+                    "http://sswapmeet.sswap.info/util/TextDocument"
+                ]
+            },
+            "value": {
+                "default": "null",
+                "validator": "*.txt"
+            }
+        }
+    ],
+    "parameters": [
+        {
+            "id": "printLongestLine",
+            "defaultValue": "false",
+            "value": {
+                "validator": "",
+                "visible": true,
+                "required": true,
+                "type": "bool",
+                "default": "false"
+            },
+            "details": {
+                "label": "Print the length of the longest line",
+                "description": "Command option -L"
+            },
+            "semantics": {
+                "ontology": [
+                    "xs:boolean"
+                ]
+            }
+        }
+    ]
+}

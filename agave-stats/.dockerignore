@@ -1,0 +1,17 @@
+# Ignored files for docker builds
+laravel/.env*
+Dockerfile
+fig*.yml
+.gitignore
+.git
+config.hdf
+*.hhvm
+fig.yml
+README.md
+
+composer.phar
+composer.lock
+laravel/revent
+laravel/symdemo
+*.bak
+docker-compose-prod.yml

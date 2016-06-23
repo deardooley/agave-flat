@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.iplantc</groupId>
+		<artifactId>agave</artifactId>
+		<version>2.1.8</version>
+	</parent>
+	<groupId>org.iplantc.agave</groupId>
+	<artifactId>common</artifactId>
+	<name>iPlant Agave API Common Services Parent</name>
+	<description>Parent pom for the Agave common services.</description>
+	<packaging>pom</packaging>
+
+	<scm>
+		<connection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-common.git</connection>
+		<developerConnection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-common.git</developerConnection>
+		<url>https://bitbucket.org/agaveapi/agave-common</url>
+	</scm>
+	
+	<properties>
+		<force.check.update>false</force.check.update>
+	</properties>
+	
+	<build>
+		<testResources>
+			<testResource>
+				<filtering>true</filtering>
+				<directory>src/test/resources</directory>
+			</testResource>
+		</testResources>
+		
+		<plugins>
+			<!-- Attach testng to the surefire execution -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<suiteXmlFiles>
+						<suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+					</suiteXmlFiles>
+				</configuration>
+			</plugin>
+
+			<!-- Release config -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<configuration>
+					<remoteTagging>false</remoteTagging>
+					<suppressCommitBeforeTag>true</suppressCommitBeforeTag>
+					<updateWorkingCopyVersions>false</updateWorkingCopyVersions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<modules>
+		<module>common-core</module>
+		<module>auth-core</module>
+		<module>common-api</module>
+		<module>common-legacy-api</module>
+	</modules>
+</project>

@@ -1,0 +1,59 @@
+{
+    "apiVersion": "2.1.0-reb586",
+    "apis": [
+        {
+            "description": "List available tenants",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "list",
+                    "notes": "",
+                    "parameters": [],
+                    "summary": "List all available tenants",
+                    "type": "MultipleTenantResponse"
+                }
+            ],
+            "path": "/tenants/"
+        }
+    ],
+    "basePath": "http://agaveapi.co",
+    "models": {
+        "MultipleTenantResponse": {
+            "id": "MultipleTenantResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "empty response",
+                    "items": {
+                      "$ref": "Tenant"
+                    },
+                    "type": "array"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "Tenant": {
+            "id": "Tenant",
+            "name": "",
+            "properties": {
+                "baseUrl": {
+                    "description": "Base url of all tenant requests",
+                    "type": "string"
+                },
+                "tenantId": {
+                    "description": "Unique identifier of the tenant",
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "resourcePath": "/tenants/",
+    "swaggerVersion": "1.2"
+}

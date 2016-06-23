@@ -1,0 +1,161 @@
+##############################################################
+#  OPTIONAL: Automated MongoDB backup to disk
+#############################################################
+
+mongodb-cron:
+  image: sillelien/tutum-cron
+  restart: always
+  cpu_shares: 128
+  mem_limit: 64m
+  roles:
+    - global
+  environment:
+    MONGODB_BACKUP_HOURLY_CRON_SCHEDULE: '0 * * * *'
+    MONGODB_BACKUP_DAILY_CRON_SCHEDULE: '0 3 * * *'
+  links:
+    - mongodb_backup_hourly
+    - mongodb_backup_daily
+  tags:
+    - staging
+    - db
+    
+mongodb_backup_hourly:
+  image: tutum/mongodb-backup:latest
+  command: /run.sh
+  links:
+    - mongodb:mongodb
+  environment:
+    CRON_TIME: '0 * * * *'
+    INIT_BACKUP: yes
+    MAX_BACKUPS: 12
+  volumes:
+    - /backups/mongodb/hourly:/backup
+  tags:
+    - staging
+    - db
+
+mongodb_backup_daily:
+  image: tutum/mongodb-backup:latest
+  command: /run.sh
+  links:
+    - mongodb:mongodb
+  environment:
+    CRON_TIME: '0 3 * * *'
+    INIT_BACKUP: yes
+    MAX_BACKUPS: 7
+  volumes:
+    - /backups/mongodb/hourly:/backup
+  tags:
+    - staging
+    - db
+
+##############################################################
+#  OPTIONAL: MySQL Master-Slave cluster with replication
+#############################################################
+
+mysql:
+  image: tutum/mysql
+  ports:
+    - 3301:3306
+  restart: always
+  cpu_shares: 4096
+  mem_limit: 512m
+  volumes_from:
+    - 'mysqlvol_master'
+  environment:
+    REPLICATION_MASTER: true
+    REPLICATION_PASS: rep_pass_change_me
+    ON_CREATE_DB: db
+    MYSQL_USER: agaveapi
+    MYSQL_PASS: d3f@ult$
+  tags:
+    - staging
+    - db
+    - master
+
+mysql-slave:
+  image: tutum/mysql
+  target_num_containers: 2
+  deployment_strategy: high_availability
+  ports:
+    - "3306"
+  restart: always
+  cpu_shares: 4096
+  mem_limit: 512m
+  links:
+    - mysql:mysql
+  environment:
+    REPLICATION_SLAVE: true
+    REPLICATION_PASS: rep_pass_change_me
+    ON_CREATE_DB: db
+    MYSQL_USER: agaveapi
+    MYSQL_PASS: d3f@ult$
+  tags:
+    - staging
+    - db
+    - slave
+
+mysqlvol-master:
+  image: ubuntu
+  command: sleep 2147483647
+  mem_limit: 64m
+  volumes:
+    - /var/lib/mysql_master:/var/lib/mysql
+  tags:
+    - staging
+    - db
+    - master
+
+###############################################################
+#   OPTIONAL: Automated MySQL backup to S3
+##############################################################
+
+mysql-cron:
+  image: sillelien/tutum-cron
+  restart: always
+  cpu_shares: 128
+  mem_limit: 64m
+  roles:
+    - global
+  environment:
+    MYSQLBACKUP_HOURLY_CRON_SCHEDULE: '0 * * * *'
+    MYSQLBACKUP_DAILY_CRON_SCHEDULE: '0 3 * * *'
+  links:
+    - mysqlbackup_hourly
+    - mysqlbackup_daily
+  tags:
+    - staging
+    - db
+    - slave
+
+mysqlbackup_hourly:
+  image: sillelien/docker-mysql-backup
+  command: backup
+  links:
+    - mysql:mysql
+  environment:
+    AWS_ACCESS_KEY_ID: key_id_change_me
+    AWS_SECRET_ACCESS_KEY: "secret_change_me"
+    AWS_DEFAULT_REGION: eu-west-1
+    S3_BUCKET: s3_bucket_change_me
+    S3_PATH: hourly
+  tags:
+    - staging
+    - db
+    - slave
+
+mysqlbackup_daily:
+  image: sillelien/docker-mysql-backup
+  command: backup
+  links:
+    - mysql:mysql
+  environment:
+    AWS_ACCESS_KEY_ID: key_id_change_me
+    AWS_SECRET_ACCESS_KEY: "secret_change_me"
+    AWS_DEFAULT_REGION: eu-west-1
+    S3_BUCKET: s3_bucket_change_me
+    S3_PATH: daily
+  tags:
+    - staging
+    - db
+    - slave

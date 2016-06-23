@@ -1,0 +1,34 @@
+Agave\Bundle\ApiBundle\Entity\Systempermissions:
+    type: entity
+    table: systempermissions
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        permission:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        username:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+    lifecycleCallbacks: {  }

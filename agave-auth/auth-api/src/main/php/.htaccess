@@ -1,0 +1,7 @@
+RewriteEngine On
+RewriteBase /v2/auth
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^/=]+)(/(.+))?$ /v2/auth/$1/?token=$3 [N,QSA]
+#RewriteRule ^(.*)/(.*)$ $1.php?$2 [L,QSA]

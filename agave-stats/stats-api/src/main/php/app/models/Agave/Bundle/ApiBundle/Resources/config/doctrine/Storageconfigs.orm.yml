@@ -1,0 +1,62 @@
+Agave\Bundle\ApiBundle\Entity\Storageconfigs:
+    type: entity
+    table: storageconfigs
+    indexes:
+        FK99C2F2965C950942:
+            columns:
+                - id
+    id: {  }
+    fields:
+        homeDir:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: home_dir
+        mirrorPermissions:
+            type: boolean
+            nullable: false
+            column: mirror_permissions
+        protocol:
+            type: string
+            nullable: false
+            length: 16
+            fixed: false
+        resource:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+        rootDir:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: root_dir
+        zone:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+        publicAppsDir:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: public_apps_dir
+        container:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+    oneToOne:
+        id:
+            targetEntity: Remoteconfigs
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

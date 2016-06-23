@@ -1,0 +1,64 @@
+Agave\Bundle\ApiBundle\Entity\AuthenticationTokens:
+    type: entity
+    table: authentication_tokens
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+        token:
+            columns:
+                - token
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        createdAt:
+            type: datetime
+            nullable: false
+            column: created_at
+        creator:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        expiresAt:
+            type: datetime
+            nullable: false
+            column: expires_at
+        internalUsername:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+            column: internal_username
+        ipAddress:
+            type: string
+            nullable: false
+            length: 15
+            fixed: false
+            column: ip_address
+        renewedAt:
+            type: datetime
+            nullable: false
+            column: renewed_at
+        remainingUses:
+            type: integer
+            nullable: false
+            unsigned: false
+            column: remaining_uses
+        token:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+        username:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+    lifecycleCallbacks: {  }

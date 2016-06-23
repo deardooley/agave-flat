@@ -1,0 +1,59 @@
+{
+	"id": "stampede.tacc.utexas.edu",
+	"name": "TACC Stampede",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Stampede is intended primarily for parallel applications scalable to tens of thousands of cores.  Normal batch queues will enable users to run simulations up to 24 hours.  Jobs requiring run times and more cores than allowed by the normal queues will be run in a special queue after approval of TACC staff.  Serial and development queues will also be configured. In addition, users will be able to run jobs using thousands of the Intel Xeon Phi coprocessors via the same queues to support massively parallel workflows.",
+	"site": "tacc.xsede.org",
+	"executionType": "HPC",
+	"default": true,
+	"queues": [
+		{
+			"name": "normal",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": "#SBATCH -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "stampede.tacc.utexas.edu",
+		"port": 2222,
+		"protocol": "GSISSH",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "X509",
+			"server": {
+				"id": "myproxy.teragrid.org",
+				"name": "XSEDE MyProxy Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"storage": {
+		"host": "data3.stampede.tacc.utexas.edu",
+		"port": 2811,
+		"protocol": "GRIDFTP",
+		"rootDir": "/",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "X509",
+			"server": {
+				"id": "myproxy.teragrid.org",
+				"name": "XSEDE MyProxy Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"scheduler": "SLURM",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

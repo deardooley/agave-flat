@@ -1,0 +1,81 @@
+##############################################################
+#  OPTIONAL: Persistent MongoDB instance
+#############################################################
+
+mongodb:
+  image: agaveapi/mongodb:2.6
+  command: --smallfiles
+  mem_limit: 1024m
+  restart: always
+  environment:
+    - MONGODB_PASS=password
+  volumes_from:
+    - mongodbvol_master
+  ports:
+    - '27017:27017'
+    - '28017:28017'
+  tags:
+    - staging
+    - db
+
+mongodbvol-master:
+  image: ubuntu
+  command: sleep 2147483647
+  mem_limit: 64m
+  volumes:
+    - /var/lib/mongodb:/var/lib/mongodb
+  tags:
+    - staging
+    - db
+
+
+##############################################################
+#  OPTIONAL: Automated MongoDB backup to disk
+#############################################################
+
+mongodb-cron:
+  image: sillelien/tutum-cron
+  restart: always
+  cpu_shares: 128
+  mem_limit: 64m
+  roles:
+    - global
+  environment:
+    MONGODB_BACKUP_HOURLY_CRON_SCHEDULE: '0 * * * *'
+    MONGODB_BACKUP_DAILY_CRON_SCHEDULE: '0 3 * * *'
+  links:
+    - mongodb_backup_hourly
+    - mongodb_backup_daily
+  tags:
+    - staging
+    - db
+    
+mongodb_backup_hourly:
+  image: tutum/mongodb-backup:latest
+  command: /run.sh
+  links:
+    - mongodb:mongodb
+  environment:
+    CRON_TIME: '0 * * * *'
+    INIT_BACKUP: yes
+    MAX_BACKUPS: 12
+  volumes:
+    - /backups/mongodb/hourly:/backup
+  tags:
+    - staging
+    - db
+
+mongodb_backup_daily:
+  image: tutum/mongodb-backup:latest
+  command: /run.sh
+  links:
+    - mongodb:mongodb
+  environment:
+    CRON_TIME: '0 3 * * *'
+    INIT_BACKUP: yes
+    MAX_BACKUPS: 7
+  volumes:
+    - /backups/mongodb/hourly:/backup
+  tags:
+    - staging
+    - db

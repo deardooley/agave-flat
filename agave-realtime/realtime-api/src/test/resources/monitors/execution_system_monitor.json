@@ -1,0 +1,14 @@
+{
+	"target" : "ssh.example.com",
+	"internalUsername": null,
+	"updateSystemStatus" : false,
+	"frequency": 300,
+	"active": true,
+	"notifications": [
+		{
+			"url": "http://localhost/postbin.php?username=${SYSTEM_ID}&status=${STATUS}",
+			"event": "STATUS_CHANGE",
+			"persistent": true
+		}
+	]
+}

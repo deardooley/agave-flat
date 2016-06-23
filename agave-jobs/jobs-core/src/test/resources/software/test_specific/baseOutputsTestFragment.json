@@ -1,0 +1,7 @@
+{
+"id": "outputtextfile",
+"defaultValue": "null",
+"semantics": {"fileTypes": [""],"maxCardinality": 1,"minCardinality": 1,"ontology": ["http://sswapmeet.sswap.info/util/TextDocument"]},
+"details": {"description": "","label": ""},
+"value": {"default": "null","validator": "*.txt"}
+}

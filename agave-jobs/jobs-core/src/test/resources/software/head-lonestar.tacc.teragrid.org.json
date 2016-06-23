@@ -1,0 +1,122 @@
+{
+	"available": true, 
+	"checkpointable": false, 
+	"deploymentPath": "/api_sample_user/applications/head-5.97/", 
+	"executionSystem": "lonestar4.tacc.teragrid.org",
+	"executionType": "HPC", 
+	"helpURI": "http://www.gnu.org/software/coreutils/manual/html_node/head-invocation.html#head-invocation", 
+	"id": "head-lonestar-5.97",
+    "icon":"http://example.com/icon.jpg",
+	"inputs": [
+		{
+			"details": {
+				"description": "Select an input file", 
+				"label": "Target File", 
+				"visible": true
+			}, 
+			"id": "inputfile", 
+			"semantics": {
+				"fileTypes": [
+					"TEXT-0"
+				], 
+				"minCardinality": 1, 
+				"ontology": [
+					"0"
+				]
+			}, 
+			"value": {
+				"default": "/api_sample_user/raxml.json", 
+				"required": false, 
+				"validator": "", 
+				"visible": true
+			}
+		}
+	], 
+	"label": "Head", 
+	"longDescription": "This is an application you can use to inspect the beginning of a file.", 
+	"modules": [
+		""
+	], 
+	"name": "head-trestles", 
+	"ontolog": [
+		""
+	], 
+	"outputs": [
+		{
+			"defaultValue": "null", 
+			"details": {
+				"description": "", 
+				"label": ""
+			}, 
+			"id": "outputtextfile", 
+			"semantics": {
+				"fileTypes": [
+					""
+				], 
+				"maxCardinality": 1, 
+				"minCardinality": 1, 
+				"ontology": [
+					"http://sswapmeet.sswap.info/util/TextDocument"
+				]
+			}, 
+			"value": {
+				"default": "null", 
+				"validator": "*.txt"
+			}
+		}
+	], 
+	"parallelism": "SERIAL", 
+	"parameters": [
+		{
+			"defaultValue": "", 
+			"details": {
+				"description": "Equivalent to --countbytes command flag. Can be specified alone or in combination with number of lines. A value of 0 indicates that no byte-wise filtering is to take place.", 
+				"label": "Extract the first k bytes"
+			}, 
+			"id": "numberofbytes", 
+			"semantics": {
+				"ontology": [
+					"xs:string"
+				]
+			}, 
+			"value": {
+				"default": "", 
+				"required": false, 
+				"type": "number", 
+				"validator": "[0-9]+(b|kB|MB|M|GB|G)?", 
+				"visible": true
+			}
+		}, 
+		{
+			"defaultValue": "10", 
+			"details": {
+				"description": "Equivalent to -n command flag", 
+				"label": "Extract the first k lines"
+			}, 
+			"id": "numberoflines", 
+			"semantics": {
+				"ontology": [
+					"xs:integer"
+				]
+			}, 
+			"value": {
+				"default": "10", 
+				"required": false, 
+				"type": "number", 
+				"validator": "[0-9]+", 
+				"visible": true
+			}
+		}
+	], 
+	"public": true, 
+	"revision": 1, 
+	"shortDescription": "Extract first lines or bytes from a file", 
+	"tags": [
+		"file", 
+		"coreutils", 
+		"gnu"
+	], 
+	"templatePath": "wrapper.template", 
+	"testPath": "test/test.sh", 
+	"version": "5.97"
+}

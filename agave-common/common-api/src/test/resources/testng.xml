@@ -1,0 +1,12 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+  
+<suite name="iPlant Common Service API" verbose="5" parallel="false">
+  <!-- <test name="InternalUser" >
+    <classes>
+        <class name="org.iplantc.service.profile.dao.InternalUserDaoTest" />
+        <class name="org.iplantc.service.profile.manager.InternalUserManagerTest" />
+        <class name="org.iplantc.service.profile.model.InternalUserTest" />
+    </classes>
+  </test> -->
+
+</suite>

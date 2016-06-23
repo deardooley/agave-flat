@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+  
+<suite name="iPlant Metadata Service" verbose="5" parallel="false">
+  <test name="dao" >
+  	<packages>
+        <package name="org.iplantc.service.metadata.dao" />
+    </packages>
+  </test>
+</suite>

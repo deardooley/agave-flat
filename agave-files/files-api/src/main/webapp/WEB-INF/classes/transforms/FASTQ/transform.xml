@@ -1,0 +1,56 @@
+<transform>
+
+	<name>FASTQ</name>
+	<version>0</version>
+	<fileExtensions>fastq,fq,fastqsanger</fileExtensions>
+	<pattern>^@</pattern>
+	<description>FASTQ (Sanger)</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/FASTQ_format</descriptionURI>
+	<tags>sequence,sequencing,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>FASTQ</name>
+		<filters>
+			<filter>
+				<name>FASTQ-self</name>
+				<description>FASTQ in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>FASTQ</name>
+			<version>0</version>
+			<description>Export to FASTQ</description>
+			<filters>
+				<filter>
+					<name>FASTQ-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+		
+		<decodingChain>
+			<name>FASTA</name>
+			<version>0</version>
+			<description>FASTQ->FASTA</description>
+			<filters>
+				<filter>
+					<name>FASTQ->FASTA</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ->FASTA translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+
+	</decoders>
+
+</transform>

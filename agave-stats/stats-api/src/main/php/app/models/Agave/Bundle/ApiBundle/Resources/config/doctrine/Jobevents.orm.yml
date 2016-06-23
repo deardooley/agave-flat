@@ -1,0 +1,74 @@
+Agave\Bundle\ApiBundle\Entity\Jobevents:
+    type: entity
+    table: jobevents
+    indexes:
+        FK6222FB1673DE1B78:
+            columns:
+                - transfertask
+        FK6222FB1678E880CD:
+            columns:
+                - job_id
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        createdBy:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: created_by
+        description:
+            type: string
+            nullable: true
+            length: 32768
+            fixed: false
+        ipAddress:
+            type: string
+            nullable: false
+            length: 15
+            fixed: false
+            column: ip_address
+        status:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+    manyToOne:
+        transfertask:
+            targetEntity: Transfertasks
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                transfertask:
+                    referencedColumnName: id
+            orphanRemoval: false
+        job:
+            targetEntity: Jobs
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                job_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

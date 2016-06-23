@@ -1,0 +1,55 @@
+<transform>
+
+	<name>Soap-SE</name>
+	<version>1</version>
+	<fileExtensions>soap,txt</fileExtensions>
+	<pattern></pattern>
+	<description>Soap (single end) alignment file</description>
+	<descriptionURI>http://soap.genomics.org.cn/soap1/#Formatofoutput</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>Soap-SE</name>
+		<filters>
+			<filter>
+				<name>Soap-SE-self</name>
+				<description>Soap in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Soap-SE</name>
+			<version>1</version>
+			<description>Export to Soap</description>
+			<filters>
+				<filter>
+					<name>Soap-SE-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Soap-SE in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+		<decodingChain>
+			<name>SAM</name>
+			<version>0.12</version>
+			<description>Export to SAM</description>
+			<filters>
+				<filter>
+					<name>Soap-SE-SAM</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Soap-SE->SAM translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

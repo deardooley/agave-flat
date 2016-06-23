@@ -1,0 +1,473 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+	xmlns:xsi="http://www.w3.org/v21/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                      http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+	<localRepository>${user.home}/.m2/repository</localRepository>
+	<interactiveMode>true</interactiveMode>
+	<usePluginRegistry>false</usePluginRegistry>
+	<offline>false</offline>
+
+	<activeProfiles>
+		<activeProfile>agave</activeProfile>
+		<activeProfile>plain</activeProfile>
+	</activeProfiles>
+
+	<servers>
+		<server>
+			<id>docker-registry</id>
+			<username>%%DOCKER_USERNAME%%</username>
+			<password>%%DOCKER_PASSWORD%%</password>
+			<configuration>
+				<email>%%DOCKER_EMAIL%%</email>
+			</configuration>
+		</server>
+	</servers>
+
+	<profiles>
+		<profile>
+				<!-- *********************************************************************
+				**	turns off tests and build of docker containers                      **
+				***********************************************************************-->
+				<id>plain</id>
+				<properties>
+						<force.docker.push>false</force.docker.push>
+						<force.check.update>false</force.check.update>
+						<force.check.version>false</force.check.version>
+						<skip.docker.build>true</skip.docker.build>
+						<skip.docker.tag>true</skip.docker.tag>
+						<skip.docker.clean>true</skip.docker.clean>
+						<skip.utest.docker.build>true</skip.utest.docker.build>
+						<skip.utest.docker.run>true</skip.utest.docker.run>
+						<skip.create-db>true</skip.create-db>
+						<maven.test.skip>true</maven.test.skip>
+						<skipTests>true</skipTests>
+						<docker.registry.username>agaveapi</docker.registry.username>
+				</properties>
+		</profile>
+		<profile>
+				<id>sandbox</id>
+				<!-- *********************************************************************
+				**	turns off tests and build of unit test container                    **
+				**	but keeps the api container build                                   **
+				***********************************************************************-->
+				<properties>
+						<force.check.update>false</force.check.update>
+						<force.check.version>false</force.check.version>
+						<docker.registry.username>agaveapi</docker.registry.username>
+
+						<skip.docker.build>false</skip.docker.build>
+						<skip.docker.tag>true</skip.docker.tag>
+						<skip.docker.clean>true</skip.docker.clean>
+						<force.docker.push>false</force.docker.push>
+
+						<skip.utest.docker.build>true</skip.utest.docker.build>
+						<skip.utest.docker.run>true</skip.utest.docker.run>
+						<skip.create-db>true</skip.create-db>
+						<maven.test.skip>true</maven.test.skip>
+						<skipTests>true</skipTests>
+				</properties>
+		</profile>
+		<profile>
+				<id>utest</id>
+				<!-- *********************************************************************
+				**	turns on tests and build of unit test container                     **
+				**	and turns off the api container build                               **
+				***********************************************************************-->
+				<properties>
+						<force.check.update>false</force.check.update>
+						<force.check.version>false</force.check.version>
+
+						<skip.docker.build>false</skip.docker.build>
+						<skip.docker.tag>true</skip.docker.tag>
+						<skip.docker.clean>true</skip.docker.clean>
+						<skip.utest.docker.build>false</skip.utest.docker.build>
+						<skip.utest.docker.run>false</skip.utest.docker.run>
+						<skip.create-db>true</skip.create-db>
+						<skipTests>false</skipTests>
+					    <maven.test.skip>false</maven.test.skip>
+
+						<iplant.community.username>testuser</iplant.community.username>
+						<iplant.community.password>testuser</iplant.community.password>
+						<iplant.community.myproxy.server>docker.example.com</iplant.community.myproxy.server>
+						<iplant.community.myproxy.port>7512</iplant.community.myproxy.port>
+						<foundation.db.url>jdbc:mysql://localhost:3306/agavecore?zeroDateTimeBehavior=convertToNull&amp;sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true&amp;tinyInt1isBit=false</foundation.db.url>
+						<foundation.db.bootstrap>
+								jdbc:mysql://localhost:3306/mavenbootstrap?sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true&amp;tinyInt1isBit=false
+						</foundation.db.bootstrap>
+						<foundation.db.test.url>jdbc:mysql://localhost:3306/test?sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true&amp;tinyInt1isBit=false</foundation.db.test.url>
+						<foundation.db.test.bootstrap>
+								jdbc:mysql://localhost:3306/mavenbootstrap?sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true&amp;tinyInt1isBit=false
+						</foundation.db.test.bootstrap>
+						<foundation.db.test.database>agave</foundation.db.test.database>
+				</properties>
+		</profile>
+		<profile>
+				<id>publish</id>
+				<!-- *********************************************************************
+				**	turns off tests and build of unit test container                    **
+				**	but keeps the api container build and enables image tagging and		**
+				**  push to the docker central registry                                 **
+				***********************************************************************-->
+				<properties>
+						<docker.registry.id>docker-registry</docker.registry.id>
+						<force.docker.push>false</force.docker.push>
+						<docker.registry.url>https://index.docker.io/v1/</docker.registry.url>
+						<docker.registry.username>agaveapi</docker.registry.username>
+
+						<skip.docker.build>false</skip.docker.build>
+						<skip.docker.clean>false</skip.docker.clean>
+						<skip.docker.tag>false</skip.docker.tag>
+						<force.docker.push>false</force.docker.push>
+
+						<force.check.update>false</force.check.update>
+						<force.check.version>false</force.check.version>
+						<skip.utest.docker.build>true</skip.utest.docker.build>
+						<skip.utest.docker.run>true</skip.utest.docker.run>
+						<skip.create-db>true</skip.create-db>
+						<maven.test.skip>true</maven.test.skip>
+						<skipTests>true</skipTests>
+
+				</properties>
+		</profile>
+		<profile>
+				<id>push</id>
+				<!-- *********************************************************************
+				**	turns off tests and build of unit test container                    **
+				**	but keeps the api container build and enables image tagging and		**
+				**  push to the docker central registry                                 **
+				***********************************************************************-->
+				<properties>
+						<docker.registry.id>docker-registry</docker.registry.id>
+						<docker.registry.url>https://index.docker.io/v1/</docker.registry.url>
+						<docker.registry.username>agaveapi</docker.registry.username>
+
+						<skip.docker.build>true</skip.docker.build>
+						<skip.docker.clean>true</skip.docker.clean>
+						<skip.docker.tag>false</skip.docker.tag>
+						<force.docker.push>true</force.docker.push>
+
+						<force.check.update>false</force.check.update>
+						<force.check.version>false</force.check.version>
+						<skip.utest.docker.build>true</skip.utest.docker.build>
+						<skip.utest.docker.run>true</skip.utest.docker.run>
+						<skip.create-db>true</skip.create-db>
+						<maven.test.skip>true</maven.test.skip>
+						<skipTests>true</skipTests>
+				</properties>
+		</profile>
+		<profile>
+			<id>agave</id>
+			<properties>
+
+				<!-- *********************************************************************
+				**************************************************************************
+				**																		**
+				**						Agave common properties 						**
+				**																		**
+				**************************************************************************
+				***********************************************************************-->
+				<skip.migrations>true</skip.migrations>
+				<iplant.community.username>iplant</iplant.community.username>
+				<iplant.community.password></iplant.community.password>
+				<iplant.community.charge.number>TG-MCB110022</iplant.community.charge.number>
+				<iplant.community.myproxy.server>myproxy.teragrid.org</iplant.community.myproxy.server>
+				<iplant.community.myproxy.port>7512</iplant.community.myproxy.port>
+				
+				<irods.username>rods</irods.username>
+				<irods.password>rods</irods.password>
+				<irods.zone>testuser</irods.zone>
+				<irods.host>docker.example.com</irods.host>
+				<irods.port>1247</irods.port>
+				<irods.resource>bitol</irods.resource>
+
+				<foundation.api.version>2</foundation.api.version>
+				<foundation.world.username>world</foundation.world.username>
+				<foundation.public.username>public</foundation.public.username>
+				<foundation.auth.source>wso2</foundation.auth.source>
+				<foundation.service.slave.mode>false</foundation.service.slave.mode>
+				<foundation.remote.default.path>/scratch</foundation.remote.default.path>
+				<foundation.local.scratch.dir>/scratch</foundation.local.scratch.dir>
+
+				<foundation.api.page.size.default>100</foundation.api.page.size.default>
+				<foundation.api.page.size.max>250</foundation.api.page.size.max>
+				
+				<!-- ********************** SSL Properties ************************* -->
+				<foundation.keystore.path>/home/agave/jssecacerts</foundation.keystore.path>
+				<foundation.trusted.certs.path>/home/agave/.globus/certificates</foundation.trusted.certs.path>
+				<foundation.ca.certs.path>/home/agave/.globus/certificates</foundation.ca.certs.path>
+
+				<!-- ********************** Email Properties ************************* -->
+				<foundation.smtp.provider>log</foundation.smtp.provider>
+				<foundation.smtp.user>agave</foundation.smtp.user>
+				<foundation.smtp.password></foundation.smtp.password>
+				<foundation.smtp.host>localhost</foundation.smtp.host>
+				<foundation.smtp.port></foundation.smtp.port>
+				<foundation.smtp.auth>false</foundation.smtp.auth>
+				<foundation.smtp.from.name>Agave Notification Service</foundation.smtp.from.name>
+				<foundation.smtp.from.address>noreply@agaveapi.co</foundation.smtp.from.address>
+
+				<!-- ********************** LDAP Properties ************************* -->
+				<foundation.ldap.realm>iPlant Agave API</foundation.ldap.realm>
+				<foundation.ldap.url>ldaps://ldap.example.com</foundation.ldap.url>
+				<foundation.ldap.port>636</foundation.ldap.port>
+				<foundation.ldap.dn>ou=People,dc=example,dc=com</foundation.ldap.dn>
+
+				<!-- *************************** Database **************************** -->
+				<foundation.db.jndi.connection>java:comp/env/jdbc/iplant_io</foundation.db.jndi.connection>
+				<foundation.db.host>mysql</foundation.db.host>
+				<foundation.db.port>3306</foundation.db.port>
+				<foundation.db.database>agavecore</foundation.db.database>
+				<foundation.db.username>agaveuser</foundation.db.username>
+				<foundation.db.password>password</foundation.db.password>
+				<foundation.db.url>jdbc:mysql://${foundation.db.host}:${foundation.db.port}/${foundation.db.database}?zeroDateTimeBehavior=convertToNull&amp;sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true&amp;tinyInt1isBit=false</foundation.db.url>
+				<foundation.db.bootstrap>jdbc:mysql://${foundation.db.host}:${foundation.db.port}/mavenbootstrap?sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true&amp;tinyInt1isBit=false</foundation.db.bootstrap>
+				<foundation.db.driver>com.mysql.jdbc.Driver</foundation.db.driver>
+				<foundation.db.auth.table>authentication_tokens</foundation.db.auth.table>
+				<foundation.db.postits.table>postits</foundation.db.postits.table>
+				<foundation.db.tenants.table>tenants</foundation.db.tenants.table>
+				<foundation.db.internaluser.table>internalusers</foundation.db.internaluser.table>
+				<foundation.db.usage.table>Usage</foundation.db.usage.table>
+				<foundation.db.usageservices.table>UsageServices</foundation.db.usageservices.table>
+				<foundation.db.usageactivities.table>UsageActivities</foundation.db.usageactivities.table>
+
+				<!-- ************************* Test Database ************************* -->
+				<foundation.db.test.jndi.connection>java:comp/env/jdbc/iplant_io</foundation.db.test.jndi.connection>
+				<foundation.db.test.host>mysql</foundation.db.test.host>
+				<foundation.db.test.port>3306</foundation.db.test.port>
+				<foundation.db.test.database>test</foundation.db.test.database>
+				<foundation.db.test.username>agaveuser</foundation.db.test.username>
+				<foundation.db.test.password>password</foundation.db.test.password>
+				<foundation.db.test.url>jdbc:mysql://${foundation.db.test.host}:${foundation.db.test.port}/${foundation.db.test.database}?sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true</foundation.db.test.url>
+				<foundation.db.test.bootstrap>jdbc:mysql://${foundation.db.test.host}:${foundation.db.test.port}/mavenbootstrap?sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true</foundation.db.test.bootstrap>
+				<foundation.db.test.driver>com.mysql.jdbc.Driver</foundation.db.test.driver>
+				
+				<!-- **************** AWS Credentials for Integration Tests ********** -->
+				<aws.bucket></aws.bucket>
+				<aws.access.key></aws.access.key>
+				<aws.secret.key></aws.secret.key>
+			
+				<!-- *********************************************************************
+				**************************************************************************
+				**																		**
+				**							Dependent services	 						**
+				**																		**
+				**************************************************************************
+				***********************************************************************-->
+
+				<!-- ********************** local beanstalkd ************************* -->
+
+				<foundation.service.atmosphere>https://atmo.iplantcollaborative.org:443/auth</foundation.service.atmosphere>
+
+				<!-- *********************** Messaging services ********************** -->
+
+				<!-- ********************** local beanstalkd ************************* -->
+				<foundation.service.messaging.provider>beanstalk</foundation.service.messaging.provider>
+				<foundation.service.messaging.host>beanstalkd</foundation.service.messaging.host>
+				<foundation.service.messaging.port>11300</foundation.service.messaging.port>
+				<foundation.service.messaging.username></foundation.service.messaging.username>
+				<foundation.service.messaging.password></foundation.service.messaging.password>
+
+				<!-- *************************** rabbitmq **************************** -->
+				<!--<foundation.service.messaging.provider>rabbitmq</foundation.service.messaging.provider> -->
+				<!--<foundation.service.messaging.host>localhost</foundation.service.messaging.host> -->
+				<!--<foundation.service.messaging.port>15672</foundation.service.messaging.port> -->
+				<!--<foundation.service.messaging.username></foundation.service.messaging.username> -->
+				<!--<foundation.service.messaging.password></foundation.service.messaging.password> -->
+
+				<!-- *************************** ironmq **************************** -->
+				<!--<foundation.service.messaging.provider>ironmq</foundation.service.messaging.provider> -->
+				<!--<foundation.service.messaging.host>mq-aws-us-east-1.iron.io</foundation.service.messaging.host> -->
+				<!--<foundation.service.messaging.port>80</foundation.service.messaging.port> -->
+				<!--<foundation.service.messaging.username></foundation.service.messaging.username> -->
+				<!--<foundation.service.messaging.password>-8LQ4</foundation.service.messaging.password> -->
+
+				<!-- ********************** ironio beanstalkd ************************* -->
+				<!-- <foundation.service.messaging.provider>ironbeanstalk</foundation.service.messaging.provider> -->
+				<!--<foundation.service.messaging.host>mq-aws-us-east-1.iron.io</foundation.service.messaging.host> -->
+				<!--<foundation.service.messaging.port>11300</foundation.service.messaging.port> -->
+				<!--<foundation.service.messaging.username></foundation.service.messaging.username> -->
+				<!--<foundation.service.messaging.password>-8LQ4</foundation.service.messaging.password> -->
+
+
+				<!-- *********************************************************************
+				**************************************************************************
+				**																		**
+				**					Agave service-specific properties 					**
+				**																		**
+				**************************************************************************
+				***********************************************************************-->
+
+				<foundation.base.url>https://docker.example.com</foundation.base.url>
+
+				<foundation.service.documentation>https://docker.example.com/docs/v2</foundation.service.documentation>
+
+				<foundation.service.dedicated.tenant></foundation.service.dedicated.tenant>
+				<foundation.service.dedicated.users></foundation.service.dedicated.users>
+				<foundation.service.dedicated.systems></foundation.service.dedicated.systems>
+				<foundation.service.dedicated.queues></foundation.service.dedicated.queues>
+				<foundation.service.drain.all.queues>false</foundation.service.drain.all.queues>
+
+				<!-- *********************************************************************
+				**								PHP services 							**
+				***********************************************************************-->
+
+				<!-- ****************** Auth service (deprecated) ******************** -->
+
+				<foundation.service.auth>${foundation.base.url}/auth/v2</foundation.service.auth>
+
+
+				<!-- ************************ Logging service ************************ -->
+
+				<foundation.service.log>http://logging/logging/</foundation.service.log>
+
+				<!-- ************************ Docs service ************************ -->
+
+				<foundation.service.docs>${foundation.base.url}/docs/v2</foundation.service.docs>
+
+
+				<!-- ************************ PostIts service ************************ -->
+				<foundation.service.proxy>${foundation.base.url}</foundation.service.proxy>
+				<foundation.service.postits>${foundation.base.url}/postits/v2</foundation.service.postits>
+
+
+				<!-- *********************************************************************
+				**								Java services 							**
+				***********************************************************************-->
+
+				<foundation.allow.relay.transfers>false</foundation.allow.relay.transfers>
+				<foundation.max.relay.transfer.size>2</foundation.max.relay.transfer.size>
+
+				<!-- ************************ Apps service *************************** -->
+
+				<foundation.service.apps>${foundation.base.url}/apps/v2</foundation.service.apps>
+				<foundation.service.apps.jetty.port>13001</foundation.service.apps.jetty.port>
+				<foundation.service.apps.jetty.ajp.port>13002</foundation.service.apps.jetty.ajp.port>
+
+
+				<!-- ************************ Files service ************************** -->
+
+				<foundation.service.files>${foundation.base.url}/files/v2</foundation.service.files>
+				<foundation.service.files.disk.quota>-1</foundation.service.files.disk.quota>
+				<foundation.service.files.jetty.port>13021</foundation.service.files.jetty.port>
+				<foundation.service.files.jetty.ajp.port>13022</foundation.service.files.jetty.ajp.port>
+
+
+				<!-- ************************ Jobs service *************************** -->
+
+				<foundation.service.jobs>${foundation.base.url}/jobs/v2</foundation.service.jobs>
+				<foundation.service.jobs.gateway.node>false</foundation.service.jobs.gateway.node>
+				<foundation.service.jobs.allow.fork>false</foundation.service.jobs.allow.fork>
+				<foundation.service.jobs.staging.tasks>2</foundation.service.jobs.staging.tasks>
+				<foundation.service.jobs.archiving.tasks>2</foundation.service.jobs.archiving.tasks>
+				<foundation.service.jobs.submission.tasks>2</foundation.service.jobs.submission.tasks>
+				<foundation.service.jobs.monitoring.tasks>1</foundation.service.jobs.monitoring.tasks>
+				<foundation.service.jobs.max.retries>3</foundation.service.jobs.max.retries>
+				<foundation.service.jobs.local.system.id></foundation.service.jobs.local.system.id>
+				<foundation.service.jobs.jetty.port>13031</foundation.service.jobs.jetty.port>
+				<foundation.service.jobs.jetty.ajp.port>13032</foundation.service.jobs.jetty.ajp.port>
+
+
+				<!-- ************************ Meta service *************************** -->
+
+				<foundation.service.meta>${foundation.base.url}/meta/v2</foundation.service.meta>
+				<foundation.service.meta.db.host>mongodb</foundation.service.meta.db.host>
+				<foundation.service.meta.db.port>27017</foundation.service.meta.db.port>
+				<foundation.service.meta.db.user>agaveuser</foundation.service.meta.db.user>
+				<foundation.service.meta.db.pwd>password</foundation.service.meta.db.pwd>
+				<foundation.service.meta.db.scheme>api</foundation.service.meta.db.scheme>
+				<foundation.service.meta.collection>metadata</foundation.service.meta.collection>
+				<foundation.service.meta.schema.collection>schemata</foundation.service.meta.schema.collection>
+				<foundation.service.meta.jetty.port>13041</foundation.service.meta.jetty.port>
+				<foundation.service.meta.jetty.ajp.port>13042</foundation.service.meta.jetty.ajp.port>
+
+
+				<!-- ************************ Monitor service ******************* -->
+
+				<foundation.service.monitor>${foundation.base.url}/monitor/v2</foundation.service.monitor>
+				<foundation.service.monitor.queue>dev.monitors.queue</foundation.service.monitor.queue>
+				<foundation.service.monitor.topic>dev.monitors.topic</foundation.service.monitor.topic>
+				<foundation.service.montior.max.q.failures>5</foundation.service.montior.max.q.failures>
+				<foundation.service.monitor.max.retries>1</foundation.service.monitor.max.retries>
+				<foundation.service.monitor.max.tasks>2</foundation.service.monitor.max.tasks>
+				<foundation.service.monitor.jetty.port>13051</foundation.service.monitor.jetty.port>
+				<foundation.service.monitor.jetty.ajp.port>13052</foundation.service.monitor.jetty.ajp.port>
+				<foundation.service.min.monitor.repeat.interval>300</foundation.service.min.monitor.repeat.interval>
+				
+				<!-- ************************ Notification service ******************* -->
+
+				<foundation.service.notif>${foundation.base.url}/notifications/v2</foundation.service.notif>
+				<foundation.service.notif.queue>dev.notifications.queue</foundation.service.notif.queue>
+				<foundation.service.notif.topic>dev.notifications.topic</foundation.service.notif.topic>
+				<foundation.service.notif.retry.queue>devretry.notifications.queue</foundation.service.notif.retry.queue>
+				<foundation.service.notif.retry.topic>devretry.notifications.queue</foundation.service.notif.retry.topic>
+				<foundation.service.notif.max.retries>5</foundation.service.notif.max.retries>
+				<foundation.service.notif.max.tasks>1</foundation.service.notif.max.tasks>
+				<foundation.service.notif.jetty.port>13051</foundation.service.notif.jetty.port>
+				<foundation.service.notif.jetty.ajp.port>13052</foundation.service.notif.jetty.ajp.port>
+				
+				<foundation.service.notif.failed.db.host>mongodb</foundation.service.notif.failed.db.host>
+				<foundation.service.notif.failed.db.port>27017</foundation.service.notif.failed.db.port>
+				<foundation.service.notif.failed.db.user>agaveuser</foundation.service.notif.failed.db.user>
+				<foundation.service.notif.failed.db.pwd>password</foundation.service.notif.failed.db.pwd>
+				<foundation.service.notif.failed.db.scheme>notifications</foundation.service.notif.failed.db.scheme>
+				<foundation.service.notif.failed.db.size>1048576</foundation.service.notif.failed.db.size>
+				<foundation.service.notif.failed.db.limit>10000</foundation.service.notif.failed.db.limit>
+				
+				<foundation.service.notif.slack.icon.emoji></foundation.service.notif.slack.icon.emoji>
+				<foundation.service.notif.slack.icon.url>http://www.gravatar.com/avatar/4a01bd7c64dbb313035b23fe521f75e6</foundation.service.notif.slack.icon.url>
+				<foundation.service.notif.slack.username>AgaveBot</foundation.service.notif.slack.username>
+				
+				<foundation.sms.provider>LOG</foundation.sms.provider>
+				<foundation.twilio.sid></foundation.twilio.sid>
+				<foundation.twilio.token></foundation.twilio.token>
+				<foundation.twilio.phone.number></foundation.twilio.phone.number>
+				
+				<foundation.realtime.provider>pushpin</foundation.realtime.provider>
+				<foundation.realtime.url>http://localhost:7999</foundation.realtime.url>
+				<foundation.realtime.realm.key></foundation.realtime.realm.key>
+				<foundation.realtime.realm.id></foundation.realtime.realm.id>
+
+				<!-- ************************ Profile service ************************ -->
+				<foundation.service.profiles>${foundation.base.url}/profiles/v2</foundation.service.profiles>
+				<foundation.service.profiles.trellis.url>https://user.iplantcollaborative.org/api/v1/users/</foundation.service.profiles.trellis.url>
+				<foundation.service.profiles.trellis.secret></foundation.service.profiles.trellis.secret>
+				<foundation.service.profiles.trellis.key></foundation.service.profiles.trellis.key>
+				<foundation.service.profiles.jetty.port>13061</foundation.service.profiles.jetty.port>
+				<foundation.service.profiles.jetty.ajp.port>13062</foundation.service.profiles.jetty.ajp.port>
+
+				<!-- ************************ Systems service ************************ -->
+
+				<foundation.service.systems>${foundation.base.url}/systems/v2</foundation.service.systems>
+				<foundation.test.credentials.username>agave</foundation.test.credentials.username>
+				<foundation.test.credentials.password>password</foundation.test.credentials.password>
+				<foundation.service.systems.jetty.port>13071</foundation.service.systems.jetty.port>
+				<foundation.service.systems.jetty.ajp.port>13072</foundation.service.systems.jetty.ajp.port>
+
+
+				<!-- ************************ Transforms service ********************* -->
+
+				<foundation.service.transforms>${foundation.base.url}/transforms/v2</foundation.service.transforms>
+				<foundation.service.transforms.max.tasks>2</foundation.service.transforms.max.tasks>
+				<foundation.service.transforms.file.path>/opt/tomcat/webapps/transforms/WEB-INF/classes/transforms.xml</foundation.service.transforms.file.path>
+				<foundation.service.transforms.conversion.map.path>/opt/tomcat/webapps/transforms/WEB-INF/classes/transform_conversion_map.xml</foundation.service.transforms.conversion.map.path>
+				<foundation.service.transforms.dir.path>/opt/tomcat/webapps/transforms/WEB-INF/classes/transforms</foundation.service.transforms.dir.path>
+				<foundation.service.transforms.jetty.port>13081</foundation.service.transforms.jetty.port>
+				<foundation.service.transforms.jetty.ajp.port>13082</foundation.service.transforms.jetty.ajp.port>
+
+
+				<!-- ************************ Transfers service ********************** -->
+
+				<foundation.service.transfers>${foundation.base.url}/transfers/v2</foundation.service.transfers>
+				<foundation.service.transfers.max.tasks>5</foundation.service.transfers.max.tasks>
+				<foundation.service.transfers.max.simultaneous>-1</foundation.service.transfers.max.simultaneous>
+				<foundation.service.transfers.max.retries>3</foundation.service.transfers.max.retries>
+				<foundation.service.transfers.jetty.port>13091</foundation.service.transfers.jetty.port>
+				<foundation.service.transfers.jetty.ajp.port>13092</foundation.service.transfers.jetty.ajp.port>
+				<foundation.service.transfers.max.relay.size>2</foundation.service.transfers.max.relay.size>
+				<foundation.service.transfers.allow.relays>true</foundation.service.transfers.allow.relays>
+			</properties>
+		</profile>
+	</profiles>
+
+</settings>

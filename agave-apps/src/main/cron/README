@@ -1,0 +1,4 @@
+This folder contains cron utilities for the iplant jobs service. Copy this folder in its entirety to each remote
+hpc system, set the config properties in each file, and add the entries in crontab.txt to the crontab on the remote system. Each script is described below.
+
+* iplant_checkjob.pl : checks for ghost jobs in the db by verifying that all jobs listed as running, queued, archiving, or paused actually show up on the local scheduler. If not, the job callback is invoked and just to be safe, the job status in the db is updated to failed. This essentially fills in the gap when status callbacks are not made by the executing job.

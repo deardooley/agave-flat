@@ -1,0 +1,6 @@
+orig:
+jobName=test-steve1&softwareName=wca-1.00&requestedTime=01%3A00%3A00&maxMemory=&callbackUrl=&archive=&archivePath=&query1=wca-1.00%2Fread1.fq&printLongestLine=false
+
+
+new:
+jobName=test-steve1&softwareName=wca-1.00&requestedTime=01%3A00%3A00&maxMemory=&callbackUrl=&archive=true&archivePath=%2sterry1%2archive%2test-job-999&query1=read1.fq&printLongestLine=false

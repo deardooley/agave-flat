@@ -1,0 +1,4 @@
+services:
+#    agave_api.example:
+#        class: Agave\Bundle\ApiBundle\Example
+#        arguments: [@service_id, "plain_value", %parameter%]

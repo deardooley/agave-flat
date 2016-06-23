@@ -1,0 +1,29 @@
+{
+	"id": "gridftp.example.com",
+	"name": "GRIDFTP Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example gridftp system",
+	"site": "example.com",
+	"storage": {
+		"host": "docker.example.com",
+		"port": 2811,
+		"protocol": "GRIDFTP",
+		"homeDir": "/home/testuser",
+		"rootDir": "/",
+		"auth": {
+			"username": "testuser",
+			"password": "testuser",
+			"credential": null,
+			"type": "X509",
+			"server": {
+				"id": "docker.example.com",
+				"name": "Agave Dev myproxy Docker container",
+				"endpoint": "docker.example.com",
+				"port": 7514,
+				"protocol": "MYPROXY"
+			}
+		}
+		
+	}
+}

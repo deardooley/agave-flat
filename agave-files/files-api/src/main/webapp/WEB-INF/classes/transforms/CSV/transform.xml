@@ -1,0 +1,41 @@
+<transform>
+
+	<name>CSV</name>
+	<version>0</version>
+	<fileExtensions>csv,txt</fileExtensions>
+	<pattern></pattern>
+	<description>Comma-separated values</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/Comma-separated_values</descriptionURI>
+	<tags>network,graph</tags>
+	
+	<encodingChain>
+		<name>CSV</name>
+		<filters>
+			<filter>
+				<name>CSV-self</name>
+				<description>CSV in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>CSV</name>
+			<version>0</version>
+			<description>Export to CSV</description>
+			<filters>
+				<filter>
+					<name>CSV-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>CSV in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

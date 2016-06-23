@@ -1,0 +1,83 @@
+Agave\Bundle\ApiBundle\Entity\Executionsystems:
+    type: entity
+    table: executionsystems
+    indexes:
+        FK29629E0C7871F82F:
+            columns:
+                - id
+        FK29629E0C8DC88804:
+            columns:
+                - login_config
+    id: {  }
+    fields:
+        environment:
+            type: string
+            nullable: true
+            length: 32768
+            fixed: false
+        executionType:
+            type: string
+            nullable: false
+            length: 16
+            fixed: false
+            column: execution_type
+        maxSystemJobs:
+            type: integer
+            nullable: true
+            unsigned: false
+            column: max_system_jobs
+        maxSystemJobsPerUser:
+            type: integer
+            nullable: true
+            unsigned: false
+            column: max_system_jobs_per_user
+        schedulerType:
+            type: string
+            nullable: false
+            length: 16
+            fixed: false
+            column: scheduler_type
+        scratchDir:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: scratch_dir
+        startupScript:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: startup_script
+        type:
+            type: string
+            nullable: false
+            length: 16
+            fixed: false
+        workDir:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: work_dir
+    oneToOne:
+        id:
+            targetEntity: Systems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    manyToOne:
+        loginConfig:
+            targetEntity: Loginconfigs
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                login_config:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

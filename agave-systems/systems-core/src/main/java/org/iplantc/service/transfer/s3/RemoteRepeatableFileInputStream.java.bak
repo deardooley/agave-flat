@@ -1,0 +1,113 @@
+package org.iplantc.service.transfer.s3;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.apache.log4j.Logger;
+import org.iplantc.service.transfer.RemoteDataClient;
+import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.jets3t.service.io.InputStreamWrapper;
+import org.jets3t.service.io.UnrecoverableIOException;
+
+class RemoteRepeatableFileInputStream extends InputStream implements InputStreamWrapper {
+    private final Logger log = Logger.getLogger(RemoteRepeatableFileInputStream.class);
+
+    private RemoteDataClient remoteClient = null;
+    private String path;
+    private InputStream fis = null;
+    private long bytesReadPastMarkPoint = 0;
+    private long markPoint = 0;
+
+    /**
+     * Creates a repeatable input stream based on a file.
+     * 
+     * @param file
+     * @throws FileNotFoundException
+     */
+    public RemoteRepeatableFileInputStream(RemoteDataClient remoteClient, String path) throws FileNotFoundException {
+        if (path == null) {
+            throw new IllegalArgumentException("File cannot be null");
+        }
+        this.remoteClient = remoteClient;
+        try {
+			this.fis = remoteClient.getInputStream(path, true);
+			this.path = path;
+		} catch (Exception e) {
+			throw new FileNotFoundException("Failed to reference remote file");
+		}
+        
+    }
+    
+    /**
+     * Resets the input stream to the last mark point, or the beginning of the stream if 
+     * there is no mark point, by creating a new FileInputStream based on the 
+     * underlying file. 
+     * 
+     * @throws UnrecoverableIOException
+     * when the FileInputStream cannot be re-created.
+     */
+    public void reset() throws IOException {
+        try {
+            this.fis.close();
+            this.fis = remoteClient.getInputStream(path, true);
+
+            long skipped = 0;
+			long toSkip = markPoint;
+            while (toSkip > 0) {
+				skipped = this.fis.skip(toSkip);
+				toSkip -= skipped;
+			}       
+            
+            if (log.isDebugEnabled()) {
+            	log.debug("Reset to mark point " + markPoint + " after returning " + bytesReadPastMarkPoint + " bytes");
+            }
+            this.bytesReadPastMarkPoint = 0;
+        } catch (IOException e) {
+            throw new UnrecoverableIOException("Input stream is not repeatable: " + e.getMessage());
+        } catch (RemoteDataException e) {
+			throw new IOException("Failed to open input stream to IRODS file", e);
+		}
+    }
+    
+    public boolean markSupported() {
+    	return true;
+    }
+    
+    public void mark(int readlimit) {
+    	this.markPoint += bytesReadPastMarkPoint;
+    	this.bytesReadPastMarkPoint = 0;
+    	if (log.isDebugEnabled()) {
+    		log.debug("Input stream marked at " + this.markPoint + " bytes");
+    	}
+    }
+    
+    public int available() throws IOException {
+        return fis.available();
+    }
+
+    public void close() throws IOException {
+        fis.close();
+    }
+
+    public int read() throws IOException {
+        int byteRead = fis.read();
+        if (byteRead != -1) {
+            bytesReadPastMarkPoint++;
+            return byteRead;
+        } else {
+            return -1;
+        }
+    }
+
+    public int read(byte[] arg0, int arg1, int arg2) throws IOException {
+        int count = fis.read(arg0, arg1, arg2);
+        bytesReadPastMarkPoint += count;
+        return count;
+    }
+
+    public InputStream getWrappedInputStream() {
+        return this.fis;
+    }
+
+}

@@ -1,0 +1,7 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="iPlant Agave API Common Legacy API" verbose="1" parallel="false">
+	<test name="common-legacy-api">
+		<packages></packages>
+	</test>
+</suite>

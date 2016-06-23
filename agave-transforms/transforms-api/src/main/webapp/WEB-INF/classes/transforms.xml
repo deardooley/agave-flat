@@ -1,0 +1,2168 @@
+<transforms>
+<transform>
+
+	<name>2bit</name>
+	<version>0</version>
+	<fileExtensions>2bit</fileExtensions>
+	<pattern></pattern>
+	<description>UCSC 2bit</description>
+	<descriptionURI>http://genome.ucsc.edu/FAQ/FAQformat#format7</descriptionURI>
+	<tags>sequence,sequencing,nucleotide,base pair,binary</tags>
+	
+	<encodingChain>
+		<name>2bit</name>
+		<filters>
+			<filter>
+				<name>2bit-self</name>
+				<description>2bit in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>2bit</name>
+			<version>0</version>
+			<description>Export to 2bit</description>
+			<filters>
+				<filter>
+					<name>2bit-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>2bit in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+	<name>ASN1</name>
+	<version>0</version>
+	<fileExtensions>asn</fileExtensions>
+	<pattern></pattern>
+	<description>Genbank ASN1</description>	<descriptionURI>http://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One</descriptionURI>
+	<tags>genbank,annotation,sequence,nucleotide,peptide,base pair,amino acid</tags>
+	
+	<encodingChain>
+		<name>ASN1</name>
+		<filters>
+			<filter>
+				<name>ASN1-self</name>
+				<description>ASN in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>ASN1</name>
+			<version>0</version>
+			<description>Export Genbank ASN1</description>
+			<filters>
+				<filter>
+					<name>ASN1-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>ASN1 in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+	<name>BAM</name>
+	<version>0.1.2</version>
+	<fileExtensions>bam</fileExtensions>
+	<pattern></pattern>
+	<description>Binary SAM (BAM)</description>	<descriptionURI>http://samtools.sourceforge.net/SAM1.pdf</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>BAM</name>
+		<filters>
+			<filter>
+				<name>BAM-self</name>
+				<description>BAM in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>BAM</name>
+			<version>0.1.2</version>
+			<description>Export Binary SAM (BAM)</description>
+			<filters>
+				<filter>
+					<name>BAM-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>BAM in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+	<name>Barcode</name>
+	<version>0</version>
+	<fileExtensions>bc,tab,txt</fileExtensions>
+	<pattern></pattern>
+	<description>FASTX toolkit barcode file</description>	<descriptionURI></descriptionURI>
+	<tags>bar code,alignment,sequencing,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>Barcode</name>
+		<filters>
+			<filter>
+				<name>Barcode-self</name>
+				<description>Barcode in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Barcode</name>
+			<version>0</version>
+			<description>Export to Barcode</description>
+			<filters>
+				<filter>
+					<name>Barcode-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Barcode in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>BED</name>
+	<version>0</version>
+	<fileExtensions>bc,tab,txt</fileExtensions>
+	<pattern></pattern>
+	<description>UCSC BED</description>	<descriptionURI>http://genome.ucsc.edu/FAQ/FAQformat.html#format1</descriptionURI>
+	<tags>sequence,annotation,interval,feature,coordinates</tags>
+	
+	<encodingChain>
+		<name>BED</name>
+		<filters>
+			<filter>
+				<name>BED-self</name>
+				<description>BED in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>BED</name>
+			<version>0</version>
+			<description>Export to BED</description>
+			<filters>
+				<filter>
+					<name>BED-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>BED in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>BlastN</name>
+	<version>2.0</version>
+	<fileExtensions>blastn,blast,txt</fileExtensions>
+	<pattern></pattern>
+	<description>NCBI BlastN alignment</description>
+	<descriptionURI>http://www.ncbi.nlm.nih.gov/bookshelf/br.fcgi?book=handbook</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>BlastN</name>
+		<filters>
+			<filter>
+				<name>BlastN-self</name>
+				<description>BlastN in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>BlastN</name>
+			<version>2.0</version>
+			<description>Export to BlastN</description>
+			<filters>
+				<filter>
+					<name>BlastN-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>BlastN in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+		<decodingChain>
+			<name>SAM</name>
+			<version>0.12</version>
+			<description>Export to SAM</description>
+			<filters>
+				<filter>
+					<name>BlastN-SAM</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>BlastN->SAM translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>Bowtie</name>
+	<version>0</version>
+	<fileExtensions>bowtie,aln,txt</fileExtensions>
+	<pattern></pattern>
+	<description>Bowtie alignment</description>
+	<descriptionURI>http://bowtie-bio.sourceforge.net/manual.shtml#default-bowtie-output</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>Bowtie</name>
+		<filters>
+			<filter>
+				<name>Bowtie-self</name>
+				<description>Bowtie in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Bowtie</name>
+			<version>0</version>
+			<description>Export to Bowtie</description>
+			<filters>
+				<filter>
+					<name>Bowtie-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Bowtie in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+		<decodingChain>
+			<name>SAM</name>
+			<version>0.12</version>
+			<description>Export to SAM</description>
+			<filters>
+				<filter>
+					<name>Bowtie-SAM</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Bowtie->SAM translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>BZIP2</name>
+	<version>0</version>
+	<fileExtensions>bz2</fileExtensions>
+	<pattern></pattern>
+	<description>BZIP2</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/Bzip2</descriptionURI>
+	<tags>compressed</tags>
+	
+	<encodingChain>
+		<name>BZIP2</name>
+		<filters>
+			<filter>
+				<name>BZIP2-self</name>
+				<description>BZIP2 in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>BZIP2</name>
+			<version>0</version>
+			<description>Export to BZIP2</description>
+			<filters>
+				<filter>
+					<name>BZIP2-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>BZIP2 in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>CEL</name>
+	<version>3</version>
+	<fileExtensions>cel</fileExtensions>
+	<pattern></pattern>
+	<description>Affymetrix CEL</description>	<descriptionURI>http://www.affymetrix.com/estore/support/developer/powertools/changelog/gcos-agcc/cel.html.affx;jsessionid=9CD728EA13DE3495CC1338E1AE21330A#V3</descriptionURI>
+	<tags>cdna,transcript,microarray,affymetrix,gene</tags>
+	
+	<encodingChain>
+		<name>CEL</name>
+		<filters>
+			<filter>
+				<name>CEL-self</name>
+				<description>CEL in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>CEL</name>
+			<version>3</version>
+			<description>Export to CEL</description>
+			<filters>
+				<filter>
+					<name>CEL-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>CEL in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>ClustalW</name>
+	<version>1.8</version>
+	<fileExtensions>aln</fileExtensions>
+	<pattern>^CLUSTAL W</pattern>
+	<description>ClustalW multiple sequence alignment</description>	<descriptionURI>http://www.bioperl.org/wiki/ClustalW_multiple_alignment_format</descriptionURI>
+	<tags>alignment,nucleotide,peptide,amino acid,base pair,codon,msa</tags>
+	
+	<encodingChain>
+		<name>ClustalW</name>
+		<filters>
+			<filter>
+				<name>ClustalW-self</name>
+				<description>ClustalW in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>ClustalW</name>
+			<version>1.8</version>
+			<description>Export to ClustalW</description>
+			<filters>
+				<filter>
+					<name>ClustalW-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>ClustalW in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>CSV</name>
+	<version>0</version>
+	<fileExtensions>csv,txt</fileExtensions>
+	<pattern></pattern>
+	<description>Comma-separated values</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/Comma-separated_values</descriptionURI>
+	<tags>network,graph</tags>
+	
+	<encodingChain>
+		<name>CSV</name>
+		<filters>
+			<filter>
+				<name>CSV-self</name>
+				<description>CSV in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>CSV</name>
+			<version>0</version>
+			<description>Export to CSV</description>
+			<filters>
+				<filter>
+					<name>CSV-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>CSV in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>DOT</name>
+	<version>0</version>
+	<fileExtensions>gv,dot</fileExtensions>
+	<pattern></pattern>
+	<description>DOT graph description language</description>
+	<descriptionURI>http://www.graphviz.org/doc/info/lang.html</descriptionURI>
+	<tags>network,graph,graphviz</tags>
+	
+	<encodingChain>
+		<name>DOT</name>
+		<filters>
+			<filter>
+				<name>DOT-self</name>
+				<description>DOT in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>DOT</name>
+			<version>0</version>
+			<description>Export to DOT</description>
+			<filters>
+				<filter>
+					<name>DOT-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>DOT in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>EMBL</name>
+	<version>0</version>
+	<fileExtensions>embl</fileExtensions>
+	<pattern>^ID</pattern>
+	<description>EMBL multiple sequence alignment</description>	<descriptionURI>http://www.bioperl.org/wiki/EMBL_sequence_format</descriptionURI>
+	<tags>annotation,sequence,amino acid,base pair,peptide,feature,gene model</tags>
+	
+	<encodingChain>
+		<name>EMBL</name>
+		<filters>
+			<filter>
+				<name>EMBL-self</name>
+				<description>EMBL in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>EMBL</name>
+			<version>0</version>
+			<description>Export to EMBL</description>
+			<filters>
+				<filter>
+					<name>EMBL-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>EMBL in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>EXPR</name>
+	<version>0</version>
+	<fileExtensions>expr</fileExtensions>
+	<pattern></pattern>
+	<description>Cufflinks EXPR</description>	<descriptionURI></descriptionURI>
+	<tags>rnaseq,sequencing,transcriptome,gene</tags>
+	
+	<encodingChain>
+		<name>EXPR</name>
+		<filters>
+			<filter>
+				<name>EXPR-self</name>
+				<description>EXPR in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>EXPR</name>
+			<version>0</version>
+			<description>Export to EXPR</description>
+			<filters>
+				<filter>
+					<name>EXPR-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>EXPR in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>FAI</name>
+	<version>0</version>
+	<fileExtensions>fai</fileExtensions>
+	<pattern></pattern>
+	<description>Samtools Fasta Index (FAI)</description>	<descriptionURI></descriptionURI>
+	<tags>sequence,sequencing,index,genome,fasta</tags>
+	
+	<encodingChain>
+		<name>FAI</name>
+		<filters>
+			<filter>
+				<name>FAI-self</name>
+				<description>FAI in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>FAI</name>
+			<version>0</version>
+			<description>Export to FAI</description>
+			<filters>
+				<filter>
+					<name>FAI-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FAI in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>FASTA</name>
+	<version>0</version>
+	<fileExtensions>fa,fasta,fas,seq</fileExtensions>
+	<pattern>\>*</pattern>
+	<description>FASTA</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/FASTA_format</descriptionURI>
+	<tags>sequence,sequencing,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>FASTA</name>
+		<filters>
+			<filter>
+				<name>FASTA-self</name>
+				<description>FASTA in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>FASTA</name>
+			<version>0</version>
+			<description>Export to FASTA</description>
+			<filters>
+				<filter>
+					<name>FASTA-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTA in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>FASTQ-Illumina</name>
+	<version>0</version>
+	<fileExtensions>fastq,fq,fastqillumina</fileExtensions>
+	<pattern>^@</pattern>
+	<description>FASTQ (Illumina 1.3+)</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/FASTQ_format</descriptionURI>
+	<tags>sequence,sequencing,nucleotide,base pair,illumina</tags>
+	
+	<encodingChain>
+		<name>FASTQ-Illumina</name>
+		<filters>
+			<filter>
+				<name>FASTQ-Illumina-self</name>
+				<description>FASTQ-Illumina in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>FASTQ-Illumina</name>
+			<version>0</version>
+			<description>Export to FASTQ</description>
+			<filters>
+				<filter>
+					<name>FASTQ-Illumina-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ-Illumina in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+		
+		<decodingChain>
+			<name>FASTQ</name>
+			<version>0</version>
+			<description>FASTQ-Illumina->FASTQ (Sanger)</description>
+			<filters>
+				<filter>
+					<name>FASTQ-Illumina->FASTQ</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ-Illumina->FASTQ translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>FASTQ-Int</name>
+	<version>0</version>
+	<fileExtensions>fastq,fq,fqint,txt</fileExtensions>
+	<pattern>^@</pattern>
+	<description>FASTQ-Integer sequence file</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/FASTQ_format</descriptionURI>
+	<tags>sequence,sequencing,nucleotide,base pair,illumina</tags>
+	
+	<encodingChain>
+		<name>FASTQ-Int</name>
+		<filters>
+			<filter>
+				<name>FASTQ-Int-self</name>
+				<description>FASTQ-Int in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>FASTQ-Int</name>
+			<version>0</version>
+			<description>Export to FASTQ</description>
+			<filters>
+				<filter>
+					<name>FASTQ-Int-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ-Int in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+		
+		<decodingChain>
+			<name>FASTQ</name>
+			<version>0</version>
+			<description>FASTQ-Int->FASTQ (Sanger)</description>
+			<filters>
+				<filter>
+					<name>FASTQ-Int->FASTQ</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ-Int->FASTQ translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>FASTQ-Solexa</name>
+	<version>0</version>
+	<fileExtensions>fastq,fq,fastqillumina</fileExtensions>
+	<pattern>^@</pattern>
+	<description>FASTQ (Solexa)</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/FASTQ_format</descriptionURI>
+	<tags>sequence,sequencing,nucleotide,base pair,illumina</tags>
+	
+	<encodingChain>
+		<name>FASTQ-Solexa</name>
+		<filters>
+			<filter>
+				<name>FASTQ-Solexa-self</name>
+				<description>FASTQ-Solexa in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>FASTQ-Solexa</name>
+			<version>0</version>
+			<description>Export to FASTQ</description>
+			<filters>
+				<filter>
+					<name>FASTQ-Solexa-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ-Solexa in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+		
+		<decodingChain>
+			<name>FASTQ</name>
+			<version>0</version>
+			<description>FASTQ-Solexa->FASTQ (Sanger)</description>
+			<filters>
+				<filter>
+					<name>FASTQ-Solexa->FASTQ</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ-Solexa->FASTQ translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>FASTQ</name>
+	<version>0</version>
+	<fileExtensions>fastq,fq,fastqsanger</fileExtensions>
+	<pattern>^@</pattern>
+	<description>FASTQ (Sanger)</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/FASTQ_format</descriptionURI>
+	<tags>sequence,sequencing,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>FASTQ</name>
+		<filters>
+			<filter>
+				<name>FASTQ-self</name>
+				<description>FASTQ in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>FASTQ</name>
+			<version>0</version>
+			<description>Export to FASTQ</description>
+			<filters>
+				<filter>
+					<name>FASTQ-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+		
+		<decodingChain>
+			<name>FASTA</name>
+			<version>0</version>
+			<description>FASTQ->FASTA</description>
+			<filters>
+				<filter>
+					<name>FASTQ->FASTA</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTQ->FASTA translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+
+	</decoders>
+
+</transform><transform>
+
+	<name>Genbank</name>
+	<version>0</version>
+	<fileExtensions>gb,gbk</fileExtensions>
+	<pattern>^LOCUS</pattern>
+	<description>Genbank</description>
+	<descriptionURI>http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html</descriptionURI>
+	<tags>annotation,sequence,amino acid,base pair,peptide,feature,gene model</tags>
+	
+	<encodingChain>
+		<name>Genbank</name>
+		<filters>
+			<filter>
+				<name>Genbank-self</name>
+				<description>Genbank in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Genbank</name>
+			<version>0</version>
+			<description>Export to Genbank</description>
+			<filters>
+				<filter>
+					<name>Genbank-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Genbank in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>GFF</name>
+	<version>2.0</version>
+	<fileExtensions>gff,gff2</fileExtensions>
+	<pattern>##gff-version 2</pattern>
+	<description>Genome File Format v2 (GFF)</description>
+	<descriptionURI></descriptionURI>
+	<tags>sequence,annotation,interval,feature,coordinates</tags>
+	
+	<encodingChain>
+		<name>GFF</name>
+		<filters>
+			<filter>
+				<name>GFF-self</name>
+				<description>GFF in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>GFF</name>
+			<version>2.0</version>
+			<description>Export to GFF</description>
+			<filters>
+				<filter>
+					<name>GFF-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>GFF in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>GFF</name>
+	<version>3.0</version>
+	<fileExtensions>gff</fileExtensions>
+	<pattern>##gff-version 2.5</pattern>
+	<description>Genome File Format v2.5 (GFF)</description>
+	<descriptionURI></descriptionURI>
+	<tags>sequence,annotation,interval,feature,coordinates</tags>
+	
+	<encodingChain>
+		<name>GFF</name>
+		<filters>
+			<filter>
+				<name>GFF-self</name>
+				<description>GFF in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>GFF</name>
+			<version>2.5</version>
+			<description>Export to GFF</description>
+			<filters>
+				<filter>
+					<name>GFF-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>GFF in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>GFF</name>
+	<version>3.0</version>
+	<fileExtensions>gff,gff3</fileExtensions>
+	<pattern>##gff-version 3</pattern>
+	<description>Genome File Format v3 (GFF)</description>
+	<descriptionURI>http://www.sequenceontology.org/gff3.shtml</descriptionURI>
+	<tags>sequence,annotation,interval,feature,coordinates</tags>
+	
+	<encodingChain>
+		<name>GFF</name>
+		<filters>
+			<filter>
+				<name>GFF-self</name>
+				<description>GFF in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>GFF</name>
+			<version>3.0</version>
+			<description>Export to GFF</description>
+			<filters>
+				<filter>
+					<name>GFF-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>GFF in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>GraphML</name>
+	<version>0</version>
+	<fileExtensions>xml,graphml</fileExtensions>
+	<pattern></pattern>
+	<description>GraphML</description>
+	<descriptionURI>http://graphml.graphdrawing.org/specification.html</descriptionURI>
+	<tags>network,graph</tags>
+	
+	<encodingChain>
+		<name>GraphML</name>
+		<filters>
+			<filter>
+				<name>GraphML-self</name>
+				<description>GraphML in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>GraphML</name>
+			<version>0</version>
+			<description>Export to GraphML</description>
+			<filters>
+				<filter>
+					<name>GraphML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>GraphML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>GTF</name>
+	<version>2.2</version>
+	<fileExtensions>gtf</fileExtensions>
+	<pattern>gtf</pattern>
+	<description>Gene Transfer Format (GTF)</description>
+	<descriptionURI>http://mblab.wustl.edu/GTF22.html</descriptionURI>
+	<tags>sequence,annotation,interval,feature,coordinates</tags>
+	
+	<encodingChain>
+		<name>GTF</name>
+		<filters>
+			<filter>
+				<name>GTF-self</name>
+				<description>GTF in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>GTF</name>
+			<version>2.2</version>
+			<description>Export to GTF</description>
+			<filters>
+				<filter>
+					<name>GTF-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>GTF in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>HTML</name>
+	<version>4</version>
+	<fileExtensions>htm,html</fileExtensions>
+	<pattern></pattern>
+	<description>Hypertext Markup Language (HTML4)</description>
+	<descriptionURI></descriptionURI>
+	<tags>text,content,web,internet</tags>
+	
+	<encodingChain>
+		<name>HTML</name>
+		<filters>
+			<filter>
+				<name>HTML-self</name>
+				<description>HTML4 in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>HTML</name>
+			<version>4</version>
+			<description>Export to HTML4</description>
+			<filters>
+				<filter>
+					<name>HTML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>HTML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>HTML</name>
+	<version>5</version>
+	<fileExtensions>htm,html</fileExtensions>
+	<pattern></pattern>
+	<description>Hypertext Markup Language (HTML5)</description>
+	<descriptionURI></descriptionURI>
+	<tags>text,content,web,internet</tags>
+	
+	<encodingChain>
+		<name>HTML</name>
+		<filters>
+			<filter>
+				<name>HTML-self</name>
+				<description>HTML5 in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>HTML</name>
+			<version>5</version>
+			<description>Export to HTML5</description>
+			<filters>
+				<filter>
+					<name>HTML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>HTML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>Newick</name>
+	<version>0</version>
+	<fileExtensions>nwk,newick,txt</fileExtensions>
+	<pattern>newick*</pattern>
+	<description>Newick</description>
+	<descriptionURI>http://evolution.genetics.washington.edu/phylip/newick_doc.html</descriptionURI>
+	<tags>phylogeny,tree,systematics</tags>
+	
+	<encodingChain>
+		<name>Newick</name>
+		<filters>
+			<filter>
+				<name>Newick-self</name>
+				<description>Newick in-place encoder</description>
+				<handle>newick-encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Newick</name>
+			<version>0</version>
+			<description>Export to Newick</description>
+			<filters>
+				<filter>
+					<name>Newick-self</name>
+					<handle>newick-decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Newick in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>NEXUS</name>
+	<version>0</version>
+	<fileExtensions>nex,nxs</fileExtensions>
+	<pattern>#NEXUS</pattern>
+	<description>NEXUS</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/Nexus_file</descriptionURI>
+	<tags>phylogeny,tree,systematics,alignment,codon,sequence</tags>
+	
+	<encodingChain>
+		<name>NEXUS</name>
+		<filters>
+			<filter>
+				<name>NEXUS-self</name>
+				<description>NEXUS in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>NEXUS</name>
+			<version>0</version>
+			<description>Export to NEXUS</description>
+			<filters>
+				<filter>
+					<name>NEXUS-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>NEXUS in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>PAIR</name>
+	<version>0</version>
+	<fileExtensions>pair,pair.txt</fileExtensions>
+	<pattern></pattern>
+	<description>Nimblegen PAIR</description>
+	<descriptionURI></descriptionURI>
+	<tags>microarray,oligo,probe</tags>
+	
+	<encodingChain>
+		<name>PAIR</name>
+		<filters>
+			<filter>
+				<name>PAIR-self</name>
+				<description>PAIR in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>PAIR</name>
+			<version>0</version>
+			<description>Export to PAIR</description>
+			<filters>
+				<filter>
+					<name>PAIR-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>PAIR in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>PDB</name>
+	<version>3.2</version>
+	<fileExtensions>pdb</fileExtensions>
+	<pattern></pattern>
+	<description>Protein Data Bank (PDB)</description>
+	<descriptionURI>http://www.wwpdb.org/documentation/format32/v3.2.html</descriptionURI>
+	<tags>protein,structure,polypeptide,amino acid,residue</tags>
+	
+	<encodingChain>
+		<name>PDB</name>
+		<filters>
+			<filter>
+				<name>PDB-self</name>
+				<description>PDB in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>PDB</name>
+			<version>0</version>
+			<description>Export to PDB</description>
+			<filters>
+				<filter>
+					<name>PDB-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>PDB in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>Phylip</name>
+	<version>0</version>
+	<fileExtensions>ph,phy</fileExtensions>
+	<pattern></pattern>
+	<description>Phylip</description>
+	<descriptionURI>http://evolution.genetics.washington.edu/phylip/doc/sequence.html</descriptionURI>
+	<tags>sequence,alignment,codon,amino acid,protein,peptide,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>Phylip</name>
+		<filters>
+			<filter>
+				<name>Phylip-self</name>
+				<description>Phylip in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Phylip</name>
+			<version>0</version>
+			<description>Export to Phylip</description>
+			<filters>
+				<filter>
+					<name>Phylip-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Phylip in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>PhyloXML</name>
+	<version>1.10</version>
+	<fileExtensions>xml,phyloxml</fileExtensions>
+	<pattern></pattern>
+	<description>PhyloXML</description>
+	<descriptionURI>http://www.phyloxml.org/1.10/phyloxml.xsd</descriptionURI>
+	<tags>phylogeny,tree,systematics,alignment,codon,sequence</tags>
+	
+	<encodingChain>
+		<name>PhyloXML</name>
+		<filters>
+			<filter>
+				<name>PhyloXML-self</name>
+				<description>PhyloXML in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>PhyloXML</name>
+			<version>1.10</version>
+			<description>Export to PhyloXML</description>
+			<filters>
+				<filter>
+					<name>PhyloXML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>PhyloXML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>Pileup</name>
+	<version>0</version>
+	<fileExtensions>sam</fileExtensions>
+	<pattern></pattern>
+	<description>Pileup</description>
+	<descriptionURI>http://samtools.sourceforge.net/pileup.shtml</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair,SNP,genotype,base call</tags>
+	
+	<encodingChain>
+		<name>Pileup</name>
+		<filters>
+			<filter>
+				<name>Pileup-self</name>
+				<description>Pileup in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Pileup</name>
+			<version>0</version>
+			<description>Export to Pileup</description>
+			<filters>
+				<filter>
+					<name>Pileup-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Pileup in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>SAI</name>
+	<version>0.1.2</version>
+	<fileExtensions>sam</fileExtensions>
+	<pattern></pattern>
+	<description>SAM index</description>
+	<descriptionURI>http://samtools.sourceforge.net/SAM1.pdf</descriptionURI>
+	<tags>alignment,binary</tags>
+	
+	<encodingChain>
+		<name>SAI</name>
+		<filters>
+			<filter>
+				<name>SAI-self</name>
+				<description>SAI in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>SAI</name>
+			<version>0.1.2</version>
+			<description>Export to SAI</description>
+			<filters>
+				<filter>
+					<name>SAI-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>SAI in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>SAM</name>
+	<version>0.1.2</version>
+	<fileExtensions>sam</fileExtensions>
+	<pattern></pattern>
+	<description>SAM</description>
+	<descriptionURI>http://samtools.sourceforge.net/SAM1.pdf</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>SAM</name>
+		<filters>
+			<filter>
+				<name>SAM-self</name>
+				<description>SAM in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>SAM</name>
+			<version>0.1.2</version>
+			<description>Export to SAM</description>
+			<filters>
+				<filter>
+					<name>SAM-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>SAM in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>SBML</name>
+	<version>1.2</version>
+	<fileExtensions>sbml,xml</fileExtensions>
+	<pattern></pattern>
+	<description>Systems Biology Markup Language (Level 1, Version 2)</description>
+	<descriptionURI>http://sbml.org/Documents/Specifications#SBML_Level_1_Version_2</descriptionURI>
+	<tags>model,systems biology,network,pathway</tags>
+	
+	<encodingChain>
+		<name>SBML</name>
+		<filters>
+			<filter>
+				<name>SBML-self</name>
+				<description>SBML in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>SBML</name>
+			<version>1.2</version>
+			<description>Export to SBML</description>
+			<filters>
+				<filter>
+					<name>SBML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>SBML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>SBML</name>
+	<version>2.4.1</version>
+	<fileExtensions>sbml,xml</fileExtensions>
+	<pattern></pattern>
+	<description>Systems Biology Markup Language (Level 2, Version 4, Release 1)</description>
+	<descriptionURI>http://sbml.org/Documents/Specifications#SBML_Level_2_Version_4</descriptionURI>
+	<tags>model,systems biology,network,pathway</tags>
+	
+	<encodingChain>
+		<name>SBML</name>
+		<filters>
+			<filter>
+				<name>SBML-self</name>
+				<description>SBML in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>SBML</name>
+			<version>2.4.1</version>
+			<description>Export to SBML</description>
+			<filters>
+				<filter>
+					<name>SBML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>SBML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>SBML</name>
+	<version>3.1</version>
+	<fileExtensions>sbml,xml</fileExtensions>
+	<pattern></pattern>
+	<description>Systems Biology Markup Language (Level 3, Version 1 Core)</description>
+	<descriptionURI>http://sbml.org/Documents/Specifications#SBML_Level_3</descriptionURI>
+	<tags>model,systems biology,network,pathway</tags>
+	
+	<encodingChain>
+		<name>SBML</name>
+		<filters>
+			<filter>
+				<name>SBML-self</name>
+				<description>SBML in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>SBML</name>
+			<version>3.1</version>
+			<description>Export to SBML</description>
+			<filters>
+				<filter>
+					<name>SBML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>SBML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>Soap-PE</name>
+	<version>1</version>
+	<fileExtensions>soap,txt</fileExtensions>
+	<pattern></pattern>
+	<description>Soap (paired-end) alignment file</description>
+	<descriptionURI>http://soap.genomics.org.cn/soap1/#Formatofoutput</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>Soap-PE</name>
+		<filters>
+			<filter>
+				<name>Soap-PE-self</name>
+				<description>Soap in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Soap-PE</name>
+			<version>1</version>
+			<description>Export to Soap</description>
+			<filters>
+				<filter>
+					<name>Soap-PE-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Soap-PE in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+		<decodingChain>
+			<name>SAM</name>
+			<version>0.12</version>
+			<description>Export to SAM</description>
+			<filters>
+				<filter>
+					<name>Soap-PE-SAM</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Soap-PE->SAM translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>Soap-SE</name>
+	<version>1</version>
+	<fileExtensions>soap,txt</fileExtensions>
+	<pattern></pattern>
+	<description>Soap (single end) alignment file</description>
+	<descriptionURI>http://soap.genomics.org.cn/soap1/#Formatofoutput</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>Soap-SE</name>
+		<filters>
+			<filter>
+				<name>Soap-SE-self</name>
+				<description>Soap in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Soap-SE</name>
+			<version>1</version>
+			<description>Export to Soap</description>
+			<filters>
+				<filter>
+					<name>Soap-SE-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Soap-SE in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+		<decodingChain>
+			<name>SAM</name>
+			<version>0.12</version>
+			<description>Export to SAM</description>
+			<filters>
+				<filter>
+					<name>Soap-SE-SAM</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Soap-SE->SAM translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>Stockholm</name>
+	<version>1.0</version>
+	<fileExtensions></fileExtensions>
+	<pattern># STOCKHOLM 1.0</pattern>
+	<description>Stockholm</description>
+	<descriptionURI>http://www.bioperl.org/wiki/Stockholm_multiple_alignment_format</descriptionURI>
+	<tags>alignment,nucleotide,peptide,amino acid,base pair,codon,msa</tags>
+	
+	<encodingChain>
+		<name>Stockholm</name>
+		<filters>
+			<filter>
+				<name>Stockholm-self</name>
+				<description>Stockholm in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Stockholm</name>
+			<version>1.0</version>
+			<description>Export to Stockholm</description>
+			<filters>
+				<filter>
+					<name>Stockholm-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Stockholm in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>TAB</name>
+	<version>0</version>
+	<fileExtensions>dat,tab,txt</fileExtensions>
+	<pattern></pattern>
+	<description>Tab-delimted text</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/Tab_delimited</descriptionURI>
+	<tags>data,tab,column,row</tags>
+	
+	<encodingChain>
+		<name>TAB</name>
+		<filters>
+			<filter>
+				<name>TAB-self</name>
+				<description>TAB in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>TAB</name>
+			<version>0</version>
+			<description>Export to TAB</description>
+			<filters>
+				<filter>
+					<name>TAB-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>TAB in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>TAR</name>
+	<version>0</version>
+	<fileExtensions>tar</fileExtensions>
+	<pattern></pattern>
+	<description>TAR</description>	<descriptionURI>http://en.wikipedia.org/wiki/Tar_(file_format)</descriptionURI>
+	<tags>compressed</tags>
+	
+	<encodingChain>
+		<name>TAR</name>
+		<filters>
+			<filter>
+				<name>TAR-self</name>
+				<description>TAR in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>TAR</name>
+			<version>0</version>
+			<description>Export to TAR</description>
+			<filters>
+				<filter>
+					<name>TAR-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>TAR in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>Text</name>
+	<version>0</version>
+	<fileExtensions>txt</fileExtensions>
+	<pattern></pattern>
+	<description>Plain text</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/Plain_text</descriptionURI>
+	<tags>data,tab,column,row</tags>
+	
+	<encodingChain>
+		<name>Text</name>
+		<filters>
+			<filter>
+				<name>Text-self</name>
+				<description>Text in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Text</name>
+			<version>0</version>
+			<description>Export to Text</description>
+			<filters>
+				<filter>
+					<name>Text-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Text in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>VCF</name>
+	<version>3.3</version>
+	<fileExtensions>vcf</fileExtensions>
+	<pattern>##fileformat=VCFv3.3</pattern>
+	<description>Variant call format (VCF)</description>	<descriptionURI>http://www.1000genomes.org/wiki/doku.php?id=1000_genomes:analysis:vcf3.3</descriptionURI>
+	<tags>resequencing,snp,marker,diversity,allele,genotype</tags>
+	
+	<encodingChain>
+		<name>VCF</name>
+		<filters>
+			<filter>
+				<name>VCF-self</name>
+				<description>VCF in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>VCF</name>
+			<version>3.3</version>
+			<description>Export to VCF</description>
+			<filters>
+				<filter>
+					<name>VCF-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>VCF in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>VCF</name>
+	<version>4.0</version>
+	<fileExtensions>vcf</fileExtensions>
+	<pattern>##fileformat=VCFv4.0</pattern>
+	<description>Variant call format (VCF)</description>	<descriptionURI>http://www.1000genomes.org/wiki/doku.php?id=1000_genomes:analysis:vcf4.0</descriptionURI>
+	<tags>resequencing,snp,marker,diversity,allele,genotype</tags>
+	
+	<encodingChain>
+		<name>VCF</name>
+		<filters>
+			<filter>
+				<name>VCF-self</name>
+				<description>VCF in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>VCF</name>
+			<version>3.3</version>
+			<description>Export to VCF</description>
+			<filters>
+				<filter>
+					<name>VCF-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>VCF in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+	<name>WIG</name>
+	<version>0</version>
+	<fileExtensions>wig,txt</fileExtensions>
+	<pattern></pattern>
+	<description>UCSC Wiggle</description>	<descriptionURI>http://genome.ucsc.edu/FAQ/FAQformat#format6</descriptionURI>
+	<tags>sequence,annotation,interval,feature,coordinates,continuous value</tags>
+	
+	<encodingChain>
+		<name>WIG</name>
+		<filters>
+			<filter>
+				<name>WIG-self</name>
+				<description>WIG in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>WIG</name>
+			<version>0</version>
+			<description>Export to WIG</description>
+			<filters>
+				<filter>
+					<name>WIG-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>WIG in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform><transform>
+
+    <name>TGZ</name>
+    <version>0</version>
+    <fileExtensions>tar.gz</fileExtensions>
+    <pattern></pattern>
+    <description>TGZ</description>	<descriptionURI>http://en.wikipedia.org/wiki/Tar_(file_format)</descriptionURI>
+    <tags>compressed</tags>
+
+    <encodingChain>
+        <name>TGZ</name>
+        <filters>
+            <filter>
+                <name>TGZ-self</name>
+                <description>TGZ in-place encoder</description>
+                <handle>encode.sh</handle>
+                <useOriginalFile>true</useOriginalFile>
+            </filter>
+        </filters>
+    </encodingChain>
+
+    <decoders>
+
+        <decodingChain>
+            <name>TGZ</name>
+            <version>0</version>
+            <description>Export to TAR.GZ</description>
+            <filters>
+                <filter>
+                    <name>TAR-self</name>
+                    <handle>decode.sh</handle>
+                    <useOriginalFile>true</useOriginalFile>
+                    <description>TGZ in-place decoder</description>
+                </filter>
+            </filters>
+        </decodingChain>
+
+    </decoders>
+
+</transform><transform>
+
+    <name>HEAD</name>
+    <version>0</version>
+    <fileExtensions>txt</fileExtensions>
+    <pattern></pattern>
+    <description>Text</description>
+    <descriptionURI>http://linux.about.com/library/cmd/blcmdl1_head.htm</descriptionURI>
+    <tags>data,head</tags>
+
+    <encodingChain>
+        <name>HEAD</name>
+        <filters>
+            <filter>
+                <name>HEAD-self</name>
+                <description>HEAD in-place encoder</description>
+                <handle>encode.sh</handle>
+                <useOriginalFile>true</useOriginalFile>
+            </filter>
+        </filters>
+    </encodingChain>
+
+</transform><transform>
+
+    <name>TAIL</name>
+    <version>0</version>
+    <fileExtensions>txt</fileExtensions>
+    <pattern></pattern>
+    <description>Text</description>
+    <descriptionURI>http://linux.about.com/library/cmd/blcmdl1_tail.htm</descriptionURI>
+    <tags>data,tail</tags>
+
+    <encodingChain>
+        <name>TAIL</name>
+        <filters>
+            <filter>
+                <name>TAIL-self</name>
+                <description>TAIL in-place encoder</description>
+                <handle>encode.sh</handle>
+                <useOriginalFile>true</useOriginalFile>
+            </filter>
+        </filters>
+    </encodingChain>
+
+</transform><transform>
+
+    <name>CAT</name>
+    <version>0</version>
+    <fileExtensions>txt</fileExtensions>
+    <pattern></pattern>
+    <description>Text</description>
+    <descriptionURI>http://linux.about.com/od/commands/l/blcmdl1_cat.htm</descriptionURI>
+    <tags>data,cat</tags>
+
+    <encodingChain>
+        <name>CAT</name>
+        <filters>
+            <filter>
+                <name>CAT-self</name>
+                <description>CAT in-place encoder</description>
+                <handle>encode.sh</handle>
+                <useOriginalFile>true</useOriginalFile>
+            </filter>
+        </filters>
+    </encodingChain>
+
+</transform>
+
+
+
+</transforms>

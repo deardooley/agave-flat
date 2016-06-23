@@ -1,0 +1,55 @@
+{
+    "apiVersion": "2.1.0-reb586",
+    "swaggerVersion": "1.2",
+    "produces": [
+      "application/json"
+    ],
+    "apis": [
+        {
+            "description": "List available tenants",
+            "path": "/tenants"
+        },
+        {
+            "path": "/usage",
+            "description": "Query for ussage across APIs"
+        }
+    ],
+    "authorizations": {
+      "oauth2": {
+	      "type": "oauth2",
+	      "scopes": [
+          {
+            "scope": "PRODUCTION",
+            "description": "catchall grant type for all api services."
+          }
+	      ],
+	      "grantTypes": {
+	        "implicit": {
+	          "loginEndpoint": {
+	            "url": "https://agave.iplantc.org/login"
+	          },
+	          "tokenName": "access_token"
+	        },
+	        "authorization_code": {
+	          "tokenRequestEndpoint": {
+	            "url": "https://agave.iplantc.org/authorize",
+	            "clientIdName": "client_id",
+	            "clientSecretName": "client_secret"
+	          },
+	          "tokenEndpoint": {
+	            "url": "https://agave.iplantc.org/token",
+	            "tokenName": "access_code"
+	          }
+	        }
+	      }
+	    }
+	},
+	"info": {
+	    "title": "iPlant Agave API",
+	    "description": "Your Science-as-a-Service API Platform. \nFor more information, visit <a href=\"http://agaveapi.co\">http://agaveapi.co</a>",
+	    "termsOfServiceUrl": "http://agaveapi.co/terms/",
+	    "contact": "dooley@tacc.utexas.edu",
+	    "licenseUrl": "http://agaveapi.co/terms"
+	}
+
+}

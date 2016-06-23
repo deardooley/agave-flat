@@ -1,0 +1,40 @@
+<transform>
+
+	<name>EMBL</name>
+	<version>0</version>
+	<fileExtensions>embl</fileExtensions>
+	<pattern>^ID</pattern>
+	<description>EMBL multiple sequence alignment</description>	<descriptionURI>http://www.bioperl.org/wiki/EMBL_sequence_format</descriptionURI>
+	<tags>annotation,sequence,amino acid,base pair,peptide,feature,gene model</tags>
+	
+	<encodingChain>
+		<name>EMBL</name>
+		<filters>
+			<filter>
+				<name>EMBL-self</name>
+				<description>EMBL in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>EMBL</name>
+			<version>0</version>
+			<description>Export to EMBL</description>
+			<filters>
+				<filter>
+					<name>EMBL-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>EMBL in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

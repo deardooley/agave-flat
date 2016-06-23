@@ -1,0 +1,24 @@
+{
+	"id": "storage.example.com",
+	"name": "My Example Storage System",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "My example storage system used for testing",
+	"site": "my.site",
+	"storage": {
+		"host": "docker.example.com",
+		"port": 10022,
+		"protocol": "SFTP",
+		"rootDir": "/",
+		"homeDir": "/home/testuser",
+		"auth": {
+			"username": "testuser",
+			"password": "testuser",
+			"type": "PASSWORD"
+		}
+		
+	},
+	"default": true,
+	"protocol": "SFTP"
+	
+}

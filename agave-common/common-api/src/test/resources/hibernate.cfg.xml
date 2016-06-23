@@ -1,0 +1,28 @@
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+
+<!-- DO NOT EDIT: This is a generated file that is synchronized -->
+<!-- by MyEclipse Hibernate tool integration.                   -->
+<hibernate-configuration>
+
+    <session-factory>
+        <!-- properties -->
+
+        <!-- Local JNDI connection properties -->
+        <property name="connection.datasource"><![CDATA[${foundation.db.jndi.connection}]]></property>
+
+        <!-- General connection properties -->
+        <property name="dialect">org.hibernate.dialect.MySQL5Dialect</property>
+        <property name="hibernate.current_session_context_class">thread</property>
+        <property name="hibernate.query.factory_class">org.hibernate.hql.ast.ASTQueryTranslatorFactory</property>
+        <property name="hibernate.connection.autocommit">false</property>
+        <property name="hbm2ddl.auto">update</property>
+        <property name="hibernate.show_sql">false</property>
+        <property name="hibernate.query.substitutions">true 1, false 0</property>
+
+        <!-- <mapping class="org.iplantc.service.profile.model.InternalUser" /> -->
+
+    </session-factory>
+
+</hibernate-configuration>

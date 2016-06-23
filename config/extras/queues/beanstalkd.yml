@@ -1,0 +1,26 @@
+##############################################################
+#  OPTIONAL: Persistent beanstalkd instance
+#############################################################
+
+beanstalkd:
+  image: agaveapi/beanstalkd:latest
+  command: /usr/bin/beanstalkd -b
+  mem_limit: 1024m
+  restart: always
+  volumes_from:
+    - 'beanstalkd-vol'
+  ports:
+    - '11300:11300'
+  tags:
+    - staging
+    - worker
+
+beanstalkd-vol:
+  image: ubuntu
+  command: sleep 2147483647
+  mem_limit: 64m
+  volumes:
+    - /var/lib/beanstalkd:/var/lib/beanstalkd
+  tags:
+    - staging
+    - worker

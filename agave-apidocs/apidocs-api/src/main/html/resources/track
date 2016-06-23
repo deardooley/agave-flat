@@ -1,0 +1,67 @@
+{
+    "apiVersion": "${project.version}-r${buildNumber}",
+    "apis": [
+        {
+            "description": "Log activity in the api",
+            "operations": [
+                {
+                    "method": "POST",
+                    "nickname": "log",
+                    "notes": "",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid api user",
+                            "name": "username",
+                            "paramType": "form",
+                            "required": true,
+                            "type": "String"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The service that was called",
+                            "name": "servicekey",
+                            "paramType": "form",
+                            "required": true,
+                            "type": "String"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The activitykey describing the action taken on the service",
+                            "name": "username",
+                            "paramType": "form",
+                            "required": true,
+                            "type": "String"
+                        }
+                    ],
+                    "summary": "Log an action by a specific user",
+                    "type": "SingleTrackResponse"
+                }
+            ],
+            "path": "/track/v2/"
+        }
+    ],
+    "basePath": "${foundation.base.url}",
+    "models": {
+        "SingleTrackResponse": {
+            "id": "SingleTrackResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "empty response",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "resourcePath": "/track/v2",
+    "swaggerVersion": "1.2"
+}

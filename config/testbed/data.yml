@@ -1,0 +1,87 @@
+###############################################################
+# Testbed Data Containers
+# 
+# These are the data containers needed for basic unit testing.
+###############################################################
+  
+sftp:
+  image: agaveapi/centos-base
+  hostname: docker.example.com
+  ports:
+    - '10022:22'
+
+sftptunnel:
+ image: agaveapi/centos-base
+ hostname: tunnel.example.com
+ privileged: true
+ links: 
+   - sftphidden
+ ports:
+   - '10033:22'
+
+sftphidden:
+  image: agaveapi/centos-base
+  hostname: docker.example.com
+  ports:
+    - '10044:22'
+
+irods:
+  image: agaveapi/irods:3.3.1
+  hostname: docker.example.com
+  mem_limit: 2048m
+  ports:
+    - '10055:22'
+    - '1247:1247'
+    - '5432:5432'
+
+irodspam:
+ image: agaveapi/irods-pam:latest
+ hostname: docker.example.com
+ ports:
+   - '10066:22'
+   - '1248:1247'
+
+irods4:
+ image: agaveapi/irods:4.0.3
+ command: changeit
+ hostname: docker.example.com
+ environment:
+   - 'DOCKER_HOSTNAME=docker.example.com'
+   - 'IRODS_ZONE=iplant'
+ ports:
+   - '1257:1247'
+
+http:
+  image: agaveapi/apache-dev
+  hostname: docker.example.com
+  ports:
+    - '10077:22'
+    - '10080:80'
+    - '10443:443'
+
+ftp:
+  image: agaveapi/pure-ftpd
+  hostname: docker.example.com
+  privileged: true
+  ports:
+    - '10020:20'
+    - '10021:21'
+    - '10088:22'
+    - '30000-30099:30000-30099'
+
+gridftp:
+  image: agaveapi/gridftp:5
+  hostname: docker.example.com
+  extra_hosts:
+    - 'tests.example.com:192.168.99.1'
+    - 'dooley-mac.local:192.168.99.1'
+  privileged: true
+  ports:
+    - '10099:22'
+    - '2811:2811'
+    - '7514:7512'
+    - '50000-50100:50000-50100'
+  environment:
+    - 'GLOBUS_TCP_PORT_RANGE=50000,50100'
+  volumes:
+    - ./gridftp-supervisord.conf:/etc/supervisord.conf

@@ -1,0 +1,254 @@
+Agave\Bundle\ApiBundle\Entity\Softwares:
+    type: entity
+    table: softwares
+    indexes:
+        FK85C8D3AC62ED13D2:
+            columns:
+                - storage_system_id
+        FK85C8D3AC4B955F33:
+            columns:
+                - system_id
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+        uuid:
+            columns:
+                - uuid
+        name:
+            columns:
+                - name
+                - version
+                - publicly_available
+                - revision_count
+                - tenant_id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        available:
+            type: boolean
+            nullable: true
+        checkpointable:
+            type: boolean
+            nullable: true
+        checksum:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+        created:
+            type: datetime
+            nullable: false
+        deploymentPath:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            column: deployment_path
+        executablePath:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            column: executable_path
+        executionType:
+            type: string
+            nullable: false
+            length: 8
+            fixed: false
+            column: execution_type
+        helpuri:
+            type: string
+            nullable: true
+            length: 128
+            fixed: false
+        icon:
+            type: string
+            nullable: true
+            length: 128
+            fixed: false
+        label:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        longDescription:
+            type: string
+            nullable: true
+            length: 32768
+            fixed: false
+            column: long_description
+        modules:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+        name:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+        ontology:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+        owner:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        parallelism:
+            type: string
+            nullable: false
+            length: 8
+            fixed: false
+        publiclyAvailable:
+            type: boolean
+            nullable: true
+            column: publicly_available
+        revisionCount:
+            type: integer
+            nullable: true
+            unsigned: false
+            column: revision_count
+        shortDescription:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: short_description
+        tags:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+        testPath:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            column: test_path
+        uuid:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+        version:
+            type: string
+            nullable: false
+            length: 16
+            fixed: false
+        defaultMemory:
+            type: float
+            nullable: true
+            precision: 10
+            scale: 0
+            column: default_memory
+        defaultProcesors:
+            type: integer
+            nullable: true
+            unsigned: false
+            column: default_procesors
+        defaultQueue:
+            type: string
+            nullable: true
+            length: 12
+            fixed: false
+            column: default_queue
+        defaultRequestedTime:
+            type: string
+            nullable: true
+            length: 19
+            fixed: false
+            column: default_requested_time
+        defaultNodes:
+            type: bigint
+            nullable: true
+            unsigned: false
+            column: default_nodes
+    manyToOne:
+        system:
+            targetEntity: Executionsystems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                system_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+        storageSystem:
+            targetEntity: Storagesystems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                storage_system_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    manyToMany:
+        inputs:
+            targetEntity: SoftwareInputs
+            cascade: {  }
+            mappedBy: null
+            inversedBy: softwares
+            joinTable:
+                name: softwares_inputs
+                joinColumns:
+                    -
+                        name: softwares
+                        referencedColumnName: id
+                inverseJoinColumns:
+                    -
+                        name: inputs
+                        referencedColumnName: id
+            orderBy: null
+        outputs:
+            targetEntity: SoftwareOutputs
+            cascade: {  }
+            mappedBy: null
+            inversedBy: softwares
+            joinTable:
+                name: softwares_outputs
+                joinColumns:
+                    -
+                        name: softwares
+                        referencedColumnName: id
+                inverseJoinColumns:
+                    -
+                        name: outputs
+                        referencedColumnName: id
+            orderBy: null
+        parameters:
+            targetEntity: SoftwareParameters
+            cascade: {  }
+            mappedBy: null
+            inversedBy: softwares
+            joinTable:
+                name: softwares_parameters
+                joinColumns:
+                    -
+                        name: softwares
+                        referencedColumnName: id
+                inverseJoinColumns:
+                    -
+                        name: parameters
+                        referencedColumnName: id
+            orderBy: null
+    lifecycleCallbacks: {  }

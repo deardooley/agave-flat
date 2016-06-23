@@ -1,0 +1,77 @@
+Agave\Bundle\ApiBundle\Entity\Postits:
+    type: entity
+    table: postits
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        targetUrl:
+            type: string
+            nullable: false
+            length: 32768
+            fixed: false
+            column: target_url
+        targetMethod:
+            type: string
+            nullable: false
+            length: 6
+            fixed: false
+            default: GET
+            column: target_method
+        postitKey:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: postit_key
+        creator:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        token:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+        ipAddress:
+            type: string
+            nullable: false
+            length: 15
+            fixed: false
+            column: ip_address
+        createdAt:
+            type: datetime
+            nullable: false
+            default: CURRENT_TIMESTAMP
+            column: created_at
+        expiresAt:
+            type: datetime
+            nullable: false
+            default: '0000-00-00 00:00:00'
+            column: expires_at
+        remainingUses:
+            type: integer
+            nullable: false
+            unsigned: false
+            default: '-1'
+            column: remaining_uses
+        internalUsername:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+            column: internal_username
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            default: iplantc.org
+            column: tenant_id
+    lifecycleCallbacks: {  }

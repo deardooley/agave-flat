@@ -1,0 +1,31 @@
+{
+	"id": "ranch.tacc.utexas.edu",
+	"name": "Ranch",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "TACC disk archival system.",
+	"site": "tacc.xsede.org",
+	"storage": {
+		"host": "gridftp1.ranch.tacc.utexas.edu",
+		"port": 2811,
+		"protocol": "GRIDFTP",
+		"homeDir": "/home1/00475/dooley",
+		"rootDir": "/",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": "",
+			"type": "X509",
+			"server": {
+				"id": "myproxy.xsede.org",
+				"name": "XSEDE MyProxy Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.xsede.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+		
+	},
+	"default": false
+}

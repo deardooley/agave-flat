@@ -1,0 +1,10 @@
+0 */4 * * * docker exec -it agavestats_web_1 php /var/www/html/artisan stats:cache -r summary 2>&1
+5 */4 * * * docker exec -it agavestats_web_1 php /var/www/html/artisan stats:cache -r apps 2>&1
+10 */4 * * * docker exec -it agavestats_web_1 php /var/www/html/artisan stats:cache -r jobs 2>&1
+15 */4 * * * docker exec -it agavestats_web_1 php /var/www/html/artisan stats:cache -r traffic 2>&1
+20 */4 * * * docker exec -it agavestats_web_1 php /var/www/html/artisan stats:cache -r tenants 2>&1
+25 */4 * * * docker exec -it agavestats_web_1 php /var/www/html/artisan stats:cache -r users 2>&1
+30 */4 * * * docker exec -it agavestats_web_1 php /var/www/html/artisan stats:cache -r code 2>&1
+35 */4 * * * docker exec -it agavestats_web_1 php /var/www/html/artisan stats:cache -r data 2>&1
+40 */4 * * * docker exec -it agavestats_web_1 php /var/www/html/artisan stats:cache -r operations 2>&1
+45 */4 * * * docker exec -it agavestats_web_1 php /var/www/html/artisan stats:cache -r clients 2>&1

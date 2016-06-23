@@ -1,0 +1,20 @@
+{
+	"id": "ftp.example.com",
+	"name": "Demo FTP demo vm",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "My example system using ftp to move data.",
+	"site": "example.com",
+	"storage": {
+		"host": "docker.example.com",
+		"port": 22,
+		"protocol": "FTP",
+		"rootDir":"/",
+		"homeDir": "/home/${iplant.community.username}",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "PASSWORD"
+		}
+	}
+}

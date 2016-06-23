@@ -1,0 +1,18 @@
+{
+	"id": "local.storage.example.com",
+	"name": "Local Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example storage system accessible via local file system.",
+	"site": "example.com",
+	"storage": {
+		"host": "localhost",
+		"port": 22,
+		"protocol": "LOCAL",
+		"auth": {
+			"type": "LOCAL"
+		}
+		
+	},
+	"default": false
+}

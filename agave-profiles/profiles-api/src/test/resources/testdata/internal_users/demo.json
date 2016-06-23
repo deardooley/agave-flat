@@ -1,0 +1,20 @@
+{	
+	"username": "demo",
+	"email": "demo@example.com",
+	"firstName": "Demo",
+	"lastName": "Demo",
+	"position": "Owner",
+	"institution": "Example University",
+	"phone": "512-555-5555",
+	"fax": "512-555-5556",
+	"researchArea": "Software Engineering",
+	"department": "QA",
+	"city": "Anywhere",
+	"state": "TX",
+	"country": "USA",
+	"fundingAgencies": [
+		"Dad", 
+		"Mom"
+	],
+	"gender": "FEMALE"
+}

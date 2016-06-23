@@ -1,0 +1,21 @@
+{
+	"id": "ftp.example.com",
+	"name": "FTP Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example storage system accessible via ftp.",
+	"site": "example.com",
+	"storage": {
+		"host": "docker.example.com",
+		"port": 10021,
+		"protocol": "FTP",
+		"rootDir": "/",
+		"homeDir": "/",
+		"auth": {
+			"username": "anonymous",
+			"password": null,
+			"type": "ANONYMOUS"
+		}
+	},
+	"default": false
+}

@@ -1,0 +1,62 @@
+Agave\Bundle\ApiBundle\Entity\Fileevents:
+    type: entity
+    table: fileevents
+    indexes:
+        FK8A30C99573DE1B78:
+            columns:
+                - transfertask
+        FK8A30C99541C615BD:
+            columns:
+                - logicalfile_id
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        description:
+            type: string
+            nullable: true
+            length: 32768
+            fixed: false
+        ipAddress:
+            type: string
+            nullable: false
+            length: 15
+            fixed: false
+            column: ip_address
+        status:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+    manyToOne:
+        logicalfile:
+            targetEntity: LogicalFiles
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                logicalfile_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+        transfertask:
+            targetEntity: Transfertasks
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                transfertask:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

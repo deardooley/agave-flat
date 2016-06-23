@@ -1,0 +1,361 @@
+###############################################################
+# Core Science APIs - Dev
+# service-definitions.yml
+#
+# This is the base orchestration file to start Agave's Core Science
+# APIs. The APIs are accessible behind a proxy container which
+# shields them from the outside world. Containers are assigned
+# static ports to enable rolling updates of each API as needed.
+# Containers performing data operations are assigned a partition
+# of the default GridFTP and FTP port ranges to enable proper
+# operation of the protocol from within each container.
+#
+# Make sure to start your containers
+# with $AGAVE_VERSION defined in your environment. You should
+# also have the following /etc/hosts entries defined for your
+# hosting environment. (These are appropriate for docker-machine
+# on OSX.) In a production environment, these should resolve
+# to the appropriate hosts and/or dns entries.
+#
+###############################################################
+
+version: '2'
+
+services:
+
+  jobs:
+    extends:
+      file: common.yml
+      service: java_api
+    image: jobs-api:$AGAVE_VERSION
+    mem_limit: 2048m
+    environment:
+      - 'LOG_TARGET_STDOUT=1'
+      - 'IPLANT_MAX_STAGING_TASKS=5'
+      - 'IPLANT_MAX_ARCHIVE_TASKS=5'
+      - 'IPLANT_MAX_SUBMISSION_TASKS=2'
+      - 'IPLANT_MAX_MONITORING_TASKS=1'
+      - 'GLOBUS_TCP_PORT_RANGE=50007,50017'
+      - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms512m -Xmx2000m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
+    volumes:
+      - '/var/log/splunk/jobs:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefix:/jobs
+      - traefik.backend=jobs
+    networks:
+      - backend
+      - internal
+
+  files:
+    extends:
+      file: common.yml
+      service: java_api
+    image: files-api:$AGAVE_VERSION
+    mem_limit: 2048m
+    environment:
+      - 'IPLANT_MAX_STAGING_TASKS=5'
+      - 'IPLANT_MAX_TRANSFORM_TASKS=5'
+      - 'GLOBUS_TCP_PORT_RANGE=50301,50310'
+      - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms512m -Xmx2000m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
+    volumes:
+      - '/var/log/splunk/files:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefix:/files
+      - traefik.backend=files
+    networks:
+      - backend
+      - internal
+
+  apps:
+    extends:
+      file: common.yml
+      service: java_api
+    image: apps-api:$AGAVE_VERSION
+    environment:
+      - 'GLOBUS_TCP_PORT_RANGE=50901,50910'
+      - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms256m -Xmx1000m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
+    volumes:
+      - '/var/log/splunk/apps:/opt/tomcat/logs'
+      - './ssl:/ssl:ro'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/apps
+      - traefik.backend=apps
+    networks:
+      - backend
+      - internal
+
+  systems:
+    extends:
+      file: common.yml
+      service: java_api
+    image: systems-api:$AGAVE_VERSION
+    mem_limit: 512m
+    environment:
+      - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms256m -Xmx512m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
+    volumes:
+      - '/var/log/splunk/systems:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/systems
+      - traefik.backend=systems
+    networks:
+      - backend
+      - internal
+
+  monitors:
+    extends:
+      file: common.yml
+      service: java_api
+    image: monitors-api:$AGAVE_VERSION
+    mem_limit: 1024m
+    restart: "always"
+    volumes:
+      - '/var/log/splunk/monitors:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/monitors
+      - traefik.backend=monitors
+    networks:
+      - backend
+      - internal
+
+  profiles:
+    extends:
+      file: common.yml
+      service: java_api
+    image: profiles-api:$AGAVE_VERSION
+    mem_limit: 512m
+    environment:
+      - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms256m -Xmx512m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
+    volumes:
+      - '/var/log/splunk/profiles:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/profiles
+      - traefik.backend=profiles
+    networks:
+      - backend
+      - internal
+
+  metadata:
+    extends:
+      file: common.yml
+      service: java_api
+    image: metadata-api:$AGAVE_VERSION
+    volumes:
+      - '/var/log/splunk/metadata:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=PathPrefix:/meta/data,/meta/schema
+      - traefik.backend=metadata
+    networks:
+      - backend
+      - internal
+
+  notifications:
+    extends:
+      file: common.yml
+      service: java_api
+    image: notifications-api:$AGAVE_VERSION
+    environment:
+      - 'IPLANT_MAX_NOTIFICATION_TASKS=2'
+    volumes:
+      - '/var/log/splunk/notifications:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/notfiications
+      - traefik.backend=notifications
+    networks:
+      - backend
+      - internal
+
+  transforms:
+    extends:
+      file: common.yml
+      service: java_api
+    image: transforms-api:$AGAVE_VERSION
+    environment:
+      - 'IPLANT_MAX_STAGING_TASKS=2'
+      - 'IPLANT_MAX_ARCHIVE_TASKS=2'
+      - 'IPLANT_MAX_SUBMISSION_TASKS=2'
+      - 'IPLANT_MAX_TRANSFORM_TASKS=2'
+      - 'GLOBUS_TCP_PORT_RANGE=50601,50610'
+    volumes:
+      - '/var/log/splunk/transforms:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefix:/transforms
+      - traefik.backend=transforms
+    networks:
+      - backend
+      - internal
+
+  realtime:
+    extends:
+      file: common.yml
+      service: java_api
+    image: realtime-api:$AGAVE_VERSION
+    volumes:
+      - '/var/log/splunk/realtime:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/realtime
+      - traefik.backend=realtime
+    networks:
+      - backend
+      - internal
+
+  tags:
+    extends:
+      file: common.yml
+      service: java_api
+    image: tags-api:$AGAVE_VERSION
+    volumes:
+      - '/var/log/splunk/tags:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/tags
+      - traefik.backend=tags
+    networks:
+      - backend
+      - internal
+
+  postits:
+    extends:
+      file: common.yml
+      service: php_api
+    image: postits-api:$AGAVE_VERSION
+    environment:
+      - 'IPLANT_PROXY_SERVICE=http://docker.example.com'
+      - 'IPLANT_DB_POSTITS_TABLE=postits'
+    volumes:
+      - '/var/log/splunk/postits:/var/log/apache2'
+      - './agave-postits/postits-api/src/main/php:/var/www/html'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/postits
+      - traefik.backend=postits
+    networks:
+      - backend
+      - internal
+
+  usage:
+    extends:
+      file: common.yml
+      service: php_api
+    image: usage-api:$AGAVE_VERSION
+    volumes:
+      - '/var/log/splunk/usage:/var/log/apache2'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/usage
+      - traefik.backend=usage
+    networks:
+      - backend
+      - internal
+
+  logging:
+    extends:
+      file: common.yml
+      service: php_api
+    image: logging-api:$AGAVE_VERSION
+    volumes:
+      - '/var/log/splunk/logging:/var/log/apache2'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/logging
+      - traefik.backend=logging
+    networks:
+      - backend
+      - internal
+
+  tenants:
+    extends:
+      file: common.yml
+      service: php_api
+    image: tenants-api:$AGAVE_VERSION
+    volumes:
+      - '/var/log/splunk/tenants:/var/log/apache2'
+      - './ssl:/ssl:ro'
+    labels:
+      - 'traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/tenants'
+      - 'traefik.backend=tenants'
+    networks:
+      - backend
+      - internal
+
+  docs:
+    extends:
+      file: common.yml
+      service: php_api
+    image: apidocs-api:$AGAVE_VERSION
+    volumes:
+      - '/var/log/splunk/docs:/var/log/apache2'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;Path:/docs
+      - traefik.backend=docs
+    networks:
+      - backend
+      - internal
+
+  stats:
+    extends:
+      file: common.yml
+      service: php_api
+    image: stats-api:$AGAVE_VERSION
+    environment:
+      - 'PINGDOM_USERNAME=USERNAME'
+      - 'PINGDOM_PASSWORD=PASSWORD'
+      - 'MYSQL_HOST=db.staging.agaveapi.co'
+      - 'PINGDOM_TOKEN='
+      - 'STATUSIO_ID='
+      - 'FREEGEOIP_URL=http://freegeoip:8001'
+      - 'STATS_CACHE_LIFETIME=240'
+      - 'DOCUMENT_ROOT=/var/www/html/public'
+      - 'REDIS_HOST=redis'
+      - 'REDIS_PORT=6379'
+      - 'APIM_MYSQL_HOST=auth.docker.example.com'
+      - 'APIM_MYSQL_PORT=3306'
+      - 'APIM_MYSQL_USERNAME=agaveuser'
+      - 'APIM_MYSQL_PASSWORD=password'
+    volumes:
+      - /var/log/splunk/stats:/var/www/html
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;Path:/stats
+      - traefik.backend=stats
+    networks:
+      - backend
+      - internal
+
+
+  ################################################################
+  ## Third-party Services
+  ##
+  ## These are the third-party services providing persistence and
+  ## messaging to the Core Science APIs. The containers defined
+  ## below are are sufficient for running in a development
+  ## environment. Do NOT use these for production deployments.
+  ##
+  ## Production deployments should leverage a dedicated MySQL
+  ## cluster, a managed MongoDB cluster, and a distributed
+  ## message queue. Each of these should be operated in a high
+  ## availability configuration. Without such a deployment, the
+  ## Core Science APIs cannot be properly scaled to provide HA.
+  ################################################################
+
+  reverseip:
+    image: fiorix/freegeoip
+    ports:
+      - "8001:8080"
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - backend
+
+  redis:
+    image: redis:2.8
+    command: redis-server --appendonly yes
+    hostname: docker.example.com
+    privileged: true
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./cache/redis:/data
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - backend
+
+networks:
+  backend:
+  internal:
+  frontend:

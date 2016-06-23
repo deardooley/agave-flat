@@ -1,0 +1,51 @@
+{
+	"id": "ssh.example.com",
+	"name": "SSH",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample ssh execution system.",
+	"site": "tacc.xsede.org",
+	"executionType": "HPC",
+	"default": false,
+	"queues": [
+		{
+			"name": "normal",
+			"maxJobs": 100,
+			"maxUserJobs": 10,
+			"maxNodes": 256,
+			"maxProcessorsPerNode": 16,
+			"maxMemoryPerNode": "2048GB",
+			"maxRequestedTime": "24:00:00",
+			"customDirectives": "#$ -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "docker.example.com",
+		"port": 22,
+		"protocol": "SSH",
+		"scratchDir": "/tmp",
+		"workDir": "/tmp",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": null,
+			"type": "PASSWORD"
+		}
+	},
+	"storage": {
+		"host": "docker.example.com",
+		"port": 22,
+		"protocol": "SFTP",
+		"rootDir":"/",
+		"homeDir": "/home/${iplant.test.username}",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "PASSWORD"
+		}
+	},
+	"scheduler": "SGE",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

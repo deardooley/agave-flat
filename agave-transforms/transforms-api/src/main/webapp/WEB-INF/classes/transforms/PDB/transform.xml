@@ -1,0 +1,41 @@
+<transform>
+
+	<name>PDB</name>
+	<version>3.2</version>
+	<fileExtensions>pdb</fileExtensions>
+	<pattern></pattern>
+	<description>Protein Data Bank (PDB)</description>
+	<descriptionURI>http://www.wwpdb.org/documentation/format32/v3.2.html</descriptionURI>
+	<tags>protein,structure,polypeptide,amino acid,residue</tags>
+	
+	<encodingChain>
+		<name>PDB</name>
+		<filters>
+			<filter>
+				<name>PDB-self</name>
+				<description>PDB in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>PDB</name>
+			<version>0</version>
+			<description>Export to PDB</description>
+			<filters>
+				<filter>
+					<name>PDB-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>PDB in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

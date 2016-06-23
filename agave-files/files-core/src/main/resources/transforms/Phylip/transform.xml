@@ -1,0 +1,41 @@
+<transform>
+
+	<name>Phylip</name>
+	<version>0</version>
+	<fileExtensions>ph,phy</fileExtensions>
+	<pattern></pattern>
+	<description>Phylip</description>
+	<descriptionURI>http://evolution.genetics.washington.edu/phylip/doc/sequence.html</descriptionURI>
+	<tags>sequence,alignment,codon,amino acid,protein,peptide,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>Phylip</name>
+		<filters>
+			<filter>
+				<name>Phylip-self</name>
+				<description>Phylip in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Phylip</name>
+			<version>0</version>
+			<description>Export to Phylip</description>
+			<filters>
+				<filter>
+					<name>Phylip-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Phylip in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

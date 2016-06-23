@@ -1,0 +1,41 @@
+<transform>
+
+	<name>Text</name>
+	<version>0</version>
+	<fileExtensions>txt</fileExtensions>
+	<pattern></pattern>
+	<description>Plain text</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/Plain_text</descriptionURI>
+	<tags>data,tab,column,row</tags>
+	
+	<encodingChain>
+		<name>Text</name>
+		<filters>
+			<filter>
+				<name>Text-self</name>
+				<description>Text in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Text</name>
+			<version>0</version>
+			<description>Export to Text</description>
+			<filters>
+				<filter>
+					<name>Text-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Text in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

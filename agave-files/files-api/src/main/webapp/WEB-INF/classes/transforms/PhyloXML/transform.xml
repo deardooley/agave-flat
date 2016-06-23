@@ -1,0 +1,41 @@
+<transform>
+
+	<name>PhyloXML</name>
+	<version>1.10</version>
+	<fileExtensions>xml,phyloxml</fileExtensions>
+	<pattern></pattern>
+	<description>PhyloXML</description>
+	<descriptionURI>http://www.phyloxml.org/1.10/phyloxml.xsd</descriptionURI>
+	<tags>phylogeny,tree,systematics,alignment,codon,sequence</tags>
+	
+	<encodingChain>
+		<name>PhyloXML</name>
+		<filters>
+			<filter>
+				<name>PhyloXML-self</name>
+				<description>PhyloXML in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>PhyloXML</name>
+			<version>1.10</version>
+			<description>Export to PhyloXML</description>
+			<filters>
+				<filter>
+					<name>PhyloXML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>PhyloXML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

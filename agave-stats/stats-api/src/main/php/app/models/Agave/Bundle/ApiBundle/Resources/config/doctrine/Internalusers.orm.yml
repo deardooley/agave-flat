@@ -1,0 +1,134 @@
+Agave\Bundle\ApiBundle\Entity\Internalusers:
+    type: entity
+    table: internalusers
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+        uuid:
+            columns:
+                - uuid
+        username:
+            columns:
+                - username
+                - created_by
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        currentlyActive:
+            type: boolean
+            nullable: true
+            column: currently_active
+        city:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+        country:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+        created:
+            type: datetime
+            nullable: false
+        createdBy:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+            column: created_by
+        department:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+        email:
+            type: string
+            nullable: true
+            length: 128
+            fixed: false
+        fax:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+        firstName:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+            column: first_name
+        gender:
+            type: integer
+            nullable: true
+            unsigned: false
+        institution:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+        lastName:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+            column: last_name
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        phone:
+            type: string
+            nullable: true
+            length: 15
+            fixed: false
+        position:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+        researchArea:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+            column: research_area
+        state:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+        username:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        uuid:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+        street1:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+        street2:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+    lifecycleCallbacks: {  }

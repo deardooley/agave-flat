@@ -1,0 +1,83 @@
+###############################################################
+# Core Science APIs - Dev Migrations
+# migrations.yml
+#
+# This contains the database migration utilities for updating 
+# and repairing the database. For database backup and snapshots,
+# please see the `config/extras/db` folder.
+#
+# note: Do not run this entire file. In the vast majority of 
+# cases, it is sufficient to run the info, migrate, and validate
+# tasks in succession to handle the database update in its 
+# entirety.
+#
+###############################################################
+
+migrate:
+  image: agave-migrations:$AGAVE_VERSION
+  command: "flyway:migrate"
+  extra_hosts:
+    - 'mysql.example.com:192.168.99.101'
+  environment:
+    MYSQL_DATABASE: agavecore
+    MYSQL_USER: agaveuser
+    MYSQL_PASSWORD: password
+    MYSQL_HOST: mysql.example.com
+  volumes:
+    - ~/.m2:/root/.m2
+    
+clean:
+  image: agave-migrations:$AGAVE_VERSION
+  command: "flyway:clean"
+  extra_hosts:
+    - 'mysql.example.com:192.168.99.101'
+  environment:
+    MYSQL_DATABASE: agavecore
+    MYSQL_USER: agaveuser
+    MYSQL_PASSWORD: password
+    MYSQL_HOST: mysql.example.com
+  volumes:
+#    - .:/source
+    - ~/.m2:/root/.m2
+    
+info:
+  image: agave-migrations:$AGAVE_VERSION
+  command: "flyway:info"
+  environment:
+    MYSQL_DATABASE: agavecore
+    MYSQL_USER: agaveuser
+    MYSQL_PASSWORD: password
+    MYSQL_HOST: mysql.example.com
+  volumes:
+#    - .:/source
+    - ~/.m2:/root/.m2
+
+baseline:
+  image: agave-migrations:$AGAVE_VERSION
+  command: "flyway:baseline"
+  extra_hosts:
+    - 'mysql.example.com:192.168.99.101'
+  environment:
+    MYSQL_DATABASE: agavecore
+    MYSQL_USER: agaveuser
+    MYSQL_PASSWORD: password
+    MYSQL_HOST: mysql.example.com
+  volumes:
+#    - .:/source
+    - ~/.m2:/root/.m2
+   
+repair:
+  image: agave-migrations:$AGAVE_VERSION
+  command: "flyway:info"
+  extra_hosts:
+    - 'mysql.example.com:192.168.99.101'
+  environment:
+    MYSQL_DATABASE: agavecore
+    MYSQL_USER: agaveuser
+    MYSQL_PASSWORD: password
+    MYSQL_HOST: mysql.example.com
+  volumes:
+#    - .:/source
+    - ~/.m2:/root/.m2
+    
+    

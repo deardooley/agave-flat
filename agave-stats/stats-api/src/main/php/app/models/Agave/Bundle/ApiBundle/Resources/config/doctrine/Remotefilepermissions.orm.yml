@@ -1,0 +1,55 @@
+Agave\Bundle\ApiBundle\Entity\Remotefilepermissions:
+    type: entity
+    table: remotefilepermissions
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        internalUsername:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+            column: internal_username
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        logicalFileId:
+            type: bigint
+            nullable: false
+            unsigned: false
+            column: logical_file_id
+        permission:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+        username:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        isRecursive:
+            type: boolean
+            nullable: true
+            column: is_recursive
+    lifecycleCallbacks: {  }

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+ echo "startup database, mongo and beanstalk services"
+ #/start
+
+ echo " ********************************************************************"
+ echo " running test script for testng "
+ echo "give services time to warmup"
+ sleep 5
+
+ echo "change to the agave directory to run unit tests"
+ cd /agave
+
+ echo "my current work directory is $(pwd)"
+
+ export classpaths=target/test-classes:target/apps-core-2.1.0.jar:target/dependency/*
+
+ java -cp $classpaths org.testng.TestNG -d /tmp/test-output target/test-classes/testng.xml
+
+ RSLT=$?
+
+ sleep 10
+ echo " TestNG test run return code : $RSLT"
+ exit $RSLT

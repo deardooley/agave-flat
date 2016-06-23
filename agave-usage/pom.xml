@@ -1,0 +1,26 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.iplantc</groupId>
+		<artifactId>agave</artifactId>
+		<version>2.1.8</version>
+	</parent>
+
+	<groupId>org.iplantc.agave</groupId>
+	<artifactId>usage</artifactId>
+	<name>iPlant Agave API Usage Service Parent POM</name>
+	<description>Parent pom for the Usage service</description>
+	<packaging>pom</packaging>
+
+	<scm>
+		<connection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-usage.git</connection>
+		<developerConnection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-usage.git</developerConnection>
+		<url>https://bitbucket.org/agaveapi/agave-usage</url>
+	</scm>
+
+	<modules>
+		<module>usage-api</module>
+	</modules>
+</project>

@@ -1,0 +1,124 @@
+Agave\Bundle\ApiBundle\Entity\SoftwareParameters:
+    type: entity
+    table: software_parameters
+    indexes:
+        FKEE3EF78259B3FD5F:
+            columns:
+                - software
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        defaultValue:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            default: ''
+            column: default_value
+        description:
+            type: string
+            nullable: true
+            length: 32768
+            fixed: false
+        outputKey:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: output_key
+        label:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        ontology:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+        displayOrder:
+            type: integer
+            nullable: false
+            unsigned: false
+            column: display_order
+        required:
+            type: boolean
+            nullable: true
+        valueType:
+            type: string
+            nullable: false
+            length: 16
+            fixed: false
+            column: value_type
+        validator:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+        visible:
+            type: boolean
+            nullable: true
+        cliArgument:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+            column: cli_argument
+        showCliArgument:
+            type: boolean
+            nullable: false
+            column: show_cli_argument
+        enquoted:
+            type: boolean
+            nullable: false
+        maxCardinality:
+            type: integer
+            nullable: true
+            unsigned: false
+            default: '1'
+            column: max_cardinality
+        minCardinality:
+            type: integer
+            nullable: true
+            unsigned: false
+            column: min_cardinality
+        repeatCliArgument:
+            type: boolean
+            nullable: false
+            column: repeat_cli_argument
+    manyToOne:
+        software:
+            targetEntity: Softwares
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                software:
+                    referencedColumnName: id
+            orphanRemoval: false
+    manyToMany:
+        softwares:
+            targetEntity: Softwares
+            cascade: {  }
+            mappedBy: parameters
+            inversedBy: null
+            joinTable: null
+            orderBy: null
+    lifecycleCallbacks: {  }

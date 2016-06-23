@@ -1,0 +1,380 @@
+{
+  "apiVersion": "${project.version}-r${buildNumber}",
+  "swaggerVersion": "1.1",
+  "basePath": "${foundation.base.url}",
+  "resourcePath": "/transfers/v2",
+  "apis":[
+	  {
+	    "path":"/",
+	    "description":"Query for the requesting user profile",
+	    "operations":[
+	      {
+	        "httpMethod":"GET",
+	        "nickname":"list",
+	        "responseClass":"MultipleTransformResponse",
+	        "parameters":[],
+	        "summary":"Find all transforms for use within the api.",
+	        "notes": "",
+	        "errorResponses":[]
+	      }
+	    ]
+	  },
+	  {
+	    "path":"/{owner}/{path}",
+	    "description":"Query for transforms available for a specific file",
+	    "operations":[
+	      {
+	        "httpMethod":"GET",
+	        "nickname":"listAvailableTransformsForPath",
+	        "responseClass":"MultipleTransformResponse",
+	        "parameters":[
+	        	{
+            		"paramType": "path",
+		            "name": "owner",
+		            "description": "The name of the api user owning the file at the given path.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+	        	{
+            		"paramType": "path",
+		            "name": "path",
+		            "description": "The path of the file relative to the user's default storage location.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		}
+	        
+	        ],
+	        "summary":"Find all transforms valid for the given path.",
+	        "notes": "This will search the file/folder's metadata for a known file type. If found it will return all transforms valid for that file type. If not found, it will return transforms valid for the raw file type.",
+	        "errorResponses":[]
+	      }
+	    ]
+	  },
+	  {
+	    "path":"/transfers/v2/data/async/transform/{name}/{owner}/",
+	    "description":"Query for transforms available for a specific file",
+	    "operations":[
+	      {
+	        "httpMethod":"POST",
+	        "nickname":"transformAndStageFile",
+	        "responseClass":"MultipleTransformResponse",
+	        "parameters":[
+	        	{
+            		"paramType": "path",
+		            "name": "name",
+		            "description": "The name of the transform to apply to the given file.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "path",
+		            "name": "owner",
+		            "description": "The name of the api user owning the file at the given path.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "path",
+		            "name": "path",
+		            "description": "The path to the file to be transformed and staged",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "form",
+		            "name": "native_format",
+		            "description": "The original file type of the file. If not given, the file type is assumed to be raw.",
+		            "dataType": "string",
+		            "required": false,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "form",
+		            "name": "url",
+		            "description": "The uri to which the transformed file will be staged.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "form",
+		            "name": "callbackURL",
+		            "description": "The URI to notify when the transfer is complete. This can be an email address or http URL. If a URL is given, a GET will be made to this address. URL templating is supported. Valid template values are: ${NAME}, ${SOURCE_FORMAT}, ${DEST_FORMAT}, ${STATUS}",
+		            "dataType": "string",
+		            "required": false,
+		            "allowMultiple": false
+          		}
+	        ],
+	        "summary":"Transform a file and stage it to a specified location.",
+	        "notes": "This allows you to fire and forget a data transform and staging task.",
+	        "errorResponses":[]
+	      }
+	    ]
+	  },
+	  {
+	    "path":"/transfers/v2/data/sync/transform/{name}/{owner}/{path}",
+	    "description":"Transform and download files.",
+	    "operations":[
+	      {
+	        "httpMethod":"POST",
+	        "nickname":"downloadTransformedFileByDestType",
+	        "responseClass":"FileDownload",
+	        "produces": [
+	        	"application/octet-stream",
+	        ],        
+			"parameters":[
+	        	{
+            		"paramType": "path",
+		            "name": "name",
+		            "description": "The name of the transform to apply to the given file.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "path",
+		            "name": "owner",
+		            "description": "The name of the api user owning the file at the given path.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "path",
+		            "name": "path",
+		            "description": "The path to the file to be transformed and downloaded.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "form",
+		            "name": "native_format",
+		            "description": "The original file type of the file. If not given, the file type is assumed to be raw.",
+		            "dataType": "string",
+		            "required": false,
+		            "allowMultiple": false
+          		}
+	        ],
+	        "summary":"Transform a file and download it directly.",
+	        "notes": "This allows you to synchronously transform and download a file. The download blocks until the transform has completed, so use caution when choosing this service as it is likely to time out for larger files.",
+	        "errorResponses":[]
+	      }
+	    ]
+	  },
+	  {
+	    "path":"/transfers/v2/data/sync/from/{sourcName}/to/{destName}/{owner}/{path}",
+	    "description":"Transform and download files.",
+	    "operations":[
+	      {
+	        "httpMethod":"GET",
+	        "nickname":"downloadTransformedFileBySourceAndDestType",
+	        "responseClass":"FileDownload",
+	        "produces": [
+	        	"application/octet-stream",
+	        ],        
+			"parameters":[
+	        	{
+            		"paramType": "path",
+		            "name": "sourceName",
+		            "description": "The name of the original format of the the given file.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "path",
+		            "name": "destName",
+		            "description": "The name of the transform to apply to the given file.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "path",
+		            "name": "owner",
+		            "description": "The name of the api user owning the file at the given path.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		},
+          		{
+            		"paramType": "path",
+		            "name": "path",
+		            "description": "The path to the file to be transformed and downloaded.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		}
+	        ],
+	        "summary":"Transform a file and download it directly.",
+	        "notes": "This allows you to synchronously transform and download a file. The download blocks until the transform has completed, so use caution when choosing this service as it is likely to time out for larger files. This endpoint is essentially the same as the /data/sync/transform/{name}/{owner}/{path} endpoint, but it does not require a post as the source file type is a path parameter. ",
+	        "errorResponses":[]
+	      }
+	    ]
+	  },
+	  {
+	    "path":"/transfers/v2/transform/{name}",
+	    "description":"Operations on a specific user.",
+	    "operations":[
+	      {
+	        "httpMethod":"GET",
+	        "nickname":"get",
+	        "responseClass":"MultipleTransformResponse",
+	        "parameters":[
+	        	{
+            		"paramType": "path",
+		            "name": "name",
+		            "description": "The name of the transform requested.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		}
+	        ],
+	        "summary":"Find all transforms matching the given name.",
+	        "notes": "This will perform a partial match on the name value returning everything with the given string in the name.",
+	        "errorResponses":[]
+	      }
+	    ]
+	  },
+	  {
+	    "path":"/transfers/v2/tag/{tag}",
+	    "description":"Operations on a specific user.",
+	    "operations":[
+	      {
+	        "httpMethod":"GET",
+	        "nickname":"getTransformByTag",
+	        "responseClass":"MultipleTransformResponse",
+	        "parameters":[
+	        	{
+            		"paramType": "path",
+		            "name": "tag",
+		            "description": "The tag to search for transforms on.",
+		            "dataType": "string",
+		            "required": true,
+		            "allowMultiple": false
+          		}
+	        ],
+	        "summary":"Find all transforms with the given tag.",
+	        "notes": "This will perform a partial match on the tag value returning everything with the given string in the tag.",
+	        "errorResponses":[]
+	      }
+	    ]
+	  }
+  ],
+  "models": {
+  	"Transform": {
+  		"id":"Transform",
+  		"properties":{
+			"decoders":{
+    			"type": "Array",
+    			"$ref": "Decoder"
+    		},
+  			"description":{
+    			"type": "string",
+    			"description": "Description of this transform."
+    		},
+			"descriptionurl":{
+    			"type": "string",
+    			"description": "The URL to find out more information."
+    		},
+			"enabled":{
+    			"type": "boolean",
+    			"description": "Whether this transform is enabled or not."
+    		},
+    		"encoder":{
+    			"type": "Encoder",
+    			"description": "The encoder to use to convert to this format."
+    		},
+			"name":{
+    			"type": "string",
+    			"description": "The name of this transform."
+    		},
+			"tags":{
+    			"type": "Array",
+    			"$ref": "Tag"
+    		}
+		}
+	},
+	"Decoder": {
+  		"id":"Decoder",
+  		"properties":{
+			"description":{
+    			"type": "string",
+    			"description": "The description of what this decoder is and what it does."
+  			},
+  			"name":{
+    			"type": "string",
+    			"description": "The decoder name."
+    		}
+    	}
+    },
+	"Encoder": {
+  		"id":"Encoder",
+  		"properties":{
+			"description":{
+    			"type": "string",
+    			"description": "The description of what this encoder is and what it does."
+  			},
+  			"name":{
+    			"type": "string",
+    			"description": "The encoder name."
+    		}
+    	}
+    },
+    "Tag": {
+  		"id":"Tag",
+  		"properties":{
+			"name":{
+    			"type": "string",
+    			"description": "The tag name."
+    		}
+    	}
+    },
+	"SingleTransformResponse": {
+		"id": "SingleTransformResponse",
+		"properties": {
+			"status": {
+				"type":"string",
+				"description": "success or failure"
+			},
+			"message": {
+				"type":"string",
+				"description": "success or failure"
+			},
+			"result": {
+				"type":"Transform"
+			}
+		}
+	},
+	"MultipleTransformResponse": {
+		"id": "MultipleTransformResponse",
+		"properties": {
+			"status": {
+				"type":"string",
+				"description": "success or failure"
+			},
+			"message": {
+				"type":"string",
+				"description": "success or failure"
+			},
+			"result": {
+				"type":"Array",
+				"description": "response body",
+				"items": {
+					"$ref":"Profile"
+				}
+			}
+		}
+	},
+	"FileDownload": {
+		"id": "FileDownload",
+		"properties": {}
+	}
+  }
+}

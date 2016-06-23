@@ -1,0 +1,107 @@
+Agave\Bundle\ApiBundle\Entity\Systems:
+    type: entity
+    table: systems
+    indexes:
+        FK9871D424DA9BF604:
+            columns:
+                - storage_config
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+        uuid:
+            columns:
+                - uuid
+        system_id_tenant:
+            columns:
+                - system_id
+                - tenant_id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        available:
+            type: boolean
+            nullable: true
+        created:
+            type: datetime
+            nullable: false
+        description:
+            type: string
+            nullable: true
+            length: 32768
+            fixed: false
+        globalDefault:
+            type: boolean
+            nullable: true
+            column: global_default
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        name:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+        owner:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        publiclyAvailable:
+            type: boolean
+            nullable: true
+            column: publicly_available
+        revision:
+            type: integer
+            nullable: true
+            unsigned: false
+        site:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+        status:
+            type: string
+            nullable: false
+            length: 8
+            fixed: false
+        systemId:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: system_id
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+        type:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        uuid:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+    manyToOne:
+        storageConfig:
+            targetEntity: Storageconfigs
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                storage_config:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

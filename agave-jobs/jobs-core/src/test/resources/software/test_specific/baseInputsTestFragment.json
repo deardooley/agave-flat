@@ -1,0 +1,1 @@
+{"id":"inputSeqs","semantics":{"minCardinality":1,"fileTypes":["fasta-0"],"ontology":["http://sswapmeet.sswap.info/sequence/FASTA"],"maxCardinality":1},"details":{"description":"Sequence file in multiple fasta format","label":"Sequences: "},"value":{"default":"steve","visible":true,"validator":"","required":true}}

@@ -1,0 +1,58 @@
+Agave\Bundle\ApiBundle\Entity\StagingTasks:
+    type: entity
+    table: staging_tasks
+    indexes:
+        FKB9B09E8A1DCDC7B0:
+            columns:
+                - logical_file_id
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        bytesTransferred:
+            type: bigint
+            nullable: true
+            unsigned: false
+            column: bytes_transferred
+        created:
+            type: datetime
+            nullable: false
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        retryCount:
+            type: integer
+            nullable: false
+            unsigned: false
+            column: retry_count
+        status:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        totalBytes:
+            type: bigint
+            nullable: true
+            unsigned: false
+            column: total_bytes
+    manyToOne:
+        logicalFile:
+            targetEntity: LogicalFiles
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                logical_file_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

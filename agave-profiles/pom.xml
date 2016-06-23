@@ -1,0 +1,124 @@
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.iplantc</groupId>
+		<artifactId>agave</artifactId>
+		<version>2.1.8</version>
+	</parent>
+	<groupId>org.iplantc.agave</groupId>
+	<artifactId>profiles</artifactId>
+	<name>iPlant Agave API Profile Service Parent POM</name>
+	<description>Parent pom for the Agave Profiles Services.</description>
+	<packaging>pom</packaging>
+
+	<scm>
+		<connection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-profiles.git</connection>
+		<developerConnection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-profiles.git</developerConnection>
+		<url>https://bitbucket.org/agaveapi/agave-profiles</url>
+	</scm>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<executions>
+						<execution>
+							<id>install</id>
+							<phase>install</phase>
+							<goals>
+								<goal>sources</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>2.3.2</version>
+					<executions>
+						<execution>
+							<id>default-compile</id>
+							<phase>compile</phase>
+							<goals>
+								<goal>compile</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<proc>none</proc>
+						<debug>true</debug>
+						<source>1.7</source>
+						<target>1.7</target>
+					</configuration>
+				</plugin>
+				<plugin>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>2.13</version>
+					<configuration>
+						<suiteXmlFiles>
+							<suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+						</suiteXmlFiles>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>sql-maven-plugin</artifactId>
+					<version>1.5</version>
+					<executions>
+						<execution>
+							<id>drop-db-before-test-if-any</id>
+							<phase>process-test-resources</phase>
+							<goals>
+								<goal>execute</goal>
+							</goals>
+							<configuration>
+								<url>${foundation.db.bootstrap}</url>
+								<autocommit>true</autocommit>
+								<sqlCommand>drop database test</sqlCommand>
+								<onError>continue</onError>
+							</configuration>
+						</execution>
+						<execution>
+							<id>create-db</id>
+							<phase>process-test-resources</phase>
+							<goals>
+								<goal>execute</goal>
+							</goals>
+							<configuration>
+								<url>${foundation.db.bootstrap}</url>
+								<autocommit>true</autocommit>
+								<sqlCommand>create database test</sqlCommand>
+							</configuration>
+						</execution>
+					</executions>
+					<dependencies>
+						<dependency>
+							<groupId>mysql</groupId>
+							<artifactId>mysql-connector-java</artifactId>
+							<version>5.1.22</version>
+						</dependency>
+					</dependencies>
+					<configuration>
+						<driver>${foundation.db.driver}</driver>
+						<url>${foundation.db.bootstrap}</url>
+						<username>${foundation.db.username}</username>
+						<password>${foundation.db.password}</password>
+						<settingsKey>sensibleKey</settingsKey>
+						<skip>${maven.test.skip}</skip>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<dependencies>
+
+	</dependencies>
+
+	<modules>
+		<module>profiles-core</module>
+		<module>profiles-api</module>
+	</modules>
+</project>

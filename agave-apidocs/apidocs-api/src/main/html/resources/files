@@ -1,0 +1,751 @@
+{
+    "apiVersion": "${project.version}-r${buildNumber}",
+    "apis": [
+        {
+            "description": "Manage files and folders",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "downloadFromDefaultSystem",
+                    "notes": "This will return the raw file from the user's default storage location.",
+                    "produces": [
+      			        	"application/octet-stream"
+      			        ],
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "sourcefilePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Download a file from the user's default storage location.",
+                    "type": "void"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "importToDefaultSystem",
+                    "notes": "This will return a handle to the file upload.",
+                    "consumes": [
+                      "multipart/form-data"
+                    ],
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "sourcefilePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The file format this file is in. Defaults to raw. This will be used in file transform operations.",
+                            "name": "fileType",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The URI to notify when the import is complete. This can be an email address or http URL. If a URL is given, a GET will be made to this address. URL templating is supported. Valid template values are: ${NAME}, ${SOURCE_FORMAT}, ${DEST_FORMAT}, ${STATUS}",
+                            "name": "callbackURL",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The name of the file after importing. If not specified, the uploaded file name will be used.",
+                            "name": "fileName",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The URL to import the file from. This parameter is used if not file is uploaded with this post.",
+                            "name": "urlToIngest",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Import a file via direct upload or importing from a url to the user's default storage location.",
+                    "type": "SingleRemoteFileResponse"
+                },
+                {
+                    "method": "PUT",
+                    "nickname": "manageOnDefaultSystem",
+                    "notes": "This will return a handle to the file upload.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "sourcefilePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The operation to perform. ",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "FileOperationRequest",
+                            "defaultValue": "{\n\t\"action\":\"mkdir\",\n\t\"dirName\": \"deleteme\"\n}"
+                        }
+                    ],
+                    "summary": "Perform an action on a file or folder.",
+                    "type": "EmptyRemoteFileResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "deleteFromDefaultSystem",
+                    "notes": "This will delete the file or folder at the given path from the user's default storage location.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "sourcefilePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Deletes a file or folder.",
+                    "type": "EmptyRemoteFileResponse"
+                }
+            ],
+            "path": "/files/v2/media/{sourcefilePath}"
+        },
+        {
+            "description": "Manage files and folders on a specific system",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "download",
+                    "notes": "This will return the raw file from the user's default storage location.",
+                    "produces": [
+      			        	"application/octet-stream"
+      			        ],
+      			        "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The unique id of the system on which the data resides.",
+                            "name": "systemId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Download a file from the user's default storage location.",
+                    "type": "void"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "importData",
+                    "notes": "This will return a handle to the file upload.",
+                    "consumes": [
+                      "multipart/form-data"
+                    ],
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The unique id of the system on which the data resides.",
+                            "name": "systemId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The file format this file is in. Defaults to raw. This will be used in file transform operations.",
+                            "name": "fileType",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The URI to notify when the import is complete. This can be an email address or http URL. If a URL is given, a GET will be made to this address. URL templating is supported. Valid template values are: ${NAME}, ${SOURCE_FORMAT}, ${DEST_FORMAT}, ${STATUS}",
+                            "name": "callbackURL",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The name of the file after importing. If not specified, the uploaded file name will be used.",
+                            "name": "fileName",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The URL to import the file from. This parameter is used if not file is uploaded with this post.",
+                            "name": "urlToIngest",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Import a file via direct upload or importing from a url to the user's default storage location.",
+                    "type": "SingleRemoteFileResponse"
+                },
+                {
+                    "method": "PUT",
+                    "nickname": "manage",
+                    "notes": "This will return a handle to the file upload.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The unique id of the system on which the data resides.",
+                            "name": "systemId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The operation to perform. ",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "FileOperationRequest",
+                            "defaultValue": "{\n\t\"action\":\"mkdir\",\n\t\"path\": \"deleteme\"\n}"
+                        }
+                    ],
+                    "summary": "Perform an action on a file or folder.",
+                    "type": "EmptyRemoteFileResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "delete",
+                    "notes": "This will delete the file or folder at the given path from the user's default storage location.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The unique id of the system on which the data resides.",
+                            "name": "systemId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Deletes a file or folder.",
+                    "type": "EmptyRemoteFileResponse"
+                }
+            ],
+            "path": "/files/v2/media/system/{systemId}/{filePath}"
+        },
+        {
+            "description": "Obtain remote directory listings.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listOnDefaultSystem",
+                    "notes": "This will return the a directory listing or information about a single file if the path is not a directory.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Get a remote directory listing.",
+                    "type": "MultipleRemoteFileResponse"
+                }
+            ],
+            "path": "/files/v2/listings/{filePath}"
+        },
+        {
+            "description": "Obtian remote directory listings.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "list",
+                    "notes": "This will return the a directory listing or information about a single file if the path is not a directory.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The unique id of the system on which the data resides.",
+                            "name": "systemId",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Get a remote directory listing on a specific system.",
+                    "type": "MultipleRemoteFileResponse"
+                }
+            ],
+            "path": "/files/v2/listings/system/{systemId}/{filePath}"
+        },
+        {
+            "description": "View history of api actions on this file/folder",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "getHistoryOnDefaultSystem",
+                    "notes": "This will return the raw file from the user's default storage location.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Download a file from the user's default storage location.",
+                    "type": "FileHistoryResponse"
+                }
+            ],
+            "path": "/files/v2/history/{filePath}"
+        },
+        {
+            "description": "View history of api actions on this file/folder",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "getHistory",
+                    "notes": "This will return the raw file from the user's default storage location.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the given system root location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Download a file from the user's default storage location.",
+                    "type": "FileHistoryResponse"
+                }
+            ],
+            "path": "/files/v2/history/system/{systemId}/{filePath}"
+        },
+        {
+            "description": "Manage share permissions on files and folders",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listPermissionsOnDefaultSystem",
+                    "notes": "You must have read permission on this file or folder to call this endpoint",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "List all the share permissions for a file or folder.",
+                    "type": "MultiplePermissionResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "updatePermissionsOnDefaultSystem",
+                    "notes": "Due to the nature of the underlying file system, permissions are autonomous. READ and WRITE are exclusive. ALL implies ownership. If you want someone to be able to see and edit a document, give them all=true permissions.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The permission add or update. ",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "FilePermissionRequest",
+                            "defaultValue": "{\n\t\"username\":\"\",\n\t\"permission\": \"READ_EXECUTE\",\n\t\"recursive\": false\n}"
+                        }
+                    ],
+                    "summary": "Update permissions for a single user.",
+                    "type": "EmptyRemoteFileResponse"
+                }
+            ],
+            "path": "/files/v2/pems/{filePath}"
+        },
+        {
+            "description": "Manage share permissions on files and folders",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listPermissions",
+                    "notes": "You must have read permission on this file or folder to call this endpoint",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "List all the share permissions for a file or folder.",
+                    "type": "MultiplePermissionResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "updatePermissions",
+                    "notes": "Due to the nature of the underlying file system, permissions are autonomous. READ and WRITE are exclusive. ALL implies ownership. If you want someone to be able to see and edit a document, give them all=true permissions.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The permission add or update. ",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "FilePermissionRequest",
+                            "defaultValue": "{\n\t\"username\":\"\",\n\t\"permission\": \"READ_EXECUTE\",\n\t\"recursive\": false\n}"
+                        }
+                    ],
+                    "summary": "Update permissions for a single user.",
+                    "type": "EmptyRemoteFileResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "deletePermissions",
+                    "notes": "Once applied, users will not be able to view or edit these files anymore. Keep this in mind before calling this on data referenced by shared applications.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The path of the file relative to the user's default storage location.",
+                            "name": "filePath",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Deletes all permissions on a file except those of the owner.",
+                    "type": "EmptyRemoteFileResponse"
+                }
+            ],
+            "path": "/files/v2/pems/system/{systemId}/{filePath}"
+        }
+    ],
+    "basePath": "${foundation.base.url}",
+    "models": {
+        "EmptyRemoteFileResponse": {
+            "id": "EmptyRemoteFileResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "empty result",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "FileHistory": {
+            "id": "FileHistory",
+            "name": "",
+            "properties": {
+                "created": {
+                    "description": "The date of the event.",
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "A brief description of the event details.",
+                    "type": "String"
+                },
+                "status": {
+                    "description": "The status of the file/folder after this event.",
+                    "type": "String"
+                }
+            }
+        },
+        "FileHistoryResponse": {
+            "id": "FileHistoryResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "response body",
+                    "items": {
+                        "$ref": "FileHistory"
+                    },
+                    "type": "array"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "MultipleRemoteFileResponse": {
+            "id": "MultipleRemoteFileResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "response body",
+                    "items": {
+                        "$ref": "RemoteFile"
+                    },
+                    "type": "array"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "RemoteFile": {
+            "id": "RemoteFile",
+            "name": "",
+            "properties": {
+                "format": {
+                    "description": "The file type of the file.",
+                    "type": "string"
+                },
+                "lastModified": {
+                    "description": "The date this file was last modified in ISO 8601 format.",
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "length": {
+                    "description": "The length of the file/folder.",
+                    "format": "int32",
+                    "type": "integer"
+                },
+                "mimeType": {
+                    "description": "The mime type of the file/folder. If unknown, it defaults to application/binary.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The name of the file/folder.",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "The absolute path to the file/folder.",
+                    "type": "string"
+                },
+                "permissions": {
+                    "description": "The system permission of the invoking user on the file/folder.",
+                    "type": "string"
+                },
+                "system": {
+                    "description": "The systemId of the system where this file lives.",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "Whether it is a file or folder.",
+                    "type": "string"
+                }
+            }
+        },
+        "SingleRemoteFileResponse": {
+            "id": "SingleRemoteFileResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "type": "RemoteFile"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "MultiplePermissionResponse": {
+            "id": "MultiplePermissionResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "One or more file permissions",
+                    "items": {
+                        "$ref": "Permission"
+                    },
+                    "type": "array"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "Permission": {
+            "id": "Permission",
+            "name": "",
+            "properties": {
+            	"username": {
+                    "description": "The name of the user for this permission object.",
+                    "type": "string"
+                },
+                "permission": {
+    				"description": "One or more permission objects",
+                    "type": "PermissionStanza"
+                },
+                "recursive": {
+    				"description": "Is the permission recursively applied",
+                    "type": "boolean"
+                },
+                "internalUsername": {
+    				"description": "Name of the internal user to whom the permission applies",
+                    "type": "string"
+                }
+            }
+        },
+        "PermissionStanza": {
+        	"id": "PermissionStanza",
+            "name": "",
+            "properties": {
+            	"execute": {
+                    "description": "Is the file executable",
+                    "type": "boolean"
+                },
+                "read": {
+    				"description": "Is the file readable",
+                    "type": "boolean"
+                },
+                "write": {
+    				"description": "Is the file writable",
+                    "type": "boolean"
+                }
+            }
+        },
+        "FilePermissionRequest": {
+          "id": "FilePermissionRequest",
+          "name": "",
+          "properties": {
+              "username": {
+                  "description": "The username of the api user whose permission is to be set.",
+                  "type": "string",
+                  "required": true
+              },
+              "permission": {
+                  "description": "The permission to set",
+                  "type": "string",
+                  "required": true,
+                  "enum": [
+                    "READ",
+                    "WRITE",
+                    "EXECUTE",
+                    "READ_WRITE",
+                    "READ_EXECUTE",
+                    "WRITE_EXECUTE",
+                    "ALL",
+                    "NONE"
+                  ]
+              },
+              "recursive": {
+                  "description": "Should updated permissions be applied recursively. Defaults to false.",
+                  "type": "boolean"
+              }
+          }
+        },
+        "FileOperationRequest": {
+          "id": "FileOperationRequest",
+          "name": "",
+          "properties": {
+              "action": {
+                  "description": "Action to perform on the file or folder.",
+                  "type": "string",
+                  "required": true,
+                  "enum": [
+                      "mkdir",
+                      "rename",
+                      "copy",
+                      "move"
+                  ]
+              },
+              "path": {
+                  "description": "Name of new directory or target file or folder.",
+                  "type": "string"
+              }
+          }
+        }
+    },
+    "resourcePath": "/files/v2",
+    "swaggerVersion": "1.2"
+}

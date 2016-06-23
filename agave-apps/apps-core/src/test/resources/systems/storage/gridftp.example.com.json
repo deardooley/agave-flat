@@ -1,0 +1,27 @@
+{
+	"id": "gridftp.example.com",
+	"name": "GRIDFTP Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example gridftp system",
+	"site": "example.com",
+	"storage": {
+		"host": "docker.example.com",
+		"port": 2811,
+		"protocol": "GRIDFTP",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": null,
+			"type": "X509",
+			"server": {
+				"id": "myproxy.teragrid.org",
+				"name": "XSEDE MyProxy Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	}
+}

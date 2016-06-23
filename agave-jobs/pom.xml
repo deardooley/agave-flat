@@ -1,0 +1,219 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.iplantc</groupId>
+		<artifactId>agave</artifactId>
+		<version>2.1.8</version>
+	</parent>
+	<groupId>org.iplantc.agave</groupId>
+	<artifactId>jobs</artifactId>
+	<name>iPlant Agave API Jobs Services Parent POM</name>
+	<description>Parent pom for core, api, and worker projects.</description>
+	<packaging>pom</packaging>
+
+	<scm>
+		<connection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-jobs.git</connection>
+		<developerConnection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-jobs.git</developerConnection>
+		<url>https://bitbucket.org/agaveapi/agave-jobs</url>
+	</scm>
+
+	<build>
+
+		<sourceDirectory>src/main/java</sourceDirectory>
+
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<filtering>true</filtering>
+			</testResource>
+		</testResources>
+
+		<plugins>
+
+			<!-- ************************************ -->
+			<!-- ***           DEPLOYMENT          ** -->
+			<!-- ************************************ -->
+
+			<!-- Install a jar with the source code into maven when installing the
+				primary artifact -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>install</id>
+						<phase>install</phase>
+						<goals>
+							<goal>sources</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+
+			<!-- ************************************ -->
+			<!-- ***           COMPILE             ** -->
+			<!-- ************************************ -->
+
+			<!-- Boilerplace compile -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<proc>none</proc>
+					<debug>true</debug>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+
+			<!-- ************************************ -->
+			<!-- ***           TESTING             ** -->
+			<!-- ************************************ -->
+
+			<!-- Use TestNG as the test runner -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<suiteXmlFiles>
+						<suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+					</suiteXmlFiles>
+				</configuration>
+			</plugin>
+
+			<!-- database cleanup prior to dao tests running -->
+<!--
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>sql-maven-plugin</artifactId>
+
+				&lt;!&ndash; common configuration shared by all executions &ndash;&gt;
+				<configuration>
+					<driver>${foundation.db.driver}</driver>
+					<url>${foundation.db.bootstrap}</url>
+					<username>${foundation.db.username}</username>
+					<password>${foundation.db.password}</password>
+					<settingsKey>sensibleKey</settingsKey>
+					&lt;!&ndash;all executions are ignored if -Dmaven.test.skip=true &ndash;&gt;
+					<skip>${maven.test.skip}</skip>
+				</configuration>
+				<executions>
+					<execution>
+						<id>drop-db-before-test-if-any</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>execute</goal>
+						</goals>
+						<configuration>
+							&lt;!&ndash; need another database to drop the targeted one &ndash;&gt;
+							<url>${foundation.db.bootstrap}</url>
+							<autocommit>true</autocommit>
+							<sqlCommand>drop database test</sqlCommand>
+							&lt;!&ndash; ignore error when database is not avaiable &ndash;&gt;
+							<onError>continue</onError>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>create-db</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>execute</goal>
+						</goals>
+						<configuration>
+							<url>${foundation.db.bootstrap}</url>
+							&lt;!&ndash; no transaction &ndash;&gt;
+							<autocommit>true</autocommit>
+							<sqlCommand>create database test</sqlCommand>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+-->
+
+			
+
+			<!-- ************************************ -->
+			<!-- ***         CODE COVERAGE         ** -->
+			<!-- ************************************ -->
+
+			<plugin>
+                <groupId>org.codehaus.sonar</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.6.3.201306030806</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>org.testng.internal.Parameters</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>COMPLEXITY</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.60</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin> -->
+		</plugins>
+	</build>
+	<dependencies>
+
+
+	</dependencies>
+
+	<modules>
+		<module>jobs-core</module>
+		<module>jobs-api</module>
+	</modules>
+</project>

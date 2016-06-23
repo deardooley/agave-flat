@@ -1,0 +1,123 @@
+{
+   "name":"boilerplate",
+   "version":"1.0",
+   "icon":"http://example.com/icon.jpg",
+   "helpURI":"http://example.com/boilerplate",
+   "label":"boilerplate",
+   "shortDescription":"Run some boilerplate code",
+   "longDescription":"This is an application wrapper that you can use as a basis for wrapper your own.",
+   "tags":[
+      "sample",
+      "boilerplate",
+      "example"
+   ],
+   "ontology":[
+   	  "https://example.com/apps/boilerplate"
+   ],
+   "executionSystem":"execute.example.com",
+   "executionType":"CLI",
+   "parallelism":"SERIAL",
+   "deploymentPath":"applications/boilerplate-1.0",
+   "deploymentSystem":"storage.example.com",
+   "templatePath":"wrapper.sh",
+   "testPath":"test/test.sh",
+   "checkpointable": false,
+   "modules":[
+      "perl",
+      "boilerplate"
+   ],
+   "inputs":[
+      {
+         "id":"input1",
+         "details":{
+            "label":"Target File one input",
+            "description":"Select one input file",
+            "visible":true
+         },
+         "semantics":{
+            "ontology":[],
+            "minCardinality":1,
+            "maxCardinality":1,
+            "fileTypes":[
+               "TEXT-0"
+            ]
+         },
+         "value": {
+                "default": "testuser/input1.txt",
+                "required": false,
+                "visible": true,
+                "validator": null
+         }
+      }
+   ],
+   "parameters":[
+      {
+         "id":"myIntegerParameter",
+         "details":{
+            "label":"Extract the first k lines",
+            "description":"Equivalent to -n command flag"
+         },
+         "semantics":{
+            "minCardinality":1,
+            "maxCardinality":-1,
+            "ontology":[
+               "xs:integer"
+            ]
+         },
+         "value": {
+                "default": 6,
+                "type":"number",
+                "required": false,
+                "visible": true,
+                "validator":""
+         }
+      },
+      {
+         "id":"myEnumerationParameter",
+         "details":{
+            "label":"Extract the first k lines",
+            "description":"Equivalent to -n command flag"
+         },
+         "semantics":{
+            "minCardinality":1,
+            "maxCardinality":-1,
+            "ontology":[
+               "xs:string"
+            ]
+         },
+         "value": {
+            "default": ["val1"],
+            "type":"enumeration",
+            "required": false,
+            "visible": true,
+            "enum_values": [
+                {"val1":"val1"},
+                {"val2":"val2"},
+                {"val3":"val3"}
+            ]
+         }
+      },
+      {
+         "id":"myStringParameter",
+         "details":{
+            "label":"Extract the first k lines",
+            "description":"Equivalent to -n command flag"
+         },
+         "semantics":{
+            "minCardinality":1,
+            "maxCardinality":-1,
+            "ontology":[
+               "xs:string"
+            ]
+         },
+         "value": {
+            "default": "some reasonable default",
+            "type":"string",
+            "required": false,
+            "visible": true,
+            "validator": null
+         }
+      }
+   ],
+   "outputs":[]
+}

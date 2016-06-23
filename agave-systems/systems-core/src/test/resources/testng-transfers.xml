@@ -1,0 +1,37 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Agave Data Transfer Tests" verbose="2" thread-count="1" parallel="false">
+	
+	<!-- <test name="cloud transfers">
+		<groups>
+			<run>
+				<include name="functest" />
+			</run>
+		</groups>
+		<classes>
+			<class name="org.iplantc.service.transfer.s3.S3RemoteDataClientTest" />
+		</classes>
+	</test> -->
+	
+	<test name="transfers">
+		<classes>
+			<class name="org.iplantc.service.transfer.sftp.SftpSshKeysRemoteDataClientTest"/> 
+			<class name="org.iplantc.service.transfer.sftp.SftpPasswordRemoteDataClientTest"/> 
+			<class name="org.iplantc.service.transfer.local.LocalRemoteDataClientTest"/>
+			<class name="org.iplantc.service.transfer.http.HTTPClientTest"/>
+
+			<class name="org.iplantc.service.transfer.ftp.FTPRemoteDataClientTest" />
+			<!-- <class name="org.iplantc.service.transfer.s3.S3RemoteDataClientTest" /> -->
+			<!-- <class name="org.iplantc.service.transfer.ftp.AnonymousFTPRemoteDataClientTest"/> -->
+
+			<class name="org.iplantc.service.transfer.irods.IrodsPasswordRemoteDataClientTest" />
+			<class name="org.iplantc.service.transfer.irods4.Irods4PasswordRemoteDataClientTest"/>
+
+			<!-- Need working containers to automate testing. Networking is not letting 
+				us tunnel atm. -->
+			<!-- <class name="org.iplantc.service.transfer.sftp.SftpSshKeysTunnelRemoteDataClientTest"/> -->
+			<!-- <class name="org.iplantc.service.transfer.sftp.SftpPasswordTunnelRemoteDataClientTest"/> -->
+		</classes>
+
+	</test>
+</suite>

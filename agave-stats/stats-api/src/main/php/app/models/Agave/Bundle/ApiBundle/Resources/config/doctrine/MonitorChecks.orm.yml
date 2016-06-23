@@ -1,0 +1,63 @@
+Agave\Bundle\ApiBundle\Entity\MonitorChecks:
+    type: entity
+    table: monitor_checks
+    indexes:
+        FK83E322F026AC90B:
+            columns:
+                - monitor
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+        uuid:
+            columns:
+                - uuid
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        message:
+            type: string
+            nullable: true
+            length: 2048
+            fixed: false
+        result:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+        uuid:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+        type:
+            type: string
+            nullable: true
+            length: 16
+            fixed: false
+    manyToOne:
+        monitor:
+            targetEntity: Monitors
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                monitor:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

@@ -1,0 +1,29 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Agave Data Transfer Tests" verbose="1" >
+	<test name="permissions" enabled="true">
+		<groups>
+			<run>
+				<!-- <include name="permissions.*" /> -->
+				<include name=".*path-resolution"/>
+			</run>
+		</groups>
+		
+		<packages>
+			<package name="org.iplantc.service.transfer.irods" />
+			<package name="org.iplantc.service.transfer.irods4" />
+			<package name="org.iplantc.service.transfer.http" />
+			<package name="org.iplantc.service.transfer.ftp" />
+			<package name="org.iplantc.service.transfer.sftp" />
+			<package name="org.iplantc.service.transfer.gridftp" />
+			<package name="org.iplantc.service.transfer.s3" />
+			
+			<!-- 
+			<package name="org.iplantc.service.transfer.azure" /> 
+			<package name="org.iplantc.service.transfer.swift" /> 
+			<package name="org.iplantc.service.transfer.dropbox" /> 
+			<package name="org.iplantc.service.transfer.box" /> 
+			-->
+		</packages>
+	</test>
+</suite>

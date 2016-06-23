@@ -1,0 +1,41 @@
+<transform>
+
+	<name>HTML</name>
+	<version>5</version>
+	<fileExtensions>htm,html</fileExtensions>
+	<pattern></pattern>
+	<description>Hypertext Markup Language (HTML5)</description>
+	<descriptionURI></descriptionURI>
+	<tags>text,content,web,internet</tags>
+	
+	<encodingChain>
+		<name>HTML</name>
+		<filters>
+			<filter>
+				<name>HTML-self</name>
+				<description>HTML5 in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>HTML</name>
+			<version>5</version>
+			<description>Export to HTML5</description>
+			<filters>
+				<filter>
+					<name>HTML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>HTML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

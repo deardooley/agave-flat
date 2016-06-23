@@ -1,0 +1,14 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="iPlant Services" verbose="1" parallel="false" thread-count="1" >
+	<test name="iPlant Services Apps">
+		<packages>
+			<package name="org.iplantc.service.apps.model" />
+			<package name="org.iplantc.service.apps.dao" />
+			<package name="org.iplantc.service.apps.managers" />
+		</packages>
+		<classes>
+			<class name="org.iplantc.service.apps.util.RegexValidator" />
+		</classes>
+	</test>
+</suite>

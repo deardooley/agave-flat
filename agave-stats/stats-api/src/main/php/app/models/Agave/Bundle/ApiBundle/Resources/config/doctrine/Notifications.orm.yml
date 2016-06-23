@@ -1,0 +1,87 @@
+Agave\Bundle\ApiBundle\Entity\Notifications:
+    type: entity
+    table: notifications
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+        uuid:
+            columns:
+                - uuid
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        associatedUuid:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: associated_uuid
+        attempts:
+            type: integer
+            nullable: false
+            unsigned: false
+        callbackUrl:
+            type: string
+            nullable: false
+            length: 1024
+            fixed: false
+            column: callback_url
+        created:
+            type: datetime
+            nullable: false
+        lastSent:
+            type: datetime
+            nullable: true
+            column: last_sent
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        notificationEvent:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+            column: notification_event
+        owner:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        isPersistent:
+            type: boolean
+            nullable: true
+            column: is_persistent
+        responseCode:
+            type: integer
+            nullable: true
+            unsigned: false
+            column: response_code
+        isSuccess:
+            type: boolean
+            nullable: true
+            column: is_success
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+        uuid:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+        isTerminated:
+            type: boolean
+            nullable: true
+            default: 'b''0'''
+            column: is_terminated
+    lifecycleCallbacks: {  }

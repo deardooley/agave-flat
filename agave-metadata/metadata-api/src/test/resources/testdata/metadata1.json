@@ -1,0 +1,11 @@
+{
+    "value": {
+        "title": "Example Metadata ",
+        "properties": {
+            "species": "arabidopsis",
+            "description": "A model organism..."
+        }
+    },
+    "name": "some test metadata"
+}
+

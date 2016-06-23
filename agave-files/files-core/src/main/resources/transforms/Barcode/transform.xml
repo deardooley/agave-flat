@@ -1,0 +1,39 @@
+<transform>
+	<name>Barcode</name>
+	<version>0</version>
+	<fileExtensions>bc,tab,txt</fileExtensions>
+	<pattern></pattern>
+	<description>FASTX toolkit barcode file</description>	<descriptionURI></descriptionURI>
+	<tags>bar code,alignment,sequencing,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>Barcode</name>
+		<filters>
+			<filter>
+				<name>Barcode-self</name>
+				<description>Barcode in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Barcode</name>
+			<version>0</version>
+			<description>Export to Barcode</description>
+			<filters>
+				<filter>
+					<name>Barcode-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Barcode in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

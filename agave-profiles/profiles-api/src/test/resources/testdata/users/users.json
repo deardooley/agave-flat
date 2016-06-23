@@ -1,0 +1,58 @@
+{"users": [
+    {
+        "username": "jnvaughn",
+        "firstname": "Justin",
+        "lastname": "Vaughn",
+        "email": "jnvaughn@uga.edu",
+        "position": null,
+        "institution": "University of Georgia"
+    },
+    {
+        "username": "vaughn",
+        "firstname": "Matthew",
+        "lastname": "Vaughn",
+        "email": "vaughn@tacc.utexas.edu",
+        "position": null,
+        "institution": "University of Texas Austin"
+    },
+    {
+        "username": "sterry1",
+        "email": "sterry1@example.com",
+        "firstName": "Steve",
+        "lastName": "Terry",
+        "position": "Owner",
+        "institution": "Example University",
+        "phone": "512-555-5555",
+        "fax": "512-555-5556",
+        "researchArea": "Software Engineering",
+        "department": "QA",
+        "city": "Anywhere",
+        "state": "TX",
+        "country": "USA",
+        "fundingAgencies": [
+            "Dad",
+            "Mom"
+        ],
+        "gender": "MALE"
+    },
+    {
+        "username": "jstubbs",
+        "email": "jstubbs@tacc.utexas.edu",
+        "firstName": "Joe",
+        "lastName": "Stubbs",
+        "position": "Owner",
+        "institution": "University of Texas at Austin",
+        "phone": "512-555-5555",
+        "fax": "512-555-5556",
+        "researchArea": "Software Engineering",
+        "department": "QA",
+        "city": "Anywhere",
+        "state": "TX",
+        "country": "USA",
+        "fundingAgencies": [
+            "iplant",
+            "tacc"
+        ],
+        "gender": "MALE"
+    }
+]}

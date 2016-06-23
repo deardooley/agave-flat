@@ -1,0 +1,60 @@
+Agave\Bundle\ApiBundle\Entity\Tenants:
+    type: entity
+    table: tenants
+    id:
+        id:
+            type: integer
+            nullable: false
+            unsigned: true
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        name:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+        baseUrl:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            column: base_url
+        contactEmail:
+            type: string
+            nullable: true
+            length: 128
+            fixed: false
+            column: contact_email
+        contactName:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+            column: contact_name
+        created:
+            type: datetime
+            nullable: false
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        status:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+        tenantId:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: tenant_id
+        uuid:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            default: ''
+    lifecycleCallbacks: {  }

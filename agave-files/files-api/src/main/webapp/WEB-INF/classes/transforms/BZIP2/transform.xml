@@ -1,0 +1,40 @@
+<transform>
+
+	<name>BZIP2</name>
+	<version>0</version>
+	<fileExtensions>bz2</fileExtensions>
+	<pattern></pattern>
+	<description>BZIP2</description>	<descriptionURI>http://en.wikipedia.org/wiki/Bzip2</descriptionURI>
+	<tags>compressed</tags>
+	
+	<encodingChain>
+		<name>BZIP2</name>
+		<filters>
+			<filter>
+				<name>BZIP2-self</name>
+				<description>BZIP2 in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>BZIP2</name>
+			<version>0</version>
+			<description>Export to BZIP2</description>
+			<filters>
+				<filter>
+					<name>BZIP2-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>BZIP2 in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

@@ -1,0 +1,89 @@
+Agave\Bundle\ApiBundle\Entity\LogicalFiles:
+    type: entity
+    table: logical_files
+    indexes:
+        FKBB45CEC1BBBF083F:
+            columns:
+                - system_id
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+        uuid:
+            columns:
+                - uuid
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        internalUsername:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+            column: internal_username
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        name:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+        nativeFormat:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+            column: native_format
+        owner:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        path:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+        source:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+        status:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+        uuid:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+    manyToOne:
+        system:
+            targetEntity: Systems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                system_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

@@ -1,0 +1,52 @@
+Agave\Bundle\ApiBundle\Entity\Logicalfilenotifications:
+    type: entity
+    table: logicalfilenotifications
+    indexes:
+        FK2ECF400341C615BD:
+            columns:
+                - logicalfile_id
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        lastSent:
+            type: datetime
+            nullable: false
+            column: last_sent
+        status:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        stillPending:
+            type: boolean
+            nullable: true
+            column: still_pending
+        callback:
+            type: string
+            nullable: true
+            length: 1024
+            fixed: false
+    manyToOne:
+        logicalfile:
+            targetEntity: LogicalFiles
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                logicalfile_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

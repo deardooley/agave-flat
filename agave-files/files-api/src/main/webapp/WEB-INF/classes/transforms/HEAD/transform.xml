@@ -1,0 +1,23 @@
+<transform>
+
+	<name>HEAD</name>
+	<version>0</version>
+	<fileExtensions>txt</fileExtensions>
+	<pattern></pattern>
+	<description>Text</description>
+	<descriptionURI>http://linux.about.com/library/cmd/blcmdl1_head.htm</descriptionURI>
+	<tags>data,head</tags>
+	
+	<encodingChain>
+		<name>HEAD</name>
+		<filters>
+			<filter>
+				<name>HEAD-self</name>
+				<description>HEAD in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+
+</transform>

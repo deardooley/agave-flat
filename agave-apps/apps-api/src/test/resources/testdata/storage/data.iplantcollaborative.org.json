@@ -1,0 +1,23 @@
+{
+	"id": "data.iplantcollaborative.org",
+	"name": "iPlant Data Store",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "The iPlant Data Store is where your data are stored. The Data Store is cloud-based and is the central repository from which data is accessed by all of iPlant's technologies.",
+	"site": "iplantcollaborative.org",
+	"storage": {
+		"host": "data.iplantcollaborative.org",
+		"port": 1247,
+		"protocol": "IRODS",
+		"rootDir": "/iplant/home",
+		"auth": {
+			"username": "${irods.username}",
+			"password": "${irods.password}",
+			"type": "PASSWORD"
+		},
+		"resource": "bitol",
+		"zone": "iplant"
+		
+	},
+	"isDefault": true
+}

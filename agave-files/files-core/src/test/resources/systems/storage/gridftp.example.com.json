@@ -1,0 +1,30 @@
+{
+	"id": "gridftp.example.com",
+	"name": "GRIDFTP Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example gridftp system",
+	"site": "example.com",
+	"storage": {
+		"host": "gridftp.stampede.tacc.utexas.edu",
+		"port": 2811,
+		"protocol": "GRIDFTP",
+		"homeDir": "/testdata",
+		"rootDir": "/home1/00475/dooley",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": null,
+			"type": "X509",
+			"caCerts": "http://software.xsede.org/security/xsede-certs.tar.gz",
+			"server": {
+				"id": "myproxy.xsede.org",
+				"name": "XSEDE MyProxy Server",
+				"endpoint": "myproxy.xsede.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+		
+	}
+}

@@ -1,0 +1,27 @@
+Agave\Bundle\ApiBundle\Entity\Usageservices:
+    type: entity
+    table: UsageServices
+    id:
+        id:
+            type: integer
+            nullable: false
+            unsigned: false
+            id: true
+            column: ID
+            generator:
+                strategy: IDENTITY
+    fields:
+        servicekey:
+            type: string
+            nullable: false
+            length: 30
+            fixed: false
+            default: ''
+            column: ServiceKey
+        description:
+            type: text
+            nullable: true
+            length: 65535
+            fixed: false
+            column: Description
+    lifecycleCallbacks: {  }

@@ -1,0 +1,83 @@
+Agave\Bundle\ApiBundle\Entity\Usage:
+    type: entity
+    table: Usage
+    indexes:
+        ServiceKey:
+            columns:
+                - ServiceKey
+        ActivityKey:
+            columns:
+                - ActivityKey
+    id:
+        uid:
+            type: integer
+            nullable: false
+            unsigned: false
+            id: true
+            column: UID
+            generator:
+                strategy: IDENTITY
+    fields:
+        username:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: Username
+        servicekey:
+            type: string
+            nullable: false
+            length: 30
+            fixed: false
+            default: ''
+            column: ServiceKey
+        activitykey:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+            default: ''
+            column: ActivityKey
+        activitycontext:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+            column: ActivityContext
+        createdat:
+            type: datetime
+            nullable: false
+            column: CreatedAt
+        callingip:
+            type: string
+            nullable: true
+            length: 15
+            fixed: false
+            column: CallingIP
+        userip:
+            type: string
+            nullable: true
+            length: 15
+            fixed: false
+            column: UserIP
+        clientapplication:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            default: ''
+            column: ClientApplication
+        tenantid:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            default: ''
+            column: TenantId
+        useragent:
+            type: string
+            nullable: true
+            length: 256
+            fixed: false
+            column: UserAgent
+    lifecycleCallbacks: {  }

@@ -1,0 +1,23 @@
+<transform>
+
+	<name>TAIL</name>
+	<version>0</version>
+	<fileExtensions>txt</fileExtensions>
+	<pattern></pattern>
+	<description>Text</description>
+	<descriptionURI>http://linux.about.com/library/cmd/blcmdl1_tail.htm</descriptionURI>
+	<tags>data,tail</tags>
+	
+	<encodingChain>
+		<name>TAIL</name>
+		<filters>
+			<filter>
+				<name>TAIL-self</name>
+				<description>TAIL in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+
+</transform>

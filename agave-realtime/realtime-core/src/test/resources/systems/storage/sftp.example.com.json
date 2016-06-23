@@ -1,0 +1,22 @@
+{
+	"id": "sftp.example.com",
+	"name": "SFTP Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example storage sytem accessible via sftp.",
+	"site": "example.com",
+	"storage": {
+		"host": "docker.example.com",
+		"port": 10022,
+		"protocol": "SFTP",
+		"rootDir": "/",
+		"homeDir":"/home/testuser",
+		"auth": {
+			"username": "testuser",
+			"password": "testuser",
+			"type": "PASSWORD"
+		}
+		
+	},
+	"default": false
+}

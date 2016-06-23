@@ -1,0 +1,84 @@
+Agave\Bundle\ApiBundle\Entity\Batchqueues:
+    type: entity
+    table: batchqueues
+    indexes:
+        FK2F730D3CD7AE66CC:
+            columns:
+                - execution_system_id
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: integer
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        customDirectives:
+            type: string
+            nullable: true
+            length: 32768
+            fixed: false
+            column: custom_directives
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        maxJobs:
+            type: bigint
+            nullable: false
+            unsigned: false
+            column: max_jobs
+        maxMemory:
+            type: bigint
+            nullable: false
+            unsigned: false
+            column: max_memory
+        name:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+        systemDefault:
+            type: boolean
+            nullable: true
+            column: system_default
+        maxNodes:
+            type: bigint
+            nullable: false
+            unsigned: false
+            column: max_nodes
+        maxProcesors:
+            type: bigint
+            nullable: false
+            unsigned: false
+            column: max_procesors
+        maxRequestedTime:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: max_requested_time
+        maxUserJobs:
+            type: bigint
+            nullable: false
+            unsigned: false
+            column: max_user_jobs
+    manyToOne:
+        executionSystem:
+            targetEntity: Executionsystems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                execution_system_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

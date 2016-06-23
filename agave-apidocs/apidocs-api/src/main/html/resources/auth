@@ -1,0 +1,204 @@
+{
+    "apiVersion": "${project.version}-r${buildNumber}",
+    "apis": [
+        {
+            "description": "Query for the requesting user profile",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "check",
+                    "notes": "Use HTTP Basic Authentication with a username and token.",
+                    "parameters": [],
+                    "summary": "Validate a token.",
+                    "type": "EmptyTokenResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "createToken",
+                    "notes": "Use HTTP Basic Authentication with a username and password.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid api user for whom this token will be generated. Default: the authenticated user",
+                            "name": "username",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid internal user to associate with this token. Default: empty",
+                            "name": "internalUsername",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The number of seconds this token should remain valid. Default: 7200 (2 hours)",
+                            "format": "int32",
+                            "name": "lifetime",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "integer"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The maximum number of times this token can be used. Default: no limit",
+                            "format": "int32",
+                            "name": "maxUses",
+                            "paramType": "form",
+                            "required": false,
+                            "type": "integer"
+                        }
+                    ],
+                    "summary": "Generate a new token.",
+                    "type": "SingleTokenResponse"
+                }
+            ],
+            "path": "/auth/v2/"
+        },
+        {
+            "description": "List all tokens for the user.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "list",
+                    "notes": "Expired tokens will not be returned",
+                    "parameters": [],
+                    "summary": "Returns all valid tokens for the user",
+                    "type": "MultipleTokenResponse"
+                }
+            ],
+            "path": "/auth/v2/tokens/"
+        },
+        {
+            "description": "Operate on an existing token.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "get",
+                    "notes": "Expired tokens will not be returned",
+                    "parameters": [],
+                    "summary": "Returns the token with the given nonce",
+                    "type": "SingleTokenResponse"
+                },
+                {
+                    "method": "PUT",
+                    "nickname": "refresh",
+                    "notes": "Use HTTP Basic Authentication with a username and password or token.",
+                    "parameters": [],
+                    "summary": "Refresh the given token.",
+                    "type": "SingleTokenResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "delete",
+                    "notes": "Use HTTP Basic Authentication with a username and token.",
+                    "parameters": [],
+                    "summary": "Delete the given token token.",
+                    "type": "EmptyTokenResponse"
+                }
+            ],
+            "path": "/auth/v2/tokens/{token}"
+        }
+    ],
+    "basePath": "${foundation.base.url}",
+    "models": {
+        "EmptyTokenResponse": {
+            "id": "SingleTokenResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "empty response",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "MultipleTokenResponse": {
+            "id": "MultipleTokenResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "response body",
+                    "items": {
+                        "$ref": "Token"
+                    },
+                    "type": "array"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "SingleTokenResponse": {
+            "id": "SingleTokenResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "type": "Token"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "Token": {
+            "id": "Token",
+            "name": "",
+            "properties": {
+                "created": {
+                    "description": "The creation date in ISO 8601 format.",
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "The api user who made the token request.",
+                    "type": "string"
+                },
+                "expires": {
+                    "description": "The expiration date in ISO 8601 format.",
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "internal_username": {
+                    "description": "The username of the internal user attached to this token.",
+                    "type": "string"
+                },
+                "renewed": {
+                    "description": "The date the token was last renewed in ISO 8601 format.",
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "token": {
+                    "description": "The token nonce.",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "The api user for whom this token applies.",
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "resourcePath": "/auth/v2",
+    "swaggerVersion": "1.2"
+}

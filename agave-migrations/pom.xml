@@ -1,0 +1,305 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.iplantc</groupId>
+		<artifactId>agave</artifactId>
+		<version>2.1.8</version>
+	</parent>
+
+	<groupId>org.iplantc.agave</groupId>
+	<artifactId>agave-migrations</artifactId>
+	<name>iPlant Agave API Database Migrations</name>
+	<description>Migration definitions and controls for the Agave Platform</description>
+	<packaging>jar</packaging>
+
+	<properties>
+		<flyway.version>4.0</flyway.version>
+	</properties>
+
+	<build>
+		<resources>
+			<resource>
+				<filtering>true</filtering>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
+		<testResources>
+			<testResource>
+				<filtering>true</filtering>
+				<directory>src/test/docker</directory>
+			</testResource>
+		</testResources>
+		<plugins>
+			<!-- Migration script runs during test setup phase. The result will be 
+				a contain -->
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+			    <artifactId>flyway-maven-plugin</artifactId>
+			    <version>${flyway.version}</version>
+				<configuration>
+					<driver>${foundation.db.driver}</driver>
+					<table>migrations</table>
+					<url>${foundation.db.url}</url> 
+					<user>${foundation.db.username}</user> 
+					<password>${foundation.db.password}</password>
+					<baselineVersion>${project.version}</baselineVersion> 
+					<baselineDescription>Base Migration</baselineDescription>
+					<locations>
+        				<location>filesystem:src/main/resources/db/migration</location>
+        				<location>classpath:org/iplantc/service/common/migration</location>
+					</locations>
+					<skip>${skip.migrations}</skip>
+				</configuration>
+				<!-- <executions>
+					<execution>
+						<id>sandbox-data-volume</id>
+						<phase>process-test-sources</phase>
+						<goals>
+							<goal>clean</goal>
+							<goal>migrate</goal>
+						</goals>
+					</execution>
+				</executions> -->
+			</plugin>
+			<!-- <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.4.3</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin> -->
+			<!-- Package the service up as a Docker image. -->
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<configuration>
+					<!-- Standard build will build an image without the prefix so we don't 
+						force conventions on folks. -->
+					<imageName>${project.artifactId}</imageName>
+					<dockerDirectory>${basedir}/src/main/docker</dockerDirectory>
+					<serverId>${docker.registry.id}</serverId>
+					<registryUrl>${docker.registry.url}</registryUrl>
+				</configuration>
+				<executions>
+					<execution>
+						<id>build-container</id>
+						<!-- Generic docker build of API -->
+						<phase>package</phase>
+						<goals>
+							<goal>build</goal>
+						</goals>
+						<configuration>
+							<skipDockerBuild>${skip.docker.build}</skipDockerBuild>
+							<useGitCommitId>true</useGitCommitId>
+							<imageTags>
+								<tag>${project.version}</tag>
+								<tag>latest</tag>
+							</imageTags>
+							<tagInfoFile>target/image_info.json</tagInfoFile>
+							<forceTags>true</forceTags>
+							<resources>
+								<resource>
+									<targetPath>/source/</targetPath>
+									<directory>${basedir}/../</directory>
+									<include>pom.xml</include>
+								</resource>
+								<!-- <resource>
+									<targetPath>/source/.m2/repository/org/iplantc/agave/${project.version}/</targetPath>
+									<directory>${settings.localRepository}/org/iplantc/agave/${project.version}</directory>
+									<include>**</include>
+								</resource>
+								<resource>
+									<targetPath>/source/.m2/repository/org/iplantc/agave/</targetPath>
+									<directory>${settings.localRepository}/org/iplantc/agave</directory>
+									<include>**/${project.version}/**</include>
+								</resource> -->
+								<resource>
+									<targetPath>/source/config/maven</targetPath>
+									<directory>${basedir}/../config/maven</directory>
+									<include>settings-SAMPLE.xml</include>
+								</resource>
+								<resource>
+									<targetPath>/source/agave-migrations/</targetPath>
+									<directory>${basedir}</directory>
+									<include>**</include>
+									<exclude>target/docker/**</exclude>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>tag-commit-hash</id>
+						<!-- Tag with the git commit hash. This tags a published image with 
+							the repo commit tag -->
+						<phase>deploy</phase>
+						<goals>
+							<goal>tag</goal>
+						</goals>
+						<configuration>
+							<skipDockerBuild>false</skipDockerBuild>
+							<image>${project.artifactId}</image>
+							<newName>${docker.registry.username}/${project.artifactId}</newName>
+							<forceTags>true</forceTags>
+							<useGitCommitId>true</useGitCommitId>
+							<pushImage>${force.docker.push}</pushImage>
+							<serverId>${docker.registry.id}</serverId>
+							<registryUrl>${docker.registry.url}</registryUrl>
+						</configuration>
+					</execution>
+					<execution>
+						<id>tag-version</id>
+						<!-- Tag with the api version number. This represents the latest of 
+							the api version -->
+						<phase>deploy</phase>
+						<goals>
+							<goal>tag</goal>
+						</goals>
+						<configuration>
+							<image>${project.artifactId}</image>
+							<newName>${docker.registry.username}/${project.artifactId}:${project.version}</newName>
+							<forceTags>true</forceTags>
+							<skipDockerTag>${skip.docker.tag}</skipDockerTag>
+							<pushImage>${force.docker.push}</pushImage>
+							<serverId>${docker.registry.id}</serverId>
+							<registryUrl>${docker.registry.url}</registryUrl>
+						</configuration>
+					</execution>
+					<!-- Tag as the "latest". This represents the latest of the api -->
+					<execution>
+						<id>tag-latest</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>tag</goal>
+						</goals>
+						<configuration>
+							<skipDockerBuild>false</skipDockerBuild>
+							<image>${project.artifactId}</image>
+							<newName>${docker.registry.username}/${project.artifactId}:latest</newName>
+							<forceTags>true</forceTags>
+							<skipDockerTag>${skip.docker.tag}</skipDockerTag>
+							<useGitCommitId>false</useGitCommitId>
+							<pushImage>false</pushImage>
+							<serverId>${docker.registry.id}</serverId>
+							<registryUrl>${docker.registry.url}</registryUrl>
+						</configuration>
+					</execution>
+					<execution>
+						<id>remove-version-tag</id>
+						<!-- Tag as the "latest". This represents the latest of the api -->
+						<phase>clean</phase>
+						<goals>
+							<goal>removeImage</goal>
+						</goals>
+						<configuration>
+							<skip>${skip.docker.clean}</skip>
+							<imageTags>
+								<tag>latest</tag>
+								<tag>${project.version}</tag>
+								<tag>${buildNumber}</tag>
+								<tag>${buildNumber}.DIRTY</tag>
+							</imageTags>
+							<imageName>${docker.registry.username}/${project.artifactId}</imageName>
+						</configuration>
+					</execution>
+					<execution>
+						<id>remove-image</id>
+						<!-- Tag as the "latest". This represents the latest of the api -->
+						<phase>clean</phase>
+						<goals>
+							<goal>removeImage</goal>
+						</goals>
+						<configuration>
+							<imageTags>
+								<tag>latest</tag>
+								<tag>${project.version}</tag>
+								<tag>${buildNumber}</tag>
+								<tag>${buildNumber}.DIRTY</tag>
+							</imageTags>
+							<skip>${skip.docker.clean}</skip>
+							<imageName>${project.artifactId}</imageName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.flywaydb</groupId>
+										<artifactId>
+											flyway-maven-plugin
+										</artifactId>
+										<versionRange>
+											[4.0,)
+										</versionRange>
+										<goals>
+											<goal>migrate</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<dependencies>
+		<!-- Fly way -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+			<version>4.0</version>
+		</dependency>
+
+		<!-- mysql jdbc driver -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.38</version>
+		</dependency>
+		
+		<!-- Java custom migration depedencies -->
+		<dependency>
+			<groupId>com.github.stephenc.eaio-uuid</groupId>
+			<artifactId>uuid</artifactId>
+			<version>3.4.0</version>
+		</dependency>
+		
+		<!-- logging depedencies -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.6.1</version>
+		</dependency>
+		
+		<!-- <dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>common-core</artifactId>
+			<version>${project.version}</version>
+		</dependency> -->
+	</dependencies>
+</project>

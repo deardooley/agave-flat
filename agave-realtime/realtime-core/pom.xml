@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.iplantc.agave</groupId>
+		<artifactId>realtime</artifactId>
+		<version>2.1.8</version>
+	</parent>
+	<artifactId>realtime-core</artifactId>
+	<name>Agave Platform Realtime Service Core</name>
+	<description>Core classes for Agave Realtime Service</description>
+	<packaging>jar</packaging>
+
+	<scm>
+		<connection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-realtime.git</connection>
+		<developerConnection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-realtime.git</developerConnection>
+		<url>https://bitbucket.org/agaveapi/agave-tags</url>
+	</scm>
+
+	<properties>
+		<force.check.version>false</force.check.version>
+	</properties>
+
+	<build>
+		<resources>
+			<resource>
+				<filtering>true</filtering>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
+		<testResources>
+			<testResource>
+				<filtering>true</filtering>
+				<directory>src/test/resources</directory>
+			</testResource>
+		</testResources>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>transforms-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jobs-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+</project>

@@ -1,0 +1,55 @@
+<transform>
+
+	<name>Bowtie</name>
+	<version>0</version>
+	<fileExtensions>bowtie,aln,txt</fileExtensions>
+	<pattern></pattern>
+	<description>Bowtie alignment</description>
+	<descriptionURI>http://bowtie-bio.sourceforge.net/manual.shtml#default-bowtie-output</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>Bowtie</name>
+		<filters>
+			<filter>
+				<name>Bowtie-self</name>
+				<description>Bowtie in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Bowtie</name>
+			<version>0</version>
+			<description>Export to Bowtie</description>
+			<filters>
+				<filter>
+					<name>Bowtie-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Bowtie in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+		<decodingChain>
+			<name>SAM</name>
+			<version>0.12</version>
+			<description>Export to SAM</description>
+			<filters>
+				<filter>
+					<name>Bowtie-SAM</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Bowtie->SAM translator</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

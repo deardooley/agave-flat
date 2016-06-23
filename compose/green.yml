@@ -1,0 +1,221 @@
+###############################################################
+# Core Science APIs - Green Instances
+# green.yml
+#
+# This contains the Green instances of a blue/green deployment.
+# These services start on a 8xxx port range and block a low
+# range of ports. Make sure to start the `proxy` container
+# from the `service-definitions.yml` file separately from this
+# stack. You do not need to restart the proxy once it is running.
+#
+# Starting:
+# docker-compose -p proxy -f lb-proxy.yml up -d proxy
+# docker-compose -p green -f green.yml up -d
+#
+# Recreating:
+# docker-compose -p green -f green.yml kill
+# docker-compose -p green -f green.yml rm -f
+# docker-compose -p green -f green.yml up -d
+#
+###############################################################
+
+###############################################################
+#   Agave Core Services (B instance)
+###############################################################
+
+jobs:
+  extends:
+    file: service-definitions.yml
+    service: jobs
+  ports:
+    - "7081:80"
+    - "7444:443"
+    - "50018-50027:50018-50027"
+  environment:
+    - 'CONTAINER_STACK=green'
+    - 'GLOBUS_TCP_PORT_RANGE=50018,50027'
+
+files:
+  extends:
+    file: service-definitions.yml
+    service: files
+  ports:
+    - "7082:80"
+    - "7445:443"
+    - "50311-50320:50311-50320"
+  environment:
+    - 'CONTAINER_STACK=green'
+    - 'GLOBUS_TCP_PORT_RANGE=50311,50320'
+
+apps:
+  extends:
+    file: service-definitions.yml
+    service: apps
+  ports:
+    - "7083:80"
+    - "7446:443"
+    - "50911-50920:50911-50920"
+  environment:
+    - 'CONTAINER_STACK=green'
+    - 'GLOBUS_TCP_PORT_RANGE=50911,50920'
+
+systems:
+  extends:
+    file: service-definitions.yml
+    service: systems
+  ports:
+    - "7084:80"
+    - "7447:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+monitors:
+  extends:
+    file: service-definitions.yml
+    service: monitors
+  ports:
+    - "7085:80"
+    - "7448:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+profiles:
+  extends:
+    file: service-definitions.yml
+    service: profiles
+  ports:
+    - "7086:80"
+    - "7449:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+metadata:
+  extends:
+    file: service-definitions.yml
+    service: metadata
+  ports:
+    - "7087:80"
+    - "7450:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+notifications:
+  extends:
+    file: service-definitions.yml
+    service: notifications
+  ports:
+    - "7088:80"
+    - "7451:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+transforms:
+  extends:
+    file: service-definitions.yml
+    service: transforms
+  ports:
+    - "7098:80"
+    - "7461:443"
+    - "50611-50620:50611-50620"
+  environment:
+    - 'CONTAINER_STACK=green'
+    - 'GLOBUS_TCP_PORT_RANGE=50611,50620'
+
+realtime:
+  extends:
+    file: service-definitions.yml
+    service: realtime
+  ports:
+    - "7076:80"
+    - "7458:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+tags:
+  extends:
+    file: service-definitions.yml
+    service: tags
+  ports:
+    - "7077:80"
+    - "7458:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+postits:
+  extends:
+    file: service-definitions.yml
+    service: postits
+  ports:
+    - "7090:80"
+    - "7453:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+usage:
+  extends:
+    file: service-definitions.yml
+    service: usage
+  ports:
+    - "7091:80"
+    - "7454:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+tenants:
+  extends:
+    file: service-definitions.yml
+    service: tenants
+  ports:
+    - "7092:80"
+    - "7455:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+logging:
+  extends:
+    file: service-definitions.yml
+    service: logging
+  ports:
+    - "7093:80"
+    - "7456:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+docs:
+  extends:
+    file: service-definitions.yml
+    service: docs
+  ports:
+    - "7094:80"
+    - "7457:443"
+  environment:
+    - 'CONTAINER_STACK=green'
+
+stats:
+  extends:
+    file: service-definitions.yml
+    service: stats
+  ports:
+    - "7099:80"
+    - "7462:443"
+  links:
+    - reverseip
+    - redis
+  environment:
+    - 'CONTAINER_STACK=green'
+
+reverseip:
+  extends:
+    file: service-definitions.yml
+    service: reverseip
+  environment:
+    - 'CONTAINER_STACK=green'
+
+redis:
+  extends:
+    file: service-definitions.yml
+    service: redis
+  environment:
+    - 'CONTAINER_STACK=green'
+  volumes:
+    - ./cache/redis_b:/data

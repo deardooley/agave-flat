@@ -1,0 +1,789 @@
+package org.iplantc.service.transfer.sftp;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang.StringUtils;
+import org.codehaus.plexus.util.FileUtils;
+import org.iplantc.service.systems.model.StorageConfig;
+import org.iplantc.service.systems.model.StorageSystem;
+import org.iplantc.service.transfer.BaseTransferTestCase;
+import org.iplantc.service.transfer.RemoteDataClient;
+import org.iplantc.service.transfer.RemoteFileInfo;
+import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.json.JSONObject;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+//import org.apache.commons.io.FileUtils;
+
+public class SftpClientTest extends BaseTransferTestCase {
+	
+	protected static String MISSING_DIRECTORY = "I/Do/Not/Exist/unless/some/evil/person/has/deliberately/created/a/ludicrous/directory/structure/just/to/break/this/test";
+	protected static String MISSING_FILE = "I/Do/Not/Exist/unless/some/evil/person/has/deliberately/created/a/ludicrous/directory/structure/just/to/break/this/test.txt";
+	protected static String LOCAL_DIR = "src/test/resources/transfer";
+	protected static String LOCAL_DOWNLOAD_DIR = "src/test/resources/download";
+	protected static String LOCAL_TXT_FILE = "src/test/resources/transfer/test_upload.txt";
+	protected static String LOCAL_BINARY_FILE = "src/test/resources/transfer/test_upload.bin";
+	
+	protected RemoteDataClient client;
+	protected StorageConfig storageConfig;
+	
+    public SftpClientTest() {}
+
+    @BeforeClass
+    public void beforeClass() throws Exception {
+    	super.beforeClass();
+    	if (!FileUtils.fileExists(LOCAL_DOWNLOAD_DIR)) {
+    		FileUtils.getFile(LOCAL_DOWNLOAD_DIR).mkdirs();
+    	}
+    	JSONObject json = jtd.getTestDataObject(STORAGE_SYSTEM_TEMPLATE_DIR + "/" + "sftp.example.com.json");
+    	StorageSystem system = (StorageSystem)StorageSystem.fromJSON(json);
+    	system.setOwner(SYSTEM_USER);
+    	storageConfig = system.getStorageConfig();
+    	
+    	// decrypt password for easier unit testing
+    	String salt = system.getSystemId() + 
+    			storageConfig.getHost() + 
+    			storageConfig.getDefaultAuthConfig().getUsername();
+    	
+    	storageConfig.getDefaultAuthConfig().setPassword(
+    			storageConfig.getDefaultAuthConfig().getClearTextPassword(salt));
+    }
+    
+    @AfterClass
+    public void afterClass() throws Exception {
+    	FileUtils.deleteDirectory(LOCAL_DOWNLOAD_DIR);
+    	client.authenticate();
+//    	try { client.delete(MISSING_DIRECTORY.split("/")[0]); } catch (Exception e) {}
+    	//try { client.delete(MISSING_FILE.substring(MISSING_FILE.indexOf("/"))); } catch (Exception e) {}
+    	try { client.delete("I"); } catch (Exception e) {}
+    	try { client.delete(FilenameUtils.getName(LOCAL_BINARY_FILE)); } catch (Exception e) {}
+    	try { client.delete(FilenameUtils.getName(LOCAL_TXT_FILE)); } catch (Exception e) {}
+    	try { client.delete(FilenameUtils.getName(LOCAL_DIR)); } catch (Exception e) {}
+    	client.disconnect();
+    }
+    
+    @BeforeMethod
+    public void beforeMethod() throws Exception {
+    	client = new MaverickSFTP(
+			storageConfig.getHost(), 
+			storageConfig.getPort(), 
+			storageConfig.getDefaultAuthConfig().getUsername(), 
+			storageConfig.getDefaultAuthConfig().getPassword(), 
+			storageConfig.getRootDir(), 
+			storageConfig.getHomeDir());
+    }
+    
+    @AfterMethod
+    public void afterMethod() {
+    	try {
+    		client.disconnect();
+    	} catch (Exception e) {}
+    }
+    
+    @Test
+	public void isPermissionMirroringRequired()
+	{
+		Assert.assertFalse(client.isPermissionMirroringRequired(), 
+				"MaverickSFTP permission mirroring should not be enabled.");
+	}
+    
+    @Test
+	public void isThirdPartyTransferSupported()
+	{
+		Assert.assertFalse(client.isThirdPartyTransferSupported());
+	}
+    
+//    @DataProvider(name="resolvePathProvider")
+//    public Object[][] resolvePathProvider()
+//    {	
+//    	RemoteDataClient noRootNoHome = new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), storageConfig.getDefaultAuthConfig().getUsername(), storageConfig.getDefaultAuthConfig().getPassword(), "",  "");
+//    	RemoteDataClient absoluteRootNoHome = new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), storageConfig.getDefaultAuthConfig().getUsername(), storageConfig.getDefaultAuthConfig().getPassword(), "/root",  "");
+//    	RemoteDataClient relateveRootNoHome = new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), storageConfig.getDefaultAuthConfig().getUsername(), storageConfig.getDefaultAuthConfig().getPassword(), "root",  "");
+//    	RemoteDataClient noRootAbsoluteHome = new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), storageConfig.getDefaultAuthConfig().getUsername(), storageConfig.getDefaultAuthConfig().getPassword(), "",  "/home");
+//    	RemoteDataClient noRootRelativeHome = new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), storageConfig.getDefaultAuthConfig().getUsername(), storageConfig.getDefaultAuthConfig().getPassword(), "",  "home");
+//    	RemoteDataClient absoluteRootRelativeHome = new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), storageConfig.getDefaultAuthConfig().getUsername(), storageConfig.getDefaultAuthConfig().getPassword(), "/root",  "home");
+//    	RemoteDataClient relativeRootAbsoluteHome = new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), storageConfig.getDefaultAuthConfig().getUsername(), storageConfig.getDefaultAuthConfig().getPassword(), "root",  "/home");
+//    	RemoteDataClient absoluteRootAbsoluteHome = new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), storageConfig.getDefaultAuthConfig().getUsername(), storageConfig.getDefaultAuthConfig().getPassword(), "/root",  "/home");
+//
+//        return new Object[][] {
+//    			{ noRootNoHome, "dooley", "/dooley", false, "no root no home defaults to /, so /dooley" },
+//        		{ noRootNoHome, "/dooley", "/dooley", false, "no root no home all paths return unchanged" },
+//        		{ noRootNoHome, "../", "../", true, "noRootNoHome relative paths outside of rootDir should throw exception" },
+//        		{ noRootNoHome, "../root", "../root", true, "noRootNoHome relative path outside of rootDir should throw exception" },
+//        		
+//        		{ absoluteRootNoHome, "dooley", "/root/dooley", false, "absoluteRootNoHome all paths return unchanged" },
+//        		{ absoluteRootNoHome, "/dooley", "/root/dooley", false, "absoluteRootNoHome all paths return unchanged" },
+//        		{ absoluteRootNoHome, "..", "", true, "absoluteRootNoHome relative path outside of rootDir should throw exception" },
+//        		{ absoluteRootNoHome, "../", "", true, "absoluteRootNoHome relative path outside of rootDir should throw exception" },
+//        		{ absoluteRootNoHome, "/..", "", true, "absoluteRootNoHome absolute path outside of rootDir should throw exception" },
+//        		{ absoluteRootNoHome, "/../", "", true, "absoluteRootNoHome absolute path outside of rootDir should throw exception" },
+//        		{ absoluteRootNoHome, "/../root", "/root", false, "absoluteRootNoHome absolute path inside of rootDir return valid path" },
+//        		{ absoluteRootNoHome, "../root", "/root", false, "absoluteRootNoHome relative path inside of rootDir return valid path" },
+//        		{ absoluteRootNoHome, "/../root/../", "", true,"absoluteRootNoHome absolute path outside of rootDir should throw exception" },
+//        		{ absoluteRootNoHome, "../root/../", "", true,"absoluteRootNoHome relative path outside of rootDir should throw exception" },
+//        		
+//        		{ relateveRootNoHome, "dooley", "root/dooley", false, "relative root no home all paths return unchanged" },
+//        		{ relateveRootNoHome, "/dooley", "root/dooley", false, "relative root no home all paths return unchanged" },
+//        		{ relateveRootNoHome, "..", "", true, "relateveRootNoHome relative path outside of rootDir should throw exception" },
+//        		{ relateveRootNoHome, "../", "", true, "relateveRootNoHome relative path outside of rootDir should throw exception" },
+//        		{ relateveRootNoHome, "/..", "", true, "relateveRootNoHome absolute path outside of rootDir should throw exception" },
+//        		{ relateveRootNoHome, "/../", "", true, "relateveRootNoHome absolute path outside of rootDir should throw exception" },
+//        		{ relateveRootNoHome, "/../root", "root", false, "relateveRootNoHome absolute path inside of rootDir return valid path" },
+//        		{ relateveRootNoHome, "../root", "root", false, "relateveRootNoHome relative path inside of rootDir return valid path" },
+//        		{ relateveRootNoHome, "/../root/../", "", true,"relateveRootNoHome absolute path outside of rootDir should throw exception" },
+//        		{ relateveRootNoHome, "../root/../", "", true,"relateveRootNoHome relative path outside of rootDir should throw exception" },
+//        		
+//        		{ noRootAbsoluteHome, "dooley", "/home/dooley", false, "no root absolute home all paths return unchanged" },
+//        		{ noRootAbsoluteHome, "/dooley", "/dooley", false, "no root absolute home all paths return unchanged" },
+//        		{ noRootAbsoluteHome, "..", "/", false, "noRootAbsoluteHome relative path outside of rootDir should resolve" },
+//        		{ noRootAbsoluteHome, "../", "/", false, "noRootAbsoluteHome relative path outside of rootDir should resolve" },
+//        		{ noRootAbsoluteHome, "/..", "/", true, "noRootAbsoluteHome absolute path outside of rootDir should throw exception" },
+//        		{ noRootAbsoluteHome, "/../", "/", true, "noRootAbsoluteHome absolute path outside of rootDir should throw exception" },
+//
+//        		{ noRootAbsoluteHome, "/../root", "/root", true, "noRootAbsoluteHome absolute path outside of rootDir should throw exception" },
+//        		{ noRootAbsoluteHome, "../root", "/root", false, "noRootAbsoluteHome relative path inside of rootDir should resolve" },
+//        		{ noRootAbsoluteHome, "/../root/../", "/", true,"noRootAbsoluteHome absolute path outside of rootDir should throw exception" },
+//        		{ noRootAbsoluteHome, "../root/../", "/", false,"noRootAbsoluteHome relative path outside of rootDir should resolve" },
+//        		
+//        		{ noRootRelativeHome, "dooley", "/home/dooley", false, "no root relative home all paths return unchanged" },
+//        		{ noRootRelativeHome, "/dooley", "/dooley", false, "no root relative home all paths return unchanged" },
+//                // relative path should resolve to "" with a relative Home of "home/"
+//        		{ noRootRelativeHome, "..", "/", false, "noRootRelativeHome relative path outside of rootDir should return unchanged" },
+//                    // relative path should resolve to "" with a relative Home of "home/"
+//        		{ noRootRelativeHome, "../", "/", false, "noRootRelativeHome relative path outside of rootDir should return unchanged" },
+//        		{ noRootRelativeHome, "/..", "/", true, "noRootRelativeHome absolute path outside of rootDir should throw exception" },
+//        		{ noRootRelativeHome, "/../", "/", true, "noRootRelativeHome absolute path outside of rootDir should throw excpetion" },
+//
+//        		{ noRootRelativeHome, "/../root", "/root", true, "noRootRelativeHome absolute path outside of rootDir should throw exception" },
+//                // "home/../root" should resolve to "root"
+//        		{ noRootRelativeHome, "../root", "/root", false, "noRootRelativeHome relative path inside of rootDir should resolve" },
+//        		{ noRootRelativeHome, "/../root/../", "/", true,"noRootRelativeHome absolute path outside of rootDir should throw exception" },
+//                // // "home/../root/.." should resolve to ""
+//        		{ noRootRelativeHome, "../root/../", "/", false,"noRootRelativeHome relative path outside of rootDir should resolve" },
+//        		
+//        		{ absoluteRootRelativeHome, "dooley", "/root/home/dooley", false, "absolute root relative home all paths return unchanged" },
+//        		{ absoluteRootRelativeHome, "/dooley", "/root/dooley", false, "absolute root relative home all paths return unchanged" },
+//        		{ absoluteRootRelativeHome, "..", "/root/", false, "absoluteRootRelativeHome relative path outside to rootDir should return unchanged" },
+//        		{ absoluteRootRelativeHome, "../", "/root/", false, "absoluteRootRelativeHome relative path outside to rootDir should return unchanged" },
+//        		{ absoluteRootRelativeHome, "/..", "/", true, "absoluteRootRelativeHome absolute path outside of rootDir throw exception" },
+//        		{ absoluteRootRelativeHome, "/../", "/", true, "absoluteRootRelativeHome absolute path outside of rootDir throw exception" },
+//        		{ absoluteRootRelativeHome, "/../root", "/root", false, "absoluteRootRelativeHome absolute path inside of rootDir should resolve" },
+//        		{ absoluteRootRelativeHome, "../root", "/root/root", false, "absoluteRootRelativeHome relative path inside of rootDir should resolve" },
+//        		{ absoluteRootRelativeHome, "/../root/../", "/", true,"absoluteRootRelativeHome absolute path outside of rootDir should throw exception" },
+//        		{ absoluteRootRelativeHome, "../root/../", "/root/", false,"absoluteRootRelativeHome relative path inside of rootDir should resolve" },
+//        		
+//        		{ relativeRootAbsoluteHome, "dooley", "root/home/dooley", false, "relative root absolute home all paths return unchanged" },
+//        		{ relativeRootAbsoluteHome, "/dooley", "root/dooley", false, "relative root absolute home all paths return unchanged" },
+//        		{ relativeRootAbsoluteHome, "..", "root/", false, "relativeRootAbsoluteHome relative path outside to rootDir should return unchanged" },
+//        		{ relativeRootAbsoluteHome, "../", "root/", false, "relativeRootAbsoluteHome relative path outside to rootDir should return unchanged" },
+//        		{ relativeRootAbsoluteHome, "/..", "", true, "relativeRootAbsoluteHome absolute path outside of rootDir throw exception" },
+//        		{ relativeRootAbsoluteHome, "/../", "", true, "relativeRootAbsoluteHome absolute path outside of rootDir throw exception" },
+//        		{ relativeRootAbsoluteHome, "/../root", "root", false, "relativeRootAbsoluteHome absolute path inside of rootDir should resolve" },
+//        		{ relativeRootAbsoluteHome, "../root", "root/root", false, "relativeRootAbsoluteHome relative path inside of rootDir should resolve" },
+//        		{ relativeRootAbsoluteHome, "/../root/../", "", true,"relativeRootAbsoluteHome absolute path outside of rootDir should throw exception" },
+//        		{ relativeRootAbsoluteHome, "../root/../", "root/", false,"relativeRootAbsoluteHome relative path inside of rootDir should resolve" },
+//        		
+//        		{ absoluteRootAbsoluteHome, "dooley", "/root/home/dooley", false, "absolute root absolute home all paths return unchanged" },
+//        		{ absoluteRootAbsoluteHome, "/dooley", "/root/dooley", false, "absolute root absolute home all paths return unchanged" },
+//        		{ absoluteRootAbsoluteHome, "..", "/root/", false, "absoluteRootAbsoluteHome relative path outside to rootDir should return unchanged" },
+//        		{ absoluteRootAbsoluteHome, "../", "/root/", false, "absoluteRootAbsoluteHome relative path outside to rootDir should return unchanged" },
+//        		{ absoluteRootAbsoluteHome, "/..", "/", true, "absoluteRootAbsoluteHome absolute path outside of rootDir throw exception" },
+//        		{ absoluteRootAbsoluteHome, "/../", "/", true, "absoluteRootAbsoluteHome absolute path outside of rootDir throw exception" },
+//        		{ absoluteRootAbsoluteHome, "/../root", "/root", false, "absoluteRootAbsoluteHome absolute path inside of rootDir should resolve" },
+//        		{ absoluteRootAbsoluteHome, "../root", "/root/root", false, "absoluteRootAbsoluteHome relative path inside of rootDir should resolve" },
+//        		{ absoluteRootAbsoluteHome, "/../root/../", "/", true,"absoluteRootAbsoluteHome absolute path outside of rootDir should throw exception" },
+//        		{ absoluteRootAbsoluteHome, "../root/../", "/root/", false,"absoluteRootAbsoluteHome relative path inside of rootDir should resolve" },
+//    	};
+//    }
+//    
+//    @Test(dataProvider="resolvePathProvider")
+//	public void resolvePath(RemoteDataClient client, String beforePath, String resolvedPath, boolean shouldThrowException, String message)
+//	{
+//    	boolean actuallyThrewException = false;
+//
+//		try 
+//    	{
+//    		String afterPath = client.resolvePath(beforePath);
+//    		Assert.assertEquals(afterPath, resolvedPath, 
+//    				"Resolved path " + afterPath + " did not match the expected resolved path of " + resolvedPath);
+//    	} 
+//    	catch (Exception e) {
+//    		actuallyThrewException = true;
+//        	if (!shouldThrowException) e.printStackTrace();
+//        }
+//    	
+//    	Assert.assertEquals(actuallyThrewException, shouldThrowException, message);
+//	}
+    
+    @DataProvider(name="authenticationProvider")
+    public Object[][] authenticationProvider()
+    {
+    	return new Object[][] {
+    		{ new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), storageConfig.getDefaultAuthConfig().getUsername(), storageConfig.getDefaultAuthConfig().getPassword(), storageConfig.getRootDir(), storageConfig.getHomeDir()), false, "Valid MaverickSFTP login authenticates." },
+    		{ new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), "this is a bad username", "this is a bad password", null, null), true, "Invalid MaverickSFTP login should fail" },
+    	};
+    }
+    
+    @Test(dataProvider="authenticationProvider")
+    public void authenticate(RemoteDataClient client, boolean shouldThrowException, String message) 
+    {
+    	boolean actuallyThrewException = false;
+    	
+    	try {
+    		client.authenticate();  
+        } catch (Exception e) {
+        	actuallyThrewException = true;
+        	if (!shouldThrowException) e.printStackTrace();
+        }
+    	
+    	Assert.assertEquals(actuallyThrewException, shouldThrowException, message);
+    }
+    
+    @DataProvider(name="doesExistProvider")
+    public Object[][] doesExistProvider()
+    {
+    	return new Object[][] {
+			{ null, true, "null path should resolve to home and not throw an exception." },
+			{ "", true, "Home directory should exist." },
+    		{ MISSING_DIRECTORY, false, "Missing directory should not restorageConfig.getPort() as existing." },
+    	};
+    }
+    
+    @Test(dataProvider="doesExistProvider", dependsOnMethods = { "authenticate" })
+    public void doesExist(String remotedir, boolean shouldExist, String message)
+	{
+    	try {
+    		client.authenticate();  
+    		Assert.assertEquals(shouldExist, client.doesExist(remotedir));
+        } catch (Exception e) {
+        	Assert.fail("Failed to query for existence of remote path " + remotedir, e);
+        }
+	}
+    
+    @DataProvider(name="mkdirProvider")
+    public Object[][] mkdirProvider()
+    {
+    	return new Object[][] {
+			{ null, false, true, "mkdir on null name should throw exception." },
+    		{ "", false, true, "mkdir on empty name should throw exception." },
+                // the following should not throw an exception, as it is entirely valid to create this dir.
+    		{ "deleteme-"+System.currentTimeMillis(), false, false, "mkdir new directory in current folder should not fail." },
+    		{ MISSING_DIRECTORY, true, false, "mkdir when parent does should return false." },
+    	};
+    }
+    
+    @Test(dataProvider="mkdirProvider", dependsOnMethods={"doesExist"})
+	public void mkdir(String remotedir, boolean shouldReturnFalse, boolean shouldThrowException, String message)
+	{
+    	System.out.println("Running mkdir: " + remotedir + ", " + shouldThrowException + ", " + message);
+    	boolean actuallyThrewException = false;
+    	
+    	try 
+    	{
+    		client.authenticate(); 
+    		
+    		Assert.assertEquals(client.mkdir(remotedir), !shouldReturnFalse, message);
+    		
+    		if (!shouldReturnFalse) {
+    			Assert.assertTrue(client.doesExist(remotedir), "Failed to create remote directory");
+    		}
+        } 
+    	catch (Exception e) {
+        	if (!shouldThrowException) e.printStackTrace();
+            actuallyThrewException = true;
+        }
+    	finally {
+    		try { client.delete(remotedir); } catch (Exception e) {}
+    		try { afterClass(); } catch (Exception e) {}
+        }
+    	
+    	Assert.assertEquals(actuallyThrewException, shouldThrowException, message);
+	}
+    
+  @DataProvider(name="mkdirsProvider")
+  public Object[][] mkdirsProvider()
+  {
+  	return new Object[][] {
+  		{ null, true, "mkdirs on null name should throw exception." },
+  		{ "", true, "mkdirs on empty name should throw exception." },
+  		{ "deleteme-"+System.currentTimeMillis(), false, "mkdirs new directory in current folder should not fail." },
+  		{ MISSING_DIRECTORY, false, "mkdirs when parent does not exist should not throw an exception." },
+  	};
+  }
+  
+  @Test(dataProvider="mkdirsProvider", dependsOnMethods = { "mkdir" })
+	public void mkdirs(String remotedir, boolean shouldThrowException, String message)
+	{
+  	System.out.println("Running mkdirs: " + remotedir + ", " + shouldThrowException + ", " + message);
+		boolean actuallyThrewException = false;
+  	
+  	try 
+  	{
+  		client.authenticate();  
+  		if (client.doesExist(remotedir)) {
+  			client.delete(remotedir);
+  		}
+  		Assert.assertTrue(client.mkdirs(remotedir), "Mkdirs returned false when it should be true.");
+  		Assert.assertTrue(client.doesExist(remotedir), "Failed to create remote directory");
+      } 
+  	catch (Exception e) {
+      	if (!shouldThrowException) e.printStackTrace();
+          actuallyThrewException = true;
+      }
+  	finally {
+  		try { client.delete(remotedir); } catch (Exception e) {}
+      	try { afterClass(); } catch (Exception e) {}
+      }
+  	
+  	Assert.assertEquals(actuallyThrewException, shouldThrowException, message);
+	}
+     @Test(dependsOnMethods = { "mkdirs" })
+    public void delete() 
+	{
+    	try 
+    	{
+    		client.authenticate();  
+//    		client.put(LOCAL_TXT_FILE, "");
+//    		String remoteFilename = FilenameUtils.getName(LOCAL_TXT_FILE);
+//    		Assert.assertTrue(client.doesExist(remoteFilename), 
+//    				"File " + remoteFilename + " not found on remote system after put.");
+//    		client.delete(remoteFilename);
+//    		Assert.assertFalse(client.doesExist(remoteFilename), 
+//    				"File " + remoteFilename + " not deleted from remote system.");
+    		
+    		client.authenticate();  
+//    		client.put(LOCAL_DIR, "");
+    		String remoteDir = FilenameUtils.getName(LOCAL_DIR);
+    		client.mkdirs(remoteDir);
+    		Assert.assertTrue(client.doesExist(remoteDir), 
+    				"Directory " + remoteDir + " not found on remote system after mkdir.");
+    		client.delete(remoteDir);
+    		Assert.assertFalse(client.doesExist(remoteDir), 
+    				"Directory " + remoteDir + " not deleted from remote system.");
+        } 
+    	catch (Exception e) {
+        	Assert.fail("Failed to delete file or folder", e);
+        }
+	}
+    
+    @DataProvider(name="putProvider")
+    public Object[][] putProvider()
+    {
+    	return new Object[][] {
+    		{ "", "", true, "empty localdir to put should throw exception." },
+    		{ null, "", true, "null localdir to put should throw exception." },
+    		{ "", null, true, "null remotedir to put should throw exception." },
+    		{ MISSING_FILE, "", true, "put on missing local file should throw exception." },
+    		{ MISSING_DIRECTORY, "", true, "put on missing local file should throw exception." },
+    		{ LOCAL_TXT_FILE, MISSING_FILE, true, "put on missing remote file should throw exception." },
+    		{ LOCAL_TXT_FILE, MISSING_DIRECTORY, true, "put on missing remote file should throw exception." },
+    		{ LOCAL_TXT_FILE, "", false, "put local file to remote home directory should succeed." },
+    		{ LOCAL_DIR, "", false, "put local directory to remote home directory should succeed." },
+    		{ LOCAL_DIR, FilenameUtils.getName(LOCAL_TXT_FILE), true, "put local directory to remote file should throw exception." },
+    	};
+    }
+    
+    @Test(dataProvider="putProvider")//, dependsOnMethods = { "delete" })
+	public void put(String localdir, String remotedir, boolean shouldThrowException, String message) 
+	{
+    	boolean actuallyThrewException = false;
+    	
+    	//tear down remote directory before every call
+    	try {
+        	client.authenticate();  
+        	if (!StringUtils.isEmpty(remotedir) && client.doesExist(remotedir)) {
+        		client.delete(remotedir);
+        	}
+    		client.put(localdir, remotedir);
+    		if (StringUtils.isEmpty(remotedir)) {
+    			Assert.assertTrue(client.doesExist(FilenameUtils.getName(localdir)), "Data not found on remote system after put.");
+    		} else {
+    			Assert.assertTrue(client.doesExist(remotedir), "Data not found on remote system after put.");
+    		}
+        } catch (Exception e) {
+        	if (!shouldThrowException) e.printStackTrace();
+            actuallyThrewException = true;
+        } finally {
+        	try { afterClass(); } catch (Exception e) {}
+        }
+    	
+    	Assert.assertEquals(actuallyThrewException, shouldThrowException, message);
+	}
+    
+    @DataProvider(name="isDirectoryProvider")
+    public Object[][] isDirectoryProvider()
+    {
+    	return new Object[][] {
+    		{ null, false, "null remoteDirectory to get should resolve to the home directory and return true." },
+    		{ "", false, "empty remotedir should return true." },
+    		{ MISSING_FILE, true, "remote file that does not exist should throw exception." },
+    		{ LOCAL_TXT_FILE, false, "remote file should return false" },
+    		{ LOCAL_DIR, false, "remote directory should return true" },
+    	};
+    }
+    
+    @Test(dataProvider="isDirectoryProvider", dependsOnMethods = { "put" })
+	public void isDirectory(String localdir, boolean shouldThrowException, String message)
+	{
+    	boolean actuallyThrewException = false;
+    	
+		try 
+    	{
+    		client.authenticate();
+    		if (StringUtils.isEmpty(localdir) || !FileUtils.fileExists(localdir)) 
+    		{
+    			Assert.assertTrue(client.isDirectory(localdir), "isDirectory should be true for root.");
+    		} 
+    		else 
+    		{
+	    		client.put(localdir, "");
+	    		String remotePutPath = FilenameUtils.getName(localdir);
+	    		Assert.assertTrue(client.doesExist(remotePutPath), "Data not found on remote system after put.");
+	    		Assert.assertEquals(new File(localdir).isDirectory(), client.isDirectory(remotePutPath), "isDirectory should be false for files.");
+    		}
+    	} 
+    	catch (Exception e) {
+    		actuallyThrewException = true;
+        	if (!shouldThrowException) e.printStackTrace();
+        }
+    	finally {
+        	try { afterClass(); } catch (Exception e) {}
+        }
+    	
+    	Assert.assertEquals(actuallyThrewException, shouldThrowException, message);
+	}
+    
+    @Test(dataProvider="isDirectoryProvider", dependsOnMethods = { "isDirectory" })
+	public void isFile(String localdir, boolean shouldThrowException, String message)
+	{
+    	boolean actuallyThrewException = false;
+    	
+		try 
+    	{
+    		client.authenticate();
+    		if (StringUtils.isEmpty(localdir) || !FileUtils.fileExists(localdir)) 
+    		{
+    			Assert.assertTrue(client.isDirectory(localdir), "isDirectory should be true for root.");
+    		} 
+    		else 
+    		{
+	    		client.put(localdir, "");
+	    		String remotePutPath = FilenameUtils.getName(localdir);
+	    		Assert.assertTrue(client.doesExist(remotePutPath), "Data not found on remote system after put.");
+	    		Assert.assertEquals(new File(localdir).isFile(), client.isFile(remotePutPath), "isDirectory should be false for files.");
+    		}
+    	} 
+    	catch (Exception e) {
+    		actuallyThrewException = true;
+        	if (!shouldThrowException) e.printStackTrace();
+        }
+    	finally {
+        	try { afterClass(); } catch (Exception e) {}
+        }
+    	
+    	Assert.assertEquals(actuallyThrewException, shouldThrowException, message);
+	}
+    
+    @Test(dependsOnMethods = { "isFile" })
+    public void ls()
+    {
+    	try {
+    		client.authenticate();
+    		client.put(LOCAL_DIR, "");
+    		String remoteDir = FilenameUtils.getName(LOCAL_DIR);
+    		Assert.assertTrue(client.doesExist(remoteDir), 
+    				"Directory " + remoteDir + " not found on remote system after put.");
+    		
+    		List<RemoteFileInfo> files = client.ls(remoteDir);
+    		List<String> localFiles = Arrays.asList(new File(LOCAL_DIR).list());
+    		for (RemoteFileInfo file: files) {
+    			Assert.assertTrue(localFiles.contains(file.getName()), 
+    					"Remote file is not present on local file system.");
+    			System.out.println(file.toString() + "\n");
+    		}
+    		
+    		client.delete(remoteDir);
+    		Assert.assertFalse(client.doesExist(remoteDir), 
+    				"Directory " + remoteDir + " not deleted from remote system.");
+    		
+    	} catch (Exception e) {
+        	Assert.fail("Failed to authenticate to " + storageConfig.getHost(), e);
+        }
+    	finally {
+        	try { afterClass(); } catch (Exception e) {}
+        }
+    }
+    
+    @DataProvider(name="getProvider")
+    public Object[][] getProvider()
+    {
+    	return new Object[][] {
+    		{ "", "", true, "empty localdir to get should throw exception." },
+    		{ null, "", true, "null localdir to get should throw exception." },
+    		{ "", null, true, "null remotedir to get should throw exception." },
+    		{ MISSING_FILE, "", true, "get on missing local file should throw exception." },
+    		{ MISSING_DIRECTORY, "", true, "get on missing local file should throw exception." },
+    		{ LOCAL_TXT_FILE, MISSING_FILE, true, "get on missing remote file should throw exception." },
+    		{ LOCAL_TXT_FILE, MISSING_DIRECTORY, true, "get on missing remote file should throw exception." },
+    		{ LOCAL_TXT_FILE, "", false, "get local file to remote home directory should succeed." },
+    		{ LOCAL_DIR, "", false, "get local directory to remote home directory should succeed." },
+    		{ LOCAL_DIR, FilenameUtils.getName(LOCAL_TXT_FILE), true, "get local directory to remote file should throw exception." },
+    	};
+    }
+    
+    @Test(dataProvider="getProvider", dependsOnMethods = { "ls" })
+	public void get(String localdir, String remotedir, boolean shouldThrowException, String message) 
+	{
+    	boolean actuallyThrewException = false;
+    	
+    	try 
+    	{
+    		client.authenticate();  
+    		client.put(localdir, remotedir);
+    		String remotePutPath = null;
+    		if (StringUtils.isEmpty(remotedir)) {
+    			Assert.assertTrue(client.doesExist(FilenameUtils.getName(localdir)), "Data not found on remote system after put.");
+    			remotePutPath = FilenameUtils.getName(localdir);
+    		} else {
+    			Assert.assertTrue(client.doesExist(remotedir), "Data not found on remote system after put.");
+    			remotePutPath = remotedir;
+    		}
+    		Assert.assertTrue(client.doesExist(remotePutPath), "Data not found on remote system after put.");
+    		client.get(remotePutPath, LOCAL_DOWNLOAD_DIR);
+    		String localGetPath = LOCAL_DOWNLOAD_DIR + "/" + FilenameUtils.getName(remotePutPath);
+    		Assert.assertTrue(FileUtils.fileExists(localGetPath), "Data not found on local system after get.");
+    	} 
+    	catch (Exception e) {
+        	if (!shouldThrowException) e.printStackTrace();
+            actuallyThrewException = true;
+        }
+    	finally {
+        	try { afterClass(); } catch (Exception e) {}
+        }
+    	
+    	Assert.assertEquals(actuallyThrewException, shouldThrowException, message);
+	}
+	
+	@Test(dependsOnMethods = { "get" })
+	public void length()
+	{
+		try 
+    	{
+    		client.authenticate();
+    		client.put(LOCAL_BINARY_FILE, "");
+    		String remotePutPath = FilenameUtils.getName(LOCAL_BINARY_FILE);
+    		Assert.assertTrue(client.doesExist(remotePutPath), "Data not found on remote system after put.");
+    		Assert.assertTrue(new File(LOCAL_BINARY_FILE).length() == client.length(remotePutPath),"remote length does not match local length.");
+    	} 
+    	catch (Exception e) {
+    		Assert.fail("Failed to retrieve length of remote file", e);
+        }
+    	finally {
+        	try { afterClass(); } catch (Exception e) {}
+        }
+	}
+    
+    @DataProvider(name="getInputStreamProvider")
+    public Object[][] getInputStreamProvider()
+    {
+        //RemoteDataClient client = new MaverickSFTP(storageConfig.getHost(), storageConfig.getPort(), storageConfig.getDefaultAuthConfig().getUsername(), storageConfig.getDefaultAuthConfig().getPassword(), storageConfig.getRootDir(), storageConfig.getHomeDir());
+        return new Object[][] {
+                { "", "", true, "empty localfile to get should throw exception." },
+                { null, "", true, "null localfile to get should throw exception." },
+                { "", null, true, "null remotedir to get should throw exception." },
+                { LOCAL_TXT_FILE, MISSING_DIRECTORY, true, "get on missing remote file should throw exception." },
+                { LOCAL_TXT_FILE, "", false, "get local file from remote home directory should succeed." },
+        };
+    }
+
+    @Test(dataProvider="getInputStreamProvider", dependsOnMethods = { "length" })
+    public void getInputStream(String localFile, String remotedir, boolean shouldThrowException, String message)
+            throws IOException, RemoteDataException
+    {
+        boolean actuallyThrewException = false;
+        InputStream in;
+        BufferedOutputStream bout;
+
+        try
+        {
+            client.authenticate();
+            client.put(localFile, remotedir);
+            String remotePutPath = remotedir + "/" + FilenameUtils.getName(localFile);
+            String localGetPath = LOCAL_DOWNLOAD_DIR + "/" + FilenameUtils.getName(remotePutPath);
+            Assert.assertTrue(client.doesExist(remotePutPath), "Data not found on remote system after put.");
+
+            in = client.getInputStream(remotePutPath, false);
+            File downloadfile = new File(localGetPath);
+            if (!FileUtils.fileExists(downloadfile.getParent())) {
+                FileUtils.getFile(downloadfile.getParent()).mkdirs();
+            }
+            downloadfile.createNewFile();
+            bout = new BufferedOutputStream(new FileOutputStream(downloadfile));
+
+            int bufferSize = client.getMaxBufferSize();
+            byte[] b = new byte[bufferSize];
+            int len = 0;
+
+            while ((len = in.read(b)) > -1) {
+                bout.write(b, 0, len);
+            }
+
+            bout.flush();
+            in.close();
+            bout.close();
+
+            Assert.assertTrue(FileUtils.fileExists(localGetPath), "Data not found on local system after get.");
+
+        }
+        catch (Exception e) {
+            actuallyThrewException = true;
+            if (!shouldThrowException) e.printStackTrace();
+        }
+    	finally {
+        	try { afterClass(); } catch (Exception e) {}
+        }
+
+        Assert.assertEquals(actuallyThrewException, shouldThrowException, message);
+
+    }
+    
+    @Test(dependsOnMethods={"getInputStream"})
+    public void getOutputStream() throws IOException, RemoteDataException
+	{
+		// TODO: test this
+	}	
+
+	@Test(dependsOnMethods = { "getOutputStream" })
+	public void checksum()
+	{
+		try {
+			client.checksum("");
+			Assert.fail("Checksum should not be supstorageConfig.getPort()ed for MaverickSFTP.");
+		} catch (NotImplementedException e) {
+			// this is what we expect.
+		} catch (Exception e) {
+			Assert.fail("Unexpected exception thrown from checksum.", e);
+		}
+	}
+
+	@DataProvider(name="doRenameProvider")
+    public Object[][] doRenameProvider()
+    {
+		String testdir = "TEST_DIR" + System.currentTimeMillis();
+    	return new Object[][] {
+    		{ null, testdir, true, "null oldpath should throw exception." },
+    		{ testdir, null, true, "null newpath should throw exception." },
+    		{ testdir, testdir + "-1", false, "rename should work for valid file names" },
+    	};
+    }
+    
+    @Test(dataProvider="doRenameProvider", dependsOnMethods = { "checksum" })
+	public void doRename(String oldpath, String newpath, boolean shouldThrowException, String message)
+	{
+    	boolean actuallyThrewException = false;
+    	String remoteNewPath = null;
+		try 
+    	{
+    		client.authenticate();
+    		if (StringUtils.isEmpty(oldpath) || StringUtils.isEmpty(newpath)) 
+    		{
+    			client.doRename(oldpath, newpath);
+    		} 
+    		else 
+    		{
+	    		client.mkdirs(oldpath);
+	    		String remoteOldPath = FilenameUtils.getName(oldpath);
+	    		Assert.assertTrue(client.doesExist(remoteOldPath), "Old rename folder not created.");
+	    		client.doRename(oldpath, newpath);
+	    		remoteNewPath = FilenameUtils.getName(newpath);
+	    		Assert.assertTrue(client.doesExist(remoteNewPath), "Old folder was not renamed.");
+    		}
+    	} 
+    	catch (Exception e) {
+    		actuallyThrewException = true;
+        	if (!shouldThrowException) e.printStackTrace();
+        }
+    	finally {
+    		try { client.delete(remoteNewPath); } catch (Exception e) {}
+        	try { afterClass(); } catch (Exception e) {}
+        }
+    	
+    	Assert.assertEquals(actuallyThrewException, shouldThrowException, message);
+	}
+
+	public void getUrlForPath()
+	{
+		// TODO: test this when it matters
+	}	
+    
+	@DataProvider(name = "copyProvider")
+    public Object[][] copyProvider() throws Exception {
+		return new Object[][] {
+				{ "foo", "bar", false, "bar", false, "foo => bar = bar when bar !exists" },
+				{ "foo/", "bar", false, "bar", false, "foo/ => bar = bar when bar !exists" },
+				{ "foo", "bar/", false, "bar", false, "foo => bar/ = bar when bar !exists" },
+				{ "foo/", "bar/", false, "bar", false, "foo/ => bar/ = bar when bar !exists" },
+				
+				{ "foo", "bar", true, "bar/foo", false, "foo => bar = bar/foo when bar exists" },
+				{ "foo/", "bar", true, "bar", false, "foo/ => bar = bar when bar exists" },
+				{ "foo", "bar/", true, "bar/foo", false, "foo => bar/ = bar/foo when bar exists" },
+				{ "foo/", "bar/", true, "bar", false, "foo/ => bar/ = bar when bar exists" }	
+		};
+	}
+	
+	@Test(dataProvider="copyProvider", dependsOnMethods = { "doRename" })
+	public void copy(String src, String dest, boolean createDest, String expectedPath, boolean shouldThrowException, String message)
+	throws Exception
+	{
+		try
+		{
+			client.authenticate();
+			
+			client.mkdir(src);
+			Assert.assertTrue(client.doesExist(src), "Failed to create source directory");
+			
+			if (createDest) {
+				client.mkdir(dest);
+				Assert.assertTrue(client.doesExist(dest), "Failed to create dest directory");
+			}
+			
+			client.copy(src, dest);
+			
+			Assert.assertTrue(client.doesExist(expectedPath), message);
+		}
+		catch (Exception e) {
+			if (!shouldThrowException) {
+				Assert.fail(message, e);
+			}
+		}
+		finally {
+			try {
+				if (client.doesExist(src)) {
+					client.delete(src);
+				}
+			} catch (Exception e) {
+				Assert.fail("Failed to clean up source after copy operation", e);
+			}
+			try {
+				if (client.doesExist(dest)) {
+					client.delete(dest);
+				}
+			} catch (Exception e) {
+				Assert.fail("Failed to clean up dest after copy operation", e);
+			}
+		}
+	}
+}

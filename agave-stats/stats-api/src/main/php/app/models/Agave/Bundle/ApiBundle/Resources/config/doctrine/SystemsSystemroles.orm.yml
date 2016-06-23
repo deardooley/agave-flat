@@ -1,0 +1,38 @@
+Agave\Bundle\ApiBundle\Entity\SystemsSystemroles:
+    type: entity
+    table: systems_systemroles
+    indexes:
+        FK3363E5328A8DAC1:
+            columns:
+                - roles
+        FK3363E5310E3BF38:
+            columns:
+                - systems
+    uniqueConstraints:
+        roles:
+            columns:
+                - roles
+        roles_2:
+            columns:
+                - roles
+    id: {  }
+    manyToOne:
+        systems:
+            targetEntity: Systems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                systems:
+                    referencedColumnName: id
+            orphanRemoval: false
+        roles:
+            targetEntity: Systemroles
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                roles:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

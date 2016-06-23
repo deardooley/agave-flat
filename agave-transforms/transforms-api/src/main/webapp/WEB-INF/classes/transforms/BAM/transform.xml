@@ -1,0 +1,39 @@
+<transform>
+	<name>BAM</name>
+	<version>0.1.2</version>
+	<fileExtensions>bam</fileExtensions>
+	<pattern></pattern>
+	<description>Binary SAM (BAM)</description>	<descriptionURI>http://samtools.sourceforge.net/SAM1.pdf</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>BAM</name>
+		<filters>
+			<filter>
+				<name>BAM-self</name>
+				<description>BAM in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>BAM</name>
+			<version>0.1.2</version>
+			<description>Export Binary SAM (BAM)</description>
+			<filters>
+				<filter>
+					<name>BAM-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>BAM in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

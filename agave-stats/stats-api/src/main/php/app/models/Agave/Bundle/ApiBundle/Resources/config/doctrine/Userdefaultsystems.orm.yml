@@ -1,0 +1,25 @@
+Agave\Bundle\ApiBundle\Entity\Userdefaultsystems:
+    type: entity
+    table: userdefaultsystems
+    indexes:
+        FKC1EA8F4EBBBF083F:
+            columns:
+                - system_id
+    id: {  }
+    fields:
+        username:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+    manyToOne:
+        system:
+            targetEntity: Systems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                system_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

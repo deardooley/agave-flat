@@ -1,0 +1,41 @@
+<transform>
+
+	<name>GraphML</name>
+	<version>0</version>
+	<fileExtensions>xml,graphml</fileExtensions>
+	<pattern></pattern>
+	<description>GraphML</description>
+	<descriptionURI>http://graphml.graphdrawing.org/specification.html</descriptionURI>
+	<tags>network,graph</tags>
+	
+	<encodingChain>
+		<name>GraphML</name>
+		<filters>
+			<filter>
+				<name>GraphML-self</name>
+				<description>GraphML in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>GraphML</name>
+			<version>0</version>
+			<description>Export to GraphML</description>
+			<filters>
+				<filter>
+					<name>GraphML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>GraphML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

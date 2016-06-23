@@ -1,0 +1,15 @@
+{
+    "name": "stevewc-demo-stampede",
+    "appId": "stevewc-2.0-stampede",
+    "memoryPerNode": 1,
+    "notifications": [
+    	{ 
+    		"url" : "sterry1@tacc.utexas.edu",
+    		"event": "*",
+            "persistent": true
+    	}
+    ],
+    "parameters":{
+        "printLongestLine" : "-L"
+    }
+}

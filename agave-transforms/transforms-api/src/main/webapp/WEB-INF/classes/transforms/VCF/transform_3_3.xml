@@ -1,0 +1,40 @@
+<transform>
+
+	<name>VCF</name>
+	<version>3.3</version>
+	<fileExtensions>vcf</fileExtensions>
+	<pattern>##fileformat=VCFv3.3</pattern>
+	<description>Variant call format (VCF)</description>	<descriptionURI>http://www.1000genomes.org/wiki/doku.php?id=1000_genomes:analysis:vcf3.3</descriptionURI>
+	<tags>resequencing,snp,marker,diversity,allele,genotype</tags>
+	
+	<encodingChain>
+		<name>VCF</name>
+		<filters>
+			<filter>
+				<name>VCF-self</name>
+				<description>VCF in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>VCF</name>
+			<version>3.3</version>
+			<description>Export to VCF</description>
+			<filters>
+				<filter>
+					<name>VCF-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>VCF in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

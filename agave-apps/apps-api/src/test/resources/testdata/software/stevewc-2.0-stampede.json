@@ -1,0 +1,82 @@
+{
+    "id": "stevewc-2.0-stampede",
+    "available": true,
+    "name": "stevewc",
+    "parallelism": "SERIAL",
+    "version": "2.0",
+    "helpURI":"http://www.gnu.org/s/coreutils/manual/html_node/wc-invocation.html",
+    "label":"wc stampede",
+    "shortDescription":"Count words in a file",
+    "longDescription":"",
+    "author":"Steve Terry",
+    "datePublished":"",
+    "publiclyAvailable":"false",
+    "tags":[
+        "textutils",
+        "gnu"
+    ],
+    "ontology":[
+        "http://sswapmeet.sswap.info/algorithms/wc"
+    ],
+    "executionSystem":"steve-stampede.tacc.utexas.edu",
+    "executionType":"HPC",
+    "defaultQueue": "normal",
+    "defaultNodes": 1,
+    "defaultProcessorsPerNode": 1,
+    "defaultMemoryPerNode": 1,
+    "defaultMaxRunTime": "01:00:00",
+    "deploymentSystem":"data.iplantcollaborative.org",
+    "deploymentPath":"/sterry1/applications/wca-1.00",
+    "templatePath":"/wrapper.sh",
+    "testPath":"wrapper.sh",
+    "checkpointable":true,
+    "modules":[
+        "purge",
+        "load TACC"
+    ],
+    "parameters":[
+        {
+            "id":"printLongestLine",
+            "value":{
+                "default":false,
+                "type":"bool",
+                "validator": null,
+                "visible":true,
+                "required":true
+            },
+            "details":{
+                "label":"Print the length of the longest line",
+                "description":"Command option -L"
+            },
+            "semantics":{
+                "ontology":[
+                    "xs:boolean"
+                ]
+            }
+        }
+    ],
+    "inputs":[
+        {
+            "id":"query1",
+            "value":{
+                "default":"read1.fq",
+                "validator": null,
+                "required":false
+            },
+            "details":{
+                "label":"File to count words in:",
+                "description":""
+            },
+            "semantics":{
+                "ontology":[
+                    "http://sswapmeet.sswap.info/util/TextDocument"
+                ],
+                "minCardinality":1,
+                "fileTypes":[
+                    "text-0"
+                ]
+            }
+        }
+    ],
+    "outputs":[]
+}

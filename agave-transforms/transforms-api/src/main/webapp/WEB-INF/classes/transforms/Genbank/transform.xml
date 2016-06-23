@@ -1,0 +1,41 @@
+<transform>
+
+	<name>Genbank</name>
+	<version>0</version>
+	<fileExtensions>gb,gbk</fileExtensions>
+	<pattern>^LOCUS</pattern>
+	<description>Genbank</description>
+	<descriptionURI>http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html</descriptionURI>
+	<tags>annotation,sequence,amino acid,base pair,peptide,feature,gene model</tags>
+	
+	<encodingChain>
+		<name>Genbank</name>
+		<filters>
+			<filter>
+				<name>Genbank-self</name>
+				<description>Genbank in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Genbank</name>
+			<version>0</version>
+			<description>Export to Genbank</description>
+			<filters>
+				<filter>
+					<name>Genbank-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Genbank in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

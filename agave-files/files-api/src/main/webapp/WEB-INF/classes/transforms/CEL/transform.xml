@@ -1,0 +1,40 @@
+<transform>
+
+	<name>CEL</name>
+	<version>3</version>
+	<fileExtensions>cel</fileExtensions>
+	<pattern></pattern>
+	<description>Affymetrix CEL</description>	<descriptionURI>http://www.affymetrix.com/estore/support/developer/powertools/changelog/gcos-agcc/cel.html.affx;jsessionid=9CD728EA13DE3495CC1338E1AE21330A#V3</descriptionURI>
+	<tags>cdna,transcript,microarray,affymetrix,gene</tags>
+	
+	<encodingChain>
+		<name>CEL</name>
+		<filters>
+			<filter>
+				<name>CEL-self</name>
+				<description>CEL in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>CEL</name>
+			<version>3</version>
+			<description>Export to CEL</description>
+			<filters>
+				<filter>
+					<name>CEL-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>CEL in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

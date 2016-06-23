@@ -1,0 +1,40 @@
+<transform>
+
+	<name>EXPR</name>
+	<version>0</version>
+	<fileExtensions>expr</fileExtensions>
+	<pattern></pattern>
+	<description>Cufflinks EXPR</description>	<descriptionURI></descriptionURI>
+	<tags>rnaseq,sequencing,transcriptome,gene</tags>
+	
+	<encodingChain>
+		<name>EXPR</name>
+		<filters>
+			<filter>
+				<name>EXPR-self</name>
+				<description>EXPR in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>EXPR</name>
+			<version>0</version>
+			<description>Export to EXPR</description>
+			<filters>
+				<filter>
+					<name>EXPR-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>EXPR in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

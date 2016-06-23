@@ -1,0 +1,187 @@
+###############################################################
+# Core Science APIs - Common Service Definitions
+# common.yml
+#
+# These are the common service definition configurations for
+# the core science apis. The docker-compose.yml file inherits
+# from this file by default. You should also have the following
+# /etc/hosts entries defined for your hosting environment.
+# (These are appropriate for docker-machine on OSX.) In a
+# production environment, these should resolve to the appropriate
+# hosts and/or dns entries.
+#
+# 192.168.99.101  docker.example.com
+# 192.168.99.101  mysql.example.com
+# 192.168.99.101  mongodb.example.com
+# 192.168.99.101  beanstalkd.example.com
+# 192.168.99.101  logging.example.com
+#
+###############################################################
+
+###############################################################
+#   Java APIs
+###############################################################
+
+version: '2'
+
+services:
+
+  java_api:
+    hostname: api.example.com
+    restart: "always"
+    mem_limit: 1024m
+    extra_hosts:
+      - 'mysql.example.com:192.168.99.1'
+      - 'mongodb.example.com:192.168.99.100'
+      - 'beanstalkd.example.com:192.168.99.100'
+      - 'realtime.example.com:192.168.99.100'
+      - 'logging.example.com:192.168.99.100'
+    environment:
+      - 'IPLANT_SLAVE_MODE=false'
+      - 'IPLANT_DEDICATED_TENANT_ID='
+      - 'IPLANT_DRAIN_ALL_QUEUES=false'
+      - 'IPLANT_ALLOW_RELAY_TRANSFERS=true'
+      - 'IPLANT_MAX_RELAY_TRANSFER_SIZE=2'
+      - 'IPLANT_MAX_PAGE_SIZE=500'
+      - 'IPLANT_DEFAULT_PAGE_SIZE=100'
+      - 'MYSQL_HOST=mysql.example.com'
+      - 'MYSQL_USERNAME=agaveuser'
+      - 'MYSQL_PASSWORD=password'
+      - 'MYSQL_DATABASE=agavecore'
+      - 'IPLANT_METADATA_DB_HOST=mongodb.example.com'
+      - 'IPLANT_METADATA_DB_PORT=27017'
+      - 'IPLANT_METADATA_DB_USER=agaveuser'
+      - 'IPLANT_METADATA_DB_PWD=password'
+      - 'IPLANT_LOG_SERVICE=http://logging.example.com/logging'
+      - 'IPLANT_NOTIFICATION_SERVICE_QUEUE=dev.notifications.queue'
+      - 'IPLANT_NOTIFICATION_SERVICE_TOPIC=dev.notifications.topic'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_HOST=mongodb.example.com'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_PORT=27017'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_USER=agaveuser'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_PWD=password'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_SCHEME=api'
+      - 'IPLANT_MESSAGING_HOST=beanstalkd.example.com'
+      - 'IPLANT_MESSAGING_PORT=11300'
+      - 'IPLANT_MIN_MONITOR_REPEAT_INTERVAL=0'
+      - 'REALTIME_PROVIDER=pushpin'
+      - 'REALTIME_URL=http://realtime.example.com:5561'
+      - 'REALTIME_REALM_ID='
+      - 'REALTIME_REALM_KEY='
+      - 'MAIL_SMTPS_PROVIDER=log'
+      - 'MAIL_SMTPS_HOST=localhost'
+      - 'MAIL_SMTPS_AUTH=false'
+      - 'MAIL_SMTPS_PORT=25'
+      - 'MAIL_SMTPS_USER='
+      - 'MAIL_SMTPS_PASSWD='
+      - 'MAIL_SMTPS_FROM_NAME="Agave Dev Notification Service"'
+      - 'MAIL_SMTPS_FROM_ADDRESS="noreply@agaveapi.co"'
+      - 'IPLANT_INTERNAL_ACCOUNT_SERVICE_KEY='
+      - 'IPLANT_INTERNAL_ACCOUNT_SERVICE_SECRET='
+      - 'IPLANT_INTERNAL_ACCOUNT_SERVICE=https://user.iplantcollaborative.org/api/v1/users/'
+      - 'LOG_TARGET_STDOUT=1'
+      - 'CATALINA_TMPDIR=/scratch'
+  #    - 'SSL_CERT=/ssl/api_staging_agaveapi_co_cert.cer'
+  #    - 'SSL_KEY=/ssl/api.staging.agaveapi.co.2015-11-11.key'
+  #    - 'SSL_CA_CERT=/ssl/api_staging_agaveapi_co_interm.cer'
+  #    - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms512m -Xmx1024m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom" -Dfile.encoding=UTF-8'
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'ENABLE_JMX=1'
+      - 'JMX_ADMIN_PASS=admin'
+      - 'JMX_ADMIN_USER=admin'
+    volumes:
+  #    - './ssl:/ssl:ro'
+      - './scratch:/scratch'
+    labels:
+      - "traefik.port=80"
+      - "traefik.protocol=http"
+      - "traefik.frontend.entryPoints=https"
+    networks:
+      - backend
+      - internal
+
+
+
+  php_api:
+    hostname: api.example.com
+    mem_limit: 1024m
+    restart: "always"
+    extra_hosts:
+      - 'mysql.example.com:192.168.99.1'
+      - 'mongodb.example.com:192.168.99.100'
+      - 'beanstalkd.example.com:192.168.99.100'
+      - 'realtime.example.com:192.168.99.100'
+      - 'logging.example.com:192.168.99.100'
+    environment:
+      - 'IPLANT_SLAVE_MODE=false'
+      - 'IPLANT_DEDICATED_TENANT_ID='
+      - 'IPLANT_DRAIN_ALL_QUEUES=false'
+      - 'IPLANT_ALLOW_RELAY_TRANSFERS=true'
+      - 'IPLANT_MAX_RELAY_TRANSFER_SIZE=2'
+      - 'IPLANT_MAX_PAGE_SIZE=500'
+      - 'IPLANT_DEFAULT_PAGE_SIZE=100'
+      - 'MYSQL_HOST=mysql.example.com'
+      - 'MYSQL_PORT=3306'
+      - 'MYSQL_USERNAME=agaveuser'
+      - 'MYSQL_PASSWORD=password'
+      - 'MYSQL_DATABASE=agavecore'
+      - 'IPLANT_METADATA_DB_HOST=mongodb.example.com'
+      - 'IPLANT_METADATA_DB_PORT=27017'
+      - 'IPLANT_METADATA_DB_USER=agaveuser'
+      - 'IPLANT_METADATA_DB_PWD=password'
+      - 'IPLANT_LOG_SERVICE=http://logging.example.com/logging'
+      - 'IPLANT_NOTIFICATION_SERVICE_QUEUE=dev.notifications.queue'
+      - 'IPLANT_NOTIFICATION_SERVICE_TOPIC=dev.notifications.topic'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_HOST=mongodb.example.com'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_PORT=27017'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_USER=agaveuser'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_PWD=password'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_SCHEME=api'
+      - 'IPLANT_MESSAGING_HOST=beanstalkd.example.com'
+      - 'IPLANT_MESSAGING_PORT=11300'
+      - 'IPLANT_MIN_MONITOR_REPEAT_INTERVAL=0'
+      - 'REALTIME_PROVIDER=pushpin'
+      - 'REALTIME_URL=http://realtime.example.com:5561'
+      - 'REALTIME_REALM_ID='
+      - 'REALTIME_REALM_KEY='
+      - 'MAIL_SMTPS_PROVIDER=log'
+      - 'MAIL_SMTPS_HOST=localhost'
+      - 'MAIL_SMTPS_AUTH=false'
+      - 'MAIL_SMTPS_PORT=25'
+      - 'MAIL_SMTPS_USER='
+      - 'MAIL_SMTPS_PASSWD='
+      - 'MAIL_SMTPS_FROM_NAME="Agave Dev Notification Service"'
+      - 'MAIL_SMTPS_FROM_ADDRESS="noreply@agaveapi.co"'
+      - 'LOG_TARGET_STDOUT=1'
+  #     - 'SSL_CERT=/ssl/docker.example.com_cert.cer'
+  #     - 'SSL_KEY=/ssl/docker.example.com.key'
+  #     - 'SSL_CA_CERT=/ssl/docker.example.com_interm.cer'
+  #     - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms512m -Xmx1024m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
+    volumes:
+  #     - './ssl:/ssl:ro'
+      - './scratch:/scratch'
+    labels:
+      - "traefik.port=80"
+      - "traefik.protocol=http"
+      - "traefik.frontend.entryPoints=https"
+    # networks:
+    #   - backend
+    #   - internal
+
+  migrations:
+    image: agaveapi/core-migrations:$AGAVE_VERSION
+    environment:
+      - 'MYSQL_HOST=mysql.example.com'
+      - 'MYSQL_USERNAME=agaveuser'
+      - 'MYSQL_PASSWORD=password'
+      - 'MYSQL_DATABASE=agavecore'
+    volumes:
+      - '.:/sources'
+      - '~/.m2:/root/.m2'
+    networks:
+      - backend
+      - internal
+
+networks:
+  backend:
+  internal:
+  frontend:

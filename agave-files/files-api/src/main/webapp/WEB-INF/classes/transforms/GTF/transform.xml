@@ -1,0 +1,41 @@
+<transform>
+
+	<name>GTF</name>
+	<version>2.2</version>
+	<fileExtensions>gtf</fileExtensions>
+	<pattern>gtf</pattern>
+	<description>Gene Transfer Format (GTF)</description>
+	<descriptionURI>http://mblab.wustl.edu/GTF22.html</descriptionURI>
+	<tags>sequence,annotation,interval,feature,coordinates</tags>
+	
+	<encodingChain>
+		<name>GTF</name>
+		<filters>
+			<filter>
+				<name>GTF-self</name>
+				<description>GTF in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>GTF</name>
+			<version>2.2</version>
+			<description>Export to GTF</description>
+			<filters>
+				<filter>
+					<name>GTF-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>GTF in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

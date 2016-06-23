@@ -1,0 +1,25 @@
+Agave\Bundle\ApiBundle\Entity\Loginconfigs:
+    type: entity
+    table: loginconfigs
+    indexes:
+        FKC32B7DE85C950942:
+            columns:
+                - id
+    id: {  }
+    fields:
+        protocol:
+            type: string
+            nullable: false
+            length: 16
+            fixed: false
+    oneToOne:
+        id:
+            targetEntity: Remoteconfigs
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

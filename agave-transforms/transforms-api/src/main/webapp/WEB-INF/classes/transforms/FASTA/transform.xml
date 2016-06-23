@@ -1,0 +1,41 @@
+<transform>
+
+	<name>FASTA</name>
+	<version>0</version>
+	<fileExtensions>fa,fasta,fas,seq</fileExtensions>
+	<pattern>\>*</pattern>
+	<description>FASTA</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/FASTA_format</descriptionURI>
+	<tags>sequence,sequencing,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>FASTA</name>
+		<filters>
+			<filter>
+				<name>FASTA-self</name>
+				<description>FASTA in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>FASTA</name>
+			<version>0</version>
+			<description>Export to FASTA</description>
+			<filters>
+				<filter>
+					<name>FASTA-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FASTA in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

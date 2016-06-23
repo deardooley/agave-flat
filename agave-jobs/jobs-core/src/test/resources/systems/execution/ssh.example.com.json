@@ -1,0 +1,46 @@
+{
+	"id": "ssh.example.com",
+	"name": "SSH",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample ssh execution system.",
+	"site": "tacc.xsede.org",
+	"executionType": "HPC",
+	"default": false,
+	"queues": [
+		{
+			"name": "normal",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": "#$ -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "docker.example.com",
+		"port": 10022,
+		"protocol": "SSH",
+		"auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+	},
+	"storage":{
+      "host":"storage.example.com",
+      "port":10022,
+      "protocol":"SFTP",
+      "rootDir":"/",
+      "homeDir":"/home/testuser",
+      "auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+    },
+    "scratchDir": "/tmp",
+	"workDir": "/tmp",
+	"scheduler": "SGE",
+	"environment": "",
+	"startupScript": "/home/testuser/.bashrc"
+}

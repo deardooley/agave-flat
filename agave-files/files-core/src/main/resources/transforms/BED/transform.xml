@@ -1,0 +1,40 @@
+<transform>
+
+	<name>BED</name>
+	<version>0</version>
+	<fileExtensions>bc,tab,txt</fileExtensions>
+	<pattern></pattern>
+	<description>UCSC BED</description>	<descriptionURI>http://genome.ucsc.edu/FAQ/FAQformat.html#format1</descriptionURI>
+	<tags>sequence,annotation,interval,feature,coordinates</tags>
+	
+	<encodingChain>
+		<name>BED</name>
+		<filters>
+			<filter>
+				<name>BED-self</name>
+				<description>BED in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>BED</name>
+			<version>0</version>
+			<description>Export to BED</description>
+			<filters>
+				<filter>
+					<name>BED-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>BED in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

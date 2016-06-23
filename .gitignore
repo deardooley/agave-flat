@@ -1,0 +1,57 @@
+# Binary targets
+target
+*~
+testrun.log
+
+# test reports 
+testreports
+
+# Intellij metadata files
+*.idea
+*.ids
+*.iml
+*.eml
+*.ids
+*.imp
+*.ipr
+*.iws
+
+# Eclipse metadata files
+.project
+.settings
+.classpath
+
+# Apple system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+# fabric deployment files
+fabfile.py
+fabfile.pyc
+
+# maven and eclipse malformed output test folders
+test-output
+cache
+tutum
+docker-compose.yml
+config/maven/settings.xml
+scriptBuildAll.sh
+scriptRunAll.sh
+docker-compose.build.test.yml
+docker-compose.integration.test.yml
+docker-compose.unit.test.yml
+!dist/docker-compose.yml
+compose/logs
+Migrations - Migrate Sandbox.launch
+Migrations - Migrate Staging.launch
+Migrations - Migrate Prod.launch
+Migrations - Migrate Benchmarks.launch

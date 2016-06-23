@@ -1,0 +1,76 @@
+        {"name":"muscle-ranger1.1",
+         "parallelism":"serial",
+         "version":"1.1",
+         "helpURI":"https://pods.iplantcollaborative.org/wiki/display/DEapps/MUSCLE",
+         "label":"muscle-ranger",
+         "shortDescription":"MUSCLE: Multiple sequence comparison by log-expectation",
+         "longDescription":"",
+         "author":"Naim Matasci",
+         "datePublished":"",
+         "tags":["aligner","phylogenetics","nucleotides","proteins"],
+         "ontology":["http://sswapmeet.sswap.info/sequenceServices/MultipleSequenceAlignment"],
+         "executionHost":"ranger.tacc.teragrid.org",
+         "executionType":"HPC",
+         "deploymentPath":"/iplant/home/nmatasci/applications/muscle-1.1/ranger",
+         "templatePath":"wrapper.sh",
+         "testPath":"lib/test.sh",
+         "checkpointable":false,
+         "modules":["purge","load TACC"],
+         "inputs":[
+            {"id":"inputSeqs",
+             "value":
+                {"default":"",
+                 "validator":"",
+                 "required":true,
+                 "visible":true},
+             "details":
+                {"label":"Sequences: ",
+                 "description":"Sequence file in multiple fasta format"},
+             "semantics":
+                {"ontology":["http://sswapmeet.sswap.info/sequence/FASTA"],
+                 "minCardinality":1,
+                 "maxCardinality":1,
+                 "fileTypes":["fasta-0"]}}
+                 ],
+         "parameters":[
+            {"id":"mode",
+             "value":
+                {"default":"auto",
+                 "validator":"{auto|protein|nucleo}",
+                 "required":true,
+                 "visible":true,
+                 "type":"string"},
+             "details":
+                {"label":"Sequence type: ",
+                 "description":"Specify if the sequence is amino acids or nucleotides.",
+                 "visible":true},
+             "semantics":
+                {"ontology":["xs:string"]}},
+            {"id":"outputFormat",
+             "value":
+                {"default":"fasta",
+                 "validator":"{fasta|phyi|phys|clw|msf}",
+                 "required":true,
+                 "visible":true,
+                 "type":"string"},
+             "details":
+                {"label":"Output format: ",
+                 "description":"Specify if the multiple sequence alignment format.",
+                 "visible":true},
+             "semantics":
+                {"ontology":["xs:string"]}}
+                ],
+         "outputs":[
+            {"id":"outputName",
+             "value":
+                {"default":"alignment.fas",
+                 "validator":""},
+             "details":
+                {"label":"MSA file",
+                 "description":"Multiple sequence alignment file"},
+             "semantics":
+                {"ontology":["http://sswapmeet.sswap.info/sequence/Sequences"],
+                 "minCardinality":"1",
+                 "maxCardinality":"1",
+                 "fileType":""}}]}
+

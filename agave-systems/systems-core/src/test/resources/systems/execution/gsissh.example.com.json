@@ -1,0 +1,66 @@
+{
+	"id": "gsissh.example.com",
+	"name": "GSISSH",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample gsissh execution system.",
+	"site": "tacc.xsede.org",
+	"executionType": "HPC",
+	"default": false,
+	"queues": [
+		{
+			"name": "normal",
+			"mappedName": "normal",
+			"description": "The default system queue for all jobs",
+			"maxJobs": 100,
+			"maxUserJobs": 10,
+			"maxNodes": 256,
+			"maxProcessorsPerNode": 16,
+			"maxMemoryPerNode": "2048GB",
+			"maxRequestedTime": "24:00:00",
+			"customDirectives": "#$ -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "docker.example.com",
+		"port": 22,
+		"protocol": "GSISSH",
+		"auth": {
+			"username": "testuser",
+			"password": "testuser",
+			"credential": null,
+			"type": "X509",
+			"server": {
+				"id": "docker.example.com",
+				"name": "Agave Dev myproxy Docker container",
+				"endpoint": "docker.example.com",
+				"port": 7514,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"storage": {
+		"host": "docker.example.com",
+		"port": 2811,
+		"protocol": "GRIDFTP",
+		"rootDir": "/",
+		"homeDir": "/home/testuser",
+		"auth": {
+			"username": "testuser",
+			"password": "testuser",
+			"credential": null,
+			"type": "X509",
+			"server": {
+				"id": "docker.example.com",
+				"name": "Agave Dev myproxy Docker container",
+				"endpoint": "docker.example.com",
+				"port": 7514,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"scheduler": "SGE",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

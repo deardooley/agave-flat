@@ -1,0 +1,33 @@
+{
+	"id": "condor.opensciencegrid.org",
+	"name": "Open Science Grid",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "The Open Science Grid (OSG) advances science through open distributed computing. The OSG is a multi-disciplinary partnership to federate local, regional, community and national cyberinfrastructures to meet the needs of research and academic communities at all scales.",
+	"site": "opensciencegrid.org",
+	"executionType": "CONDOR",
+	"default": false,
+	"queues": [
+        {
+            "name": "condorqueue",
+            "maxJobs": 5,
+            "maxMemory": "1GB",
+            "customDirectives": "",
+            "defaut":true
+        }
+    ],
+	"login": {
+		"host": "localhost",
+		"port": 22,
+		"protocol": "LOCAL"
+	},
+	"storage": {
+		"host": "localhost",
+		"port": 22,
+		"protocol": "LOCAL",
+		"rootDir": "/tmp"
+	},
+	"scheduler": "CONDOR",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

@@ -1,0 +1,41 @@
+<transform>
+
+	<name>NEXUS</name>
+	<version>0</version>
+	<fileExtensions>nex,nxs</fileExtensions>
+	<pattern>#NEXUS</pattern>
+	<description>NEXUS</description>
+	<descriptionURI>http://en.wikipedia.org/wiki/Nexus_file</descriptionURI>
+	<tags>phylogeny,tree,systematics,alignment,codon,sequence</tags>
+	
+	<encodingChain>
+		<name>NEXUS</name>
+		<filters>
+			<filter>
+				<name>NEXUS-self</name>
+				<description>NEXUS in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>NEXUS</name>
+			<version>0</version>
+			<description>Export to NEXUS</description>
+			<filters>
+				<filter>
+					<name>NEXUS-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>NEXUS in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

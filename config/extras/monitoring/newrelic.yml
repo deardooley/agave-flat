@@ -1,0 +1,18 @@
+##############################################################
+#  OPTIONAL: New Relic container and node monitoring
+#############################################################
+
+newrelic:
+  image: "tutum/newrelic-agent"
+  restart: always
+  privileged: true
+  volumes:
+    - "/var/run/docker.sock:/var/run/docker.sock"
+    - "/dev:/dev"
+    - "/sys:/sys"
+  environment:
+    - "NEW_RELIC_LICENSE_KEY=<LICENSE>"
+    - "HOSTNAME=$TUTUM_NODE_HOSTNAME"
+  deployment_strategy: every_node
+  net: host
+  pid: host

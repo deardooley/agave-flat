@@ -1,0 +1,41 @@
+<transform>
+
+	<name>Pileup</name>
+	<version>0</version>
+	<fileExtensions>sam</fileExtensions>
+	<pattern></pattern>
+	<description>Pileup</description>
+	<descriptionURI>http://samtools.sourceforge.net/pileup.shtml</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair,SNP,genotype,base call</tags>
+	
+	<encodingChain>
+		<name>Pileup</name>
+		<filters>
+			<filter>
+				<name>Pileup-self</name>
+				<description>Pileup in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Pileup</name>
+			<version>0</version>
+			<description>Export to Pileup</description>
+			<filters>
+				<filter>
+					<name>Pileup-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Pileup in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

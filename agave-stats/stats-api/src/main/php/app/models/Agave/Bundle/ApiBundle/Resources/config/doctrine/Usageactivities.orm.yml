@@ -1,0 +1,36 @@
+Agave\Bundle\ApiBundle\Entity\Usageactivities:
+    type: entity
+    table: UsageActivities
+    indexes:
+        ServiceKey:
+            columns:
+                - ServiceKey
+    id:
+        id:
+            type: integer
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        activitykey:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+            default: ''
+            column: ActivityKey
+        description:
+            type: text
+            nullable: true
+            length: 65535
+            fixed: false
+            column: Description
+        servicekey:
+            type: string
+            nullable: true
+            length: 30
+            fixed: false
+            column: ServiceKey
+    lifecycleCallbacks: {  }

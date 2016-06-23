@@ -1,0 +1,34 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Agave Systems Services Core" verbose="1" thread-count="1" parallel="false">
+	<test name="systems">
+		<packages>
+			<package name="org.iplantc.service.systems.model" />
+			<package name="org.iplantc.service.systems.crypt" />
+			<package name="org.iplantc.service.systems.dao" />
+			<package name="org.iplantc.service.systems.manager" />
+			<package name="org.iplantc.service.transfer.model*" />
+			<package name="org.iplantc.service.transfer.dao" />
+			<package name="org.iplantc.service.transfer.manager" />
+		</packages>
+	</test>
+	<test name="transfers">
+		<packages>
+			<package name="org.iplantc.service.transfer.model" />
+			<package name="org.iplantc.service.transfer.dao" />
+			<package name="org.iplantc.service.transfer.manager" />
+			<package name="org.iplantc.service.transfer.ftp" />
+			<package name="org.iplantc.service.transfer.gridftp" />
+			<package name="org.iplantc.service.transfer.irods" />
+			<package name="org.iplantc.service.transfer.sftp" />
+		</packages>
+	</test>
+	<test name="remote">
+		<packages>
+			<package name="org.iplantc.service.remote" />
+			<package name="org.iplantc.service.systems.crypt" />
+			<package name="org.iplantc.service.systems.dao" />
+			<package name="org.iplantc.service.systems.manager" />
+		</packages>
+	</test>
+</suite>

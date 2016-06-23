@@ -1,0 +1,43 @@
+###############################################################
+# Testbed Compute Containers
+# 
+# These are the compute containers needed for basic unit testing.
+###############################################################
+
+ssh:
+  image: agaveapi/centos-base
+  hostname: docker.example.com
+  ports:
+    - '10111:22'
+   
+gsissh:
+  image: agaveapi/centos-base
+  hostname: tunnel.example.com
+  links: 
+    - sftphidden
+  ports:
+    - '2222:2222'
+
+slurm:
+  image: agaveapi/slurm
+  hostname: docker.example.com
+  ports:
+    - '10133:22'
+
+torque:
+  image: agaveapi/torque
+  hostname: docker.example.com
+  ports:
+    - '10144:22'
+
+gridengine:
+  image: agaveapi/gridengine
+  hostname: docker.example.com
+  ports:
+    - '10155:22'
+
+# openlava:
+#   image: agaveapi/openlava:2.2
+#   hostname: docker.example.com
+#   ports:
+#     - '10166:22'

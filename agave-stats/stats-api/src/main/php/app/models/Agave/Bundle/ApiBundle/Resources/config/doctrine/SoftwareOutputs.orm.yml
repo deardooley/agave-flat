@@ -1,0 +1,100 @@
+Agave\Bundle\ApiBundle\Entity\SoftwareOutputs:
+    type: entity
+    table: software_outputs
+    indexes:
+        FKECF878FA59B3FD5F:
+            columns:
+                - software
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        defaultValue:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            default: ''
+            column: default_value
+        description:
+            type: string
+            nullable: false
+            length: 32768
+            fixed: false
+        fileTypes:
+            type: string
+            nullable: true
+            length: 128
+            fixed: false
+            column: file_types
+        outputKey:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: output_key
+        label:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        maxCardinality:
+            type: integer
+            nullable: true
+            unsigned: false
+            column: max_cardinality
+        minCardinality:
+            type: integer
+            nullable: true
+            unsigned: false
+            column: min_cardinality
+        ontology:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+        pattern:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+        displayOrder:
+            type: integer
+            nullable: false
+            unsigned: false
+            column: display_order
+    manyToOne:
+        software:
+            targetEntity: Softwares
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                software:
+                    referencedColumnName: id
+            orphanRemoval: false
+    manyToMany:
+        softwares:
+            targetEntity: Softwares
+            cascade: {  }
+            mappedBy: outputs
+            inversedBy: null
+            joinTable: null
+            orderBy: null
+    lifecycleCallbacks: {  }

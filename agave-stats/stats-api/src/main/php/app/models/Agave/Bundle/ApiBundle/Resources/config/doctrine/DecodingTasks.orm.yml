@@ -1,0 +1,93 @@
+Agave\Bundle\ApiBundle\Entity\DecodingTasks:
+    type: entity
+    table: decoding_tasks
+    indexes:
+        FKAE027D7A1DCDC7B0:
+            columns:
+                - logical_file_id
+        FKAE027D7ABBBF083F:
+            columns:
+                - system_id
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        callbackKey:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: callback_key
+        created:
+            type: datetime
+            nullable: false
+        currentFilter:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: current_filter
+        destPath:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            column: dest_path
+        destTransform:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: dest_transform
+        destinationUri:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            column: destination_uri
+        sourcePath:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            column: source_path
+        srcTransform:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: src_transform
+        status:
+            type: string
+            nullable: false
+            length: 8
+            fixed: false
+    manyToOne:
+        logicalFile:
+            targetEntity: LogicalFiles
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                logical_file_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+        system:
+            targetEntity: Systems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                system_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

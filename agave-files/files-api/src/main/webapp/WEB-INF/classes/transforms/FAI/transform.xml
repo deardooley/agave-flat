@@ -1,0 +1,40 @@
+<transform>
+
+	<name>FAI</name>
+	<version>0</version>
+	<fileExtensions>fai</fileExtensions>
+	<pattern></pattern>
+	<description>Samtools Fasta Index (FAI)</description>	<descriptionURI></descriptionURI>
+	<tags>sequence,sequencing,index,genome,fasta</tags>
+	
+	<encodingChain>
+		<name>FAI</name>
+		<filters>
+			<filter>
+				<name>FAI-self</name>
+				<description>FAI in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>FAI</name>
+			<version>0</version>
+			<description>Export to FAI</description>
+			<filters>
+				<filter>
+					<name>FAI-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>FAI in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

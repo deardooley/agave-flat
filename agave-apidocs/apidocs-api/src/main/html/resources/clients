@@ -1,0 +1,397 @@
+{
+    "apiVersion": "${project.version}-r${buildNumber}",
+    "basePath": "${foundation.base.url}",
+    "apis": [
+        {
+            "description": "Create and list clients.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "list",
+                    "notes": "Retrieve a list of your active clients. Requires HTTP BASIC authentication with your API username and password.",
+                    "parameters": [],
+                    "responseMessages": [],
+                    "summary": "List existing clients",
+                    "type": "MultipleClientResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "create",
+                    "notes": "This will create a client and return your API keys. Your keys are necessary to obtain an access token and interact with the rest of the APIs. Requires HTTP BASIC authentication with your API username and password.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The api client to create",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "ClientRequest",
+                            "defaultValue": "{\n\t\"name\": \"test-client\",\n\t\"description\": \"This is a demo client I created to kick around the APIs.\",\n\t\"tier\": \"UNLIMITED\",\n\t\"callbackUrl\": null\n}"
+                        }
+                    ],
+                    "responseMessages": [
+                        {
+                            "code": 400,
+                            "message": "Raised if a user supplies an invalid username format"
+                        },
+                        {
+                            "code": 403,
+                            "message": "Failed to authenticate the user"
+                        },
+                        {
+                            "code": 404,
+                            "message": "The user profile cannot be found"
+                        },
+                        {
+                            "code": 500,
+                            "message": "The service was unable to query the profile database"
+                        }
+                    ],
+                    "summary": "Create a new client",
+                    "type": "SingleClientResponse"
+                }
+            ],
+            "path": "/clients/v2/"
+        },
+        {
+            "description": "Manage a client",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "getClientByName",
+                    "notes": "Requires HTTP BASIC authentication with your API username and password.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The name of the client to be deleted",
+                            "name": "clientName",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Returns a detailed description of a named client.",
+                    "type": "MultipleClientResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "delete",
+                    "notes": "Requires HTTP BASIC authentication with your API username and password.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The name of the client to be deleted",
+                            "name": "clientName",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Immediately deletes this client and renders the API keys useless.",
+                    "type": "EmptyClientResponse"
+                }
+            ],
+            "path": "/clients/v2/{clientName}"
+        },
+        {
+            "description": "Manage client subscriptions",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listSubscriptionsForClient",
+                    "notes": "Requires HTTP BASIC authentication with your API username and password.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The name of the client to be deleted",
+                            "name": "clientName",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Lists all APIs to which the client is subscribed",
+                    "type": "MultipleSubscriptionResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "addSubscriptionForClient",
+                    "notes": "Requires HTTP BASIC authentication with your API username and password.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The name of the client to be subscribe to this api",
+                            "name": "clientName",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The api client to create",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "ClientSubscriptionRequest",
+                            "defaultValue": "{\n\t\"apiName\": \"apps\",\n\t\"apiVersion\": \"v2\",\n\t\"apiProvider\": \"admin\",\n\t\"tier\": \"UNLIMITED\"\n}"
+                        }
+                    ],
+                    "summary": "Lists all APIs to which the client is subscribed",
+                    "type": "SingleSubscriptionResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "deleteSubscriptionsForClient",
+                    "notes": "Requires HTTP BASIC authentication with your API username and password.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The name of the client to be deleted",
+                            "name": "clientName",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Unsubscribe the client from all APIs",
+                    "type": "EmptyClientResponse"
+                }
+            ],
+            "path": "/clients/v2/{clientName}/subscriptions"
+        }
+    ],
+    "models": {
+        "Client": {
+            "id": "Client",
+            "name": "",
+            "properties": {
+                "key": {
+                    "description": "The API key for this client.",
+                    "type": "string"
+                },
+                "secret": {
+                    "description": "The API secret for this client.",
+                    "type": "string"
+                },
+                "callbackUrl": {
+                    "description": "Callback URL for OAuth authentication grant.",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description of the client. This will be shown to users when authentication via OAuth web flows",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The name of the client.",
+                    "type": "string"
+                },
+                "tier": {
+                    "description": "The access tier for this client.",
+                    "type": "string"
+                }
+            }
+        },
+        "ClientRequest": {
+            "id": "ClientRequest",
+            "name": "",
+            "properties": {
+                "name": {
+                    "description": "The name of the client.",
+                    "type": "string",
+                    "required": true
+                },
+                "description": {
+                    "description": "Description of the client. This will be shown to users when authentication via OAuth web flows",
+                    "type": "string"
+                },
+                "tier": {
+                    "description": "The access tier for this client.",
+                    "type": "string",
+                    "enum": [
+                      "UNLIMITED",
+                      "GOLD",
+                      "SILVER",
+                      "BRONZE"
+                    ]
+                },
+                "callbackUrl": {
+                    "description": "Callback URL for OAuth authentication grant.",
+                    "type": "string"
+                }
+            }
+        },
+        "Subscription": {
+            "id": "Subscription",
+            "name": "",
+            "properties": {
+                "apiContext": {
+                    "description": "The base url path of the API.",
+                    "type": "string"
+                },
+                "apiName": {
+                    "description": "The name of the API.",
+                    "type": "string"
+                },
+                "apiProvider": {
+                    "description": "The user who registered the API.",
+                    "type": "string"
+                },
+                "apiVersion": {
+                    "description": "The current major version of the API. This is appended to the api_context to create the base API url.",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "The current status of the API.",
+                    "type": "string"
+                },
+                "tier": {
+                    "description": "The access tier for this client.",
+                    "type": "string"
+                }
+            }
+        },
+        "ClientSubscriptionRequest": {
+          "id": "ClientSubscriptionRequest",
+          "name": "",
+          "properties": {
+              "apiName": {
+                  "description": "The name of the API.",
+                  "type": "string",
+                  "required": true
+              },
+              "apiProvider": {
+                  "description": "The user who registered the API.",
+                  "type": "string",
+                  "required": true
+              },
+              "apiVersion": {
+                  "description": "The current major version of the API. This is appended to the api_context to create the base API url.",
+                  "type": "string",
+                  "required": true
+              },
+              "tier": {
+                  "description": "The access tier for this client.",
+                  "type": "string",
+                  "enum": [
+                    "UNLIMITED",
+                    "GOLD",
+                    "SILVER",
+                    "BRONZE"
+                  ]
+              }
+          }
+        },
+        "SingleClientResponse": {
+            "id": "SingleClientResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "type": "Client"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "MultipleClientResponse": {
+            "id": "MultipleClientResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "List of clients",
+                    "items": {
+                        "$ref": "Client"
+                    },
+                    "type": "array"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "EmptyClientResponse": {
+            "id": "EmptyClientResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "type": "String"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "MultipleSubscriptionResponse": {
+            "id": "MultipleSubscriptionResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "List of subscriptions",
+                    "items": {
+                        "$ref": "Subscription"
+                    },
+                    "type": "array"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "SingleSubscriptionResponse": {
+            "id": "SingleSubscriptionResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "type": "Subscription"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "EmptySubscriptionResponse": {
+            "id": "EmptySubscriptionResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "type": "String"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "resourcePath": "/clients/v2",
+    "swaggerVersion": "1.2"
+}

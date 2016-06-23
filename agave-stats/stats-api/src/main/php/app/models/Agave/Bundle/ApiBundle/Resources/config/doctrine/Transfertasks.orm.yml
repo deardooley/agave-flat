@@ -1,0 +1,120 @@
+Agave\Bundle\ApiBundle\Entity\Transfertasks:
+    type: entity
+    table: transfertasks
+    indexes:
+        FK8914FE833015DB82:
+            columns:
+                - parent_task
+        FK8914FE83BFE5C64A:
+            columns:
+                - root_task
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        attempts:
+            type: integer
+            nullable: true
+            unsigned: false
+        bytesTransferred:
+            type: float
+            nullable: true
+            precision: 10
+            scale: 0
+            column: bytes_transferred
+        created:
+            type: datetime
+            nullable: false
+        dest:
+            type: string
+            nullable: false
+            length: 2048
+            fixed: false
+            default: ''
+        endTime:
+            type: datetime
+            nullable: true
+            column: end_time
+        eventId:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: event_id
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        owner:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        source:
+            type: string
+            nullable: false
+            length: 2048
+            fixed: false
+            default: ''
+        startTime:
+            type: datetime
+            nullable: true
+            column: start_time
+        status:
+            type: string
+            nullable: true
+            length: 16
+            fixed: false
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+        totalSize:
+            type: float
+            nullable: true
+            precision: 10
+            scale: 0
+            column: total_size
+        transferRate:
+            type: float
+            nullable: true
+            precision: 10
+            scale: 0
+            column: transfer_rate
+        uuid:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            default: ''
+    manyToOne:
+        parentTask:
+            targetEntity: Transfertasks
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                parent_task:
+                    referencedColumnName: id
+            orphanRemoval: false
+        rootTask:
+            targetEntity: Transfertasks
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                root_task:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

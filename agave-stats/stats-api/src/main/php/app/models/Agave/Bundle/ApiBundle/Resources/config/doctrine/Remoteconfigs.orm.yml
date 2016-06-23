@@ -1,0 +1,47 @@
+Agave\Bundle\ApiBundle\Entity\Remoteconfigs:
+    type: entity
+    table: remoteconfigs
+    indexes:
+        FKF431326BE2764978:
+            columns:
+                - proxy_server_id
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        created:
+            type: datetime
+            nullable: false
+        host:
+            type: string
+            nullable: false
+            length: 256
+            fixed: false
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        port:
+            type: integer
+            nullable: true
+            unsigned: false
+    manyToOne:
+        proxyServer:
+            targetEntity: Proxyservers
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                proxy_server_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

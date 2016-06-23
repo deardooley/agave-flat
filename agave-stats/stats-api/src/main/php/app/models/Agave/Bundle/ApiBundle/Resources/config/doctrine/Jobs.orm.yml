@@ -1,0 +1,208 @@
+Agave\Bundle\ApiBundle\Entity\Jobs:
+    type: entity
+    table: jobs
+    indexes:
+        FK31DC56AC7D7B60:
+            columns:
+                - archive_system
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+        uuid:
+            columns:
+                - uuid
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        archiveOutput:
+            type: boolean
+            nullable: true
+            column: archive_output
+        archivePath:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: archive_path
+        callbackUrl:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: callback_url
+        charge:
+            type: float
+            nullable: true
+            precision: 10
+            scale: 0
+        created:
+            type: datetime
+            nullable: false
+        endTime:
+            type: datetime
+            nullable: true
+            column: end_time
+        errorMessage:
+            type: string
+            nullable: true
+            length: 16384
+            fixed: false
+            column: error_message
+        inputs:
+            type: string
+            nullable: true
+            length: 16384
+            fixed: false
+        internalUsername:
+            type: string
+            nullable: true
+            length: 32
+            fixed: false
+            column: internal_username
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        localJobId:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: local_job_id
+        memoryRequest:
+            type: integer
+            nullable: false
+            unsigned: false
+            column: memory_request
+        name:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+        outputPath:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: output_path
+        owner:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        parameters:
+            type: string
+            nullable: true
+            length: 16384
+            fixed: false
+        processorCount:
+            type: integer
+            nullable: false
+            unsigned: false
+            column: processor_count
+        requestedTime:
+            type: string
+            nullable: true
+            length: 19
+            fixed: false
+            column: requested_time
+        retries:
+            type: integer
+            nullable: true
+            unsigned: false
+        schedulerJobId:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: scheduler_job_id
+        softwareName:
+            type: string
+            nullable: false
+            length: 80
+            fixed: false
+            column: software_name
+        startTime:
+            type: datetime
+            nullable: true
+            column: start_time
+        status:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        submitTime:
+            type: datetime
+            nullable: true
+            column: submit_time
+        executionSystem:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            default: ''
+            column: execution_system
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+        updateToken:
+            type: string
+            nullable: true
+            length: 64
+            fixed: false
+            column: update_token
+        uuid:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+        optlock:
+            type: integer
+            nullable: true
+            unsigned: false
+        visible:
+            type: boolean
+            nullable: true
+        workPath:
+            type: string
+            nullable: true
+            length: 255
+            fixed: false
+            column: work_path
+        queueRequest:
+            type: string
+            nullable: false
+            length: 80
+            fixed: false
+            column: queue_request
+        nodeCount:
+            type: bigint
+            nullable: false
+            unsigned: false
+            column: node_count
+        statusChecks:
+            type: integer
+            nullable: false
+            unsigned: false
+            column: status_checks
+    manyToOne:
+        archiveSystem:
+            targetEntity: Systems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                archive_system:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

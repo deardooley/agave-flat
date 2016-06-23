@@ -1,0 +1,92 @@
+{
+    "apiVersion": "${project.version}-r${buildNumber}",
+    "swaggerVersion": "1.2",
+    "basePath": "${foundation.base.url}/docs/v2/resources",
+    "produces": [
+      "application/json"
+    ],
+    "apis": [
+        {
+            "description": "Create and manage API keys. Requires HTTP BASIC authentication",
+            "path": "/clients"
+        },
+        {
+            "path": "/apps",
+            "description": "Register and manage apps"
+        },
+        {
+            "description": "Move and manage data",
+            "path": "/files"
+        },
+        {
+            "description": "Run and manage jobs",
+            "path": "/jobs"
+        },
+        {
+            "description": "Create and manage metadata",
+            "path": "/meta"
+        },
+        {
+            "description": "Create and manage system monitors",
+            "path": "/monitors"
+        },
+        {
+            "description": "Subscribe to and manage notifications",
+            "path": "/notifications"
+        },
+        {
+            "description": "Create pre-authenticated, disposable URLs",
+            "path": "/postits"
+        },
+        {
+            "description": "Create and manage application users",
+            "path": "/profiles"
+        },
+        {
+            "description": "Register and manage systems",
+            "path": "/systems"
+        },
+        {
+            "description": "Transform and stage data",
+            "path": "/transforms"
+        }
+    ],
+    "authorizations": {
+      "oauth2": {
+	      "type": "oauth2",
+	      "scopes": [
+          {
+            "scope": "PRODUCTION",
+            "description": "catchall grant type for all api services."
+          }
+	      ],
+	      "grantTypes": {
+	        "implicit": {
+	          "loginEndpoint": {
+	            "url": "${foundation.base.url}/login"
+	          },
+	          "tokenName": "access_token"
+	        },
+	        "authorization_code": {
+	          "tokenRequestEndpoint": {
+	            "url": "${foundation.base.url}/authorize",
+	            "clientIdName": "client_id",
+	            "clientSecretName": "client_secret"
+	          },
+	          "tokenEndpoint": {
+	            "url": "${foundation.base.url}/token",
+	            "tokenName": "access_code"
+	          }
+	        }
+	      }
+	    }
+	},
+	"info": {
+	    "title": "iPlant Agave API",
+	    "description": "Your Science-as-a-Service API Platform. \nFor more information, visit <a href=\"http://agaveapi.co\">http://agaveapi.co</a>",
+	    "termsOfServiceUrl": "http://agaveapi.co/terms/",
+	    "contact": "dooley@tacc.utexas.edu",
+	    "licenseUrl": "http://agaveapi.co/terms"
+	}
+
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE hibernate-mapping PUBLIC
+ "-//Hibernate/Hibernate Mapping DTD 2.0//EN"
+"http://hibernate.org/dtd/hibernate-mapping-3.0.dtd" >
+
+<!--
+Various Hibernate value types.
+Make sure this mapping file is loaded before the others.
+
+@author Rion Dooley dooley [at] tacc [dot] utexas [dot] edu.
+-->
+
+<hibernate-mapping>
+
+	<typedef class="org.iplantc.service.apps.model.enumerations.StringEnumUserType" name="pem_type">
+	    <param name="enumClassname">org.iplantc.service.jobs.model.enumerations.PermissionType</param>
+	</typedef>
+	
+	<typedef class="org.iplantc.service.apps.model.enumerations.StringEnumUserType" name="parallel_type">
+	    <param name="enumClassname">org.iplantc.service.apps.model.enumerations.ParallelismType</param>
+	</typedef>
+	
+	<typedef class="org.iplantc.service.apps.model.enumerations.StringEnumUserType" name="auth_type">
+	    <param name="enumClassname">org.iplantc.service.apps.model.enumerations.AuthenticationType</param>
+	</typedef>
+	
+	<typedef class="org.iplantc.service.apps.model.enumerations.StringEnumUserType" name="module_type">
+	    <param name="enumClassname">org.iplantc.service.apps.model.enumerations.ModuleType</param>
+	</typedef>
+	
+	<typedef class="org.iplantc.service.apps.model.enumerations.StringEnumUserType" name="exec_type">
+	    <param name="enumClassname">org.iplantc.service.apps.model.enumerations.ExecutionType</param>
+	</typedef>
+	
+	<typedef class="org.iplantc.service.apps.model.enumerations.StringEnumUserType" name="job_status">
+	    <param name="enumClassname">org.iplantc.service.jobs.model.enumerations.JobStatusType</param>
+	</typedef>
+	
+	<typedef class="org.iplantc.service.apps.model.enumerations.StringEnumUserType" name="sofware_parameter_type">
+	    <param name="enumClassname">org.iplantc.service.apps.model.enumerations.SoftwareParameterType</param>
+	</typedef>
+
+</hibernate-mapping>

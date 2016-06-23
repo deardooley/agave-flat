@@ -1,0 +1,20 @@
+{
+	"id": "ftp.example.com",
+	"name": "FTP Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example storage sytem accessible via sftp.",
+	"site": "example.com",
+	"storage": {
+		"host": "ftp.example.com",
+		"port": 21,
+		"protocol": "FTP",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "PASSWORD"
+		}
+		
+	},
+	"default": false
+}

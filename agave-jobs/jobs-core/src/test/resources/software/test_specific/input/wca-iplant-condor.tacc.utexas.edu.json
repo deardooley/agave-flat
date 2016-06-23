@@ -1,0 +1,79 @@
+{
+    "id":"wca-1.00",
+    "name":"wca",
+    "parallelism":"SERIAL",
+    "version":"1.00",
+    "helpURI":"http://www.gnu.org/s/coreutils/manual/html_node/wc-invocation.html",
+    "label":"wc condor",
+    "shortDescription":"Count words in a file",
+    "longDescription":"",
+    "author":"sterry1",
+    "datePublished":"",
+    "tags":[
+        "textutils",
+        "gnu"
+    ],
+    "ontology":[
+        "http://sswapmeet.sswap.info/algorithms/wc"
+    ],
+    "executionHost":"condor.opensciencegrid.org",
+    "executionType":"CONDOR",
+    "deploymentSystem":"data.iplantcollaborative.org",
+    "deploymentPath":"/sterry1/applications/wca-1.00",
+    "templatePath":"wrapper.sh",
+    "testPath":"test.sh",
+    "checkpointable": false,
+    "available": true,
+    "modules":[
+        "purge",
+        "load TACC"
+    ],
+    "inputs":[
+        {
+            "id":"query1",
+            "defaultValue": "read1.fq",
+            "value":{
+                "validator": "",
+                "default":"read1.fq",
+                "visible": true,
+                "required":false
+            },
+            "details":{
+                "label":"File to count words in: ",
+            "description": "",
+            "visible": true
+            },
+            "semantics":{
+                "ontology":[
+                    "http://sswapmeet.sswap.info/util/TextDocument"
+                ],
+                "minCardinality":1,
+                "maxCardinality":1,
+                "fileTypes":[
+                    "text-0"
+                ]
+            }
+        }
+    ],
+    "outputs":[
+        {
+            "id":"outputWC",
+            "value":{
+                "default":"wc_out.txt",
+                "validator":""
+            },
+            "details":{
+                "label":"Text file",
+                "description":"Results of WC"
+            },
+            "semantics":{
+                "ontology":[
+                    "http://sswapmeet.sswap.info/util/TextDocument"
+                ],
+                "minCardinality":"1",
+                "maxCardinality":"1",
+                "fileType":"text-0"
+            }
+        }
+    ]
+}

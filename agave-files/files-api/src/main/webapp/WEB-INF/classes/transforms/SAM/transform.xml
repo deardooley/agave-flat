@@ -1,0 +1,41 @@
+<transform>
+
+	<name>SAM</name>
+	<version>0.1.2</version>
+	<fileExtensions>sam</fileExtensions>
+	<pattern></pattern>
+	<description>SAM</description>
+	<descriptionURI>http://samtools.sourceforge.net/SAM1.pdf</descriptionURI>
+	<tags>alignment,sequence,nucleotide,base pair</tags>
+	
+	<encodingChain>
+		<name>SAM</name>
+		<filters>
+			<filter>
+				<name>SAM-self</name>
+				<description>SAM in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>SAM</name>
+			<version>0.1.2</version>
+			<description>Export to SAM</description>
+			<filters>
+				<filter>
+					<name>SAM-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>SAM in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

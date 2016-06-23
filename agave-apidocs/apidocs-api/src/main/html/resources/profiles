@@ -1,0 +1,644 @@
+{
+    "apiVersion": "${project.version}-r${buildNumber}",
+    "apis": [
+        {
+            "description": "Retrieve the profile of the requesting user.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "get",
+                    "notes": "",
+                    "parameters": [
+                    	{
+                            "allowMultiple": false,
+                            "description": "The username to search by.",
+                            "name": "username",
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The email address to search by.",
+                            "name": "email",
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The full name to search by.",
+                            "name": "username",
+                            "paramType": "query",
+                            "required": false,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The maximum number of results. Default is everything.",
+                            "name": "limit",
+                            "paramType": "query",
+                            "required": false,
+                            "type": "integer",
+                            "defaultValue": 250
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The number of results to skip in the response. Default is 0",
+                            "name": "offset",
+                            "paramType": "query",
+                            "required": false,
+                            "type": "integer",
+                            "defaultValue": 0
+                        }
+                    ],
+                    "responseMessages": [
+                        {
+                            "code": 400,
+                            "message": "Raised if a user supplies an invalid username format"
+                        },
+                        {
+                            "code": 403,
+                            "message": "Failed to authenticate the user"
+                        },
+                        {
+                            "code": 404,
+                            "message": "The user profile cannot be found"
+                        },
+                        {
+                            "code": 500,
+                            "message": "The service was unable to query the profile database"
+                        }
+                    ],
+                    "summary": "Find authenticated user profile",
+                    "type": "MultipleProfileResponse"
+                }
+            ],
+            "path": "/profiles/v2/"
+        },
+        {
+            "description": "Retrieve the profile of an API user by their exact username.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "findByUsername",
+                    "notes": "Internal users will not be returned",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid api user",
+                            "name": "username",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string",
+                            "defaultValue": "me"
+                        }
+                    ],
+                    "responseMessages": [
+                        {
+                            "code": 400,
+                            "message": "Raised if a user supplies an invalid username format"
+                        },
+                        {
+                            "code": 403,
+                            "message": "Failed to authenticate the user"
+                        },
+                        {
+                            "code": 404,
+                            "message": "The user profile cannot be found"
+                        },
+                        {
+                            "code": 500,
+                            "message": "The service was unable to query the profile database"
+                        }
+                    ],
+                    "summary": "Find api user profile by their api username",
+                    "type": "SingleProfileResponse"
+                }
+            ],
+            "path": "/profiles/v2/{username}"
+        },
+        {
+            "description": "Retrieve the profile of the requesting user. This method has been deprecated as of v2.2",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "search",
+                    "notes": "All searches will be done using partial matches.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The profile attribute by which to search.",
+                            "enum": [
+                                "username",
+                                "email",
+                                "name"
+                            ],
+                            "name": "term",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The search value. Partial matches will be returned.",
+                            "name": "value",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Search for authenticated user profiles by search terms",
+                    "type": "MultipleProfileResponse"
+                }
+            ],
+            "path": "/profiles/v2/search/{term}/{value}"
+        },
+        {
+            "description": "Perform operations on internal users",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "listInternalUsers",
+                    "notes": "",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid api user",
+                            "name": "apiUsername",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "List all internal users created by the authenticated user",
+                    "type": "MultipleInternalUserResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "deleteInternalUsers",
+                    "notes": "Deleted users cannot be recovered.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid api user",
+                            "name": "apiUsername",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Delete all internal users created by the authenticated user.",
+                    "type": "SingleInternalUserResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "addInternalUser",
+                    "notes": "",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid api user",
+                            "name": "apiUsername",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The internal user to create.",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "InternalUserRequest",
+                            "defaultValue": "{\n\t\"username\": \"psherman\",\n\t\"email\": \"psherman@wallabydentistry.com.au\",\n\t\"country\": \"Australia\",\n\t\"department\": \"General\",\n\t\"fax\": null,\n\t\"firstName\": \"Phillip\",\n\t\"lastName\": \"Sherman\",\n\t\"gender\": \"male\",\n\t\"institution\": null,\n\t\"phone\": \"(818) 460-7477\",\n\t\"position\": \"owner\",\n\t\"researchArea\": \"aquatic dental hygene\",\n\t\"state\": \"New South Wales\",\n\t\"status\": \"active\"\n}"
+                        }
+                    ],
+                    "summary": "Create or update an internal user.",
+                    "type": "SingleInternalUserResponse"
+                }
+            ],
+            "path": "/profiles/v2/{apiUsername}/users"
+        },
+        {
+            "description": "Perform operations on a specific internal user",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "getInternalUser",
+                    "notes": "",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid api user",
+                            "name": "apiUsername",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid internal user",
+                            "name": "internalUsername",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Find api user profile by their api username",
+                    "type": "SingleInternalUserResponse"
+                },
+                {
+                    "method": "DELETE",
+                    "nickname": "deleteInternalUser",
+                    "notes": "Deleted users cannot be recovered.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid api user",
+                            "name": "apiUsername",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid internal user",
+                            "name": "internalUsername",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Delete all internal users created by the authenticated user.",
+                    "type": "SingleInternalUserResponse"
+                },
+                {
+                    "method": "POST",
+                    "nickname": "updateInternalUser",
+                    "notes": "",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid api user",
+                            "name": "apiUsername",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid internal user",
+                            "name": "internalUsername",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The internal user to create.",
+                            "name": "body",
+                            "paramType": "body",
+                            "required": true,
+                            "type": "InternalUserRequest",
+                            "defaultValue": "{\n\t\"username\": \"psherman\",\n\t\"email\": \"psherman@wallabydentistry.com.au\",\n\t\"country\": \"Australia\",\n\t\"department\": \"General\",\n\t\"fax\": null,\n\t\"firstName\": \"Phillip\",\n\t\"lastName\": \"Sherman\",\n\t\"gender\": \"male\",\n\t\"institution\": null,\n\t\"phone\": \"(818) 460-7477\",\n\t\"position\": \"owner\",\n\t\"researchArea\": \"aquatic dental hygene\",\n\t\"state\": \"New South Wales\",\n\t\"status\": \"active\"\n}"
+                        }
+                    ],
+                    "summary": "Create or update the given internal user.",
+                    "type": "SingleInternalUserResponse"
+                }
+            ],
+            "path": "/profiles/v2/{apiUsername}/users/{internalUsername}"
+        },
+        {
+            "description": "Retrieve the profile of the requesting user.",
+            "operations": [
+                {
+                    "method": "GET",
+                    "nickname": "searchInternalUsers",
+                    "notes": "All searches will be done using partial matches.",
+                    "parameters": [
+                        {
+                            "allowMultiple": false,
+                            "description": "The username of a valid api user",
+                            "name": "username",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The profile attribute by which to search. Status may be either active or deleted.",
+                            "enum": [
+                                "username",
+                                "email",
+                                "name",
+                                "status"
+                            ],
+                            "name": "term",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "allowMultiple": false,
+                            "description": "The search value. Partial matches will be returned.",
+                            "name": "value",
+                            "paramType": "path",
+                            "required": true,
+                            "type": "string"
+                        }
+                    ],
+                    "summary": "Search for internal user profiles by search terms",
+                    "type": "MultipleProfileResponse"
+                }
+            ],
+            "path": "/profiles/v2/{username}/users/search/{term}/{value}"
+        }
+    ],
+    "basePath": "${foundation.base.url}",
+    "models": {
+        "InternalUser": {
+            "id": "InternalUser",
+            "name": "",
+            "properties": {
+                "city": {
+                    "description": "The api user's city.",
+                    "type": "string"
+                },
+                "country": {
+                    "description": "The api user's country.",
+                    "type": "string"
+                },
+                "department": {
+                    "description": "The api user's institutional department.",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "The api user's unique email address.",
+                    "type": "string"
+                },
+                "fax": {
+                    "description": "The api user's fax number.",
+                    "type": "string"
+                },
+                "firstName": {
+                    "description": "The api user's first name.",
+                    "type": "string"
+                },
+                "gender": {
+                    "description": "The api user's gender. male or female.",
+                    "type": "string"
+                },
+                "institution": {
+                    "description": "The api user's home institution",
+                    "type": "string"
+                },
+                "lastName": {
+                    "description": "The api user's last name.",
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "The api user's phone number.",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "The api user's position of employment.",
+                    "type": "string"
+                },
+                "researchArea": {
+                    "description": "The api user's primary area of research.",
+                    "type": "string"
+                },
+                "state": {
+                    "description": "The api user's state.",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "The api user's status. active or deleted.",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "The api user's unique username.",
+                    "type": "string"
+                }
+            }
+        },
+        "InternalUserRequest": {
+            "id": "InternalUserRequest",
+            "name": "",
+            "properties": {
+                "username": {
+                    "description": "The api user's unique username.",
+                    "type": "string",
+                    "required": true
+                },
+                "email": {
+                    "description": "The api user's unique email address.",
+                    "type": "string",
+                    "required": true
+                },
+                "city": {
+                    "description": "The api user's city.",
+                    "type": "string"
+                },
+                "country": {
+                    "description": "The api user's country.",
+                    "type": "string"
+                },
+                "department": {
+                    "description": "The api user's institutional department.",
+                    "type": "string"
+                },
+                "fax": {
+                    "description": "The api user's fax number.",
+                    "type": "string"
+                },
+                "firstName": {
+                    "description": "The api user's first name.",
+                    "type": "string"
+                },
+                "gender": {
+                    "description": "The api user's gender. male or female.",
+                    "type": "string",
+                    "enum": [
+                        "male",
+                        "female"
+                    ]
+                },
+                "institution": {
+                    "description": "The api user's home institution",
+                    "type": "string"
+                },
+                "lastName": {
+                    "description": "The api user's last name.",
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "The api user's phone number.",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "The api user's position of employment.",
+                    "type": "string"
+                },
+                "researchArea": {
+                    "description": "The api user's primary area of research.",
+                    "type": "string"
+                },
+                "state": {
+                    "description": "The api user's state.",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "The api user's status. active or deleted.",
+                    "type": "string"
+                }
+            }
+        },
+        "MultipleInternalUserResponse": {
+            "id": "MultipleInternalUserResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "response body",
+                    "items": {
+                        "$ref": "InternalUser"
+                    },
+                    "type": "List"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "MultipleProfileResponse": {
+            "id": "MultipleProfileResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "description": "response body",
+                    "items": {
+                        "$ref": "Profile"
+                    },
+                    "type": "List"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "Profile": {
+            "id": "Profile",
+            "name": "",
+            "properties": {
+                "city": {
+                    "description": "The api user's city.",
+                    "type": "string"
+                },
+                "country": {
+                    "description": "The api user's country.",
+                    "type": "string"
+                },
+                "department": {
+                    "description": "The api user's institutional department.",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "The api user's unique email address.",
+                    "type": "string"
+                },
+                "fax": {
+                    "description": "The api user's fax number.",
+                    "type": "string"
+                },
+                "firstName": {
+                    "description": "The api user's first name.",
+                    "type": "string"
+                },
+                "gender": {
+                    "description": "The api user's gender. male or female.",
+                    "type": "string"
+                },
+                "institution": {
+                    "description": "The api user's home institution",
+                    "type": "string"
+                },
+                "lastName": {
+                    "description": "The api user's last name.",
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "The api user's phone number.",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "The api user's position of employment.",
+                    "type": "string"
+                },
+                "researchArea": {
+                    "description": "The api user's primary area of research.",
+                    "type": "string"
+                },
+                "state": {
+                    "description": "The api user's state.",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "The api user's unique username.",
+                    "type": "string"
+                },
+                "uuid": {
+                    "description": "A unique uuid for this user.",
+                    "type": "string"
+                }
+            }
+        },
+        "SingleInternalUserResponse": {
+            "id": "SingleInternalUserResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "type": "InternalUser"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        },
+        "SingleProfileResponse": {
+            "id": "SingleProfileResponse",
+            "name": "",
+            "properties": {
+                "message": {
+                    "description": "success or failure",
+                    "type": "string"
+                },
+                "result": {
+                    "type": "Profile"
+                },
+                "status": {
+                    "description": "success or failure",
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "resourcePath": "/profiles/v2",
+    "swaggerVersion": "1.2"
+}

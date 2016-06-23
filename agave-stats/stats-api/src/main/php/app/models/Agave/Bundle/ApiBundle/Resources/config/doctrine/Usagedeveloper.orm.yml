@@ -1,0 +1,21 @@
+Agave\Bundle\ApiBundle\Entity\Usagedeveloper:
+    type: entity
+    table: UsageDeveloper
+    id:
+        username:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            default: ''
+            id: true
+            column: Username
+        servicekey:
+            type: string
+            nullable: false
+            length: 30
+            fixed: false
+            default: ''
+            id: true
+            column: ServiceKey
+    lifecycleCallbacks: {  }

@@ -1,0 +1,41 @@
+<transform>
+
+	<name>2bit</name>
+	<version>0</version>
+	<fileExtensions>2bit</fileExtensions>
+	<pattern></pattern>
+	<description>UCSC 2bit</description>
+	<descriptionURI>http://genome.ucsc.edu/FAQ/FAQformat#format7</descriptionURI>
+	<tags>sequence,sequencing,nucleotide,base pair,binary</tags>
+	
+	<encodingChain>
+		<name>2bit</name>
+		<filters>
+			<filter>
+				<name>2bit-self</name>
+				<description>2bit in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>2bit</name>
+			<version>0</version>
+			<description>Export to 2bit</description>
+			<filters>
+				<filter>
+					<name>2bit-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>2bit in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

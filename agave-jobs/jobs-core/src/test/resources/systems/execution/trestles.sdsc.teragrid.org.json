@@ -1,0 +1,60 @@
+{
+	"id": "trestles.sdsc.teragrid.org",
+	"name": "Trestles",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Trestles is intended for moderately scalable parallel applications with an emphasis on improving productivity for a broad spectrum of users. The scheduling environment will be structured to optimize job productivity by: 1) predominantly supporting jobs with core counts of 1,024 or less, 2) allowing long-running jobs of up to 2 weeks, 3) enabling user-settable job reservations, 4) supporting on-demand computing and 5) providing fast turnaround for development and interactive work. Trestles will also support science gateways by having the relevant middleware and common TeraGrid software installed at the outset. Trestles will be ideal for applications with fast local I/O requirements that can benefit from the flash memory available on each compute node.",
+	"site": "sdsc.teragrid.org",
+	"executionType": "HPC",
+	"default": false,
+	"queues": [
+		{
+			"name": "default",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": "#PBS -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "trestles.sdsc.edu",
+		"port": 22,
+		"protocol": "GSISSH",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"type": "X509",
+			"server": {
+				"id": "myproxy.teragrid.org",
+				"name": "XSEDE MyProxy Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"storage": {
+		"host": "trestles-dm.sdsc.xsede.org",
+		"port": 2811,
+		"protocol": "GRIDFTP",
+		"rootDir": "/",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": "",
+			"type": "X509",
+			"server": {
+				"id": "myproxy.teragrid.org",
+				"name": "XSEDE MyProxy Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "MYPROXY"
+			}
+		}
+	},
+	"scheduler": "PBS",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

@@ -1,0 +1,17 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="iPlant Jobs Services" verbose="2" parallel="false">
+	<test name="jobs">
+		 <packages>
+			<!-- <package name="org.iplantc.service.jobs.model" /> -->
+			<package name="org.iplantc.service.jobs.dao" /> 
+			<package name="org.iplantc.service.jobs.managers" />
+			<package name="org.iplantc.service.jobs.manager.launchers" />
+			<package name="org.iplantc.service.jobs.manager.killers" />
+			<package name="org.iplantc.service.jobs.manager.monitors" />
+			<package name="org.iplantc.service.jobs.manager.parsers" />
+			<package name="org.iplantc.service.jobs.queue" />
+			<package name="org.iplantc.service.jobs.util" />
+		</packages>
+	</test>
+</suite>

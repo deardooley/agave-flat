@@ -1,0 +1,81 @@
+Agave\Bundle\ApiBundle\Entity\EncodingTasks:
+    type: entity
+    table: encoding_tasks
+    indexes:
+        FKF27B81A21DCDC7B0:
+            columns:
+                - logical_file_id
+        FKF27B81A2BBBF083F:
+            columns:
+                - system_id
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        callbackKey:
+            type: string
+            nullable: false
+            length: 64
+            fixed: false
+            column: callback_key
+        created:
+            type: datetime
+            nullable: false
+        destPath:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            column: dest_path
+        sourcePath:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+            column: source_path
+        status:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+        transformName:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+            column: transform_name
+        transformFilterName:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+            column: transform_filter_name
+    manyToOne:
+        logicalFile:
+            targetEntity: LogicalFiles
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                logical_file_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+        system:
+            targetEntity: Systems
+            cascade: {  }
+            mappedBy: null
+            inversedBy: null
+            joinColumns:
+                system_id:
+                    referencedColumnName: id
+            orphanRemoval: false
+    lifecycleCallbacks: {  }

@@ -1,0 +1,41 @@
+<transform>
+
+	<name>SBML</name>
+	<version>2.4.1</version>
+	<fileExtensions>sbml,xml</fileExtensions>
+	<pattern></pattern>
+	<description>Systems Biology Markup Language (Level 2, Version 4, Release 1)</description>
+	<descriptionURI>http://sbml.org/Documents/Specifications#SBML_Level_2_Version_4</descriptionURI>
+	<tags>model,systems biology,network,pathway</tags>
+	
+	<encodingChain>
+		<name>SBML</name>
+		<filters>
+			<filter>
+				<name>SBML-self</name>
+				<description>SBML in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>SBML</name>
+			<version>2.4.1</version>
+			<description>Export to SBML</description>
+			<filters>
+				<filter>
+					<name>SBML-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>SBML in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

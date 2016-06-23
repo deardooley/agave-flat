@@ -1,0 +1,166 @@
+{
+   "name":"boilerplate",
+   "version":"1.0",
+   "icon":"http://example.com/icon.jpg",
+   "helpURI":"http://example.com/boilerplate",
+   "label":"boilerplate",
+   "shortDescription":"Run some boilerplate code",
+   "longDescription":"This is an application wrapper that you can use as a basis for wrapper your own.",
+   "tags":[
+      "sample",
+      "boilerplate",
+      "example"
+   ],
+   "ontology":[
+   	  "https://example.com/apps/boilerplate"
+   ],
+   "executionSystem":"execute.example.com",
+   "executionType":"HPC",
+   "parallelism":"SERIAL",
+   "deploymentPath":"applications/boilerplate-1.0/system.example.com",
+   "deploymentSystem":"storage.example.com",
+   "templatePath":"wrapper.template",
+   "testPath":"test/test.sh",
+   "checkpointable": false,
+   "modules":[
+      "perl",
+      "boilerplate"
+   ],
+   "inputs":[
+      {
+         "id":"input1",
+         "details":{
+            "label":"Target File",
+            "description":"Select an input file",
+            "visible":true,
+            "argument": "",
+            "showArgument": false,
+            "repeatArgument": false
+         },
+         "semantics":{
+            "ontology":[],
+            "minCardinality":0,
+            "maxCardinality":1,
+            "fileTypes":[
+               "TEXT-0"
+            ]
+         },
+         "value": {
+                "default": "/api_sample_user/input1.txt",
+                "required": false,
+                "visible": true,
+                "validator": null,
+                "order": 0,
+                "enquote": false
+         }
+      }
+   ],
+   "parameters":[
+      {
+         "id":"myIntegerParameter",
+         "details":{
+            "label":"Extract the first k lines",
+            "description":"Equivalent to -n command flag",
+            "argument": "",
+            "showArgument": false,
+            "repeatArgument": false
+         },
+         "semantics":{
+            "minCardinality":0,
+            "maxCardinality":1,
+            "ontology":[
+               "xs:integer"
+            ]
+         },
+         "value": {
+                "default": 9,
+                "type":"number",
+                "required": false,
+                "visible": true,
+                "validator":"[0-9]*",
+                "order": 0,
+                "enquote": false
+         }
+      },
+      {
+         "id":"myEnumerationParameter",
+         "details":{
+            "label":"Extract the first k lines",
+            "description":"Equivalent to -n command flag",
+            "argument": "",
+            "showArgument": false,
+            "repeatArgument": false
+         },
+         "semantics":{
+            "minCardinality":0,
+            "maxCardinality":3,
+            "ontology":[
+               "xs:string"
+            ]
+         },
+         "value": {
+                "default": [
+                	"val1",
+                	"val2"
+                ],
+                "type":"enumeration",
+                "required": false,
+                "visible": true,
+                "enum_values": [
+                        {"val1":"val1"},
+                        {"val2":"val2"},
+                        {"val3":"val3"}
+                ],
+                "order": 1,
+                "enquote": false
+         }
+      },
+      {
+         "id":"myStringParameter",
+         "details":{
+            "label":"Extract the first k lines",
+            "description":"Equivalent to -n command flag",
+            "argument": "",
+            "showArgument": false,
+            "repeatArgument": false
+         },
+         "semantics":{
+            "minCardinality":0,
+            "maxCardinality":1,
+            "ontology":[
+               "xs:string"
+            ]
+         },
+         "value": {
+                "default": "some reasonable default",
+                "type":"string",
+                "required": false,
+                "visible": true,
+                "validator": "[\\p{Alnum},.'\\s]*",
+                "order": 2,
+                "enquote": false
+         }
+      }
+   ],
+   "outputs":[
+        {
+            "id":"outputWC",
+            "value":{
+                "default":"wc_out.txt",
+                "validator":""
+            },
+            "details":{
+                "label":"Text file",
+                "description":"Results of WC"
+            },
+            "semantics":{
+                "ontology":[
+                    "http://sswapmeet.sswap.info/util/TextDocument"
+                ],
+                "minCardinality": 1,
+                "maxCardinality": 1,
+                "fileType":"text-0"
+            }
+        }
+    ]
+}

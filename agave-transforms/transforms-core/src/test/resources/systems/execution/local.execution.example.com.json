@@ -1,0 +1,30 @@
+{
+	"id": "local.execution.example.com",
+	"name": "API",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample local execution system.",
+	"site": "tacc.xsede.org",
+	"executionType": "HPC",
+	"default": false,
+	"queues": [],
+	"login": {
+		"host": "login1.ls4.tacc.utexas.edu",
+		"port": 22,
+		"protocol": "LOCAL",
+		"auth": {
+			"type": "LOCAL"
+		}
+	},
+	"storage": {
+		"host": "localhost",
+		"port": 22,
+		"protocol": "LOCAL",
+		"auth": {
+			"type": "LOCAL"
+		}
+	},
+	"scheduler": "SGE",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

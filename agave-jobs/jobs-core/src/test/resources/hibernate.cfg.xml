@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+"-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+	<session-factory>
+		<!-- Connection properties -->
+		<property name="hibernate.connection.url"><![CDATA[${foundation.db.test.url}]]></property>
+        <property name="hibernate.connection.username">${foundation.db.test.username}</property>
+        <property name="hibernate.connection.password">${foundation.db.test.password}</property>
+		<property name="hibernate.connection.driver_class">${foundation.db.test.driver}</property>
+		<property name="hibernate.connection.provider_class">org.hibernate.connection.DriverManagerConnectionProvider</property>
+        
+        <!-- <property name="hibernate.connection.url"><![CDATA[${foundation.db.url}]]></property>
+        <property name="hibernate.connection.username">${foundation.db.username}</property>
+        <property name="hibernate.connection.password">${foundation.db.password}</property>
+		<property name="hibernate.connection.driver_class">${foundation.db.driver}</property>
+		<property name="hibernate.connection.provider_class">org.hibernate.connection.DriverManagerConnectionProvider</property> -->
+		
+        <!-- General connection properties -->
+        <property name="dialect">org.hibernate.dialect.MySQL5Dialect</property>
+        <property name="hibernate.current_session_context_class">managed</property>
+        <property name="hibernate.query.factory_class">org.hibernate.hql.ast.ASTQueryTranslatorFactory</property>
+        <property name="hibernate.cache.use_second_level_cache">false</property>
+        <property name="hibernate.connection.autocommit">false</property> 
+        <property name="hbm2ddl.auto">create</property>
+        <property name="hibernate.show_sql">false</property>
+        <property name="hibernate.query.substitutions">true 1, false 0</property>
+        
+        <!-- Uncomment these if you want to run queries via the Hibernate
+             plugin in your IDE. a -->
+        <!-- <mapping class="org.iplantc.service.systems.model.RemoteSystem"/>
+        <mapping class="org.iplantc.service.systems.model.StorageSystem"/>
+        <mapping class="org.iplantc.service.systems.model.ExecutionSystem"/>
+        <mapping class="org.iplantc.service.systems.model.AuthConfig"/>
+        <mapping class="org.iplantc.service.systems.model.BatchQueue"/>
+        <mapping class="org.iplantc.service.systems.model.CredentialServer"/>
+        <mapping class="org.iplantc.service.systems.model.LoginConfig"/>
+        <mapping class="org.iplantc.service.systems.model.ProxyServer"/>
+        <mapping class="org.iplantc.service.systems.model.StorageConfig"/>
+        <mapping class="org.iplantc.service.systems.model.SystemRole"/>
+        <mapping class="org.iplantc.service.jobs.model.Job"/>
+        <mapping class="org.iplantc.service.jobs.model.JobPermission"/>
+        <mapping class="org.iplantc.service.auth.model.AuthenticationToken"/>
+        <mapping class="org.iplantc.service.profile.model.InternalUser"/> -->
+	</session-factory>
+</hibernate-configuration>

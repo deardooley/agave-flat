@@ -1,0 +1,23 @@
+<transform>
+
+	<name>CAT</name>
+	<version>0</version>
+	<fileExtensions>txt</fileExtensions>
+	<pattern></pattern>
+	<description>Text</description>
+	<descriptionURI>http://linux.about.com/od/commands/l/blcmdl1_cat.htm</descriptionURI>
+	<tags>data,cat</tags>
+	
+	<encodingChain>
+		<name>CAT</name>
+		<filters>
+			<filter>
+				<name>CAT-self</name>
+				<description>CAT in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+
+</transform>

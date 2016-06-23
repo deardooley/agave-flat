@@ -1,0 +1,15 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Agave Systems Services Core" verbose="1" thread-count="1" parallel="false">
+	<test name="systems">
+		<packages>
+			<package name="org.iplantc.service.systems.model" />
+			<package name="org.iplantc.service.systems.crypt" />
+			<package name="org.iplantc.service.systems.dao" />
+			<package name="org.iplantc.service.systems.manager" />
+			<!-- <package name="org.iplantc.service.transfer.model*" />
+			<package name="org.iplantc.service.transfer.dao" />
+			<package name="org.iplantc.service.transfer.manager" /> -->
+		</packages>
+	</test>
+</suite>

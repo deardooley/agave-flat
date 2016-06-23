@@ -1,0 +1,22 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="iPlant Services" verbose="5" parallel="false">
+	<!-- <test name="iPlant Services IO">
+		<packages>
+			<package name="org.iplantc.service.io.model" />
+			<package name="org.iplantc.service.io.dao" />
+			<package name="org.iplantc.service.io.queue" />
+			<package name="org.iplantc.service.io.transform" />
+			<package name="org.iplantc.service.io.util" />
+		</packages>
+	</test> -->
+	<test name="iPlant Services Transfer">
+		<packages>
+			<!-- <package name="org.iplantc.service.transfer" /> -->
+			<package name="org.iplantc.service.transfer.ftp" />
+			<package name="org.iplantc.service.transfer.gridftp" />
+			<package name="org.iplantc.service.transfer.irods" />
+			<package name="org.iplantc.service.transfer.sftp" />
+		</packages>
+	</test>
+</suite>

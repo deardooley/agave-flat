@@ -1,0 +1,5 @@
+{
+	"url" : "http://requestb.in/abc1234?username=${USERNAME}&status=${STATUS}",
+	"event" : "SENT",
+	"associatedUuid" : "5833036796741676570-b0b0b0bb0b-0001-011"
+}

@@ -1,0 +1,52 @@
+{
+	"id": "api.example.com",
+	"name": "API",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample api (oauth2) execution system.",
+	"site": "tacc.xsede.org",
+	"executionType": "HPC",
+	"default": false,
+	"queues": [
+		{
+			"name": "normal",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": "#$ -A TG-MCB110022",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "login1.ls4.tacc.utexas.edu",
+		"port": 22,
+		"protocol": "API",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": "sadasdfasdfasdfasdfasdfa",
+			"type": "TOKEN",
+			"server": {
+				"id": "myproxy.teragrid.org",
+				"name": "XSEDE OA4MP Server",
+				"site": "ncsa.uiuc.edu",
+				"endpoint": "myproxy.teragrid.org",
+				"port": 7512,
+				"protocol": "OAUTH2"
+			}
+		}
+	},
+	"storage": {
+		"host": "login1.ls4.tacc.utexas.edu",
+		"port": 2811,
+		"protocol": "SFTP",
+		"auth": {
+			"username": "${iplant.community.username}",
+			"password": "${iplant.community.password}",
+			"credential": "",
+			"type": "PASSWORD"
+		}
+	},
+	"scheduler": "SGE",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

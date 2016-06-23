@@ -1,0 +1,22 @@
+{
+    "id": "steve.storage.example.com",
+    "name": "Steve's sftp server",
+    "status": "UP",
+    "type": "STORAGE",
+    "description": "My example system using sftp to move data.",
+    "site": "example.com",
+    "isDefault": true,
+    "storage": {
+        "host": "iplant-ssh.tacc.utexas.edu",
+        "port": 22,
+        "protocol": "SFTP",
+        "rootDir": "/home/sterry1",
+        "homeDir": "/",
+        "auth": {
+            "username": "sterry1",
+            "password": "${default.password}",
+            "credential": "",
+            "type": "PASSWORD"
+        }
+    }
+}

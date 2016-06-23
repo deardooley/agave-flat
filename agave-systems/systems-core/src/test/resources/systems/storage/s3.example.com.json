@@ -1,0 +1,23 @@
+{
+	"id": "s3.example.com",
+	"name": "Amazon S3 Example",
+	"status": "UP",
+	"type": "STORAGE",
+	"description": "Example storage system accessible via Amazon S3 API.",
+	"site": "amazon.com",
+	"storage": {
+		"host": "s3-website-us-east-1.amazonaws.com",
+		"port": 443,
+		"protocol": "S3",
+		"homeDir": "/",
+		"rootDir": "/",
+		"auth": {
+			"publicKey": "${aws.access.key}",
+			"privateKey": "${aws.secret.key}",
+			"type": "APIKEYS"
+		},
+		"container": "${aws.bucket}"
+		
+	},
+	"default": false
+}

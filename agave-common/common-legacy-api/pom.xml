@@ -1,0 +1,119 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.iplantc.agave</groupId>
+		<artifactId>common</artifactId>
+		<version>2.1.8</version>
+	</parent>
+	<artifactId>common-legacy-api</artifactId>
+	<name>iPlant Agave API Common Services Legacy Core</name>
+	<description>Library to support services using Restlets 1.8.</description>
+	<packaging>jar</packaging>
+
+	<scm>
+		<connection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-common.git</connection>
+		<developerConnection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-common.git</developerConnection>
+		<url>https://bitbucket.org/agaveapi/agave-common</url>
+	</scm>
+
+	<properties>
+		<force.check.update>false</force.check.update>
+	</properties>
+
+	<dependencies>
+		<!-- Restlet -->
+		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet.ext.fileupload</artifactId>
+			<version>1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet.ext.servlet</artifactId>
+			<version>2.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet.ext.json</artifactId>
+			<version>2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet</artifactId>
+			<version>1.2-M2</version>
+			<classifier>M2</classifier>
+		</dependency>
+
+		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet.ext.jetty</artifactId>
+			<version>6.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-fileupload</groupId>
+			<artifactId>commons-fileupload</artifactId>
+			<version>1.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>fluent-hc</artifactId>
+			<version>4.3.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpmime</artifactId>
+			<version>4.3.4</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>common-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>auth-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<!--<dependency> <groupId>org.jacoco</groupId> <artifactId>jacoco-maven-plugin</artifactId> 
+			<version>0.6.3.201306030806</version> <scope>test</scope> </dependency> <dependency> 
+			<groupId>org.eclipse.jetty</groupId> <artifactId>jetty-server</artifactId> 
+			<version>8.1.10.v20130312</version> <scope>test</scope> </dependency> -->
+		<!-- <dependency> <groupId>org.apache.tomcat</groupId> <artifactId>servlet-api</artifactId> 
+			<version>6.0.37</version> <scope>provided</scope> </dependency> -->
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mortbay</groupId>
+			<artifactId>jetty.ajp</artifactId>
+			<version>6.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mortbay</groupId>
+			<artifactId>jetty.https</artifactId>
+			<version>6.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mortbay</groupId>
+			<artifactId>jetty.core</artifactId>
+			<version>6.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mortbay</groupId>
+			<artifactId>jetty.util</artifactId>
+			<version>6.1</version>
+		</dependency>
+		<dependency>
+			<groupId>freemarker</groupId>
+			<artifactId>freemarker</artifactId>
+			<version>2.3.9</version>
+		</dependency>
+	</dependencies>
+</project>

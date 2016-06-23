@@ -1,0 +1,40 @@
+<transform>
+
+	<name>TGZ</name>
+	<version>0</version>
+	<fileExtensions>tar.gz</fileExtensions>
+	<pattern></pattern>
+	<description>TGZ</description>	<descriptionURI>http://en.wikipedia.org/wiki/Tar_(file_format)</descriptionURI>
+	<tags>compressed</tags>
+	
+	<encodingChain>
+		<name>TGZ</name>
+		<filters>
+			<filter>
+				<name>TGZ-self</name>
+				<description>TGZ in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>TGZ</name>
+			<version>0</version>
+			<description>Export to TAR.GZ</description>
+			<filters>
+				<filter>
+					<name>TAR-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>TGZ in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

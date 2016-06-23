@@ -1,0 +1,20 @@
+{
+   "id":"storage.example.com",
+   "name":"Example SFTP Storage System",
+   "status":"UP",
+   "type":"STORAGE",
+   "description":"My example storage system using SFTP to store data for testing",
+   "site":"example.com",
+   "storage":{
+      "host":"storage.example.com",
+      "port":10022,
+      "protocol":"SFTP",
+      "rootDir":"/",
+      "homeDir":"/home/${iplant.community.username}",
+      "auth": {
+         "username":"${iplant.community.username}",
+         "password":"${iplant.community.password}",
+         "type":"PASSWORD"
+      }
+   }
+}

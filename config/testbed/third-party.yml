@@ -1,0 +1,93 @@
+###############################################################
+# Third-party Services
+#
+# These are the third-party services providing persistence and
+# messaging to the Core Science APIs. The containers defined
+# below are are sufficient for running in a development
+# environment. Do NOT use these for production deployments.
+#
+# Production deployments should leverage a dedicated MySQL
+# cluster, a managed MongoDB cluster, and a distributed
+# message queue. Each of these should be operated in a high
+# availability configuration. Without such a deployment, the
+# Core Science APIs cannot be properly scaled to provide HA.
+###############################################################
+
+##############################################################
+# MySQL
+##############################################################
+mysql:
+  image: agaveapi/mysql:5.6-dev
+  ports:
+    - '3306:3306'
+  restart: on-failure
+  hostname: mysql.example.com
+  volumes_from:
+    - 'mysqlvol'
+  environment:
+    MYSQL_ROOT_PASSWORD: changeit
+    MYSQL_DATABASE: agavecore
+    MYSQL_USER: agaveuser
+    MYSQL_PASSWORD: password
+    MYSQL_TEST_DATABASE: test
+
+mysqlvol:
+  image: agaveapi/mysql:5.6-dev
+  command: sleep 90
+  mem_limit: 64m
+
+    
+##############################################################
+# MongoDB
+##############################################################
+mongodb:
+  image: agaveapi/mongodb:2.6
+  hostname: mongodb
+  restart: on-failure
+  environment:
+    - MONGODB_ADMIN_PASS=changeit
+    - MONGODB_PASSWORD=password
+    - MONGODB_USERNAME=agaveuser
+    - MONGODB_DATABASE=api
+  volumes_from:
+    - mongodbvol
+  ports:
+    - '27017:27017'
+
+mongodbvol:
+  image: agaveapi/mongodb:2.6
+  command: sleep 120
+  mem_limit: 64m
+
+##############################################################
+# Beanstalkd
+##############################################################
+beanstalkd:
+  image: agaveapi/beanstalkd:latest
+  command: /usr/bin/beanstalkd -b /var/lib/beanstalkd/binlog
+  hostname: beanstalkd
+  mem_limit: 512m
+  restart: on-failure
+  volumes_from:
+    - beanstalkdvol
+  ports:
+    - '11300:11300'
+
+beanstalkdvol:
+  image: agaveapi/beanstalkd:latest
+  command: sleep 60
+  mem_limit: 64m
+
+##############################################################
+# Pushpin
+##############################################################
+pushpin:
+  image: agaveapi/pushpin:1.6.0
+  extra_hosts:
+    - 'realtime.api.agave:192.168.99.100'
+  hostname: realtime.docker.example.com
+  mem_limit: 512m
+  restart: on-failure
+  ports:
+    - '7999:7999'
+    - '5561:5561'

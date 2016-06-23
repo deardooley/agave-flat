@@ -1,0 +1,46 @@
+Agave\Bundle\ApiBundle\Entity\JobPermissions:
+    type: entity
+    table: job_permissions
+    uniqueConstraints:
+        id:
+            columns:
+                - id
+        job_id:
+            columns:
+                - job_id
+                - username
+    id:
+        id:
+            type: bigint
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        jobId:
+            type: bigint
+            nullable: false
+            unsigned: false
+            column: job_id
+        lastUpdated:
+            type: datetime
+            nullable: false
+            column: last_updated
+        permission:
+            type: string
+            nullable: false
+            length: 16
+            fixed: false
+        tenantId:
+            type: string
+            nullable: false
+            length: 128
+            fixed: false
+            column: tenant_id
+        username:
+            type: string
+            nullable: false
+            length: 32
+            fixed: false
+    lifecycleCallbacks: {  }

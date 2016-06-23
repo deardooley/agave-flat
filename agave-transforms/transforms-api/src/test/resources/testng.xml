@@ -1,0 +1,14 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="iPlant Files Services" verbose="5" parallel="false">
+	<!-- <test name="files api">
+		<packages>
+			<package name="org.iplantc.service.io.resources" />
+		</packages>
+	</test> -->
+	<!-- <test name="transforms api">
+		<packages>
+			<package name="org.iplantc.service.data.resources" />
+		</packages> 
+	</test>-->
+</suite>

@@ -1,0 +1,41 @@
+<transform>
+
+	<name>SAI</name>
+	<version>0.1.2</version>
+	<fileExtensions>sam</fileExtensions>
+	<pattern></pattern>
+	<description>SAM index</description>
+	<descriptionURI>http://samtools.sourceforge.net/SAM1.pdf</descriptionURI>
+	<tags>alignment,binary</tags>
+	
+	<encodingChain>
+		<name>SAI</name>
+		<filters>
+			<filter>
+				<name>SAI-self</name>
+				<description>SAI in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>SAI</name>
+			<version>0.1.2</version>
+			<description>Export to SAI</description>
+			<filters>
+				<filter>
+					<name>SAI-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>SAI in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>

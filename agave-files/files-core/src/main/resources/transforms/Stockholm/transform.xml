@@ -1,0 +1,41 @@
+<transform>
+
+	<name>Stockholm</name>
+	<version>1.0</version>
+	<fileExtensions></fileExtensions>
+	<pattern># STOCKHOLM 1.0</pattern>
+	<description>Stockholm</description>
+	<descriptionURI>http://www.bioperl.org/wiki/Stockholm_multiple_alignment_format</descriptionURI>
+	<tags>alignment,nucleotide,peptide,amino acid,base pair,codon,msa</tags>
+	
+	<encodingChain>
+		<name>Stockholm</name>
+		<filters>
+			<filter>
+				<name>Stockholm-self</name>
+				<description>Stockholm in-place encoder</description>
+				<handle>encode.sh</handle>
+				<useOriginalFile>true</useOriginalFile>
+			</filter>
+		</filters>
+	</encodingChain>
+	
+	<decoders>
+		
+		<decodingChain>
+			<name>Stockholm</name>
+			<version>1.0</version>
+			<description>Export to Stockholm</description>
+			<filters>
+				<filter>
+					<name>Stockholm-self</name>
+					<handle>decode.sh</handle>
+					<useOriginalFile>true</useOriginalFile>
+					<description>Stockholm in-place decoder</description>
+				</filter>
+			</filters>
+		</decodingChain>
+
+	</decoders>
+
+</transform>
