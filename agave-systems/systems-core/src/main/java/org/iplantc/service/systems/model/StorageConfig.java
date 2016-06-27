@@ -14,6 +14,7 @@ import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
@@ -414,7 +415,10 @@ public class StorageConfig extends RemoteConfig implements LastUpdatable
 						}
 					}
 
-					if (jsonConfig.has("mirror") && !jsonConfig.isNull("mirror")) {
+					// let null and false values slide
+					if (jsonConfig.has("mirror") && 
+							(!jsonConfig.isNull("mirror") 
+									&& BooleanUtils.toBoolean(jsonConfig.getBoolean("mirror")))) {
 						throw new SystemArgumentException("Invalid 'storage.mirror' value. " +
 								"This parameter is only supported on iRODS systems.");
 					} else {
@@ -440,7 +444,7 @@ public class StorageConfig extends RemoteConfig implements LastUpdatable
 						"Please specify one of: " + ServiceUtils.explode(",",Arrays.asList(StorageProtocolType.values())));
 			}
 
-			if (jsonConfig.has("proxy"))
+			if (jsonConfig.has("proxy") && !jsonConfig.isNull("proxy"))
 			{
 				if (config.getProtocol() == StorageProtocolType.SFTP)
 				{

@@ -24,6 +24,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.hibernate.HibernateException;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.representation.AgaveErrorRepresentation;
@@ -109,7 +110,7 @@ public class MonitorResourceImpl extends AbstractAgaveResource implements Monito
 					    ObjectMapper mapper = new ObjectMapper();
 						ObjectNode jsonMonitor = mapper.createObjectNode()
 								.put("target", systemId)
-								.put("frequency", frequency)
+								.put("frequency", NumberUtils.toInt(frequency))
 								.put("updateSystemStatus", StringUtils.equalsIgnoreCase(updateSystemStatus, "true") || 
                                                            StringUtils.equalsIgnoreCase(updateSystemStatus, "1"))
 								.put("internalUsername", internalUsername)

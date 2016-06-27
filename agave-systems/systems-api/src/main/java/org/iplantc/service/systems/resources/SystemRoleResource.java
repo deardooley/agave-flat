@@ -3,17 +3,25 @@
  */
 package org.iplantc.service.systems.resources;
 
+import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.clients.AgaveProfileServiceClient;
+import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.common.resource.AgaveResource;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.dao.SystemDao;
+import org.iplantc.service.systems.exceptions.SystemArgumentException;
+import org.iplantc.service.systems.exceptions.SystemException;
+import org.iplantc.service.systems.exceptions.SystemUnavailableException;
+import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.manager.SystemRoleManager;
 import org.iplantc.service.systems.model.RemoteSystem;
@@ -37,6 +45,8 @@ import org.restlet.resource.Variant;
  */
 public class SystemRoleResource extends AgaveResource 
 {
+	private static final Logger log = Logger.getLogger(SystemRoleResource.class);	
+	
 	private String username;
 	private String systemId;
 	private String sharedUsername;
@@ -216,18 +226,21 @@ public class SystemRoleResource extends AgaveResource
 			if (system == null)
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-						"No shared system found matching " + systemId);
+						"No shared system found matching " + systemId,
+						new SystemUnknownException());
 			}
 			else if (!system.isAvailable()) 
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 						"System has been disabled by the administrator. "
-						+ "No roles changes may be applied to a disabled system.");
+						+ "No roles changes may be applied to a disabled system.", 
+						new SystemUnavailableException());
 			}
 			else if (system.isPubliclyAvailable() && !systemManager.isManageableByUser(system, username)) 
 			{
 				throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-						"Share roles are not suported on public systems.");
+						"Share roles are not suported on public systems.",
+						new NotImplementedException());
 			}
 			
 			if (systemManager.isManageableByUser(system, username))
@@ -247,7 +260,8 @@ public class SystemRoleResource extends AgaveResource
 					{
 						throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
 								"The username value in the POST body, " + postData.get("username") + 
-	                			", does not match the username in the URL, " + sharedUsername);         
+	                			", does not match the username in the URL, " + sharedUsername,
+								new SystemArgumentException());         
 					}
 					else
 					{
@@ -257,7 +271,8 @@ public class SystemRoleResource extends AgaveResource
 					
 					if (StringUtils.isEmpty(name) || StringUtils.equals(name, "null")) { 
 						throw new ResourceException(
-							Status.CLIENT_ERROR_BAD_REQUEST, "No user found matching " + name); 
+							Status.CLIENT_ERROR_BAD_REQUEST, "No user found matching " + name,
+							new FileNotFoundException()); 
 					} 
 					else 
 					{
@@ -267,7 +282,8 @@ public class SystemRoleResource extends AgaveResource
 						
 						if (profileServiceClient.getUser(name) == null) {
 							throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-								"No user found matching " + name);
+								"No user found matching " + name,
+								new FileNotFoundException());
 						}
 					}
 	
@@ -278,7 +294,8 @@ public class SystemRoleResource extends AgaveResource
 					} 
 					else {
 						throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-								"Missing role field.");
+								"Missing role field.",
+								new SystemArgumentException());
 					}
 					
 					// if the role is null or empty, the role
@@ -308,20 +325,25 @@ public class SystemRoleResource extends AgaveResource
 					catch (IllegalArgumentException iae) {
 						throw new ResourceException(
 								Status.CLIENT_ERROR_BAD_REQUEST,
-								"Invalid role value. Valid values are: " + RoleType.supportedValuesAsString());
+								"Invalid role value. Valid values are: " + RoleType.supportedValuesAsString(),
+								new SystemArgumentException());
 					}
 				}
 				catch (ResourceException e) {
 					throw e;
 				}
-				catch (Exception e) 
-				{
-					throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-							"Error occurred updating user role.");
+				catch (SystemException e) {
+					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
+							e.getMessage(), e);
+				}
+				catch (Exception e)  {
+					log.error("Unexpected error updating user permission", e);
+					throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
+							"Error occurred updating user role.", e);
 				}
 			} else {
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"User does not have the necessary role to modify this system");
+						"User does not have the necessary role to modify this system", new PermissionException());
 			}
 
 		}
@@ -410,7 +432,8 @@ public class SystemRoleResource extends AgaveResource
 			else 
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"User does not have the necessary role to update this system");
+						"User does not have the necessary role to update this system", 
+						new PermissionException());
 			}
 		}
 		catch (ResourceException e) {

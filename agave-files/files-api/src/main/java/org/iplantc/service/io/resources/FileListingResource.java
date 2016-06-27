@@ -241,7 +241,7 @@ public class FileListingResource extends AbstractFileResource {
         		
                 
 //                String absPath = logicalFile.getPath()remoteDataClient.resolvePath(path) + (fileName.equals(".") ? "" : File.separator + fileName);
-                
+                writer.array();
                 // adjust the offset and print the path element only if offset is zero
                 int theLimit = getLimit();
                 int theOffset = getOffset();
@@ -249,7 +249,7 @@ public class FileListingResource extends AbstractFileResource {
                 {
                 	theLimit--;
                 	
-	                writer.array().object()
+	                writer.object()
 		                .key("name").value(fileName)
 		                .key("path").value(absPath)
 		                .key("lastModified").value(new DateTime(remoteFileInfo.getLastModified()).toString())
@@ -317,7 +317,7 @@ public class FileListingResource extends AbstractFileResource {
 	                            sPermission = file.getPermissionType().name();
 	                        }
 	                                    
-	                        String absChildPath = absPath + file.getName();
+	                        String absChildPath = (absPath + file.getName()).replaceAll("/+", "/");
 	                        writer.object()
 								.key("name").value(file.getName())
 								.key("path").value(absChildPath)

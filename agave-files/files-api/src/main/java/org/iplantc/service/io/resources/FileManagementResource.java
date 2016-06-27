@@ -1644,8 +1644,14 @@ public class FileManagementResource extends AbstractFileResource
 
 		if (StringUtils.isEmpty(newPath) || newPath.equals("/")) {
 			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "No path specified.");
-		} else {
-			newPath = org.codehaus.plexus.util.FileUtils.getPath(newPath) + "/" + newName;
+		} 
+		else {
+			String currentTargetDirectory = org.codehaus.plexus.util.FileUtils.getPath(newPath);
+			if (StringUtils.isEmpty(currentTargetDirectory)) {
+				newPath = newName;
+			} else {
+				newPath = currentTargetDirectory + "/" + newName;
+			}
 		}
 
 		// do they have permission to write to this new folder
@@ -1654,7 +1660,7 @@ public class FileManagementResource extends AbstractFileResource
 		    		"User does not have access to rename the requested resource",
 		    		new PermissionException());
 		}
-
+		
 		if (remoteDataClient.doesExist(newPath)) {
 			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 					"A File or folder at " + newPath + " already exists",
@@ -1680,8 +1686,9 @@ public class FileManagementResource extends AbstractFileResource
 
 		// now keep the logical file up to date
 		logicalFile.setPath(remoteDataClient.resolvePath(newPath));
+		logicalFile.setName(FilenameUtils.getName(newPath));
 		logicalFile.addContentEvent(new FileEvent(FileEventType.RENAME, 
-				"Renamed path from " + path + " to " + newPath, 
+				"Renamed by " + getAuthenticatedUsername() + " from " + path + " to " + newPath, 
 				getAuthenticatedUsername()));
 		LogicalFileDao.persist(logicalFile);
 //					LogicalFileDao.moveSubtreePath(absolutePath, logicalFile.getSystem().getId(), remoteDataClient.resolvePath(newPath), logicalFile.getSystem().getId());
@@ -1797,6 +1804,7 @@ public class FileManagementResource extends AbstractFileResource
 			destLogicalFile = logicalFile.clone();
 			destLogicalFile.setSourceUri(logicalFile.getPublicLink());
 			destLogicalFile.setPath(remoteDataClient.resolvePath(destPath));
+			destLogicalFile.setName(FilenameUtils.getName(destLogicalFile.getPath()));
 			destLogicalFile.setSystem(logicalFile.getSystem());
 			destLogicalFile.setOwner(username);
 			destLogicalFile.setInternalUsername(internalUsername);
@@ -1811,6 +1819,7 @@ public class FileManagementResource extends AbstractFileResource
 		}
 		else
 		{
+			destLogicalFile.setName(FilenameUtils.getName(destLogicalFile.getPath()));
 			destLogicalFile.addContentEvent(new FileEvent(FileEventType.OVERWRITTEN, 
 					"Overwritten by a move from " + logicalFile.getSourceUri(), 
 					getAuthenticatedUsername()));
