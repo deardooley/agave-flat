@@ -3,6 +3,7 @@
  */
 package org.iplantc.service.systems.resources;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,12 +11,14 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
+import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.common.resource.AgaveResource;
 import org.iplantc.service.profile.dao.InternalUserDao;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
+import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.AuthConfig;
 import org.iplantc.service.systems.model.ExecutionSystem;
@@ -104,17 +107,20 @@ public class SystemCredentialResource extends AgaveResource
 			if (system == null)
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-						"No system found matching " + systemId);
+						"No system found matching " + systemId, 
+						new FileNotFoundException());
 			}
 			else if (!system.isAvailable()) 
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 						"System has been disabled by the administrator. "
-						+ "No credential changes may be applied to a disabled system.");
+						+ "No credential changes may be applied to a disabled system.", 
+						new SystemUnavailableException());
 			}
 			else if (!system.getUserRole(username).canAdmin()) {
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"Individual user credentials may only be managed by system administrators.");
+						"Individual user credentials may only be managed by system administrators.", 
+						new PermissionException());
 			} 
 			
 			
@@ -128,7 +134,8 @@ public class SystemCredentialResource extends AgaveResource
 					if (type.equalsIgnoreCase("execution")) {
 						if (system instanceof StorageSystem) {
 							throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-									"Execution credentials are not supported on storage systems.");
+									"Execution credentials are not supported on storage systems.", 
+									new SystemArgumentException());
 						} else {
 							remoteConfigs.add(((ExecutionSystem)system).getLoginConfig());
 						}
@@ -140,7 +147,9 @@ public class SystemCredentialResource extends AgaveResource
 					else 
 					{
 						throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-								"Unknown system type '" + type + "' given. If  provided, please specify either 'execution' or 'storage'.");
+								"Unknown system type '" + type + "' given. If  provided, "
+										+ "please specify either 'execution' or 'storage'.", 
+								new SystemArgumentException());
 					}
 				} 
 				else 
@@ -163,7 +172,8 @@ public class SystemCredentialResource extends AgaveResource
 							throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
 									"No credentials registered for '" + systemId + ".' " +
 									"You must registered at least a default credential " +
-									"for this sytem before you can use it for anything useful.");
+									"for this sytem before you can use it for anything useful.", 
+									new FileNotFoundException());
 						} else {
 							salt = system.getSystemId() + system.getStorageConfig().getHost() + 
 									config.getDefaultAuthConfig().getUsername();
@@ -195,7 +205,8 @@ public class SystemCredentialResource extends AgaveResource
 							// check validate username
 							if (new InternalUserDao().getInternalUserByAPIUserAndUsername(username, internalUsername) == null) {
 								throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-										"No internal user found matching username '" + internalUsername + "'");
+										"No internal user found matching username '" + internalUsername + "'", 
+										new FileNotFoundException());
 							} 
 							else 
 							{
@@ -205,7 +216,8 @@ public class SystemCredentialResource extends AgaveResource
 											"No credentials registered for '" + internalUsername + "' " +
 											"and no default credentials are registered for '" + systemId + ".' " +
 											"You must registered at least a default credential " +
-											"for this sytem before you can use it for anything useful.");
+											"for this sytem before you can use it for anything useful.", 
+											new FileNotFoundException());
 								}
 								String salt = system.getSystemId() + system.getStorageConfig().getHost() + auth.getUsername();
 								
@@ -217,7 +229,8 @@ public class SystemCredentialResource extends AgaveResource
 							throw e;
 						} catch (Exception e) {
 							throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-									"No credentials found for user " + internalUsername);
+									"No credentials found for user " + internalUsername, 
+									new FileNotFoundException());
 						}
 					}
 				}
@@ -234,7 +247,8 @@ public class SystemCredentialResource extends AgaveResource
 			else
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"User does not have the necessary role to view this system's credentials.");
+						"User does not have the necessary role to view this system's credentials.",
+						new PermissionException());
 			}
 		}
 		catch (ResourceException e) 
@@ -278,17 +292,20 @@ public class SystemCredentialResource extends AgaveResource
 			if (system == null)
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-						"No shared system found matching " + systemId);
+						"No shared system found matching " + systemId, 
+						new FileNotFoundException());
 			}
 			else if (!system.isAvailable()) 
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 						"System has been disabled by the administrator. "
-						+ "No credential changes may be applied to a disabled system.");
+						+ "No credential changes may be applied to a disabled system.",
+						new SystemUnavailableException());
 			}
 			else if (!system.getUserRole(username).canAdmin()) {
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"Individual user credentials may only be managed by system administrators.");
+						"Individual user credentials may only be managed by system administrators.",
+						new PermissionException());
 			} 
 			
 			SystemManager systemManager = new SystemManager();
@@ -323,7 +340,8 @@ public class SystemCredentialResource extends AgaveResource
 										"Internal user '" + internalUsername + "' given in the URL does " +
 										"not match the internal user '" + 
 										jsonAuthConfig.getString("internalUsername") + "' " +
-										"given in the auth config.");
+										"given in the auth config.", 
+										new FileNotFoundException());
 							} else {
 								name = internalUsername;
 							}
@@ -335,7 +353,8 @@ public class SystemCredentialResource extends AgaveResource
 					
 					if (new InternalUserDao().getInternalUserByAPIUserAndUsername(username, name) == null) {
 						throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-								"No internal user found matching username '" + internalUsername + "'");
+								"No internal user found matching username '" + internalUsername + "'", 
+								new FileNotFoundException());
 					}
 					 
 					if (!jsonAuthConfig.isNull("username")) {
@@ -376,7 +395,8 @@ public class SystemCredentialResource extends AgaveResource
 								} catch (Exception e) {
 									throw new ResourceException(
 											Status.CLIENT_ERROR_BAD_REQUEST, 
-											"Invalid value for 'port' specified "); 
+											"Invalid value for 'port' specified ",
+											new SystemArgumentException()); 
 								}
 							}
 						}
@@ -391,7 +411,8 @@ public class SystemCredentialResource extends AgaveResource
 						{
 							throw new ResourceException(
 									Status.CLIENT_ERROR_BAD_REQUEST, 
-									"Invalid value for 'port' specified "); 
+									"Invalid value for 'port' specified ",
+									new SystemArgumentException()); 
 						}
 					}
 					
@@ -432,9 +453,10 @@ public class SystemCredentialResource extends AgaveResource
 				}
 				catch (HibernateException e) {
 		        	getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-		            getResponse().setEntity(new IplantErrorRepresentation("Unable to save updated internal user credential: \"" + e.getMessage() + "\""));
-		            log.error(e);
-		            e.printStackTrace();
+		            getResponse().setEntity(new IplantErrorRepresentation(
+		            		"An unexpected error occurred wil saving the updated internal user credential. " + 
+            				"If this persists, please contact your system admin."));
+		            log.error("Unable to save updated internal user credential.", e);
 			    } 
 		        catch (SystemArgumentException e) {
 					getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
@@ -452,12 +474,12 @@ public class SystemCredentialResource extends AgaveResource
 					getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
 					getResponse().setEntity(new IplantErrorRepresentation(
 							"Failed to update internal user: " + e.getMessage()));
-					e.printStackTrace();
 					log.error(e);
 				}
 			} else {
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"User does not have the necessary role to modify credentials on this system");
+						"User does not have the necessary role to modify credentials on this system",
+						new PermissionException());
 			}
 
 		}
@@ -509,11 +531,13 @@ public class SystemCredentialResource extends AgaveResource
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 						"System has been disabled by the administrator. "
-						+ "No credential changes may be applied to a disabled system.");
+						+ "No credential changes may be applied to a disabled system.",
+						new SystemUnavailableException());
 			}
 			else if (!system.getUserRole(username).canAdmin()) {
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"Individual user credentials may only be managed by system administrators.");
+						"Individual user credentials may only be managed by system administrators.",
+						new PermissionException());
 			} 
 			
 			SystemManager systemManager = new SystemManager();
@@ -524,7 +548,8 @@ public class SystemCredentialResource extends AgaveResource
 				{
 					if (new InternalUserDao().getInternalUserByAPIUserAndUsername(username, internalUsername) == null) {
 						throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-								"No internal user found matching username '" + internalUsername + "'");
+								"No internal user found matching username '" + internalUsername + "'",
+								new FileNotFoundException());
 					}
 					
 					if (StringUtils.isEmpty(systemId)) {
@@ -567,7 +592,8 @@ public class SystemCredentialResource extends AgaveResource
 			else 
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"User does not have the necessary role to update this system");
+						"User does not have the necessary role to update this system",
+						new PermissionException());
 			}
 		}
 		catch (ResourceException e) {

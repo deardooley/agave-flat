@@ -3,6 +3,7 @@
  */
 package org.iplantc.service.systems.resources;
 
+import java.io.FileNotFoundException;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
@@ -20,6 +21,7 @@ import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.events.RemoteSystemEventProcessor;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
 import org.iplantc.service.systems.exceptions.SystemException;
+import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.SystemRole;
@@ -195,7 +197,11 @@ public class SystemManagementResource extends AbstractSystemListResource
  			getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
             log.error(e);
 		}
-		catch (SystemArgumentException | PermissionException | SystemException e) {
+		catch (PermissionException e) {
+			throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+					e.getMessage(), e);
+		}
+		catch (SystemArgumentException | SystemException e) {
 			getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
 			getResponse().setEntity(new IplantErrorRepresentation(e.getMessage()));
 			log.error(e);
@@ -254,14 +260,16 @@ public class SystemManagementResource extends AbstractSystemListResource
 		        // update if the existing system belongs to the user, otherwise throw an exception
 	        	if (existingSystem == null) {
 	        		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-	        				"No system found matching " + systemId);
+	        				"No system found matching " + systemId, 
+							new FileNotFoundException());
 	        	}
 	        	// force the system to be reenabled before it's updated
 	        	else if (!existingSystem.isAvailable()) 
 				{
 					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 							"System has been disabled by the administrator. "
-							+ "The system must be re-enabled before updating its description.");
+							+ "The system must be re-enabled before updating its description.",
+							new SystemUnavailableException());
 				}
 	        	// check user access rights
 	        	else if (systemManager.isManageableByUser(existingSystem, username))
@@ -269,14 +277,16 @@ public class SystemManagementResource extends AbstractSystemListResource
 	        		if (existingSystem.isPubliclyAvailable()) {
 	        			throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
 	    						"Permission denied. Public systems cannot be updated. " +
-	        					"The system must be re-enabled before updating its description.");
+	        					"The system must be re-enabled before updating its description.",
+								new PermissionException());
 	        		}
 	        	}
 	        	// 403 if you don't have the rights
 	        	else 
 	        	{
 	        		throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-							"Permission denied. You do not have permission to update this system");
+							"Permission denied. You do not have permission to update this system",
+							new PermissionException());
 		    	}
 	        
 	        	// now we can merge/update
@@ -288,7 +298,8 @@ public class SystemManagementResource extends AbstractSystemListResource
 							"for " + existingSystem.getSystemId() + ". Please either register a new " +
 							"system or post your update to " + 
 							Settings.IPLANT_JOB_SERVICE + "systems/" + json.getString("id") +
-							" to update that system.");
+							" to update that system.", 
+							new SystemArgumentException());
 					}
 	    		} else {
 	    			throw new SystemArgumentException("Please specify a valid string value for the 'id' field.");
@@ -354,18 +365,22 @@ public class SystemManagementResource extends AbstractSystemListResource
 			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 					"Unable to parse JSON object", e);
 		}
+		catch (PermissionException e) {
+			throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+					e.getMessage(), e);
+		}
+		catch (SystemException e) {
+			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
+					e.getMessage(), e);
+		}
 		catch (ResourceException e) {
 			throw e;
 		}
-		catch (HibernateException e)
+		catch (Throwable e)
 		{
 			log.error(e);
 			throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
 					"An unexpected error occurred while saving system.", e);
-		}
-		catch (Throwable e) {
-			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-					"Unable to parse JSON object", e);
 		}
 	}
 

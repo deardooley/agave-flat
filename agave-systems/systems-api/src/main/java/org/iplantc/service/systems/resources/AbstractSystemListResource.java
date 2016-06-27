@@ -93,6 +93,7 @@ public abstract class AbstractSystemListResource extends AgaveResource
 	 * @see
 	 * org.restlet.resource.Resource#represent(org.restlet.resource.Variant)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public Representation represent(Variant variant) throws ResourceException
 	{

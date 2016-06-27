@@ -126,7 +126,7 @@ public class LoginConfig extends RemoteConfig implements LastUpdatable
 						"Please specify one of: " + LoginProtocolType.values());
 			}
 			
-			if (jsonConfig.has("proxy"))
+			if (jsonConfig.has("proxy") && !jsonConfig.isNull("proxy"))
 			{
 				if (config.getProtocol().equals(LoginProtocolType.SSH)) 
 				{

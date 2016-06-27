@@ -3,6 +3,7 @@
  */
 package org.iplantc.service.systems.resources;
 
+import java.io.FileNotFoundException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
+import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.common.resource.AgaveResource;
@@ -17,6 +19,7 @@ import org.iplantc.service.common.search.SearchTerm;
 import org.iplantc.service.systems.dao.BatchQueueDao;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
+import org.iplantc.service.systems.exceptions.SystemException;
 import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.ExecutionSystem;
@@ -91,17 +94,20 @@ public class BatchQueueResource extends AgaveResource
 			if (system == null)
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-						"No system found matching " + systemId);
+						"No system found matching " + systemId,
+						new FileNotFoundException());
 			}
 			else if (!system.getUserRole(username).canRead()) {
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"User does not have the necessary role to view this system.");
+						"User does not have the necessary role to view this system.",
+						new PermissionException());
 			}
 			else if ( ! (system instanceof ExecutionSystem))
             {
                 throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
                         "Invalid system id. " + systemId + " is a storage system. "
-                      + "Only execution systems have batch queues.");
+                      + "Only execution systems have batch queues.",
+                      new SystemArgumentException());
             }
 			else {
 				SystemManager systemManager = new SystemManager();
@@ -154,7 +160,8 @@ public class BatchQueueResource extends AgaveResource
 			if (StringUtils.isEmpty(systemId))
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
-						"Please specify an system using its system id. ");
+						"Please specify an system using its system id. ",
+						new SystemException());
 			}
 
 			RemoteSystem system = dao.findActiveAndInactiveSystemBySystemId(systemId);
@@ -162,20 +169,23 @@ public class BatchQueueResource extends AgaveResource
 			if (system == null)
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-						"No system found matching " + systemId);
+						"No system found matching " + systemId,
+						new FileNotFoundException());
 			}
 			else {
 				SystemRole userRole = system.getUserRole(username);
 				
 				if (!userRole.canAdmin()) {
 					throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-							"User does not have the necessary role to edit this system.");
+							"User does not have the necessary role to edit this system.",
+							new PermissionException());
 				}
 				else if (system.isPubliclyAvailable()) 
 				{
 					throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
 							"Public system queues cannot be updated. "
-							+ "Please unpublish this system before updating its queues.");
+							+ "Please unpublish this system before updating its queues.",
+							new SystemArgumentException());
 				}
 			}
 			
@@ -188,7 +198,8 @@ public class BatchQueueResource extends AgaveResource
 				
 				if (json == null || json.length() == 0) {
 				    throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-	                        "No queue description found in the request.");
+	                        "No queue description found in the request.",
+							new FileNotFoundException());
 				}
 				
 				try
@@ -219,16 +230,17 @@ public class BatchQueueResource extends AgaveResource
 				}
 				catch (SystemArgumentException e) {
 				    throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-                            e.getMessage());
+                            e.getMessage(), e);
 				}
-				catch (Throwable e) 
-				{
+				catch (Throwable e) {
 					throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-							"Error occurred updating system queue.");
+							"An expected occurred updating system queue. "
+							+ "If this persists, please contact your system admin", e);
 				}
 			} else {
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"User does not have the necessary role to modify this system queue");
+						"User does not have the necessary role to modify this system queue",
+						new PermissionException());
 			}
 
 		}

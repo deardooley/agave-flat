@@ -191,7 +191,8 @@ public class SystemManager {
 		}
 		
 		if (system != null && system.getUserRole(apiUsername).getRole().equals(RoleType.NONE)) {
-			throw new PermissionException("User does not have permission to update this system.");
+			throw new PermissionException("System " + system.getSystemId() + 
+					" already exists and you do not have the necessary role to update it.");
 		}
 		
 		if (json == null) 

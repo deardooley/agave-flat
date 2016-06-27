@@ -42,7 +42,7 @@ public abstract class AbstractFileResource extends AbstractAgaveServerResource {
 	public String getPublicLink(RemoteSystem system, String absolutePath) {
 		String resolvedPath = StringUtils.removeStart(absolutePath, system.getStorageConfig().getRootDir());
 		resolvedPath = "/" + StringUtils.removeEnd(resolvedPath, "/"); 
-		
+		resolvedPath = resolvedPath.replaceAll("/+", "/");
 		return TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_IO_SERVICE) + 
 				"media/system/" + system.getSystemId() + "/" + UrlPathEscaper.escape(resolvedPath);
 	}
