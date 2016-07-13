@@ -1,28 +1,20 @@
 #!/bin/bash
-
-source ~/.bashrc
-
-# iRODS environment is initialized in the .bashrc file
-# iinit is already initialized and available 
+set +x
 
 # These parameters are passed in by the service
-system=$1
-sourcePath=$2
-destPath=$3
-#callbackUrl=$4
+sourcePath=$1
+destPath=$2
+callbackUrl=$3
 
 # Notify the service that the transform is starting
 
 # Notice that we ALWAYS check for the existence of callbackURL
-# but we don't check that it was valid. 
+# but we don't check that it was valid.
 #if [ -n $callbackUrl ]; then
 #	curl -o /dev/null -O "$callbackUrl/TRANSFORMING" > /dev/null
 #fi
 
-
-# unpack the archive in iRods system
-#ibun -x $sourcePath $destPath
-mkdir $destPath
+mkdir -p $destPath
 tar -xf $sourcePath -C $destPath
 
 if [ "$?"  -ne 0 ]; then

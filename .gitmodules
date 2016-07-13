@@ -1,0 +1,61 @@
+[submodule "agave-apidocs"]
+	path = agave-apidocs
+	url = https://bitbucket.org/agaveapi/agave-apidocs.git
+[submodule "agave-apps"]
+	path = agave-apps
+	url = https://bitbucket.org/agaveapi/agave-apps.git
+[submodule "agave-auth"]
+	path = agave-auth
+	url = https://bitbucket.org/agaveapi/agave-auth.git
+[submodule "agave-common"]
+	path = agave-common
+	url = https://bitbucket.org/agaveapi/agave-common.git
+[submodule "agave-files"]
+	path = agave-files
+	url = https://bitbucket.org/agaveapi/agave-files.git
+[submodule "agave-jobs"]
+	path = agave-jobs
+	url = https://bitbucket.org/agaveapi/agave-jobs.git
+[submodule "agave-metadata"]
+	path = agave-metadata
+	url = https://bitbucket.org/agaveapi/agave-metadata.git
+[submodule "agave-postits"]
+	path = agave-postits
+	url = https://bitbucket.org/agaveapi/agave-postits.git
+[submodule "agave-profiles"]
+	path = agave-profiles
+	url = https://bitbucket.org/agaveapi/agave-profiles.git
+[submodule "agave-systems"]
+	path = agave-systems
+	url = https://bitbucket.org/agaveapi/agave-systems.git
+[submodule "agave-transforms"]
+	path = agave-transforms
+	url = https://bitbucket.org/agaveapi/agave-transforms.git
+[submodule "agave-notifications"]
+	path = agave-notifications
+	url = https://bitbucket.org/agaveapi/agave-notifications.git
+[submodule "agave-logging"]
+	path = agave-logging
+	url = https://bitbucket.org/agaveapi/agave-logging.git
+[submodule "agave-monitors"]
+	path = agave-monitors
+	url = https://bitbucket.org/agaveapi/agave-monitors.git
+[submodule "agave-tenants"]
+	path = agave-tenants
+	url = https://bitbucket.org/agaveapi/agave-tenants
+[submodule "agave-usage"]
+	path = agave-usage
+	url = https://bitbucket.org/agaveapi/agave-usage
+[submodule "agave-stats"]
+	path = agave-stats
+url=https://bitbucket.org/agaveapi/agave-stats.git
+[submodule "agave-realtime"]
+	path = agave-realtime
+	url = https://bitbucket.org/agaveapi/agave-realtime.git
+[submodule "agave-migrations"]
+	path = agave-migrations
+	url = https://bitbucket.org/agaveapi/agave-migrations.git
+[submodule "agave-tags"]
+	path = agave-tags
+	url = https://bitbucket.org/agaveapi/agave-tags.git
+	branch = 2.1.5

@@ -227,6 +227,7 @@ public class MonitorNotificationEvent extends AbstractEventFilter {
 			if (internalUsername == null) {
 				internalUsername = "";
 			}
+			
 			body = StringUtils.replace(body, "${INTERNAL_USERNAME}", internalUsername);
 			body = StringUtils.replace(body, "${FREQUENCY}", jobFieldMap.get("frequency").toString() + " minutes");
 			body = StringUtils.replace(body, "${LAST_UPDATED}", new DateTime(jobFieldMap.get("last_updated")).toString());
@@ -253,9 +254,9 @@ public class MonitorNotificationEvent extends AbstractEventFilter {
                     JsonNode json = mapper.readTree(getCustomNotificationMessageContextData());
                     if (json != null && json.isObject() && json.has("lastCheck") && json.get("lastCheck").isObject()) {
                         JsonNode jsonLastCheck = json.get("lastCheck");
-                        body = StringUtils.replace(body, "${LAST_CHECK_ID}", jsonLastCheck.has("id") ? jsonLastCheck.get("id").asText() : "");
-                        body = StringUtils.replace(body, "${LAST_MESSAGE}", jsonLastCheck.has("message") ? jsonLastCheck.get("message").asText() : "");
-                        body = StringUtils.replace(body, "${TYPE}", jsonLastCheck.has("type") ? jsonLastCheck.get("type").asText() : "");
+                        body = StringUtils.replace(body, "${LAST_CHECK_ID}", jsonLastCheck.hasNonNull("id") ? jsonLastCheck.get("id").asText() : "");
+                        body = StringUtils.replace(body, "${LAST_MESSAGE}", jsonLastCheck.hasNonNull("message") ? jsonLastCheck.get("message").asText() : "");
+                        body = StringUtils.replace(body, "${TYPE}", jsonLastCheck.hasNonNull("type") ? jsonLastCheck.get("type").asText() : "");
                         resolvedCheck = true;
                     } 
                 } catch (Exception e) {

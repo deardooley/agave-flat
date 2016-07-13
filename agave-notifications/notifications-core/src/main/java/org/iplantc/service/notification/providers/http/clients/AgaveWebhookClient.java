@@ -10,7 +10,9 @@ import java.util.Map;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -33,7 +35,10 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.auth.JWTClient;
+import org.iplantc.service.common.dao.TenantDao;
 import org.iplantc.service.common.exceptions.TenantException;
+import org.iplantc.service.common.model.Tenant;
+import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.notification.exceptions.NotificationException;
 import org.iplantc.service.notification.model.NotificationAttempt;
 import org.iplantc.service.notification.model.NotificationAttemptResponse;
@@ -212,9 +217,16 @@ public class AgaveWebhookClient extends AbstractWebhookClient {
 					InputStream in = null;
 					byte[] bs = new byte[2048]; 
 					try {
-						in = response.getEntity().getContent();
-						in.read(bs);
-						attemptResponse.setMessage(new String(bs));
+						HttpEntity entity = response.getEntity();
+						if (entity.getContentLength() > 0) {
+							in = entity.getContent();
+							in.read(bs);
+							attemptResponse.setMessage(new String(bs));
+						}
+						else {
+							attemptResponse.setMessage(response.getStatusLine().getReasonPhrase());
+						}
+						
 					} catch (Exception e) {
 						attemptResponse.setMessage("[" + attempt.getUuid() + "] Failed to send " + attempt.getEventName() + 
 								" " + getSupportedCallbackProviderType() + " notification to " + attempt.getCallbackUrl() + 
@@ -286,7 +298,17 @@ public class AgaveWebhookClient extends AbstractWebhookClient {
 	 * @throws NotificationException
 	 */
 	public String getFilteredCallbackUrl(String callbackUrl)
-			throws NotificationException {
-		return callbackUrl;
+	throws NotificationException 
+	{
+		// use the tenant id to create the internal url we can can call with a jwt
+		String tenantId = TenancyHelper.getCurrentTenantId();
+		String internalUrl = "https://" + StringUtils.replace(tenantId, ".", "-") + ".api.prod.agaveapi.co/"; 
+		
+		// strip the version number as the backend does not refernece them.
+		String filteredcallbackUrl = StringUtils.replace(callbackUrl, "/v2", "");
+		// we'll swap out the scheme so we can split after the hostname and optional port.
+		filteredcallbackUrl = StringUtils.replaceOnce(filteredcallbackUrl, "//", "");
+		// now return the internal url and the path+fragment+query
+		return internalUrl + StringUtils.substringAfter(filteredcallbackUrl, "/");
 	}
 }

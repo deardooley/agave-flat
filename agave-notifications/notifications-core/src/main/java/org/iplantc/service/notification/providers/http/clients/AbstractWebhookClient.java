@@ -10,7 +10,9 @@ import java.util.Map;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -40,7 +42,7 @@ public abstract class AbstractWebhookClient implements WebhookClient {
 	
 	private static final Logger	log	= Logger.getLogger(AbstractWebhookClient.class);
 	
-	private NotificationAttempt attempt;
+	protected NotificationAttempt attempt;
 
 	public AbstractWebhookClient(NotificationAttempt attempt) {
 		this.attempt = attempt;
@@ -194,15 +196,23 @@ public abstract class AbstractWebhookClient implements WebhookClient {
 //				StringUtils.isEmpty(getCustomNotificationMessageContextData())				
 				if (attemptResponse.getCode() >= 200 && attemptResponse.getCode() < 300) {
 					attemptResponse.setMessage("200 ok");
-					log.debug("[" + attempt.getUuid() + "] Successfully sent " + attempt.getEventName() + 
+					log.debug("[" + attempt.getUuid() + "] Successfully sent " + attempt.getEventName() + " " + 
 							getSupportedCallbackProviderType() + " notification  to " + attempt.getCallbackUrl());
 				} else {
 					InputStream in = null;
 					byte[] bs = new byte[2048]; 
 					try {
-						in = response.getEntity().getContent();
-						in.read(bs);
-						attemptResponse.setMessage(new String(bs));
+						HttpEntity entity = response.getEntity();
+						long contentLength = entity.getContentLength();
+						if (contentLength > 0) {
+							in = entity.getContent();
+							int bytesRead = in.read(bs, 0, bs.length);
+							attemptResponse.setMessage(new String(bs, 0, bytesRead).replaceAll("\\s+$", ""));
+						}
+						else {
+							attemptResponse.setMessage(response.getStatusLine().getReasonPhrase());
+						}
+						
 						log.error("[" + attempt.getUuid() + "] Failed to send " + attempt.getEventName() + 
 								" " + getSupportedCallbackProviderType() + " notification to " + attempt.getCallbackUrl() + 
 								". Server responded with: " + attemptResponse.getCode() + " - " + attemptResponse.getMessage());
@@ -220,7 +230,7 @@ public abstract class AbstractWebhookClient implements WebhookClient {
 			} 
 			catch (ConnectTimeoutException e) {
 				attemptResponse.setCode(408);
-				attemptResponse.setMessage("Failed to send " + attempt.getEventName() + 
+				attemptResponse.setMessage("Failed to send " + attempt.getEventName() + " " +
 						getSupportedCallbackProviderType() + " notification to " + attempt.getCallbackUrl() +
 						". Remote call to " + escapedUri.toString() + " timed out after " + 
 						(System.currentTimeMillis() - callstart) + " milliseconds.");
@@ -229,11 +239,11 @@ public abstract class AbstractWebhookClient implements WebhookClient {
 			catch (SSLException e) {
 				attemptResponse.setCode(404);
 				if (StringUtils.equalsIgnoreCase(escapedUri.getScheme(), "https")) {
-					attemptResponse.setMessage("Failed to send " + attempt.getEventName() + 
+					attemptResponse.setMessage("Failed to send " + attempt.getEventName() + " " +
 							getSupportedCallbackProviderType() + " notification to " + attempt.getCallbackUrl() +
 							". Remote call to " + escapedUri.toString() + " failed due to the remote side not supporting SSL.");
 				} else {
-					attemptResponse.setMessage("Failed to send " + attempt.getEventName() + 
+					attemptResponse.setMessage("Failed to send " + attempt.getEventName() + " " +
 							getSupportedCallbackProviderType() + " notification to " + attempt.getCallbackUrl() +
 							". Remote call to " + escapedUri.toString() + " failed due a server side SSL failure.");
 				}
@@ -257,7 +267,7 @@ public abstract class AbstractWebhookClient implements WebhookClient {
 		}
 		catch(Exception e) {
 			attemptResponse.setCode(500);
-			attemptResponse.setMessage("Failed to send " + attempt.getEventName() + 
+			attemptResponse.setMessage("Failed to send " + attempt.getEventName() + " " +
 					getSupportedCallbackProviderType() + " notification to " + attempt.getCallbackUrl() +
 					" due to internal server error. Remote call failed after " + 
 						(System.currentTimeMillis() - callstart) + " milliseconds.");

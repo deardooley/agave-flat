@@ -613,14 +613,14 @@ public class JobDao
     		}
 			    sql     += "order by rand()\n";
 			
-			sql = sql.replaceAll(":excludeowners", excludeOwners ? "not" : "")
-                     .replaceAll(":excludetenant", excludeTenant ? "not" : "")
-                     .replaceAll(":excludesystems", excludeSystems ? "not" : "");
+			sql = StringUtils.replace(sql, ":excludeowners", excludeOwners ? "not" : "");
+			sql = StringUtils.replace(sql, ":excludetenant", excludeTenant ? "not" : "");
+			sql = StringUtils.replace(sql, ":excludesystems", excludeSystems ? "not" : "");
     			
-            String q = sql.replaceAll(":queuedstatus", "'QUEUED'")
-                    .replaceAll(":runningstatus", "'RUNNING'")
-                    .replaceAll(":pausedstatus", "'PAUSED'")
-                    .replaceAll(":tenantid", "'" + tenantId + "'");        
+            String q = StringUtils.replace(sql, ":queuedstatus", "'QUEUED'");
+            q = StringUtils.replace(q, ":runningstatus", "'RUNNING'");
+            q = StringUtils.replace(q, ":pausedstatus", "'PAUSED'");
+            q = StringUtils.replace(q, ":tenantid", "'" + tenantId + "'");        
             
 			Query query = session.createSQLQuery(sql)
 					.setString("queuedstatus", JobStatusType.QUEUED.name())
@@ -636,7 +636,7 @@ public class JobDao
                 
                 query.setParameterList("owners", owners);
                 
-                q = q.replaceAll(":owners", "('" + StringUtils.join(owners, "','")+"')");
+                q = StringUtils.replace(q, ":owners", "('" + StringUtils.join(owners, "','")+"')");
             }
             
             if (!ArrayUtils.isEmpty(systemIds)) 
@@ -649,16 +649,16 @@ public class JobDao
                     if (StringUtils.contains(systemIds[i], "#")) {
                         String[] tokens = StringUtils.split(systemIds[i], "#");
                         query.setString("systemid" + i, tokens[0]);
-                        q = q.replaceAll(":systemid"+i, "'" + tokens[0] +"'");
+                        q = StringUtils.replace(q, ":systemid"+i, "'" + tokens[0] +"'");
                         if (tokens.length > 1) {
                             query.setString("queuename" + i, tokens[1]); 
-                            q = q.replaceAll(":queuename"+i, "'" + tokens[1] +"'");
+                            q = StringUtils.replace(q, ":queuename"+i, "'" + tokens[1] +"'");
                         }
                     }
                     else
                     {
                         query.setString("systemid" + i, systemIds[i]);
-                        q = q.replaceAll(":systemid"+i, "'" + systemIds[i] +"'");
+                        q = StringUtils.replace(q, ":systemid"+i, "'" + systemIds[i] +"'");
                     }
                 }
             }
@@ -880,7 +880,7 @@ public class JobDao
                 sql += "from ( \n"
                      + "    select s.system_id, q.name as queue_name, s.tenant_id \n"
                      + "    from systems s left join batchqueues q on s.id = q.execution_system_id \n"
-                     + "    where s.tenant_id :excludetenant :excludetenant like :tenantid and :excludesystems (\n";
+                     + "    where s.tenant_id :excludetenant like :tenantid and :excludesystems (\n";
                 
                 for (int i=0;i<systemIds.length;i++) {
                     
@@ -951,14 +951,14 @@ public class JobDao
 			sql +=  "group by j.owner, j.tenant_id, usg.pending_archiving_tasks, usg.active_archiving_tasks  \n" + 
 					"order by RAND() \n";
 			
-			sql = sql.replaceAll(":excludeowners", excludeOwners ? "not" : "")
-                    .replaceAll(":excludetenant", excludeTenant ? "not" : "")
-                    .replaceAll(":excludesystems", excludeSystems ? "not" : "");
+			sql = StringUtils.replace(sql, ":excludeowners", excludeOwners ? "not" : "");
+			sql = StringUtils.replace(sql, ":excludetenant", excludeTenant ? "not" : "");
+			sql = StringUtils.replace(sql, ":excludesystems", excludeSystems ? "not" : "");
            
-			String q = sql.replaceAll(":queuedstatus", "'QUEUED'")
-                    .replaceAll(":runningstatus", "'RUNNING'")
-                    .replaceAll(":pausedstatus", "'PAUSED'")
-                    .replaceAll(":tenantid", "'" + tenantId + "'");    
+			String q = StringUtils.replace(sql, ":queuedstatus", "'QUEUED'");
+			q = StringUtils.replace(q, ":runningstatus", "'RUNNING'");
+			q = StringUtils.replace(q, ":pausedstatus", "'PAUSED'");
+			q = StringUtils.replace(q, ":tenantid", "'" + tenantId + "'");    
 			
 //			log.debug(sql);
 			Query query = session.createSQLQuery(sql)
@@ -972,7 +972,7 @@ public class JobDao
 			if (!ArrayUtils.isEmpty(owners)) 
 			{
 			    query.setParameterList("owners", owners);
-                q = q.replaceAll(":owners", "('" + StringUtils.join(owners, "','")+"')");
+			    q = StringUtils.replace(q, ":owners", "('" + StringUtils.join(owners, "','")+"')");
             }
             
             if (!ArrayUtils.isEmpty(systemIds)) 
@@ -981,16 +981,16 @@ public class JobDao
                     if (StringUtils.contains(systemIds[i], "#")) {
                         String[] tokens = StringUtils.split(systemIds[i], "#");
                         query.setString("systemid" + i, tokens[0]);
-                        q = q.replaceAll(":systemid"+i, "'" + tokens[0] +"'");
+                        q = StringUtils.replace(q, ":systemid"+i, "'" + tokens[0] +"'");
                         if (tokens.length > 1) {
                             query.setString("queuename" + i, tokens[1]); 
-                            q = q.replaceAll(":queuename"+i, "'" + tokens[1] +"'");
+                            q = StringUtils.replace(q, ":queuename"+i, "'" + tokens[1] +"'");
                         }
                     }
                     else
                     {
                         query.setString("systemid" + i, systemIds[i]);
-                        q = q.replaceAll(":systemid"+i, "'" + systemIds[i] +"'");
+                        q = StringUtils.replace(q, ":systemid"+i, "'" + systemIds[i] +"'");
                     }
                 }
             }
@@ -1042,9 +1042,9 @@ public class JobDao
 					+ "		and j.status = 'CLEANING_UP' \n"
 					+ "order by rand() ";
 				
-				String jq = sql.replaceAll(":excludesystems", excludeSystems ? "not" : "")
-        				       .replaceAll(":tenantid", tid)
-        				       .replaceAll(":owner", username);
+				String jq = StringUtils.replace(sql, ":excludesystems", excludeSystems ? "not" : "");
+				jq = StringUtils.replace(jq, ":tenantid", tid);
+				jq = StringUtils.replace(jq, ":owner", username);
 				
 				Query jobQuery = session.createSQLQuery(sql)
 						.setString("owner", username)
@@ -1056,16 +1056,16 @@ public class JobDao
 	                    if (StringUtils.contains(systemIds[i], "#")) {
 	                        String[] tokens = StringUtils.split(systemIds[i], "#");
 	                        jobQuery.setString("systemid" + i, tokens[0]);
-	                        jq = jq.replaceAll(":systemid"+i, "'" + tokens[0] +"'");
+	                        jq = StringUtils.replace(jq, ":systemid"+i, "'" + tokens[0] +"'");
 	                        if (tokens.length > 1) {
 	                            jobQuery.setString("queuename" + i, tokens[1]); 
-	                            jq = jq.replaceAll(":queuename"+i, "'" + tokens[1] +"'");
+	                            jq = StringUtils.replace(jq, ":queuename"+i, "'" + tokens[1] +"'");
 	                        }
 	                    }
 	                    else
 	                    {
 	                        jobQuery.setString("systemid" + i, systemIds[i]);
-	                        jq = q.replaceAll(":systemid"+i, "'" + systemIds[i] +"'");
+	                        jq = StringUtils.replace(jq, ":systemid"+i, "'" + systemIds[i] +"'");
 	                    }
 	                }
 	            }
@@ -1235,13 +1235,13 @@ public class JobDao
 						"order by rand() \n";
 	//					"order by jq.execution_system, jq.queue_request, jq.owner ";
 			
-			sql = sql.replaceAll(":excludeowners", excludeOwners ? "not" : "")
-                    .replaceAll(":excludetenant", excludeTenant ? "not" : "")
-                    .replaceAll(":excludesystems", excludeSystems ? "not" : "");
+			sql = StringUtils.replace(sql, ":excludeowners", excludeOwners ? "not" : "");
+			sql = StringUtils.replace(sql, ":excludetenant", excludeTenant ? "not" : "");
+			sql = StringUtils.replace(sql, ":excludesystems", excludeSystems ? "not" : "");
            
             
-			String q = sql.replaceAll(":status", "'" + status + "'")
-                    .replaceAll(":tenantid", "'" + tenantId + "'");
+			String q = StringUtils.replace(sql, ":status", "'" + status + "'");
+            q = StringUtils.replace(q, ":tenantid", "'" + tenantId + "'");
 			
 			Query query = session.createSQLQuery(sql)
 			        .addScalar("owner", StandardBasicTypes.STRING)
@@ -1256,7 +1256,7 @@ public class JobDao
 			
 			if (!ArrayUtils.isEmpty(owners)) {
 			    query.setParameterList("owners", owners);
-                q = q.replaceAll(":owners", "('" + StringUtils.join(owners, "','")+"')");
+                q = StringUtils.replace(q, ":owners", "('" + StringUtils.join(owners, "','")+"')");
             }
 			
 			if (!ArrayUtils.isEmpty(systemIds)) {
@@ -1265,21 +1265,22 @@ public class JobDao
                     if (StringUtils.contains(systemIds[i], "#")) {
                         String[] tokens = StringUtils.split(systemIds[i], "#");
                         query.setString("systemid" + i, tokens[0]);
-                        q = q.replaceAll(":systemid"+i, "'" + tokens[0] +"'");
+                        q = StringUtils.replace(q, ":systemid"+i, "'" + tokens[0] +"'");
                         if (tokens.length > 1) {
                             query.setString("queuename" + i, tokens[1]); 
-                            q = q.replaceAll(":queuename"+i, "'" + tokens[1] +"'");
+                            q = StringUtils.replace(q, ":queuename"+i, "'" + tokens[1] +"'");
                         }
                     }
                     else
                     {
                         query.setString("systemid" + i, systemIds[i]);
-                        q = q.replaceAll(":systemid"+i, "'" + systemIds[i] +"'");
+                        q = StringUtils.replace(q, ":systemid"+i, "'" + systemIds[i] +"'");
                     }
                 }
 			}
 			
 //			log.debug(q);
+//			log.debug(query.getQueryString());
 			List<Map<String,Object>> aliasToValueMapList = query
 			        .setCacheable(false)
                     .setCacheMode(CacheMode.REFRESH)
@@ -1330,14 +1331,18 @@ public class JobDao
     public static String getNextQueuedJobUuid(JobStatusType status, String tenantId, String[] owners, String[] systemIds)
 	throws JobException
 	{
-		if (StringUtils.isEmpty(tenantId)) {
-			tenantId = "%";
-		}
-		
-		// we don't need to clone these arrays, they should be safe, but I'm tired and this is safe, so we'll do this
+    	// we don't need to clone these arrays, they should be safe, but I'm tired and this is safe, so we'll do this
 		// until i come back and add formal whitelist/blacklist support.
 		String nextUser = getRandomUserForNextQueuedJobOfStatus(status, tenantId, (String[])ArrayUtils.clone(systemIds), (String[])ArrayUtils.clone(owners));
         
+		boolean excludeTenant = false;
+	    if (StringUtils.isEmpty(tenantId)) {
+            tenantId = "%";
+        } else if (tenantId.contains("!")) {
+            excludeTenant = true;
+            tenantId = StringUtils.removeStart(tenantId, "!");
+        }
+	    
 		try
 		{
 		    
@@ -1358,7 +1363,7 @@ public class JobDao
                 }
                 sql +=      "               from jobs bqj     \n" + 
                             "               where bqj.visible = 1 and bqj.status in ('PENDING','PROCESSING_INPUTS', 'RUNNING', 'PAUSED', 'QUEUED', 'CLEANING_UP', 'SUBMITTING', 'STAGING_INPUTS', 'STAGING_JOB', 'STAGED') \n" +
-                            "                     and bqj.tenant_id like :tenantid \n" + 
+                            "                     and bqj.tenant_id :excludetenant like :tenantid \n" + 
                             "                     and bqj.owner = :owner \n";
                 
                 if (!ArrayUtils.isEmpty(systemIds)) 
@@ -1427,10 +1432,12 @@ public class JobDao
                 
                 sql +=      "   and jq.queue_request is not NULL    \n" + 
                             "   and jq.queue_request <> ''    \n" + 
-                            "   and jq.tenant_id like :tenantid \n" +
-                            "group by jq.owner, jq.execution_system, jq.queue_request, jq.status, jq.jq.tenant_id, jq.uuid    \n" +
+                            "   and jq.tenant_id :excludetenant like :tenantid \n" +
+                            "group by jq.owner, jq.execution_system, jq.queue_request, jq.status, jq.tenant_id, jq.uuid    \n" +
                             "order by rand() \n";
                 
+                sql = StringUtils.replace(sql, ":excludetenant", excludeTenant ? "not" : "");
+    			
                 Query query = session.createSQLQuery(sql)
                         .addScalar("owner", StandardBasicTypes.STRING)
                         .addScalar("tenant_id", StandardBasicTypes.STRING)
@@ -1440,9 +1447,9 @@ public class JobDao
                         .setString("tenantid", tenantId)
                         .setString("owner", nextUser);
                 
-                String q = sql.replaceAll(":status", "'" + status + "'")
-                        .replaceAll(":tenantid", "'" + tenantId + "'")
-                        .replaceAll(":owner", nextUser);
+                String q = StringUtils.replace(sql, ":status", "'" + status + "'");
+                q = StringUtils.replace(q, ":tenantid", "'" + tenantId + "'");
+                q = StringUtils.replace(q, ":owner", nextUser);
                 
                 if (!ArrayUtils.isEmpty(systemIds)) 
                 {
@@ -1456,22 +1463,21 @@ public class JobDao
                         if (StringUtils.contains(systemIds[i], "#")) {
                             String[] tokens = StringUtils.split(systemIds[i], "#");
                             query.setString("systemid" + i, tokens[0]);
-                            q = q.replaceAll(":systemid"+i, "'" + tokens[0] +"'");
+                            q = StringUtils.replace(q, ":systemid"+i, "'" + tokens[0] +"'");
                             if (tokens.length > 1) {
                                 query.setString("queuename" + i, tokens[1]); 
-                                q = q.replaceAll(":queuename"+i, "'" + tokens[1] +"'");
+                                q = StringUtils.replace(q, ":queuename"+i, "'" + tokens[1] +"'");
                             }
                         }
                         else
                         {
                             query.setString("systemid" + i, systemIds[i]);
-                            q = q.replaceAll(":systemid"+i, "'" + systemIds[i] +"'");
+                            q = StringUtils.replace(q, ":systemid"+i, "'" + systemIds[i] +"'");
                         }
                     }
                 }
                 
-                // log.debug(q);
-                
+//                 log.debug(q);              
                 List<Map<String,Object>> aliasToValueMapList = query
                         .setCacheable(false)
                         .setCacheMode(CacheMode.REFRESH)
@@ -1610,19 +1616,19 @@ public class JobDao
 			Query query = session.createQuery(sql)
 								 .setString("tenantid", TenancyHelper.getCurrentTenantId());
 			
-			q = q.replaceAll(":tenantid", "'" + TenancyHelper.getCurrentTenantId() + "'");
+			q = StringUtils.replace(q, ":tenantid", "'" + TenancyHelper.getCurrentTenantId() + "'");
 			
 			if (sql.contains(":visiblebydefault") ) {
 				query.setBoolean("visiblebydefault", Boolean.TRUE);
 				
-				q = q.replaceAll(":visiblebydefault", "1");
+				q = StringUtils.replace(q, ":visiblebydefault", "1");
 			}
 			
 		 	if (!ServiceUtils.isAdmin(username)) {
 		 		query.setString("jobowner",username)
 		 			.setString("none",PermissionType.NONE.name());
-		 		q = q.replaceAll(":jobowner", "'" + username + "'")
-		 		    .replaceAll(":none", "'NONE'");
+		 		q = StringUtils.replace(q, ":jobowner", "'" + username + "'");
+		 		q = StringUtils.replace(q, ":none", "'NONE'");
 		 	}
 		 	
 			for (SearchTerm searchTerm: searchCriteria.keySet()) 
@@ -1631,19 +1637,19 @@ public class JobDao
 			        List<String> formattedDates = (List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm));
 			        for(int i=0;i<formattedDates.size(); i++) {
 			            query.setString(searchTerm.getSearchField()+i, formattedDates.get(i));
-			            q = q.replaceAll(":" + searchTerm.getSearchField(), "'" + formattedDates.get(i) + "'");
+			            q = StringUtils.replace(q, ":" + searchTerm.getSearchField(), "'" + formattedDates.get(i) + "'");
 			        }
 			    }
 			    else if (searchTerm.getOperator().isSetOperator()) 
 				{
 					query.setParameterList(searchTerm.getSearchField(), (List<Object>)searchCriteria.get(searchTerm));
-					q = q.replaceAll(":" + searchTerm.getSearchField(), "('" + StringUtils.join((List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm)), "','") + "')" );
+					q = StringUtils.replace(q, ":" + searchTerm.getSearchField(), "('" + StringUtils.join((List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm)), "','") + "')" );
 				}
 				else 
 				{
 					query.setParameter(searchTerm.getSearchField(), 
 							searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm)));
-					q = q.replaceAll(":" + searchTerm.getSearchField(), "'" + String.valueOf(searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm))) + "'");
+					q = StringUtils.replace(q, ":" + searchTerm.getSearchField(), "'" + String.valueOf(searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm))) + "'");
 				}
 			    
 			}
@@ -1918,9 +1924,14 @@ public class JobDao
 	public static List<BigInteger> findZombieJobs(String tenantId) 
 	throws JobException
 	{
-		if (StringUtils.isEmpty(tenantId)) {
-			tenantId = "%";
-		}
+		boolean excludeTenant = false;
+	    if (StringUtils.isEmpty(tenantId)) {
+            tenantId = "%";
+        } else if (tenantId.contains("!")) {
+            excludeTenant = true;
+            tenantId = StringUtils.removeStart(tenantId, "!");
+        }
+	    
 		Session session = null;
 		try
 		{
@@ -1946,9 +1957,11 @@ public class JobDao
 						"	left join transfertasks t on j.task_id = t.id " + 
 						"where (t.status = 'TRANSFERRING' or t.status = 'QUEUED') " + 
 						"	and NOW() > DATE_ADD(t.last_updated, INTERVAL 15 minute) " + 
-						"	and t.tenant_id like :tenantId " + 
+						"	and t.tenant_id :excludetenant like :tenantId " + 
 						"group by j.id " + 
 						"order by t.last_updated ASC ";
+			
+			sql = StringUtils.replace(sql, ":excludetenant", excludeTenant ? "not" : "");
 			
 			List<BigInteger> jobIds = session.createSQLQuery(sql)
 					.setString("tenantId", tenantId)

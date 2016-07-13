@@ -30,6 +30,7 @@ import org.iplantc.service.notification.model.Notification;
 import org.iplantc.service.notification.model.NotificationAttempt;
 import org.iplantc.service.notification.resources.NotificationAttemptResource;
 import org.restlet.Request;
+import org.restlet.data.Reference;
 import org.restlet.data.Status;
 import org.restlet.resource.ResourceException;
 import org.testng.log4testng.Logger;
@@ -65,39 +66,47 @@ public class NotificationAttemptResourceImpl extends AbstractNotificationResourc
 		
 		try
 		{
-			Notification notification = getResourceFromPathValue(notificationUuid);
-			
-			NotificationAttempt attempt = attemptDao.findByUuid(attemptUuid);
-			
-			if (attempt == null) {
-	            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-	                    "No notification attempt found matching " + attemptUuid + " for notification " + 
-	                    notificationUuid);
-	        } 
-			
-			ObjectMapper mapper = new ObjectMapper();
-			ObjectNode json = mapper.valueToTree(attempt);
-			
-			ObjectNode links = json.putObject("_links");
-            links.putObject("self")
-                 .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE) + notification.getUuid() + "/attempts/" + attempt.getUuid());
-            links.putObject("notification")
-            	.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE) + notification.getUuid() );
-            links.putObject("profile")
-        		.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_PROFILE_SERVICE) + attempt.getOwner());
-            
-            try {
-            	if (!StringUtils.contains("*", notification.getAssociatedUuid()) 
-            			&& !StringUtils.isEmpty(notification.getAssociatedUuid())) {
-            		AgaveUUID agaveUUID = new AgaveUUID(notification.getAssociatedUuid());
-            		links.putObject(agaveUUID.getResourceType().name().toLowerCase())
-            			.put("href", TenancyHelper.resolveURLToCurrentTenant(agaveUUID.getObjectReference()));
-            	}
-            } catch (UUIDException e) {
-            	log.debug("Unknown associatedUuid found for notification attempt " + attempt.getUuid());
-    		} 
+			// redirect if there is a trailing slash
+			if (StringUtils.isEmpty(attemptUuid)) {
+				Reference redirectReference = Request.getCurrent().getOriginalRef().clone();
+				redirectReference.setPath(StringUtils.removeEnd(redirectReference.getPath(), "/"));
+				return Response.temporaryRedirect(redirectReference.toUri()).build();
+			}
+			else {
+				Notification notification = getResourceFromPathValue(notificationUuid);
 				
-            return Response.ok(new AgaveSuccessRepresentation()).build();
+				NotificationAttempt attempt = attemptDao.findByUuid(attemptUuid);
+				
+				if (attempt == null) {
+		            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
+		                    "No notification attempt found matching " + attemptUuid + " for notification " + 
+		                    notificationUuid);
+		        } 
+				
+				ObjectMapper mapper = new ObjectMapper();
+				ObjectNode json = mapper.valueToTree(attempt);
+				
+				ObjectNode links = json.putObject("_links");
+	            links.putObject("self")
+	                 .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE) + notification.getUuid() + "/attempts/" + attempt.getUuid());
+	            links.putObject("notification")
+	            	.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE) + notification.getUuid() );
+	            links.putObject("profile")
+	        		.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_PROFILE_SERVICE) + attempt.getOwner());
+	            
+	            try {
+	            	if (!StringUtils.contains("*", notification.getAssociatedUuid()) 
+	            			&& !StringUtils.isEmpty(notification.getAssociatedUuid())) {
+	            		AgaveUUID agaveUUID = new AgaveUUID(notification.getAssociatedUuid());
+	            		links.putObject(agaveUUID.getResourceType().name().toLowerCase())
+	            			.put("href", TenancyHelper.resolveURLToCurrentTenant(agaveUUID.getObjectReference()));
+	            	}
+	            } catch (UUIDException e) {
+	            	log.debug("Unknown associatedUuid found for notification attempt " + attempt.getUuid());
+	    		} 
+					
+	            return Response.ok(new AgaveSuccessRepresentation()).build();
+			}
 		}
 		catch (NotificationException e)
 		{

@@ -24,6 +24,7 @@ import org.iplantc.service.apps.util.ZipUtil;
 import org.iplantc.service.common.exceptions.DependencyException;
 import org.iplantc.service.common.exceptions.DomainException;
 import org.iplantc.service.common.exceptions.PermissionException;
+import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.io.dao.LogicalFileDao;
 import org.iplantc.service.io.model.LogicalFile;
 import org.iplantc.service.io.permissions.PermissionManager;
@@ -397,7 +398,7 @@ public class CloneAction extends AbstractWorkerAction<Software> {
                     software.setDefaultQueue(batchQueue.getName());
                     
                     if (StringUtils.isNotEmpty(software.getDefaultMaxRunTime())) {
-                        if (ServiceUtils.compareRequestedJobTimes(software.getDefaultMaxRunTime(), batchQueue.getMaxRequestedTime()) > 0) {
+                        if (TimeUtils.compareRequestedJobTimes(software.getDefaultMaxRunTime(), batchQueue.getMaxRequestedTime()) > 0) {
                             software.setDefaultMaxRunTime(batchQueue.getMaxRequestedTime());
                         }
                     }

@@ -433,39 +433,4 @@ public class ServiceUtils {
 					phone.substring(6, 10));
 		}
 	}
-	
-	public static boolean isValidRequestedJobTime(String value)
-	{
-		if (StringUtils.isEmpty(value)) 
-			return false;
-		else
-			return Pattern.matches("([0-9]{2,4}):([0-5]\\d):([0-5]\\d)", value);
-	}
-	
-	public static int compareRequestedJobTimes(String t1, String t2) throws IllegalArgumentException
-	{
-		if (!isValidRequestedJobTime(t1)) {
-			throw new IllegalArgumentException("Invalid requested time " + t1);
-		}
-		else if (!isValidRequestedJobTime(t2)) {
-			throw new IllegalArgumentException("Invalid requested time " + t2);
-		}
-		else
-		{
-			String[] tod1 = t1.split(":");
-			String[] tod2 = t2.split(":");
-			
-			if (NumberUtils.toInt(tod1[0]) == NumberUtils.toInt(tod2[0])) {
-				if (NumberUtils.toInt(tod1[1]) == NumberUtils.toInt(tod2[1]))
-					return new Integer(NumberUtils.toInt(tod1[2])).compareTo(new Integer(NumberUtils.toInt(tod2[2])));
-				else
-					return new Integer(NumberUtils.toInt(tod1[1])).compareTo(new Integer(NumberUtils.toInt(tod2[1])));
-			}
-			else 
-			{
-				return new Integer(NumberUtils.toInt(tod1[0])).compareTo(new Integer(NumberUtils.toInt(tod2[0])));
-			}
-		}
-		
-	}
 }

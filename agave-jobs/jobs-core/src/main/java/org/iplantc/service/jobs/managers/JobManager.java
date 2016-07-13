@@ -30,6 +30,7 @@ import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.apps.model.enumerations.SoftwareParameterType;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.exceptions.PermissionException;
+import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.io.dao.LogicalFileDao;
 import org.iplantc.service.io.model.LogicalFile;
 import org.iplantc.service.io.permissions.PermissionManager;
@@ -2094,7 +2095,7 @@ public class JobManager {
 		}
 
 		if (queue.getMaxRequestedTime() != null &&
-				org.iplantc.service.systems.util.ServiceUtils.compareRequestedJobTimes(queue.getMaxRequestedTime(), requestedTime) == -1)
+				TimeUtils.compareRequestedJobTimes(queue.getMaxRequestedTime(), requestedTime) == -1)
 
 		{
 			return false;

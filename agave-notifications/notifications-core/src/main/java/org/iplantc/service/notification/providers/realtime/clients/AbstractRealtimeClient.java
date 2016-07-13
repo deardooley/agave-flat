@@ -26,9 +26,7 @@ public abstract class AbstractRealtimeClient extends AbstractWebhookClient imple
 
 	private static final Logger log = Logger.getLogger(AbstractRealtimeClient.class);
     
-	protected NotificationAttempt attempt;
-    
-    public AbstractRealtimeClient(NotificationAttempt attempt) {
+	public AbstractRealtimeClient(NotificationAttempt attempt) {
         super(attempt);
     }
     
@@ -58,7 +56,7 @@ public abstract class AbstractRealtimeClient extends AbstractWebhookClient imple
      */
     protected RealtimeMessageItems getMessageItemsForAttempt() throws NotificationException {
     	try {
-	        URL callbackUrl = new URL(this.attempt.getCallbackUrl());
+	        URL callbackUrl = new URL(attempt.getCallbackUrl());
             
 	        ObjectMapper mapper = new ObjectMapper();
     	    
@@ -70,12 +68,15 @@ public abstract class AbstractRealtimeClient extends AbstractWebhookClient imple
             ChannelMessage ownerChannelMessage = new ChannelMessage(
             		attempt.getTenantId() + "/" + attempt.getOwner(), 
                     channelMessageBody);
-            ChannelMessage resourceChannelMessage = new ChannelMessage(
-            		attempt.getTenantId() + "/" + attempt.getAssociatedUuid(), 
-                    channelMessageBody);
             
             RealtimeMessageItems items = new RealtimeMessageItems(Arrays.asList(
-                    ownerChannelMessage, resourceChannelMessage)); 
+                    ownerChannelMessage));
+//            ChannelMessage resourceChannelMessage = new ChannelMessage(
+//            		attempt.getTenantId() + "/" + attempt.getAssociatedUuid(), 
+//                    channelMessageBody);
+//            
+//            RealtimeMessageItems items = new RealtimeMessageItems(Arrays.asList(
+//                    ownerChannelMessage, resourceChannelMessage)); 
                  
             try 
             {
@@ -88,10 +89,9 @@ public abstract class AbstractRealtimeClient extends AbstractWebhookClient imple
                     		attempt.getTenantId() + "/" + attempt.getOwner() + userProvidedChannelName, 
                             channelMessageBody));
                 }
-                
             } catch (Exception e) {
-                log.debug("[" + attempt.getUuid() + "] Failed to add " + attempt.getEventName() + 
-                		" notification realtime message to " + attempt.getCallbackUrl());
+                log.error("[" + attempt.getUuid() + "] Failed to add " + attempt.getEventName() + 
+                		" notification realtime message to " + attempt.getCallbackUrl(), e);
             }
             
             return items;

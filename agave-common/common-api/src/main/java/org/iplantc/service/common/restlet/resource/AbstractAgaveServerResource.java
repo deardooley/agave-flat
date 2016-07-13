@@ -1,6 +1,7 @@
 package org.iplantc.service.common.restlet.resource;
 
 import static org.restlet.data.MediaType.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
@@ -34,6 +35,7 @@ import org.restlet.resource.ServerResource;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.CharMatcher;
@@ -209,7 +211,10 @@ public class AbstractAgaveServerResource extends ServerResource {
 				else {   
 					// sure, why not allow comments
 					mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-
+					mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+					mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+					mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+//					mapper.addHandler(DeserializationProblemHandler)
 					json = mapper.readTree(bytes);
 				}
 			}

@@ -481,7 +481,7 @@ public class FilePermissionResource extends AbstractFileResource
                         		ServiceUtils.explode(",", Arrays.asList(PermissionType.values())));
                     } 
                     catch (Exception e) {
-                    	log.error("Failed to update permissions for agave://" + systemId + "/" + path, e);
+                    	log.error("Failed to update permissions for agave://" + system.getSystemId() + "/" + path, e);
                         throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
                         		"Failed to update permissions.");
                     }
@@ -498,7 +498,7 @@ public class FilePermissionResource extends AbstractFileResource
 		}
 		catch (Throwable e) {
 			throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-					"Failed to update permissions for " + path);
+					"Failed to update permissions for " + path, e);
 		} 
 		finally {
 			try {remoteDataClient.disconnect();} catch (Exception e) {}

@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.util.EnumResolver;
  */
 public class CaseInsensitiveEnumDeserializer  extends SimpleDeserializers {
 
-    @Override
+	@Override
     @SuppressWarnings("unchecked")
     public JsonDeserializer<?> findEnumDeserializer(Class<?> type, DeserializationConfig config, BeanDescription beanDesc) throws JsonMappingException {
         return createDeserializer((Class<Enum>) type);

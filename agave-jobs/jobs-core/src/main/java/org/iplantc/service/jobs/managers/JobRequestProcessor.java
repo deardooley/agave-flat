@@ -18,10 +18,10 @@ import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.exceptions.SoftwareException;
 import org.iplantc.service.apps.managers.ApplicationManager;
 import org.iplantc.service.apps.model.Software;
+import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.io.dao.LogicalFileDao;
 import org.iplantc.service.io.model.LogicalFile;
 import org.iplantc.service.io.permissions.PermissionManager;
-import org.iplantc.service.io.util.ServiceUtils;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobProcessingException;
@@ -528,11 +528,11 @@ public class JobRequestProcessor {
 				requestedTime = userRequestedTime;
 			}
 
-			if (!org.iplantc.service.systems.util.ServiceUtils.isValidRequestedJobTime(requestedTime)) {
+			if (!TimeUtils.isValidRequestedJobTime(requestedTime)) {
 				throw new JobProcessingException(400,
 						"Invalid maxRunTime. maxRunTime should be the maximum run time " +
 							"time for this job in hh:mm:ss format.");
-			} else if (org.iplantc.service.systems.util.ServiceUtils.compareRequestedJobTimes(requestedTime, BatchQueue.DEFAULT_MIN_RUN_TIME) == -1) {
+			} else if (TimeUtils.compareRequestedJobTimes(requestedTime, BatchQueue.DEFAULT_MIN_RUN_TIME) == -1) {
 				throw new JobProcessingException(400,
 						"Invalid maxRunTime. maxRunTime should be greater than 00:00:00.");
 			}

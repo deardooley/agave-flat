@@ -263,7 +263,7 @@ public class NotificationDao extends AbstractDao
 					.setString("uuid",uuid)
 					.uniqueResult();
 			
-			session.flush();
+//			session.flush();
 			
 			return notification;
 		}
@@ -386,6 +386,75 @@ public class NotificationDao extends AbstractDao
 			try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
 		}
 	}
+	
+	/**
+	 * Merges the current instance with the one in the db.
+	 * @param notification
+	 * @return the merged Notification
+	 * @throws NotificationException
+	 */
+	public boolean update(Notification notification) throws NotificationException
+	{
+		if (notification == null)
+			throw new NotificationException("Notification cannot be null");
+
+		try
+		{	
+			HibernateUtil.beginTransaction();
+			Session session = HibernateUtil.getSession();
+			session.clear();
+			session.disableFilter("notificationTenantFilter");
+			
+			String sql = "UPDATE notifications n "
+					+ "SET  n.status = :status, "
+					+ "	    n.last_updated = CURRENT_TIMESTAMP, "
+					+ "	    n.associated_uuid = :associateduuid, "
+					+ "	    n.notification_event = :event, "
+					+ "	    n.callback_url = :callbackurl, "
+					+ "	    n.is_persistent = :ispersistent, "
+					+ "	    n.is_visible = :isvisible, "
+					+ "	    n.retry_strategy = :retrystrategy, "
+					+ "	    n.retry_limit = :retrylimit, "
+					+ "	    n.retry_rate = :retryrate, "
+					+ "	    n.retry_delay = :retrydelay, "
+					+ "	    n.save_on_failure = :saveonfailure "
+					+ "WHERE n.uuid = :uuid ";
+			
+			int rowsAffected = session.createSQLQuery(sql)
+					.setString("uuid",notification.getUuid())
+					.setString("status", notification.getStatus().name())
+					.setString("associateduuid",notification.getAssociatedUuid())
+					.setString("event",notification.getEvent())
+					.setString("callbackurl",notification.getCallbackUrl())
+					.setInteger("ispersistent", notification.isPersistent() ? 1: 0)
+					.setInteger("isvisible",notification.isVisible() ? 1: 0)
+					.setString("retrystrategy",notification.getPolicy().getRetryStrategyType().name())
+					.setInteger("retrylimit",notification.getPolicy().getRetryLimit())
+					.setInteger("retryrate",notification.getPolicy().getRetryRate())
+					.setInteger("retrydelay",notification.getPolicy().getRetryDelay())
+					.setInteger("saveonfailure",notification.getPolicy().isSaveOnFailure() ? 1 : 0)
+					.executeUpdate();
+			
+			session.flush();
+			
+			return rowsAffected > 0;
+		}
+		catch (HibernateException ex)
+		{
+			try
+			{
+				if (HibernateUtil.getSession().isOpen()) {
+					HibernateUtil.rollbackTransaction();
+				}
+			}
+			catch (Exception e) {}
+			
+			throw new NotificationException("Failed to merge notification", ex);
+		}
+		finally {
+			try { HibernateUtil.commitTransaction(); } catch (Exception e) {e.printStackTrace();}
+		}
+	}
 
 	/**
 	 * Saves or updates the InternalUser
@@ -402,7 +471,7 @@ public class NotificationDao extends AbstractDao
 			Session session = getSession();
 			
 			session.saveOrUpdate(notification);
-			session.clear();
+//			session.clear();
 			session.flush();
 		}
 		catch (HibernateException ex)
@@ -593,8 +662,7 @@ public class NotificationDao extends AbstractDao
                 
             }
             
-            log.debug(q);
-            
+//            log.debug(q);
             List<Notification> attempts = query
                     .setFirstResult(offset)
                     .setMaxResults(limit)

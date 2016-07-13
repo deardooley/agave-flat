@@ -61,12 +61,12 @@ public enum NotificationCallbackProviderType {
 			try {
 				URI callbackURI = URI.create(callbackUrl.replaceAll("\\$", "%24").replaceAll("\\{", "%7B").replaceAll("\\}", "%7B"));
 				// avoid loopback attacks by filtering out reserve hostnames
-				if (callbackURI.getHost().contains("localhost") || 
-						callbackURI.getHost().contains("local") ||
-						callbackURI.getHost().startsWith("127.") ||
-						callbackURI.getHost().startsWith("255.") || 
-						callbackURI.getHost().startsWith("172.") || 
-						callbackURI.getHost().startsWith("192.") || 
+				if (StringUtils.endsWith(callbackURI.getHost(),".localhost") ||
+						StringUtils.endsWith(callbackURI.getHost(),".local") || 
+						StringUtils.startsWith(callbackURI.getHost(), "127.") ||
+						StringUtils.startsWith(callbackURI.getHost(), "255.") || 
+						StringUtils.startsWith(callbackURI.getHost(), "172.") || 
+						StringUtils.startsWith(callbackURI.getHost(), "192.") || 
 						StringUtils.equals(callbackURI.getHost(), Settings.getLocalHostname()) ||
 						Settings.getIpAddressesFromNetInterface().contains(callbackURI.getHost())) {
 					throw new BadCallbackException("Invalid callback url.");

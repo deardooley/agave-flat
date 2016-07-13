@@ -17,12 +17,12 @@ public class WrapperTemplateStatusVariableTypeTest {
 	protected Object[][] resolveNotificationEventMacroAddsCustomEventToCallbackDataProvider() {
 		return new Object[][] {
 				{ "my_custom_event", "my_custom_event", "Custom user event name should be written into the callback data" },
-				{ "", "AGAVE_JOB_CALLBACK_NOTIFICATION", "Empty user event name should write default custom user event name" },
-				{ null, "AGAVE_JOB_CALLBACK_NOTIFICATION", "null user event name should write default custom user event name" },
+				{ "", "JOB_RUNTIME_CALLBACK_EVENT", "Empty user event name should write default custom user event name" },
+				{ null, "JOB_RUNTIME_CALLBACK_EVENT", "null user event name should write default custom user event name" },
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroAddsCustomEventToCallbackDataProvider", enabled=false)
+	@Test(dataProvider="resolveNotificationEventMacroAddsCustomEventToCallbackDataProvider", enabled=true)
 	public void resolveNotificationEventMacroAddsCustomEventToCallbackData(String providedEventName, String expectedCallbackEventName, String message) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
@@ -48,7 +48,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
 				.resolveNotificationEventMacro(job, "", customVariableNames);
-		System.out.println(resolvedWrapperCode);
+//		System.out.println(resolvedWrapperCode);
 		for (String uniqueName: new HashSet<String>(Arrays.asList(customVariableNames))) {
 			String expectedString = String.format("echo '  \"%s\": '$(printf %%q \"$%s\")'\",\\\n' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
 			Assert.assertTrue(resolvedWrapperCode.contains(expectedString), "User custom data should be written into the output data");
@@ -56,7 +56,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 			Assert.assertFalse(resolvedWrapperCode.contains(expectedString), "Duplicate user variable names should be filtered out prior to writing the callback output");
 		}
 		
-		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \"AGAVE_JOB_CALLBACK_NOTIFICATION\""), "Empty user event name should write default custom user event name");
+		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \"JOB_RUNTIME_CALLBACK_EVENT\""), "Empty user event name should write default custom user event name");
 
 	}
 	
@@ -70,7 +70,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroTrimsVariableNamesProvider", enabled=false)
+	@Test(dataProvider="resolveNotificationEventMacroTrimsVariableNamesProvider", enabled=true)
 	public void resolveNotificationEventMacroTrimsVariableNames(String[] customVariableNames, String message ) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
@@ -83,7 +83,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 			Assert.assertFalse(resolvedWrapperCode.contains(expectedString), "Duplicate user variable names should be filtered out prior to writing the callback output");
 		}
 		
-		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \"AGAVE_JOB_CALLBACK_NOTIFICATION\""), "Empty user event name should write default custom user event name");
+		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \"JOB_RUNTIME_CALLBACK_EVENT\""), "Empty user event name should write default custom user event name");
 
 	}
 	
@@ -107,7 +107,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroStripsEmptyVariableNamesProvider", enabled=false)
+	@Test(dataProvider="resolveNotificationEventMacroStripsEmptyVariableNamesProvider", enabled=true)
 	public void resolveNotificationEventMacroStripsEmptyVariableNames(String[] customVariableNames, String message ) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
@@ -127,7 +127,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 			Assert.assertFalse(resolvedWrapperCode.contains(expectedString), "Duplicate user variable names should be filtered out prior to writing the callback output");
 		}
 		
-		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \"AGAVE_JOB_CALLBACK_NOTIFICATION\""), "Empty user event name should write default custom user event name");
+		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \"JOB_RUNTIME_CALLBACK_EVENT\""), "Empty user event name should write default custom user event name");
 
 	}
 	
@@ -152,7 +152,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroStripsBlankVariableNamesProvider", enabled=false)
+	@Test(dataProvider="resolveNotificationEventMacroStripsBlankVariableNamesProvider", enabled=true)
 	public void resolveNotificationEventMacroStripsBlankVariableNames(String[] customVariableNames, String message ) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
@@ -172,7 +172,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 			Assert.assertFalse(resolvedWrapperCode.contains(expectedString), "Duplicate user variable names should be filtered out prior to writing the callback output");
 		}
 		
-		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \"AGAVE_JOB_CALLBACK_NOTIFICATION\""), "Empty user event name should write default custom user event name");
+		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \"JOB_RUNTIME_CALLBACK_EVENT\""), "Empty user event name should write default custom user event name");
 
 	}
 		
@@ -195,7 +195,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroStripsNullVariableNamesProvider", enabled=false)
+	@Test(dataProvider="resolveNotificationEventMacroStripsNullVariableNamesProvider", enabled=true)
 	public void resolveNotificationEventMacroStripsNullVariableNames(String[] customVariableNames, String message ) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
@@ -215,7 +215,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 			Assert.assertFalse(resolvedWrapperCode.contains(expectedString), "Duplicate user variable names should be filtered out prior to writing the callback output");
 		}
 		
-		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \"AGAVE_JOB_CALLBACK_NOTIFICATION\""), "Empty user event name should write default custom user event name");
+		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \"JOB_RUNTIME_CALLBACK_EVENT\""), "Empty user event name should write default custom user event name");
 
 	}
 }

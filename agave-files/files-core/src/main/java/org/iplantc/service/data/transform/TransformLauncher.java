@@ -34,8 +34,8 @@ public class TransformLauncher {
 		}
 		
 		try {
-			log.debug("Invoking transform: " + handlerFile.getAbsolutePath() + " "  + sourcePath + " " + destPath + " " + triggerBaseUrl);
-			ProcessBuilder processBuilder = new ProcessBuilder(handlerFile.getAbsolutePath(), sourcePath, destPath, triggerBaseUrl);
+			log.debug("Invoking transform: " + handlerFile.getAbsolutePath() + " ' ' "  + sourcePath + " " + destPath + " " + triggerBaseUrl);
+			ProcessBuilder processBuilder = new ProcessBuilder(handlerFile.getAbsolutePath(), " ", sourcePath, destPath, triggerBaseUrl);
 			processBuilder.redirectErrorStream(true);
 			processBuilder.start();
 			
@@ -58,7 +58,7 @@ public class TransformLauncher {
 		
 		try {
 			
-			log.debug("Invoking transform: " + " " + handlerFile.getAbsolutePath() + " " + sourcePath + " " + destPath);
+			log.debug("Invoking transform: " + " " + handlerFile.getAbsolutePath() + " ' ' " + sourcePath + " " + destPath);
 			ProcessBuilder processBuilder = new ProcessBuilder(handlerFile.getAbsolutePath(), sourcePath, destPath);
 			processBuilder.redirectErrorStream(true);
 			Process process = processBuilder.start();
@@ -67,7 +67,7 @@ public class TransformLauncher {
 			BufferedReader br = new BufferedReader(isr);
 			String line;
 
-			log.debug("Output of running " + handlerFile.getAbsolutePath() + " " + sourcePath + " " + destPath + " is:");
+			log.debug("Output of running " + handlerFile.getAbsolutePath() + " ' ' " + sourcePath + " " + destPath + " is:");
 			
 			while ((line = br.readLine()) != null) {	
 				log.debug(line);

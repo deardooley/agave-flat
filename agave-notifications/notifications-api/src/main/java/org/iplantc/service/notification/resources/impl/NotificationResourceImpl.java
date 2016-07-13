@@ -28,6 +28,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.hibernate.HibernateException;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
+import org.iplantc.service.notification.dao.FailedNotificationAttemptQueue;
 import org.iplantc.service.notification.dao.NotificationDao;
 import org.iplantc.service.notification.exceptions.NotificationException;
 import org.iplantc.service.notification.managers.NotificationManager;
@@ -38,6 +39,7 @@ import org.iplantc.service.notification.model.enumerations.NotificationStatusTyp
 import org.iplantc.service.notification.resources.NotificationResource;
 import org.iplantc.service.notification.util.ServiceUtils;
 import org.restlet.Request;
+import org.restlet.data.Reference;
 import org.restlet.data.Status;
 import org.restlet.ext.fileupload.RestletFileUpload;
 import org.restlet.representation.Representation;
@@ -118,9 +120,7 @@ public class NotificationResourceImpl extends AbstractNotificationResource imple
 							getAuthenticatedUsername(), 
 							notification.toJSON());
 				
-					return Response.status(javax.ws.rs.core.Response.Status.CREATED)
-							.entity(new AgaveSuccessRepresentation(notification.toJSON()))
-							.build();
+					return Response.ok(new AgaveSuccessRepresentation(notification.toJSON())).build();
 		    	}
 			}
 			else
@@ -218,9 +218,7 @@ public class NotificationResourceImpl extends AbstractNotificationResource imple
 								getAuthenticatedUsername(), 
 								notification.toJSON());
 	
-						return Response.status(javax.ws.rs.core.Response.Status.CREATED)
-								.entity(new AgaveSuccessRepresentation(notification.toJSON()))
-								.build();
+						return Response.ok(new AgaveSuccessRepresentation(notification.toJSON())).build();
 			    	}
 				}
 			}
@@ -276,44 +274,47 @@ public class NotificationResourceImpl extends AbstractNotificationResource imple
 			}
 			else if (notification.getStatus() == NotificationStatusType.ACTIVE)
 			{
-				
 				ObjectMapper mapper = new ObjectMapper();
         		JsonNode jsonNotification = mapper.readTree(bytes);
             	
         		Notification newNotification = null;
 				if (jsonNotification.isObject()) {
 					newNotification = Notification.fromJSON((ObjectNode)jsonNotification);
-				} else {
+				} 
+				else {
 					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 							"Notification should be a valid JSON object.");
 				}
 				
 				if (StringUtils.contains(newNotification.getAssociatedUuid(), "*") && 
-		    			!ServiceUtils.isAdmin(getAuthenticatedUsername())) 
-		    	{
+		    			!ServiceUtils.isAdmin(getAuthenticatedUsername())) {
 		    		throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
 							"Administrator permissions are required to set wildcard notifications.");
 		    	} 
-		    	else 
-		    	{
+		    	else {
+//		    		newNotification.setId(notification.getId());
+//		    		newNotification.setUuid(notification.getUuid());
+//		    		newNotification.setCreated(notification.getCreated());
+//		    		newNotification.setLastUpdated(notification.getLastUpdated());
+//		    		newNotification.setOwner(notification.getOwner());
+//		    		newNotification.setVisible(notification.isVisible());
 		    		
-					notification.setCallbackUrl(newNotification.getCallbackUrl());
+		    		notification.setCallbackUrl(newNotification.getCallbackUrl());
 					notification.setEvent(newNotification.getEvent());
 					notification.setAssociatedUuid(newNotification.getAssociatedUuid());
 					notification.setStatus(newNotification.getStatus());
 					notification.setPolicy(newNotification.getPolicy());
-					dao.persist(notification);
+					notification.setPersistent(newNotification.isPersistent());
+//					notification = dao.merge(notification);
+					dao.update(notification);
 					
 					
 					NotificationManager.process(notification.getUuid(), 
 							NotificationEventType.UPDATED.name(), 
 							getAuthenticatedUsername(), 
 							notification.toJSON());
-
 				
-					return Response.status(javax.ws.rs.core.Response.Status.CREATED)
-							.entity(new AgaveSuccessRepresentation(notification.toJSON()))
-							.build();
+					return Response.ok(new AgaveSuccessRepresentation(notification.toJSON())).build();
 		    	}
 			}
 			else
@@ -349,16 +350,25 @@ public class NotificationResourceImpl extends AbstractNotificationResource imple
 	@GET
 	public Response getNotification(@PathParam("uuid") String uuid)
 	{
-		AgaveLogServiceClient.log(NOTIFICATIONS02.name(), 
-				NotifGetById.name(), 
-				getAuthenticatedUsername(), "", 
-				Request.getCurrent().getClientInfo().getUpstreamAddress());
-		
 		try
 		{
-			Notification notification = getResourceFromPathValue(uuid);
+			// redirect if there is a trailing slash
+			if (StringUtils.isEmpty(uuid)) {
+				Reference redirectReference = Request.getCurrent().getOriginalRef().clone();
+				redirectReference.setPath(StringUtils.removeEnd(redirectReference.getPath(), "/"));
+				return Response.temporaryRedirect(redirectReference.toUri()).build();
+			}
+			else {
+				AgaveLogServiceClient.log(NOTIFICATIONS02.name(), 
+						NotifGetById.name(), 
+						getAuthenticatedUsername(), "", 
+						Request.getCurrent().getClientInfo().getUpstreamAddress());
+				
+				
+				Notification notification = getResourceFromPathValue(uuid);
 			
-			return Response.ok(new AgaveSuccessRepresentation(notification.toJSON())).build();
+				return Response.ok(new AgaveSuccessRepresentation(notification.toJSON())).build();
+			}
 		}
 		catch (ResourceException e) {
 			throw e;
@@ -391,6 +401,14 @@ public class NotificationResourceImpl extends AbstractNotificationResource imple
 				notification.setVisible(false);
 				notification.setStatus(NotificationStatusType.INACTIVE);
 				dao.softDeleteNotification(notification.getUuid());
+				
+				try 
+				{
+					FailedNotificationAttemptQueue.getInstance().removeAll(uuid);
+				} 
+				catch (Exception e) {
+					log.error("Failed to delete the failed delivery queue for notification " + uuid, e);
+				}
 				
 				NotificationManager.process(notification.getUuid(), 
 											NotificationEventType.DELETED.name(), 

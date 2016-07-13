@@ -257,7 +257,7 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 		
 		List<Object[]> testCases = new ArrayList<Object[]>();
 		
-		for(int i=0; i<500; i++)
+		for(int i=0; i<50; i++)
 		{
 			int expectedInterval = getExpectedIntervalForCheckCount(i);
 			

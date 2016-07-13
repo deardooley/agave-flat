@@ -59,17 +59,18 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
 		 */
 		public static String resolveNotificationEventMacro(Job job, String eventName, String[] callbackVariableNames) {
 		    
+			eventName = StringUtils.trimToNull(eventName);
+			
             StringBuilder sb = new StringBuilder();
             
             sb.append("# Building job callback document to send to any notifications\n");
             sb.append("AGAVE_CALLBACK_FILE=\".callback-$(date +%Y-%m-%dT%H:%M:%S%z)\"\n");
             sb.append("echo -e \"{\" > \"$AGAVE_CALLBACK_FILE\"\n");
-            sb.append("echo -e \"\\n\" >> \"$AGAVE_CALLBACK_FILE\"\n");
             if (!ArrayUtils.isEmpty(callbackVariableNames)) {
                 for (String varName: new HashSet<String>(Arrays.asList(callbackVariableNames))) {
                 	varName = StringUtils.trimToNull(varName);
                 	if (varName != null) {
-                		sb.append(String.format("echo '  \"%s\": '$(printf %%q \"$%s\")'\",\\\n' >> \"$AGAVE_CALLBACK_FILE\"\n", varName, varName));
+                		sb.append(String.format("echo '  \"%s\": \"'$(printf %%q \"$%s\")'\",' >> \"$AGAVE_CALLBACK_FILE\"\n", varName, varName));
                 	}
                 }
             }
@@ -79,10 +80,10 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
             	eventName = "JOB_RUNTIME_CALLBACK_EVENT";
             }
         
-            sb.append("echo '  \"CUSTOM_USER_JOB_EVENT_NAME\": \""+eventName+"\"\\\n' >> \"$AGAVE_CALLBACK_FILE\"\n");
+            sb.append("echo '  \"CUSTOM_USER_JOB_EVENT_NAME\": \""+eventName+"\"' >> \"$AGAVE_CALLBACK_FILE\"\n");
             
-            sb.append("}\n\n");
-            sb.append(String.format("cat \"$AGAVE_CALLBACK_FILE\" | curl -sSk -H \"Content-Type: application/json\" -X POST --data-binary @- \"%strigger/job/%s/token/%s/status/HEARTBEAT?pretty=true\" 1>&2 \n\n",
+            sb.append("echo -e \"}\" >> \"$AGAVE_CALLBACK_FILE\"\n\n");
+            sb.append(String.format("cat \"$AGAVE_CALLBACK_FILE\" | sed  -e \"s#: \\\"''\\\"#: \\\"\\\"#g\" | curl -sSk -H \"Content-Type: application/json\" -X POST --data-binary @- \"%strigger/job/%s/token/%s/status/HEARTBEAT?pretty=true\" 1>&2 \n\n",
                     TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, job.getTenantId()),
                     job.getUuid(),
                     job.getUpdateToken()));

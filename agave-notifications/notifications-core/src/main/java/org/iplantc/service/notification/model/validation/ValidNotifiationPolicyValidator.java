@@ -49,9 +49,6 @@ public class ValidNotifiationPolicyValidator implements ConstraintValidator<Vali
         			throw new NotificationPolicyViolationException("Invalid notification policy retryDelay. retryDely must be a positive integer value when retryStrategy is DELAYED");
         		}
         	}
-        	
-        	
-        	
 		}
         catch (IllegalArgumentException e) {
         	isValid = false;

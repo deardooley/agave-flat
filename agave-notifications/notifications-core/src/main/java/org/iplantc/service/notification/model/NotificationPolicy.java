@@ -13,6 +13,7 @@ import org.iplantc.service.notification.model.constraints.ValidNotifiationPolicy
 import org.iplantc.service.notification.model.enumerations.RetryStrategyType;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Embeddable
 @JsonAutoDetect(fieldVisibility = com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
 @ValidNotifiationPolicy
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class NotificationPolicy
 {
 	@Enumerated(EnumType.STRING)

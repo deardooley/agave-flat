@@ -120,7 +120,7 @@ public class TenancyHelper
 		try {
 			String dedicatedTenantId = Settings.getDedicatedTenantIdFromServiceProperties();
 			if (StringUtils.isNotEmpty(dedicatedTenantId) && 
-			        dao.findByTenantId(dedicatedTenantId) != null) {
+			        dao.findByTenantId(StringUtils.stripStart(dedicatedTenantId, "!")) != null) {
 				return dedicatedTenantId;
 			} else {
 				return null;

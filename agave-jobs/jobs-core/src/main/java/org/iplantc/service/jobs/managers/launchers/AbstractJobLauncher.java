@@ -152,29 +152,26 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	@Override
 	public String resolveRuntimeNotificationMacros(String wrapperTemplate) {
 	    // process the notification template first so there is no confusion or namespace conflict prior to resolution
-        Pattern defaultCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|(.*)\\}");
+        Pattern defaultCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|(?:([a-zA-Z0-9_,\\s]*))\\}");
         Matcher callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
-        if (callbackMatcher.matches()) {
-            while(callbackMatcher.find()) 
-            {
-            	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
-                        job, "JOB_RUNTIME_CALLBACK_EVENT", StringUtils.split(callbackMatcher.group(1), ","));
-                
-                wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
-            }
+        while (callbackMatcher.matches()) {
+        	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
+                    job, "JOB_RUNTIME_CALLBACK_EVENT", StringUtils.split(callbackMatcher.group(1), ","));
+            
+            wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
+            
+            callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
         }
         
-        Pattern customCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|([a-zA-Z0-9_]*)\\|(.*)\\}");
+        Pattern customCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|([a-zA-Z0-9_\\s]*)\\|(?:([a-zA-Z0-9_,\\s]*))\\}");
         callbackMatcher = customCallbackPattern.matcher(wrapperTemplate);
-        if (callbackMatcher.matches()) {
-            while(callbackMatcher.find()) 
-            {
-            	
-                String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
-                        job, callbackMatcher.group(1), StringUtils.split(callbackMatcher.group(2), ","));
-                
-                wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
-            }
+        while (callbackMatcher.matches()) {
+            String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
+                    job, callbackMatcher.group(1), StringUtils.split(callbackMatcher.group(2), ","));
+            
+            wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
+            
+            callbackMatcher = customCallbackPattern.matcher(wrapperTemplate);
         }
         
         return wrapperTemplate;
