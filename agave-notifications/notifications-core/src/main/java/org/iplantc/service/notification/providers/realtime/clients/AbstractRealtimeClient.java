@@ -62,6 +62,7 @@ public abstract class AbstractRealtimeClient extends AbstractWebhookClient imple
     	    
     	    ChannelMessageBody channelMessageBody = new ChannelMessageBody(attempt.getEventName(), 
     	                                                    attempt.getOwner(), 
+    	                                                    attempt.getNotificationId(),
     	                                                    attempt.getAssociatedUuid(),
     	                                                    mapper.readTree(attempt.getContent()));
                     

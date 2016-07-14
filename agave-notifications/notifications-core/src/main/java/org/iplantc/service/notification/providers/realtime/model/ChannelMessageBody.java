@@ -27,6 +27,11 @@ public class ChannelMessageBody {
     /**
      * The uuid of the resource from which the event originiated 
      */
+    private String notificationId;
+    
+    /**
+     * The uuid of the resource from which the event originiated 
+     */
     public String source;
     
     /**
@@ -41,10 +46,11 @@ public class ChannelMessageBody {
      * @param source
      * @param content
      */
-    public ChannelMessageBody(String event, String owner, String source, JsonNode content) {
+    public ChannelMessageBody(String event, String owner, String notificationId, String source, JsonNode content) {
         super();
         this.event = event;
         this.owner = owner;
+        this.notificationId = notificationId;
         this.source = source;
         this.content = content;
     }
@@ -104,4 +110,18 @@ public class ChannelMessageBody {
     public synchronized void setContent(Object content) {
         this.content = content;
     }
+
+	/**
+	 * @return the notificationId
+	 */
+	public String getNotificationId() {
+		return notificationId;
+	}
+
+	/**
+	 * @param notificationId the notificationId to set
+	 */
+	public void setNotificationId(String notificationId) {
+		this.notificationId = notificationId;
+	}
 }
