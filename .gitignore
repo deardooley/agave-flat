@@ -3,7 +3,7 @@ target
 *~
 testrun.log
 
-# test reports 
+# test reports
 testreports
 
 # Intellij metadata files
@@ -43,6 +43,7 @@ test-output
 cache
 tutum
 docker-compose.yml
+!compose/*/docker-compose.yml
 config/maven/settings.xml
 scriptBuildAll.sh
 scriptRunAll.sh

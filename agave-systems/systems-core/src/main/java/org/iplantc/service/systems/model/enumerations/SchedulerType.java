@@ -11,7 +11,7 @@ package org.iplantc.service.systems.model.enumerations;
  */
 public enum SchedulerType
 {
-	LSF, LOADLEVELER, PBS, SGE, CUSTOM_GRIDENGINE, CONDOR, FORK, COBALT, TORQUE, CUSTOM_TORQUE, MOAB, SLURM, CUSTOM_SLURM, UNKNOWN;
+	LSF, LOADLEVELER, PBS, CUSTOM_PBS, SGE, CUSTOM_GRIDENGINE, CONDOR, FORK, COBALT, TORQUE, CUSTOM_TORQUE, MOAB, SLURM, CUSTOM_SLURM, UNKNOWN;
 
 	public String getBatchSubmitCommand() 
 	{
@@ -24,6 +24,7 @@ public enum SchedulerType
 				return "llsub";
 			case TORQUE:
 			case CUSTOM_TORQUE:
+			case CUSTOM_PBS:
 			case MOAB:
 			case PBS:
 			case SGE:
@@ -54,6 +55,7 @@ public enum SchedulerType
 				return "llcancel ";
 			case TORQUE:
 			case CUSTOM_TORQUE:
+			case CUSTOM_PBS:
 			case MOAB:
 			case PBS:
 			case SGE:
@@ -88,6 +90,7 @@ public enum SchedulerType
 				return "llq";
 			case TORQUE:
 			case CUSTOM_TORQUE:
+			case CUSTOM_PBS:
 			case MOAB:
 			case PBS:
 			case SGE:

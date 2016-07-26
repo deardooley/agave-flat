@@ -17,5 +17,5 @@ address = ":8080"
 
 [docker]
 endpoint = "unix:///var/run/docker.sock"
-domain = "api.example.com"
+domain = "docker.localhost"
 watch = true

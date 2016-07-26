@@ -5,7 +5,7 @@
 # This contains the Blue instances of a blue/green deployment.
 # These services start on a 8xxx port range and block a low
 # range of ports. Make sure to start the `proxy` container
-# from the `service-definitions.yml` file separately from this
+# from the `'../service-definitions.yml'` file separately from this
 # stack. You do not need to restart the proxy once it is running.
 #
 # Starting:
@@ -27,44 +27,45 @@
 version: '2'
 
 services:
-
   jobs:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: jobs
-  #  command: catalina.sh jpda run 2>&1
     ports:
     #   - "8081:80"
     #   - "52981:52911"
     #   - "10181:10001"
     #   - "10281:10002"
     #   - "8444:443"
+      - "80"
       - "50007-50017:50007-50017"
     environment:
+      - 'IPLANT_API_VERSION=blue'
       - 'CONTAINER_STACK=blue'
       - 'GLOBUS_TCP_PORT_RANGE=50007,50017'
 
   files:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: files
-  #  command: catalina.sh jpda run 2>&1
     ports:
     #   - "8082:80"
     #   - "52982:52911"
     #   - "10182:10001"
     #   - "10282:10002"
     #   - "8445:443"
+      - "80"
       - "50301-50310:50301-50310"
     environment:
     #   - 'JPDA_TRANSPORT=dt_socket'
     #   - 'JPDA_SUSPEND=n'
+      - 'IPLANT_API_VERSION=blue'
       - 'CONTAINER_STACK=blue'
       - 'GLOBUS_TCP_PORT_RANGE=50301,50310'
 
   apps:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: apps
   #  command: catalina.sh jpda run 2>&1
     ports:
@@ -73,6 +74,7 @@ services:
     #   - "10183:10001"
     #   - "10283:10002"
     #   - "8446:443"
+      - "80"
       - "50901-50910:50901-50910"
     environment:
       - 'CONTAINER_STACK=blue'
@@ -80,25 +82,28 @@ services:
 
   systems:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: systems
   #  command: catalina.sh jpda run 2>&1
-    # ports:
+    ports:
+      - "80"
     #   - "8084:80"
     #   - "52985:52911"
     #   - "10185:10001"
     #   - "10285:10002"
     #   - "8447:443"
     environment:
+      - 'IPLANT_API_VERSION=$AGAVE_VERSION-blue'
       - 'HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE=true'
       - 'CONTAINER_STACK=blue'
 
   monitors:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: monitors
   #  command: catalina.sh jpda run 2>&1
-    # ports:
+    ports:
+      - "80"
     #   - "8085:80"
     #   - "52985:52911"
     #   - "10185:10001"
@@ -109,10 +114,11 @@ services:
 
   profiles:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: profiles
   #  command: catalina.sh jpda run 2>&1
-    # ports:
+    ports:
+      - "80"
     #   - "8086:80"
     #   - "52986:52911"
     #   - "10186:10001"
@@ -123,11 +129,11 @@ services:
 
   metadata:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: metadata
   #  command: catalina.sh jpda run 2>&1
     ports:
-      - "8087:80"
+      - "80"
       - "52987:52911"
       - "10187:10001"
       - "10287:10002"
@@ -137,11 +143,11 @@ services:
 
   notifications:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: notifications
   #  command: catalina.sh jpda run 2>&1
-    # ports:
-    #   - "8088:80"
+    ports:
+      - "80"
     #   - "52988:52911"
     #   - "10188:10001"
     #   - "10288:10002"
@@ -151,15 +157,16 @@ services:
 
   transforms:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: transforms
   #  command: catalina.sh jpda run 2>&1
     ports:
-      - "8098:80"
-      - "52998:52911"
-      - "10198:10001"
-      - "10298:10002"
-      - "8461:443"
+      - "80"
+#      - "8098:80"
+#      - "52998:52911"
+#      - "10198:10001"
+#      - "10298:10002"
+#      - "8461:443"
       - "50601-50610:50601-50610"
     environment:
       - 'CONTAINER_STACK=blue'
@@ -167,10 +174,11 @@ services:
 
   realtime:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: realtime
   #  command: catalina.sh jpda run 2>&1
-    # ports:
+    ports:
+      - "80"
     #   - "8076:80"
     #   - "52976:52911"
     #   - "10176:10001"
@@ -181,10 +189,11 @@ services:
 
   tags:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: tags
   #  command: catalina.sh jpda run 2>&1
-    # ports:
+    ports:
+      - "80"
     #   - "8077:80"
     #   - "52977:52911"
     #   - "10177:10001"
@@ -195,9 +204,10 @@ services:
 
   postits:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: postits
-    # ports:
+    ports:
+      - "80"
     #   - "8090:80"
     #   - "8453:443"
     environment:
@@ -205,9 +215,10 @@ services:
 
   usage:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: usage
-    # ports:
+    ports:
+      - "80"
     #   - "8091:80"
     #   - "8454:443"
     environment:
@@ -215,9 +226,10 @@ services:
 
   logging:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: logging
-    # ports:
+    ports:
+      - "80"
     #   - "8093:80"
     #   - "8456:443"
     environment:
@@ -225,10 +237,11 @@ services:
 
   tenants:
     extends:
-      file: service-definitions.yml
+      file: '../service-definitions.yml'
       service: tenants
     hostname: api.example.com
-    # ports:
+    ports:
+      - "80"
     #   - "80"
     #   - "8455:443"
     environment:
@@ -242,7 +255,7 @@ services:
   #
   #docs:
   #  extends:
-  #    file: service-definitions.yml
+  #    file: '../service-definitions.yml'
   #    service: docs
   #  ports:
   #    - "8094:80"
@@ -252,7 +265,7 @@ services:
   #
   #stats:
   #  extends:
-  #    file: service-definitions.yml
+  #    file: '../service-definitions.yml'
   #    service: stats
   #  ports:
   #    - "8099:80"
@@ -265,14 +278,14 @@ services:
   #
   #reverseip:
   #  extends:
-  #    file: service-definitions.yml
+  #    file: '../service-definitions.yml'
   #    service: reverseip
   #  environment:
   #    - 'CONTAINER_STACK=blue'
   #
   #redis:
   #  extends:
-  #    file: service-definitions.yml
+  #    file: '../service-definitions.yml'
   #    service: redis
   #  volumes:
   #    - ./cache/redis:/data
@@ -280,6 +293,12 @@ services:
   #    - 'CONTAINER_STACK=blue'
 
 networks:
+  thirdparty:
+    external:
+      name: thirdparty_services
+  realtime:
+    external:
+      name: thirdparty_realtime
   backend:
-  internal:
-  frontend:
+    external:
+      name: compose_backend

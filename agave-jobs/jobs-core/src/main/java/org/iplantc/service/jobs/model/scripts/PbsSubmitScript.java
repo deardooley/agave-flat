@@ -14,6 +14,8 @@ import org.iplantc.service.jobs.model.Job;
  */
 public class PbsSubmitScript extends AbstractSubmitScript {
 
+	public static final String DIRECTIVE_PREFIX = "#PBS ";
+	
 	/**
 	 * 
 	 */
@@ -76,19 +78,17 @@ public class PbsSubmitScript extends AbstractSubmitScript {
 		// #timing the time job starts
 		// #
 
-		String prefix = "#PBS ";
 		String result = "#!/bin/bash\n" 
-				+ prefix + "-q normal\n"
-				+ prefix + "-N " + name + "\n"
-				+ prefix + "-o " + standardOutputFile + "\n" 
-				+ prefix + "-e " + standardErrorFile + "\n" 
-				+ prefix + "-l cput=" + time + "\n"
-				+ prefix + "-l walltime=" + time + "\n"
-				+ prefix + "-q " + queue.getEffectiveMappedName() + "\n"
-				+ prefix + "-l nodes=" + nodes + ":ppn=" + processors + "\n";
+				+ DIRECTIVE_PREFIX + "-N " + name + "\n"
+				+ DIRECTIVE_PREFIX + "-o " + standardOutputFile + "\n" 
+				+ DIRECTIVE_PREFIX + "-e " + standardErrorFile + "\n" 
+				+ DIRECTIVE_PREFIX + "-l cput=" + time + "\n"
+				+ DIRECTIVE_PREFIX + "-l walltime=" + time + "\n"
+				+ DIRECTIVE_PREFIX + "-q " + queue.getEffectiveMappedName() + "\n"
+				+ DIRECTIVE_PREFIX + "-l nodes=" + nodes + ":ppn=" + processors + "\n";
 				
 				if (!StringUtils.isEmpty(queue.getCustomDirectives())) {
-					result += prefix + queue.getCustomDirectives() + "\n";
+					result += DIRECTIVE_PREFIX + queue.getCustomDirectives() + "\n";
 				}
 
 		return result;

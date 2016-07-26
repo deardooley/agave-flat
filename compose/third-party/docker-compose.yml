@@ -1,0 +1,116 @@
+##############################################################
+#  Development Stack of Dependent Services
+#############################################################
+
+##############################################################
+# MySQL
+##############################################################
+version: '2'
+
+services:
+  mysql:
+    image: agaveapi/mysql:5.6-dev
+    ports:
+      - '3306:3306'
+    restart: on-failure
+    hostname: mysql.example.com
+    volumes_from:
+      - 'mysqlvol'
+    environment:
+      MYSQL_ROOT_PASSWORD: changeit
+      MYSQL_DATABASE: agavecore
+      MYSQL_USER: agaveuser
+      MYSQL_PASSWORD: password
+      MYSQL_TEST_DATABASE: test
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - services   
+        
+  mysqlvol:
+    image: agaveapi/mysql:5.6-dev
+    command: sleep 90
+    mem_limit: 64m
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - services   
+      
+  ##############################################################
+  # MongoDB
+  ##############################################################
+  mongodb:
+    image: agaveapi/mongodb:2.6
+    hostname: mongodb
+    restart: on-failure
+    environment:
+      - MONGODB_ADMIN_PASS=changeit
+      - MONGODB_PASSWORD=password
+      - MONGODB_USERNAME=agaveuser
+      - MONGODB_DATABASE=api
+    volumes_from:
+      - mongodbvol
+    ports:
+      - '27017:27017'
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - services   
+        
+  mongodbvol:
+    image: agaveapi/mongodb:2.6
+    command: sleep 120
+    mem_limit: 64m
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - services   
+        
+  ##############################################################
+  # Beanstalkd
+  ##############################################################
+  beanstalkd:
+    image: agaveapi/beanstalkd:latest
+    command: /usr/bin/beanstalkd -b /var/lib/beanstalkd/binlog
+    hostname: beanstalkd
+    mem_limit: 512m
+    restart: on-failure
+    volumes_from:
+      - beanstalkdvol
+    ports:
+      - '11300:11300'
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - services   
+        
+  beanstalkdvol:
+    image: agaveapi/beanstalkd:latest
+    command: sleep 60
+    mem_limit: 64m
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - services   
+        
+  ##############################################################
+  # Pushpin
+  ##############################################################
+  pushpin:
+    image: agaveapi/pushpin:1.6.0
+    hostname: realtime.example.com
+    mem_limit: 512m
+    restart: on-failure
+    ports:
+      - '7999:7999'
+      - '5561:5561'
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - realtime
+      
+networks:
+  services: 
+  realtime: 
+  
+      

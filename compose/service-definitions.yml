@@ -44,7 +44,7 @@ services:
       - traefik.backend=jobs
     networks:
       - backend
-      - internal
+      - thirdparty
 
   files:
     extends:
@@ -64,7 +64,7 @@ services:
       - traefik.backend=files
     networks:
       - backend
-      - internal
+      - thirdparty
 
   apps:
     extends:
@@ -82,7 +82,7 @@ services:
       - traefik.backend=apps
     networks:
       - backend
-      - internal
+      - thirdparty
 
   systems:
     extends:
@@ -99,7 +99,7 @@ services:
       - traefik.backend=systems
     networks:
       - backend
-      - internal
+      - thirdparty
 
   monitors:
     extends:
@@ -115,7 +115,7 @@ services:
       - traefik.backend=monitors
     networks:
       - backend
-      - internal
+      - thirdparty
 
   profiles:
     extends:
@@ -132,7 +132,7 @@ services:
       - traefik.backend=profiles
     networks:
       - backend
-      - internal
+      - thirdparty
 
   metadata:
     extends:
@@ -146,7 +146,7 @@ services:
       - traefik.backend=metadata
     networks:
       - backend
-      - internal
+      - thirdparty
 
   notifications:
     extends:
@@ -162,7 +162,7 @@ services:
       - traefik.backend=notifications
     networks:
       - backend
-      - internal
+      - thirdparty
 
   transforms:
     extends:
@@ -182,7 +182,7 @@ services:
       - traefik.backend=transforms
     networks:
       - backend
-      - internal
+      - thirdparty
 
   realtime:
     extends:
@@ -196,7 +196,8 @@ services:
       - traefik.backend=realtime
     networks:
       - backend
-      - internal
+      - thirdparty
+      - realtime
 
   tags:
     extends:
@@ -210,7 +211,7 @@ services:
       - traefik.backend=tags
     networks:
       - backend
-      - internal
+      - thirdparty
 
   postits:
     extends:
@@ -228,7 +229,7 @@ services:
       - traefik.backend=postits
     networks:
       - backend
-      - internal
+      - thirdparty
 
   usage:
     extends:
@@ -242,7 +243,7 @@ services:
       - traefik.backend=usage
     networks:
       - backend
-      - internal
+      - thirdparty
 
   logging:
     extends:
@@ -256,7 +257,7 @@ services:
       - traefik.backend=logging
     networks:
       - backend
-      - internal
+      - thirdparty
 
   tenants:
     extends:
@@ -271,7 +272,7 @@ services:
       - 'traefik.backend=tenants'
     networks:
       - backend
-      - internal
+      - thirdparty
 
   docs:
     extends:
@@ -285,7 +286,7 @@ services:
       - traefik.backend=docs
     networks:
       - backend
-      - internal
+      - thirdparty
 
   stats:
     extends:
@@ -314,7 +315,7 @@ services:
       - traefik.backend=stats
     networks:
       - backend
-      - internal
+      - thirdparty
 
 
   ################################################################
@@ -355,7 +356,3 @@ services:
     networks:
       - backend
 
-networks:
-  backend:
-  internal:
-  frontend:
