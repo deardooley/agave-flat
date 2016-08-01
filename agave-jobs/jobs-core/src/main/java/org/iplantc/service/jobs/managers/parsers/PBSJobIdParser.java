@@ -21,7 +21,7 @@ public class PBSJobIdParser implements RemoteJobIdParser {
 	public String getJobId(String output) throws RemoteJobIDParsingException, JobException, SchedulerException
 	{
 		String jobID = null;
-		Pattern pattern = Pattern.compile("([0-9]+).*");
+		Pattern pattern = Pattern.compile("([0-9]+\\.[^\\s]*)");
 		
 		String lines[] = output.replaceAll("\r", "\\n").split("\n");
 		for (int idx=0; idx<lines.length; idx++) {
@@ -33,12 +33,10 @@ public class PBSJobIdParser implements RemoteJobIdParser {
 		}
 		
 		if (StringUtils.isEmpty(jobID)) {
-			if (output.contains("qsub") || output.contains("submit error"))
-			{
+			if (output.contains("qsub") || output.contains("submit error")) {
 				throw new SchedulerException(output); 
 			}
-			else
-			{
+			else {
 				throw new RemoteJobIDParsingException(output);
 			}
 		} else {
