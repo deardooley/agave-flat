@@ -218,12 +218,15 @@ services:
       file: common.yml
       service: php_api
     image: postits-api:$AGAVE_VERSION
+    hostname: postits.api.example.com
     environment:
-      - 'IPLANT_PROXY_SERVICE=http://docker.example.com'
+      - 'LOG_LEVEL_DEBUG=1'
+      - 'IPLANT_PROXY_SERVICE=http://api.prod.agaveapi.co'
+      - 'IPLANT_POSTIT_SERVICE=https://api.prod.agaveapi.co/postits/v2/'
       - 'IPLANT_DB_POSTITS_TABLE=postits'
     volumes:
       - '/var/log/splunk/postits:/var/log/apache2'
-      - './agave-postits/postits-api/src/main/php:/var/www/html'
+      - '../agave-postits/postits-api/src/main/php:/var/www/html' 
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/postits
       - traefik.backend=postits

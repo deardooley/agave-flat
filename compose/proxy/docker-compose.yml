@@ -23,38 +23,70 @@ services:
     image: traefik:latest
     command: --configFile=/traefik.toml
     hostname: docker.example.com
-    restart: always
+    mem_limit: 512m
+    restart: on-failure
     ports:
       - "80:80"
       - "443:443"
       - "8080:8080"
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
-      - './ssl:/ssl:ro'
-      - './traefik.toml:/traefik.toml:ro'
+      - '../ssl:/ssl:ro'
+      - './traefik/traefik.toml:/traefik.toml:ro'
     networks:
       - frontend
       - backend
 
-#  proxy:
-#    image: agaveapi/apache-api-proxy:alpine
-#    hostname: api.example.com
-#    ports:
-#      - '80:80'
-#      - '443:443'
-#    extra_hosts:
-#      - "proxy.host:192.168.99.100"
-#    environment:
-#      - 'BALANCER_WHITELIST=all'
-#      - 'STATUS_WHITELIST=all'
-#      - 'LOG_TARGET_STDOUT=1'
-#      - 'LOG_LEVEL_INFO=1'
-#    volumes:
-#      - './logs/proxy:/var/log/apache2'
-#      - './ssl:/ssl:ro'
-#    networks:
-#      - frontend
-#      - backend
+  proxy:
+    image: agaveapi/apache-api-proxy:alpine
+    hostname: api.example.com
+    mem_limit: 512m
+    restart: on-failure
+    ports:
+      - '80:80'
+      - '443:443'
+    extra_hosts:
+      - "proxy.host:192.168.99.100"
+    environment:
+      - 'BALANCER_WHITELIST=all'
+      - 'STATUS_WHITELIST=all'
+      - 'LOG_TARGET_STDOUT=1'
+      - 'LOG_LEVEL_DEBUG=1'
+      - 'SSL_CERT=/ssl/api.example.com.crt'
+      - 'SSL_KEY=/ssl/api.example.com.key'
+    volumes:
+      - './logs/proxy:/var/log/apache2'
+      - '../ssl:/ssl:ro'
+    networks:
+      - frontend
+      - backend
+      
+  devproxy:
+    image: agaveapi/apache-api-proxy:alpine
+    hostname: api.example.com
+    mem_limit: 512m
+    restart: on-failure
+    privileged: true
+    ports:
+      - '80:80'
+      - '443:443'
+    extra_hosts:
+      - "proxy.host:192.168.99.1"
+    environment:
+      - 'BALANCER_WHITELIST=all'
+      - 'STATUS_WHITELIST=all'
+      - 'LOG_TARGET_STDOUT=1'
+      - 'LOG_LEVEL_DEBUG=1'
+      - 'SSL_CERT=/ssl/api.example.com.crt'
+      - 'SSL_KEY=/ssl/api.example.com.key'
+    volumes:
+      - './logs/proxy:/var/log/apache2'
+      - '../ssl:/ssl:ro'
+      - './apache/httpd.conf:/etc/apache2/httpd.conf'
+      - './apache/ssl.conf:/etc/apache2/conf.d/ssl.conf'
+    networks:
+      - frontend
+      - backend
 #
 #  proxy-balancer:
 #    image: agaveapi/apache-api-proxy:balancer

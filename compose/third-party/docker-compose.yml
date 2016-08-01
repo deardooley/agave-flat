@@ -10,10 +10,11 @@ version: '2'
 services:
   mysql:
     image: agaveapi/mysql:5.6-dev
+    hostname: mysql.example.com
+    mem_limit: 512m
+    restart: on-failure
     ports:
       - '3306:3306'
-    restart: on-failure
-    hostname: mysql.example.com
     volumes_from:
       - 'mysqlvol'
     environment:
@@ -42,6 +43,7 @@ services:
   mongodb:
     image: agaveapi/mongodb:2.6
     hostname: mongodb
+    mem_limit: 512m
     restart: on-failure
     environment:
       - MONGODB_ADMIN_PASS=changeit
@@ -99,7 +101,7 @@ services:
   pushpin:
     image: agaveapi/pushpin:1.6.0
     hostname: realtime.example.com
-    mem_limit: 512m
+    mem_limit: 512m\
     restart: on-failure
     ports:
       - '7999:7999'

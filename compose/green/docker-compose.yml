@@ -1,26 +1,41 @@
 ###############################################################
 # Core Science APIs - Green Instances
-# green.yml
+# green/docker-compose.yml
 #
-# This contains the Green instances of a blue/green deployment.
-# These services start on a 8xxx port range and block a low
-# range of ports. Make sure to start the `proxy` container
-# from the `'../service-definitions.yml'` file separately from this
-# stack. You do not need to restart the proxy once it is running.
+# This contains the Green instances of a blue/green science 
+# API deployment. This differes from the static deployment 
+# configuration in that there are no static port mappings 
+# and containers may be brought up and down as needed. The 
+# `traefic` container will handle load balancing and port 
+# mapping dynamically by listening to the Docker daemon. 
+# 
+# Another difference between this deployment and the static 
+# deployment is the use of Docker networking. The load balancer 
+# will communicate with the containers over a private network 
+# defined for that purpose, and handle SSL termination before 
+# it gets to the backend containers. This means that all 
+# containers can run over standard HTTP as they do not need to 
+# be outwardly addressable. 
+#
+# As mentioned, this stack requires a `traefik` container be 
+# running as a reverse proxy in front of these containers. 
+# Once started, you do not need to bounce the `traefik` 
+# container when deploying new containers.
 #
 # Starting:
-# docker-compose -p proxy -f lb-proxy.yml up -d proxy
-# docker-compose -p green -f green.yml up -d
+# cd $AGAVE_HOME/compose && docker-compose -f proxy.yml up -d traefik
+# cd $AGAVE_HOME/compose/thirdparty && docker-compose up -d 
+# cd $AGAVE_HOME/compose/migrations && docker-compose up -d migrate
+# cd $AGAVE_HOME/compose/green && docker-compose up -d
+# 
 #
 # Recreating:
-# docker-compose -p green -f green.yml kill
-# docker-compose -p green -f green.yml rm -f
-# docker-compose -p green -f green.yml up -d
+# cd $AGAVE_HOME/compose/blue-lb && docker-compose up -d --force-recreate
 #
 ###############################################################
 
 ###############################################################
-#   Agave Core Services (B instance)
+#   Agave Core Services (Green instance)
 ###############################################################
 
 version: '2'
@@ -255,4 +270,4 @@ networks:
       name: thirdparty_realtime
   backend:
     external:
-      name: compose_backend 
+      name: proxy_backend 

@@ -13,38 +13,47 @@
 #
 ###############################################################
 
-migrate:
-  extends:
-    file: common.yml
-    service: migrations
-  command: "flyway:migrate"
+version: '2'
 
-clean:
-  extends:
-    file: common.yml
-    service: migrations
-  command: "flyway:clean"
-  
-info:
-  extends:
-    file: common.yml
-    service: migrations
-  command: "flyway:info"
+services:
 
-validate:
-  extends:
-    file: common.yml
-    service: migrations
-  command: "flyway:validate"
+  migrate:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:migrate"
   
-baseline:
-  extends:
-    file: common.yml
-    service: migrations
-  command: "flyway:baseline"
+  clean:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:clean"
+    
+  info:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:info"
   
-repair:
-  extends:
-    file: common.yml
-    service: migrations
-  command: "flyway:repair"
+  validate:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:validate"
+    
+  baseline:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:baseline"
+    
+  repair:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:repair"
+    
+networks:
+  thirdparty:
+    external:
+      name: thirdparty_services
