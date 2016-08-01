@@ -76,8 +76,39 @@ else if (isset($_GET['postit_key'])) // redeeming a postit
         $limit = get_integer_request_value('limit', $config['service.default.page.size']);
         $offset = get_integer_request_value('offset',0);
 
-        $db_results = get_active_postits($username, $limit, $offset);
+        $search_terms = array(
+            'created' => array('field' => 'created', 'type' => 'date'),
+            'expires' => array('field' => 'created', 'type' => 'date'),
+            'internalusername' => array('field' => 'created', 'type' => 'string'),
+            'url' => array('field' => 'created', 'type' => 'string'),
+            'method' => array('field' => 'created', 'type' => 'string'),
+            'noauth' => array('field' => 'created', 'type' => 'string'),
+            'remaininguses' => array('field' => 'created', 'type' => 'int'),
+            'postit' => array('field' => 'created', 'type' => 'string'),
+            'creator' => array('field' => 'created', 'type' => 'string'));
 
+        $query = array();
+        foreach (array_keys($search_terms) as $sterm) {
+            foreach($_GET as $query_term => $query_val) {
+                $query_term = strtolower($query_term);
+                list($qterm, $qoperator) = str_split($query_term, '.');
+                $qterm = strtolower($qterm);
+                if ($sterm === $qterm ) {
+                    $query[] = array(
+                        'term' => $sterm,
+                        'operator' => $qoperator,
+                        'value' => $query_val);
+                }
+            }
+        }
+
+        if (empty($query)) {
+            $db_results = search_active_postits($username, $limit, $offset);
+        }
+        else {
+            $db_results = get_active_postits($username, $limit, $offset);
+        }
+        
         while ($postit = mysql_fetch_array($db_results)) {
             $postits[] = array(
                 'created' => date('c', strtotime($postit['created_at'])),
@@ -304,31 +335,58 @@ function forward_postit_request($url, $method = "GET", $username = '', $need_aut
     } else {
         $tenant_base_url = $tenant['base_url'];
         $tenant_base_url = parse_url($tenant_base_url, PHP_URL_HOST);
+        $tenant_base_url = rtrim($tenant_base_url, '/');
         $config['iplant.service.trusted.domains'] = array($tenant_base_url);
     }
 
     $redirect_host = parse_url($url, PHP_URL_HOST);
     if (in_array($redirect_host, $config['iplant.service.trusted.domains'])) {
         $redirect_path = substr($url, strpos($url, $redirect_host) + strlen($redirect_host));
-        $url = $config['iplant.foundation.services']['proxy'] . str_replace('/v2', '', $redirect_path);
+        $redirect_path = str_replace('/v2', '', $redirect_path);
+
+        // here we need to move to docker 1.12 for the crosss-host networking
+        // so we can hit the containers directly rather than going through 3 layers of
+        // proxies and dns
+        $proxyUrl = rtrim($config['iplant.foundation.services']['proxy'], '\/');
+//        if (strpos($redirect_path, '/files') === 0) {
+//            $proxyUrl = 'http://files';
+//        }
+
+        $url = $proxyUrl . $redirect_path;
+
+        error_log( $url );
+
     } else if ($redirect_host != parse_url($config['iplant.foundation.services']['proxy'], PHP_URL_HOST)) {
         // don't send a jwt to outside domains. jwt should only go to the backend api services
         $need_auth = false;
     }
     if ($config['debug']) error_log($url);
 
-    $headers = apache_request_headers();
+    $apache_headers = apache_request_headers();
+    $headers = [];
+    foreach ($apache_headers as $hkey=>$hval) {
+        if ($hkey != "Accept-Encoding") {
+            $headers[] = $hkey . ': ' . $hval;
+        }
+    }
+
+    $headers[] = 'Accept-Encoding: identity;q=1, *;q=0';
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
+    // downgrading to HTTP 1.0 to avoid chunking response from the relay server
+//    curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, FALSE);
 //     curl_setopt($ch, CURLOPT_HEADER, TRUE);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
-    curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
+//    curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
     $referring_url = resolve_tenant_url($config['iplant.foundation.services']['postit'], $tenant_id) . $_GET['postit_key'];
     curl_setopt($ch, CURLOPT_REFERER, $referring_url);
-    curl_setopt($ch, CURLOPT_SSLVERSION, 3);
+//    curl_setopt($ch, CURLOPT_SSLVERSION, 3);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 1);
+    if (!$config['debug']) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 1);
+    }
     curl_setopt($ch, CURLOPT_HEADERFUNCTION, "write_relay_header_content"); // handle received headers
     curl_setopt($ch, CURLOPT_WRITEFUNCTION, 'write_relay_content'); // callad every CURLOPT_BUFFERSIZE
 
@@ -499,33 +557,41 @@ function forward_postit_request($url, $method = "GET", $username = '', $need_aut
         $headers[] = "Range: bytes=" . $range;
     }
 
+//    if (!in_array('HTTP_UPGRADE_INSECURE_REQUESTS: 1', $headers)) {
+//        $headers[] = 'HTTP_UPGRADE_INSECURE_REQUESTS: 1';
+//    }
+//
+//    if (array_key_exists('HTTP_COOKIE', $headers)) {
+//        unset($headers['HTTP_COOKIE']);
+//    }
+
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+//    if ($config['debug']) error_log(json_encode($headers, JSON_PRETTY_PRINT));
 
     //execute post
     curl_exec($ch);
 
-    if ($config['debug']) error_log(curl_error($ch));
+//    if ($config['debug']) error_log("Error output: " .curl_error($ch));
 
-//     error_log(json_encode(curl_getinfo($ch), JSON_PRETTY_PRINT));
+//    if ($config['debug']) error_log(json_encode(curl_getinfo($ch), JSON_PRETTY_PRINT));
     //close connection
-    curl_close($ch);
+//    curl_close($ch);
 
 }
 
 function write_relay_content($ch, $str){
+    global $config;
 	$len = strlen($str);
+//    if ($config['debug']) error_log($str);
 	echo( $str );
 	return $len;
 }
 
 function write_relay_header_content($ch, $str){
-	global $filename;
+	global $filename, $config;
 	$len = strlen($str);
+//    if ($config['debug']) error_log($str);
 	header( $str );
-// 	//~ error_log("curl-pass-through-proxy:fn_CURLOPT_HEADERFUNCTION:str:".$str.PHP_EOL, 3, "/tmp/curl-pass-through-proxy.log");
-// 	if ( strpos($str, "application/x-iso9660-image") !== false ) {
-// 		header( "Content-Disposition: attachment; filename=\"$filename\"" ); // set download filename
-// 	}
 	return $len;
 }
 

@@ -15,7 +15,7 @@ foreach ($headers as $header => $value)
 {
     if (stripos($header, JWT_HEADER_NAME) === 0)
     {
-      $tenant_id = substr(strtolower($header), (strlen(JWT_HEADER_NAME) + 1));
+        $tenant_id = substr(strtolower($header), (strlen(JWT_HEADER_NAME) + 1));
   		$tenant_id = str_replace('_', '.', $tenant_id);
   		$tenant_id = str_replace('-', '.', $tenant_id);
 

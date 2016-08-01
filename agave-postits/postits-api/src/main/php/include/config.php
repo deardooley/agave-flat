@@ -10,7 +10,7 @@
 
 date_default_timezone_set('America/Chicago');
 
-$config['debug'] = envVar('DEBUG', false);
+$config['debug'] = envVar('DEBUG', true);
 $config['service.version'] = envVar('IPLANT_SERVICE_VERSION','${foundation.service.version}');
 $config['service.default.page.size'] = intval(envVar('IPLANT_DEFAULT_PAGE_SIZE', '100'));
 
