@@ -91,19 +91,21 @@ else if (isset($_GET['postit_key'])) // redeeming a postit
         foreach (array_keys($search_terms) as $sterm) {
             foreach($_GET as $query_term => $query_val) {
                 $query_term = strtolower($query_term);
-                list($qterm, $qoperator) = str_split($query_term, '.');
-                $qterm = strtolower($qterm);
-                if ($sterm === $qterm ) {
-                    $query[] = array(
-                        'term' => $sterm,
-                        'operator' => $qoperator,
-                        'value' => $query_val);
+                if (strpos($query_term, '.') !== FALSE) {
+                    list($qterm, $qoperator) = str_split($query_term, '.');
+                    $qterm = strtolower($qterm);
+                    if ($sterm === $qterm) {
+                        $query[] = array(
+                            'term' => $sterm,
+                            'operator' => $qoperator,
+                            'value' => $query_val);
+                    }
                 }
             }
         }
 
-        if (empty($query)) {
-            $db_results = search_active_postits($username, $limit, $offset);
+        if (count($query) > 1) {
+            $db_results = search_active_postits($username, $query, $limit, $offset);
         }
         else {
             $db_results = get_active_postits($username, $limit, $offset);
