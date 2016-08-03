@@ -60,7 +60,7 @@ services:
     networks:
       - frontend
       - backend
-      
+
   devproxy:
     image: agaveapi/apache-api-proxy:alpine
     hostname: api.example.com
@@ -82,8 +82,8 @@ services:
     volumes:
       - './logs/proxy:/var/log/apache2'
       - '../ssl:/ssl:ro'
-      - './apache/httpd.conf:/etc/apache2/httpd.conf'
-      - './apache/ssl.conf:/etc/apache2/conf.d/ssl.conf'
+      - './apache:/apache'
+      - './apache/environment.sh:/app/config/environment.sh'
     networks:
       - frontend
       - backend
@@ -113,5 +113,3 @@ networks:
   default:
   frontend:
   backend:
-  
-  

@@ -17,7 +17,7 @@ public class ForkJobIdParser implements RemoteJobIdParser {
 				if (StringUtils.isNumeric(line.trim())) {
 					return line.trim();
 				} else {
-					throw new RemoteJobIDParsingException("Failed to parse job id from output: " + output); 
+					throw new RemoteJobIDParsingException(output); 
 				}
 			}
 		}

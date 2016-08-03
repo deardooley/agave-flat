@@ -34,7 +34,13 @@ public class JobQuotaCheck implements QuotaCheck {
             jobQueue = new BatchQueue("default", new Long(10), new Double(4));
         } 
         // todo end hack for queueless condor
-
+//        if ( jobQueue == null ) {
+//        	if (system.getDefaultQueue() == null && system.getScheduler() == SchedulerType.CONDOR) {
+//        		jobQueue = new BatchQueue("default", new Long(10), new Double(4));
+//        	} else {
+//        		
+//        	}
+//        } 
         
 		// verify the system quota first
         if (jobQueue.getMaxJobs() == -1) {

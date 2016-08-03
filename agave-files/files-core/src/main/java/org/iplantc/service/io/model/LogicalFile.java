@@ -532,7 +532,7 @@ public class LogicalFile {
 		links.set("self", mapper.createObjectNode()
 	    		.put("href", getPublicLink()));
 	    links.set("system", mapper.createObjectNode()
-				.put("href", system.getPublicLink()));
+				.put("href", getSystem().getPublicLink()));
 		links.put("profile", mapper.createObjectNode()
 				.put("href", getOwnerLink()));
 		links.put("history", mapper.createObjectNode()
@@ -581,20 +581,20 @@ public class LogicalFile {
 	
 	@Transient
 	public String getPublicLink() {
-		String resolvedPath = StringUtils.removeStart(getPath(), system.getStorageConfig().getRootDir());
+		String resolvedPath = StringUtils.removeStart(getPath(), getSystem().getStorageConfig().getRootDir());
 		resolvedPath = "/" + StringUtils.removeEnd(resolvedPath, "/"); 
 		return TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_IO_SERVICE) + 
-				"media/system/" + system.getSystemId() + "/" + 
+				"media/system/" + getSystem().getSystemId() + "/" + 
 				UrlPathEscaper.escape(resolvedPath);
 		
 	}
 	
 	@Transient
 	public String getEventLink() {
-		String resolvedPath = StringUtils.removeStart(getPath(), system.getStorageConfig().getRootDir());
+		String resolvedPath = StringUtils.removeStart(getPath(), getSystem().getStorageConfig().getRootDir());
 		resolvedPath = "/" + StringUtils.removeEnd(resolvedPath, "/"); 
 		return TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_IO_SERVICE) + 
-				"history/system/" + system.getSystemId() + "/" + 
+				"history/system/" + getSystem().getSystemId() + "/" + 
 				UrlPathEscaper.escape(resolvedPath);
 	}
 	

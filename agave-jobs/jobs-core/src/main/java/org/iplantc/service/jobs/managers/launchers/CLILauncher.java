@@ -48,25 +48,28 @@ public class CLILauncher extends HPCLauncher
 				cdCommand = "source " + executionSystem.getStartupScript() + " ; ";		
 			}
 			
+			// enter the job directory explicitly
 			cdCommand = "cd " + remoteExecutionDataClient.resolvePath(job.getWorkPath());
 			
-			String chmodCommand = "chmod +x " + batchScriptName;
-			
+			// get the logfile name so we can redirect output properly
 			String logFileBaseName = Slug.toSlug(job.getName());
 			
-			String pidCommand = "while [[ ! -e " + logFileBaseName + ".pid ]]; do sleep 1; done ; cat " + logFileBaseName + ".pid";
+			// grant the file write permissions just in case it doens't have them
+			String chmodCommand = " chmod +x " + batchScriptName + " > /dev/null ";
 			
-			String submitCommand = " sh -c \"./"+ batchScriptName + 
-					" 2> " + logFileBaseName + ".err 1> " + logFileBaseName + ".out & \"";
+			// submit the script and echo the pid or dump the output for debugging
+			String submitCommand = " sh -c './"+ batchScriptName + 
+					" 2> " + logFileBaseName + ".err 1> " + logFileBaseName + ".out & export AGAVE_PID=$! " +
+					" && if [[ -n \"$(ps -o comm= -p $AGAVE_PID)\" ]] || [[ -e " + logFileBaseName + ".pid ]]; then echo $AGAVE_PID; else cat " + logFileBaseName + ".err; fi'";
 			
 			String submissionResponse = submissionClient.runCommand(
-					cdCommand + "; " + chmodCommand + "; " + submitCommand + "; " + pidCommand);
+					cdCommand + " && " + chmodCommand + " && " + submitCommand);
 					
 			if (StringUtils.isEmpty(submissionResponse.trim())) 
 			{
 				// retry once just in case it was a flickr
 				submissionResponse = submissionClient.runCommand(
-						cdCommand + "; " + chmodCommand + "; " + submitCommand + "; " + pidCommand);
+						cdCommand + " &&  " + chmodCommand + " && " + submitCommand);
 				
 				if (!ServiceUtils.isValid(submissionResponse.trim())) 
 					throw new JobException("Failed to submit cli job. " + submissionResponse);
