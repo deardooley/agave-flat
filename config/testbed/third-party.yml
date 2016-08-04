@@ -17,7 +17,7 @@
 # MySQL
 ##############################################################
 mysql:
-  image: agaveapi/mysql:5.6-dev
+  image: agaveapi/mysql:5.6-devtz
   ports:
     - '3306:3306'
   restart: on-failure

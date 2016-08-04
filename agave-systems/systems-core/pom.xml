@@ -62,7 +62,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<suiteXmlFiles>
-						<suiteXmlFile>${suite.testng}</suiteXmlFile>
+						<suiteXmlFile>src/test/resources/${suite.testng}</suiteXmlFile>
 					</suiteXmlFiles>
 				</configuration>
 			</plugin>

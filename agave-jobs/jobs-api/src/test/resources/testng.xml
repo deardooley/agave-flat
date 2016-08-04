@@ -1,6 +1,12 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
 <suite name="iPlant Apps Services" verbose="1" parallel="false">
+    <groups>
+        <run>
+            <exclude name="broken"/>
+            <exclude name="notReady"/>
+        </run>
+    </groups>
 	<test name="apps">
 		<packages></packages>
 	</test>

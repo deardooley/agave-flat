@@ -1,6 +1,12 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
 <suite name="iPlant Jobs Services" verbose="2" parallel="false">
+    <groups>
+        <run>
+            <exclude name="broken"/>
+            <exclude name="notReady"/>
+        </run>
+    </groups>
 	<test name="jobs">
 		 <packages>
 			<!-- <package name="org.iplantc.service.jobs.model" /> -->

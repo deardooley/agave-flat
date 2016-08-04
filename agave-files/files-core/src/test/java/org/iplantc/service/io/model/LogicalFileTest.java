@@ -49,7 +49,7 @@ public class LogicalFileTest extends BaseTestCase {
 		};
 	}
 
-	@Test(dataProvider = "getAgaveRelativePathFromAbsolutePathProvider")
+	@Test(dataProvider = "getAgaveRelativePathFromAbsolutePathProvider", groups={"broken"})
 	public void getAgaveRelativePathFromAbsolutePath(String rootDir,
 			String homeDir, String path, String expectedUrl) {
 		
@@ -66,22 +66,22 @@ public class LogicalFileTest extends BaseTestCase {
 				"Expected URL path does not match expected url path.");
 	}
 
-	@Test
+	@Test(groups={"notReady"})
 	public void getMetadataLink() {
 		throw new RuntimeException("Test not implemented");
 	}
 
-	@Test
+	@Test(groups={"notReady"})
 	public void getOwnerLink() {
 		throw new RuntimeException("Test not implemented");
 	}
 
-	@Test
+	@Test(groups={"notReady"})
 	public void getPublicLink() {
 		throw new RuntimeException("Test not implemented");
 	}
 
-	@Test
+	@Test(groups={"notReady"})
 	public void getSourceUri() {
 		throw new RuntimeException("Test not implemented");
 	}

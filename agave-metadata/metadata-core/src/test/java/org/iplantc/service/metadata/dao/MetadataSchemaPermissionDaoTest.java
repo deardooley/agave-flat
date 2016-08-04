@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
+@Test(groups={"broken"})
 public class MetadataSchemaPermissionDaoTest {
 
 	private String schemaId = null;

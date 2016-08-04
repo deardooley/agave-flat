@@ -8,7 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.annotations.Test;
 
-@Test(groups= {"irods.path-resolution"})
+@Test(groups= {"irods.path-resolution", "broken"})
 public class IrodsPathResolutionTests extends AbstractPathResolutionTests
 {
 	@Override

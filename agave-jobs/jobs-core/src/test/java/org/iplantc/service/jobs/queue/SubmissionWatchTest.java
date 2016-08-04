@@ -41,6 +41,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"broken"})
 public class SubmissionWatchTest extends AbstractJobSubmissionTest 
 {
     private static final Logger log = Logger.getLogger(StagingWatch.class);

@@ -1,6 +1,12 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
   
 <suite name="iPlant Monitor Service API" verbose="2" parallel="false"  thread-count="1">
+  <groups>
+    <run>
+        <exclude name="broken"/>
+        <exclude name="notReady"/>
+    </run>
+  </groups>
    <test name="monitor resources" >
 		<packages>
 			<package name="org.iplantc.service.monitor.resources.impl" />

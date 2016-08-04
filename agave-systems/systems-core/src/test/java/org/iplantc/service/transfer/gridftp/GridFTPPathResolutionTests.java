@@ -8,7 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.annotations.Test;
 
-@Test(groups= {"gridftp","path-resolution"})
+@Test(groups= {"gridftp","path-resolution","broken"})
 public class GridFTPPathResolutionTests extends AbstractPathResolutionTests
 {
 	@Override

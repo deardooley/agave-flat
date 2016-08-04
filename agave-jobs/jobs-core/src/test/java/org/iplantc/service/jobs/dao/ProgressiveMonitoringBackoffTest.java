@@ -47,6 +47,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.Collections2;
 
+@Test(groups={"broken"})
 public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest 
 {
 	public static final Logger log = Logger.getLogger(ProgressiveMonitoringBackoffTest.class); 

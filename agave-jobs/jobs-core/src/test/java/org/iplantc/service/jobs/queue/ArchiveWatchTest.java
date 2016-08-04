@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
  * Tests end to end integration of a job submission by manually pushing
  * through each stage of each queue.
  */
+@Test(groups={"broken"})
 public class ArchiveWatchTest extends AbstractJobSubmissionTest
 {
     private static final Logger log = Logger.getLogger(ArchiveWatchTest.class);

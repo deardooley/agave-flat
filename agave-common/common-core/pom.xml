@@ -194,11 +194,6 @@
 			<artifactId>powermock-api-mockito</artifactId>
 			<version>${powermock.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.testng</groupId>
-			<artifactId>testng</artifactId>
-			<version>6.8.21</version>
-		</dependency>
 		<!-- <dependency>
 			<groupId>org.uncommons</groupId>
 			<artifactId>reportng</artifactId>

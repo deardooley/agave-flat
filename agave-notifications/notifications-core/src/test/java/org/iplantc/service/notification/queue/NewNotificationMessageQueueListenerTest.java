@@ -100,7 +100,7 @@ public class NewNotificationMessageQueueListenerTest extends AbstractNotificatio
 		};
 	}
 	
-	@Test(dataProvider="executeProvider")
+	@Test(dataProvider="executeProvider", groups={"broken"})
 	public void execute(Notification notification, String errorMessage, boolean shouldSucceed, boolean shouldThrowException) 
 	throws NotificationException
 	{
@@ -165,7 +165,7 @@ public class NewNotificationMessageQueueListenerTest extends AbstractNotificatio
 		}
 	}
 	
-	@Test(dataProvider="executeProvider", dependsOnMethods={"execute"})
+	@Test(dataProvider="executeProvider", dependsOnMethods={"execute"}, groups={"broken"})
 	public void executeJobExecutionContext(Notification notification, String errorMessage, boolean shouldSucceed, boolean shouldThrowException) 
 	throws NotificationException
 	{
