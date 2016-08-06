@@ -15,10 +15,6 @@
 	<description>Migration definitions and controls for the Agave Platform</description>
 	<packaging>jar</packaging>
 
-	<properties>
-		<flyway.version>4.0</flyway.version>
-	</properties>
-
 	<build>
 		<resources>
 			<resource>
@@ -38,7 +34,7 @@
 			<plugin>
 				<groupId>org.flywaydb</groupId>
 			    <artifactId>flyway-maven-plugin</artifactId>
-			    <version>${flyway.version}</version>
+			    <version>${flyway-maven-plugin.version}</version>
 				<configuration>
 					<driver>${foundation.db.driver}</driver>
 					<table>migrations</table>
@@ -67,7 +63,7 @@
 			<!-- <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.4.3</version>
+				<version>${maven-shade-plugin.version}</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -238,7 +234,7 @@
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
+					<version>${org.eclipse.m2e.lifecycle-mapping.version}</version>
 					<configuration>
 						<lifecycleMappingMetadata>
 							<pluginExecutions>
@@ -249,7 +245,7 @@
 											flyway-maven-plugin
 										</artifactId>
 										<versionRange>
-											[4.0,)
+											${flyway-maven-plugin.versionRange}
 										</versionRange>
 										<goals>
 											<goal>migrate</goal>
@@ -272,28 +268,28 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
-			<version>4.0</version>
+			<version>${flyway-core.version}</version>
 		</dependency>
 
 		<!-- mysql jdbc driver -->
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.38</version>
+			<version>${mysql-connector-java.version}</version>
 		</dependency>
 		
 		<!-- Java custom migration depedencies -->
 		<dependency>
 			<groupId>com.github.stephenc.eaio-uuid</groupId>
 			<artifactId>uuid</artifactId>
-			<version>3.4.0</version>
+			<version>${uuid.version}</version>
 		</dependency>
 		
 		<!-- logging depedencies -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.6.1</version>
+			<version>${slf4j-log4j12.version}</version>
 		</dependency>
 		
 		<!-- <dependency>

@@ -58,22 +58,22 @@
 		<dependency>
 			<groupId>bad.robot</groupId>
 			<artifactId>simple-http</artifactId>
-			<version>1.0-jdk6</version>
+			<version>${simple-http.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.mail</groupId>
 			<artifactId>mail</artifactId>
-			<version>1.4.6</version>
+			<version>${mail.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20090211</version>
+			<version>${json.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-validator</groupId>
 			<artifactId>commons-validator</artifactId>
-			<version>1.4.0</version>
+			<version>${commons-validator.version}</version>
 		</dependency>
 	</dependencies>
 </project>
