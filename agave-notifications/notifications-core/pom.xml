@@ -55,22 +55,22 @@
 		<dependency>
 			<groupId>javax.mail</groupId>
 			<artifactId>mail</artifactId>
-			<version>1.4.6</version>
+			<version>${mail.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20090211</version>
+			<version>${json.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-validator</groupId>
 			<artifactId>commons-validator</artifactId>
-			<version>1.4.0</version>
+			<version>${commons-validator.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twilio.sdk</groupId>
 			<artifactId>twilio-java-sdk</artifactId>
-			<version>3.4.1</version>
+			<version>${twilio-java-sdk.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.codehaus.jackson</groupId>
@@ -81,19 +81,19 @@
 		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
-			<version>2.5</version>
+			<version>${commons-lang.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sendgrid</groupId>
 			<artifactId>sendgrid-java</artifactId>
-			<version>2.2.2</version>
+			<version>${sendgrid-java.version}</version>
 		</dependency>
 
 		<!-- MongoDB -->
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
-			<version>2.14.1</version>
+			<version>${mongo-java-driver.version}</version>
 		</dependency>
 	</dependencies>
 </project>
