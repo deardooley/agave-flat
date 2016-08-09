@@ -9,9 +9,11 @@
     </groups>
 	<test name="auth">
 		<packages>
+<!--
 			<package name="org.iplantc.service.auth.model" />
 			<package name="org.iplantc.service.auth.dao" />
 			<package name="org.iplantc.service.auth.manager" />
+-->
 		</packages>
 	</test> 
 </suite>

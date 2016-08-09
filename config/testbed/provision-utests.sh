@@ -63,7 +63,7 @@ rm -f "$module".end
   echo " in provision-utest  SUITE     : $SUITE  "
 
   # start up all supporting containers here sans build container
-  docker-compose -f config/testbed/third-party.yml -p $module up -d $containers
+  docker-compose -f config/testbed/jenkins.yml -p $module up -d $containers
   # let's see'um
   echo " show us the containers running ..."
   docker ps
@@ -72,13 +72,13 @@ rm -f "$module".end
   # Once the supporting containers have started
   # start the utest container to run the unit tests
   echo " startup the test runner container "
-  docker-compose -f config/testbed/third-party.yml -p $module up -d utest
+  docker-compose -f config/testbed/jenkins.yml -p $module up -d utest
 
   # poll for module end flag file
   turns=0
   while [ ! -f "$module".end ]; do
       echo "   **** polling for $module.end $turns ****"
-      if [ $turns -lt 100 ]
+      if [ $turns -lt 50 ]
       then
          (( turns++ ))
          sleep 10
@@ -100,8 +100,8 @@ rm -f "$module".end
   fi
 
   # stop the docker containers
-  echo " stop third-party.yml services from provision-utests ...."
-  docker-compose -p $module -f config/testbed/third-party.yml stop
+  echo " stop jenkins.yml services from provision-utests ...."
+  docker-compose -p $module -f config/testbed/jenkins.yml stop
   sleep 10
 
   echo " ***** log from test container test run ****** "
@@ -113,8 +113,8 @@ rm -f "$module".end
   echo "***************   container log  end    ***************"
   sleep 10
 
-  echo " remove third-party.yml services from provision-utests ...."
-  docker-compose -p $module -f config/testbed/third-party.yml rm -f
+  echo " remove jenkins.yml services from provision-utests ...."
+  docker-compose -p $module -f config/testbed/jenkins.yml rm -f
   sleep 10
 
   rm -f "$module".end
