@@ -9,6 +9,7 @@
     </groups>
     <test name="Common core">
         <packages>
+<!--
             <package name="org.iplantc.service.common.auth" />
             <package name="org.iplantc.service.common.dao" />
             <package name="org.iplantc.service.common.discovery.providers.sql" />
@@ -17,6 +18,7 @@
             <package name="org.iplantc.service.common.uri" />
             <package name="org.iplantc.service.common.util" />
             <package name="org.iplantc.service.common.uuid" />
+-->
         </packages>
     </test>
 
