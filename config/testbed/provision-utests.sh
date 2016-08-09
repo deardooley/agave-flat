@@ -78,7 +78,7 @@ rm -f "$module".end
   turns=0
   while [ ! -f "$module".end ]; do
       echo "   **** polling for $module.end $turns ****"
-      if [ $turns -lt 10 ]
+      if [ $turns -lt 100 ]
       then
          (( turns++ ))
          sleep 10

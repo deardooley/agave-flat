@@ -16,7 +16,7 @@ echo ""
 echo " *****  USER:        $user     *****"
 echo ""
 echo "current directory : `pwd`"
-echo "$(ls -la ~ | grep .m2)"
+# echo "$(ls -la ~ | grep .m2)"
 echo ""
 
 
@@ -26,5 +26,5 @@ echo ""
 
   mvn -s config/maven/settings-SAMPLE.xml -f $core_module/pom.xml  -Dsuite.testng=$suite -P agave,utest  test
   sleep 10
-
+  echo " activating end file "
   touch "$MODULE".end

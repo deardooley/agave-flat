@@ -1,0 +1,237 @@
+##############################################################
+#  Development Stack of Dependent Services
+#############################################################
+
+version: '2'
+
+services:
+  ##############################################################
+  # Java & Maven enabled platform
+  ##############################################################
+  utest:
+    #image values: agaveapi/slave-mvn-runner:1.0 for jenkins vs. agaveapi/mvn-runner for mac virtualbox setup
+    image: ${IMAGE}
+    command: sh /sources/config/testbed/run-utests.sh
+    #command: sleep 1200
+    labels:
+      agaveapi.test: "utest"
+    environment:
+      MODULE: ${MODULE}
+      SUITE: ${SUITE}
+      USER_HOME: ${USER_HOME}
+    volumes:
+      - ../..:/sources
+      - ~/.m2:/home/apim/.m2
+      #- ~/.docker:/root/.docker:ro
+      #- /var/run/docker.sock:/docker.sock
+
+  ##############################################################
+  # MySQL
+  ##############################################################
+  mysql:
+    image: agaveapi/mysql:5.6-devtz
+    ports:
+      - '3306:3306'
+    restart: on-failure
+    hostname: mysql.example.com
+    labels:
+      agaveapi.test: "utest"
+    volumes_from:
+      - 'mysqlvol'
+    environment:
+      MYSQL_ROOT_PASSWORD: changeit
+      MYSQL_DATABASE: agavecore
+      MYSQL_USER: agaveuser
+      MYSQL_PASSWORD: password
+      MYSQL_TEST_DATABASE: test
+
+  mysqlvol:
+    image: agaveapi/mysql:5.6-devtz
+    command: sleep 90
+    mem_limit: 64m
+
+
+##############################################################
+# MongoDB
+##############################################################
+  mongodb:
+    image: agaveapi/mongodb:2.6
+    hostname: mongodb
+    restart: on-failure
+    labels:
+      agaveapi.test: "utest"
+    environment:
+      - MONGODB_ADMIN_PASS=changeit
+      - MONGODB_PASSWORD=password
+      - MONGODB_USERNAME=agaveuser
+      - MONGODB_DATABASE=api
+    volumes_from:
+      - mongodbvol
+    ports:
+      - '27017:27017'
+
+  mongodbvol:
+    image: agaveapi/mongodb:2.6
+    command: sleep 120
+    mem_limit: 64m
+
+##############################################################
+# Beanstalkd
+##############################################################
+  beanstalkd:
+    image: agaveapi/beanstalkd:latest
+    command: /usr/bin/beanstalkd -b /var/lib/beanstalkd/binlog
+    hostname: beanstalkd
+    mem_limit: 512m
+    labels:
+      agaveapi.test: "utest"
+    restart: on-failure
+    volumes_from:
+      - beanstalkdvol
+    ports:
+      - '11300:11300'
+
+  beanstalkdvol:
+    image: agaveapi/beanstalkd:latest
+    command: sleep 60
+    mem_limit: 64m
+
+  ##############################################################
+  # Mail
+  ##############################################################
+  #mail:
+  #  image: tvial/docker-mailserver
+  #  hostname: mail
+  #  domainname: domain.com
+  #  # your FQDN will be 'mail.domain.com'
+  #  ports:
+  #  - "25:25"
+  #  - "143:143"
+  #  - "587:587"
+  #  - "993:993"
+  #  volumes:
+  #  - ./spamassassin:/tmp/spamassassin/
+  #  - ./postfix:/tmp/postfix/
+
+  myproxy:
+    image: agaveapi/myproxy
+    #hostname: docker.example.com
+    labels:
+      agaveapi.test: "utest"
+    ports:
+      - '22'
+      - '7512'
+      - '7513'
+    environment:
+      - 'GLOBUS_GSSAPI_FORCE_TLS=1'
+
+  sftp:
+    image: agaveapi/centos-base
+    #hostname: docker.example.com
+    labels:
+      agaveapi.test: "utest"
+    ports:
+      - '22'
+
+  sftptunnel:
+   image: agaveapi/centos-base
+   #hostname: tunnel.example.com
+   labels:
+     agaveapi.test: "utest"
+   privileged: true
+   #links:
+   #  - sftphidden
+   ports:
+     - '22'
+
+  sftphidden:
+    image: agaveapi/centos-base
+    #hostname: docker.example.com
+    labels:
+      agaveapi.test: "utest"
+    ports:
+      - '22'
+
+  irods:
+    image: agaveapi/irods:3.3.1
+    #hostname: docker.example.com
+    labels:
+      agaveapi.test: "utest"
+    ports:
+      - '22'
+      - '1247'
+
+  irodspam:
+   image: agaveapi/irods-pam:latest
+   #hostname: docker.example.com
+   labels:
+     agaveapi.test: "utest"
+   ports:
+     - '22'
+     - '1247'
+
+  irods4:
+   image: agaveapi/irods:4.0.3
+   command: changeit
+   #hostname: docker.example.com
+   labels:
+     agaveapi.test: "utest"
+   environment:
+     - 'DOCKER_HOSTNAME=docker.example.com'
+     - 'IRODS_ZONE=iplant'
+   ports:
+     - '1247'
+
+  http:
+    image: agaveapi/apache-dev
+    #hostname: docker.example.com
+    labels:
+      agaveapi.test: "utest"
+    ports:
+      - '22'
+      - '80'
+      - '443'
+
+  ftp:
+    image: agaveapi/pure-ftpd
+    #hostname: docker.example.com
+    labels:
+      agaveapi.test: "utest"
+    privileged: true
+    ports:
+      - '20'
+      - '21'
+      - '22'
+      - '30000-30009'
+
+  gridftp:
+    image: agaveapi/gridftp:5
+    #hostname: docker.example.com
+    labels:
+      agaveapi.test: "utest"
+    extra_hosts:
+      - 'tests.example.com:192.168.99.1'
+      - 'dooley-mac.local:192.168.99.1'
+    privileged: true
+    ports:
+      - '22'
+      - '2811'
+      - '7512'
+      - '50000-50100'
+    environment:
+      - 'GLOBUS_TCP_PORT_RANGE=50000,50100'
+
+##############################################################
+# Pushpin
+##############################################################
+  pushpin:
+    image: agaveapi/pushpin:1.6.0
+    extra_hosts:
+      - 'realtime.api.agave:192.168.99.100'
+    hostname: realtime.docker.example.com
+    mem_limit: 512m
+    restart: on-failure
+    ports:
+      - '7999:7999'
+      - '5561:5561'
+
