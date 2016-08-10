@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Agave Platform UUID API" verbose="2" parallel="false"  thread-count="1">
+   <test name="uuid resources" >
+		<packages>
+			<package name="org.iplantc.service.uuid.resources.impl" />
+		</packages>
+    </test>
+</suite>

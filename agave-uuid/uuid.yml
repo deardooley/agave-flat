@@ -1,0 +1,143 @@
+swagger: '2.0'
+info:
+  title: Agave UUID API
+  description: This is a basic UUID creation and lookup api.
+  version: 0.1.0
+host: public.agaveapi.co
+schemes:
+  - https
+basePath: /
+produces:
+  - application/json
+paths:
+  /uuid/v2:
+    post:
+      operationId: createUuid
+      summary: Creat a new uuid
+      description: Creates a new uuid
+      tags:
+        - UUID
+      consumes:
+        - application/json
+        - multipart/form-data
+      parameters:
+        - in: body
+          name: body
+          description: JSON Tag object
+          required: true
+          schema:
+            $ref: '#/definitions/UUID'
+        - name: naked
+          in: query
+          description: If true return only the payload, not the standard response wrapper
+          required: false
+          type: boolean
+          default: true
+      responses:
+        '200':
+          description: An single UUID
+          schema:
+            $ref: '#/definitions/UUID'
+        '400':
+          description: 'Bad request, usually due to invalid resource type in the response query.'
+          schema:
+            $ref: '#/definitions/Error'
+        '403':
+          description: You do not have sufficient permissions to the tagged resources.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+        - agaveImplicit:
+            - PRODUCTION
+        - agaveApplication:
+            - PRODUCTION
+        - agavePassword:
+            - PRODUCTION
+  '/uuid/v2/{uuid}':
+    get:
+      operationId: getResouceForUuid
+      summary: Resolve UUID
+      description: Returns information about the resource represented by the UUID
+      tags:
+        - UUID
+      parameters:
+        - name: uuid
+          in: path
+          description: Unique id of the tag
+          required: true
+          type: string
+        - name: naked
+          in: query
+          description: If true return only the payload, not the standard response wrapper
+          required: false
+          type: boolean
+          default: true
+      responses:
+        '200':
+          description: UUID details
+          schema:
+            "$ref": "#/definitions/UUID"
+        '403':
+          description: You do not have sufficient permissions to view the resource corresponding to this uuid.
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+        - agaveImplicit:
+            - PRODUCTION
+        - agaveApplication:
+            - PRODUCTION
+        - agavePassword:
+            - PRODUCTION
+securityDefinitions:
+  agaveImplicit:
+    type: oauth2
+    authorizationUrl: 'https://public.agaveapi.co/authorization'
+    flow: implicit
+    scopes:
+      PRODUCTION: catchall scope for all core apis
+  agaveApplication:
+    type: oauth2
+    tokenUrl: 'https://public.agaveapi.co/token'
+    flow: application
+    scopes:
+      PRODUCTION: catchall scope for all core apis
+  agavePassword:
+    type: oauth2
+    tokenUrl: 'https://public.agaveapi.co/token'
+    flow: password
+    scopes:
+      PRODUCTION: catchall scope for all core apis
+definitions:
+  UUID:
+    description: Resource to which a tag has been associated
+    type: object
+    properties:
+      uuid:
+        description: uuid created/requested
+        type: string
+      type:
+        description: the resource type represented by this uuid
+        type: string
+  Error:
+    description: Generic error response
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string

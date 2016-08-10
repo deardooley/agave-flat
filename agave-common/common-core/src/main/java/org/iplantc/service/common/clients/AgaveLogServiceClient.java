@@ -25,7 +25,7 @@ public class AgaveLogServiceClient {
 	private static final Logger log = LogManager.getLogger(AgaveLogServiceClient.class);
 	
 	public static enum ServiceKeys { 
-		APPS02, AUTH02, TRANSFORMS02, FILES02, JOBS02, PROFILES02, NOTIFICATIONS02, SYSTEMS02, METADATA02, POSTITS02, USAGE02, TRANSFERS02, MYPROXY02, MONITORS02, CLIENTS02, TAGS02, REALTIME02,
+		APPS02, AUTH02, TRANSFORMS02, FILES02, JOBS02, PROFILES02, NOTIFICATIONS02, SYSTEMS02, METADATA02, POSTITS02, USAGE02, TRANSFERS02, MYPROXY02, MONITORS02, CLIENTS02, TAGS02, REALTIME02, UUID02, REACTORS02, ABACO02, REPOSITORIES02
 	};
 	
 	public static enum ActivityKeys 
@@ -48,7 +48,8 @@ public class AgaveLogServiceClient {
 		TriggerListAll, TriggerCreate, TriggerList, TriggerDelete,
 		MyProxyList, MyProxyStore, MyProxyGetByName, MyProxyDelete,
 		MonitorGetById, MonitorsList, MonitorAdd, MonitorDelete, MonitorUpdate, MonitorChecksList, MonitorCheckGetById, MonitorTrigger, MonitorHistoryGet, MonitorHistoryList, MonitorHistoryGetById,
-		ClientsList, ClientsDelete, ClientsUpdate, ClientsAdd, ClientsApiList, ClientsApiSubscribe, ClientsApiDelete, 
+		ClientsList, ClientsDelete, ClientsUpdate, ClientsAdd, ClientsApiList, ClientsApiSubscribe, ClientsApiDelete,
+		UuidLookup, UuidGen,
 		
 	};
 	

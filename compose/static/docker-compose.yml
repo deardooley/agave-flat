@@ -205,6 +205,18 @@ services:
     environment:
       - 'ENABLE_REMOTE_DEBUG=1'
       - 'CONTAINER_STACK=blue'
+      
+  uuids:
+    extends:
+      file: '../service-definitions.yml'
+      service: uuids
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8078:80"
+      - "8459:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
 
   postits:
     extends:

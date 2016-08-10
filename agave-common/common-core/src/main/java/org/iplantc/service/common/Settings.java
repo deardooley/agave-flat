@@ -49,6 +49,8 @@ public class Settings
     private static final Logger log = Logger.getLogger(Settings.class);
     
     protected static final String PROPERTY_FILE = "service.properties";
+
+	
     
     /* Debug settings */
     public static boolean       DEBUG;
@@ -101,6 +103,9 @@ public class Settings
     public static String        IPLANT_GROUPS_SERVICE;
     public static String		IPLANT_REALTIME_SERVICE;
     public static String		IPLANT_CLIENTS_SERVICE;
+    public static String 		IPLANT_REACTOR_SERVICE;
+    public static String 		IPLANT_ABACO_SERVICE;
+    public static String 		IPLANT_REPOSITORY_SERVICE;
     
     /* iPlant dependent services */
     public static String        QUERY_URL;
@@ -311,6 +316,9 @@ public class Settings
         IPLANT_TAGS_SERVICE         = Settings.getSantizedServiceUrl(props, "iplant.tags.service", "https://public.agaveapi.co/tags/v2");
         IPLANT_TENANTS_SERVICE      = Settings.getSantizedServiceUrl(props, "iplant.tenants.service", "http://agaveapi.co/tenants/");
         IPLANT_TRANSFER_SERVICE     = Settings.getSantizedServiceUrl(props, "iplant.transfer.service", "https://public.agaveapi.co/transfers/v2");
+        IPLANT_REACTOR_SERVICE     	= Settings.getSantizedServiceUrl(props, "iplant.reactors.service", "https://public.agaveapi.co/reactors/v2");
+        IPLANT_REPOSITORY_SERVICE   = Settings.getSantizedServiceUrl(props, "iplant.repositories.service", "https://public.agaveapi.co/repositories/v2");
+        IPLANT_ABACO_SERVICE     	= Settings.getSantizedServiceUrl(props, "iplant.abaco.service", "https://public.agaveapi.co/abaco/v2");
         
         NOTIFICATION_QUEUE = (String) props.getProperty("iplant.notification.service.queue", "prod.notifications.queue");
 		NOTIFICATION_TOPIC = (String) props.getProperty("iplant.notification.service.topic", "prod.notifications.queue");

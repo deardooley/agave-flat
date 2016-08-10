@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.iplantc.agave</groupId>
+		<artifactId>uuid</artifactId>
+		<version>2.1.8</version>
+	</parent>
+	<artifactId>uuid-api</artifactId>
+	<name>Agave Core Science API UUID Service API Endpoints</name>
+	<description>Webapp that contains the REST endpoints for the UUID service</description>
+	<packaging>war</packaging>
+
+	<scm>
+		<connection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-uuid.git</connection>
+		<developerConnection>scm:git:ssh://git@bitbucket.org/agaveapi/agave-uuid.git</developerConnection>
+		<url>https://bitbucket.org/agaveapi/agave-uuid</url>
+	</scm>
+
+	<properties>
+		<force.check.version>false</force.check.version>
+		<service.war.name>uuid</service.war.name>
+    <hibernate.hbm2ddl>update</hibernate.hbm2ddl>
+    <jetty.daemon>true</jetty.daemon>
+	</properties>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>SmartBearPluginRepository</id>
+            <url>http://www.soapui.org/repository/maven2/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+		<finalName>${service.war.name}</finalName>
+
+		<sourceDirectory>src/main/java</sourceDirectory>
+
+		<resources>
+			<resource>
+				<filtering>true</filtering>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
+
+		<testResources>
+			<testResource>
+				<filtering>true</filtering>
+				<directory>src/test/resources</directory>
+			</testResource>
+		</testResources>
+
+		<plugins>
+            <!-- ************************************ -->
+            <!-- ***           WAR BUILDER         ** -->
+            <!-- ************************************ -->
+
+            <!-- Build war here and replace all the properties in the config file.
+                 pick the desired profile above or specify it at the command line to select
+                 the appropriate set of values -->
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>prepare-war</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>exploded</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<warName>${service.war.name}</warName>
+					<useCache>true</useCache>
+					<nonFilteredFileExtensions>
+						<nonFilteredFileExtension>jar</nonFilteredFileExtension>
+						<nonFilteredFileExtension>flt</nonFilteredFileExtension>
+					</nonFilteredFileExtensions>
+					<packagingExcludes>
+						WEB-INF/lib/servlet-api-*.jar
+					</packagingExcludes>
+					<archive>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+						</manifest>
+						<manifestEntries>
+							<Implementation-Build>$\{buildNumber}</Implementation-Build>
+						</manifestEntries>
+					</archive>
+					<webResources>
+						<resource>
+							<directory>src/main/java</directory>
+							<targetPath>WEB-INF/classes</targetPath>
+							<filtering>true</filtering>
+							<excludes>
+								<exclude>**/*.java</exclude>
+							</excludes>
+						</resource>
+						<resource>
+							<directory>src/main/resources</directory>
+							<targetPath>WEB-INF/classes</targetPath>
+							<filtering>true</filtering>
+							<includes>
+								<include>service.properties</include>
+								<include>hibernate.cfg.xml</include>
+							</includes>
+						</resource>
+                        <resource>
+                            <directory>src/main/webapp/WEB-INF</directory>
+                            <targetPath>WEB-INF</targetPath>
+                            <filtering>true</filtering>
+                        </resource>
+					</webResources>
+				</configuration>
+			</plugin>
+
+            <!-- ************************************ -->
+            <!-- ***           DEPLOYMENT          ** -->
+            <!-- ************************************ -->
+            <!-- ***** deploy plugin properties ***** -->
+			<!-- Don't deploy the war -->
+			<plugin>
+			  <groupId>org.apache.maven.plugins</groupId>
+			  <artifactId>maven-deploy-plugin</artifactId>
+			  <configuration>
+				<skip>true</skip>
+			  </configuration>
+			</plugin>
+
+            <!-- ***** install plugin properties ***** -->
+			<plugin>
+			  <groupId>org.apache.maven.plugins</groupId>
+			  <artifactId>maven-install-plugin</artifactId>
+			  <configuration>
+				<skip>true</skip>
+			  </configuration>
+			</plugin>
+
+            <!-- ************************************ -->
+            <!-- ***     INTEGRATION TESTS         ** -->
+            <!-- ************************************ -->
+            <!-- **** soapui plugin properties ****** -->
+            <plugin>
+                <groupId>com.github.redfish4ktc.soapui</groupId>
+                <artifactId>maven-soapui-extension-plugin</artifactId>
+                <version>4.6.3.1</version>
+                <dependencies>
+                </dependencies>
+                <configuration>
+                    <soapuiProperties>
+                        <property>
+                            <name>soapui.scripting.library</name>
+                            <value>${basedir}/src/test/soapui/groovy_scripts</value>
+                        </property>
+                        <property>
+                            <name>soapui.ext.libraries</name>
+                            <value>${basedir}/src/test/soapui/ext</value>
+                        </property>
+                    </soapuiProperties>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${maven.test.skip}</skip>
+                            <projectFile>${basedir}/src/test/resources/integration.uuids-soapui-project.xml</projectFile>
+                            <junitReport>true</junitReport>
+                            <!--<exportwAll>true</exportwAll>-->
+                            <printReport>true</printReport>
+                            <outputFolder>${basedir}/target/smartbear</outputFolder>
+                            <projectProperties>
+                                <value>message=Hello World!</value>
+                            </projectProperties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+			<!-- Package the service up as a Docker image. -->
+			<plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+				<configuration>
+				<!-- Standard build will build an image without the prefix so
+						we don't force conventions on folks. -->
+					<imageName>${project.artifactId}</imageName>
+					<dockerDirectory>${basedir}/src/main/docker</dockerDirectory>
+					<serverId>${docker.registry.id}</serverId>
+					<registryUrl>${docker.registry.url}</registryUrl>
+				</configuration>
+				<executions>
+					<execution>
+						<id>build-container</id>
+						<!-- Generic docker build of API -->
+						<phase>package</phase>
+						<goals>
+							<goal>build</goal>
+						</goals>
+						<configuration>
+							<skipDockerBuild>${skip.docker.build}</skipDockerBuild>
+							<useGitCommitId>true</useGitCommitId>
+							<imageTags>
+								<tag>${project.version}</tag>
+								<tag>latest</tag>
+							</imageTags>
+              <tagInfoFile>target/image_info.json</tagInfoFile>
+							<forceTags>true</forceTags>
+							<resources>
+		            <resource>
+		            <targetPath>/</targetPath>
+		            <directory>${project.build.directory}</directory>
+		            <include>${service.war.name}.war</include>
+		          </resource>
+						</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>tag-commit-hash</id>
+						<!-- Tag with the git commit hash. This tags a published image with the repo commit tag-->
+						<phase>deploy</phase>
+						<goals>
+							<goal>tag</goal>
+						</goals>
+						<configuration>
+							<skipDockerBuild>false</skipDockerBuild>
+							<image>${project.artifactId}</image>
+							<newName>${docker.registry.username}/${project.artifactId}</newName>
+							<forceTags>true</forceTags>
+							<useGitCommitId>true</useGitCommitId>
+							<pushImage>${force.docker.push}</pushImage>
+							<serverId>${docker.registry.id}</serverId>
+							<registryUrl>${docker.registry.url}</registryUrl>
+						</configuration>
+					</execution>
+					<execution>
+						<id>tag-version</id>
+						<!-- Tag with the api version number. This represents the latest of the api version -->
+						<phase>deploy</phase>
+						<goals>
+							<goal>tag</goal>
+						</goals>
+						<configuration>
+							<image>${project.artifactId}</image>
+							<newName>${docker.registry.username}/${project.artifactId}:${project.version}</newName>
+							<forceTags>true</forceTags>
+							<skipDockerTag>${skip.docker.tag}</skipDockerTag>
+							<pushImage>${force.docker.push}</pushImage>
+							<serverId>${docker.registry.id}</serverId>
+							<registryUrl>${docker.registry.url}</registryUrl>
+						</configuration>
+					</execution>
+					<!-- Tag as the "latest". This represents the latest of the api -->
+					<execution>
+						<id>tag-latest</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>tag</goal>
+						</goals>
+						<configuration>
+							<skipDockerBuild>false</skipDockerBuild>
+							<image>${project.artifactId}</image>
+							<newName>${docker.registry.username}/${project.artifactId}:latest</newName>
+							<forceTags>true</forceTags>
+							<skipDockerTag>${skip.docker.tag}</skipDockerTag>
+							<useGitCommitId>false</useGitCommitId>
+							<pushImage>false</pushImage>
+							<serverId>${docker.registry.id}</serverId>
+							<registryUrl>${docker.registry.url}</registryUrl>
+						</configuration>
+					</execution>
+					<execution>
+						<id>remove-version-tag</id>
+						<!-- Tag as the "latest". This represents the latest of the api -->
+						<phase>clean</phase>
+						<goals>
+							<goal>removeImage</goal>
+						</goals>
+						<configuration>
+							<skip>${skip.docker.clean}</skip>
+							<imageTags>
+								<tag>latest</tag>
+								<tag>${project.version}</tag>
+								<tag>${buildNumber}</tag>
+								<tag>${buildNumber}.DIRTY</tag>
+							</imageTags>
+							<imageName>${docker.registry.username}/${project.artifactId}</imageName>
+						</configuration>
+					</execution>
+					<execution>
+						<id>remove-image</id>
+						<!-- Tag as the "latest". This represents the latest of the api -->
+						<phase>clean</phase>
+						<goals>
+							<goal>removeImage</goal>
+						</goals>
+						<configuration>
+							<imageTags>
+								<tag>latest</tag>
+								<tag>${project.version}</tag>
+								<tag>${buildNumber}</tag>
+								<tag>${buildNumber}.DIRTY</tag>
+							</imageTags>
+							<skip>${skip.docker.clean}</skip>
+							<imageName>${project.artifactId}</imageName>
+						</configuration>
+					</execution>
+				</executions>
+    </plugin>
+
+            <!-- ***** jetty plugin properties ****** -->
+            <!-- <plugin>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>jetty-maven-plugin</artifactId>
+                <version>8.1.9.v20130131</version>
+                <configuration>
+                    <skip>${maven.test.skip}</skip>
+                    <stopKey>STOP</stopKey>
+                    <stopPort>9999</stopPort>
+                    <scanIntervalSeconds>5</scanIntervalSeconds>
+                    <connectors>
+                        <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
+                            <port>8182</port>
+                        </connector>
+                    </connectors>
+                    <webAppConfig>
+                        <contextPath>/tags</contextPath>
+                    </webAppConfig>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>start-jetty</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
+                            <goal>run-war</goal>
+                        </goals>
+                        <configuration>
+                            <scanIntervalSeconds>0</scanIntervalSeconds>
+                            <daemon>true</daemon>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>stop-jetty</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin> -->
+
+        </plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>common-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jobs-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+</project>

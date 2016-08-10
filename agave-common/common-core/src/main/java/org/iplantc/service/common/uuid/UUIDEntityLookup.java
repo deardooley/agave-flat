@@ -103,8 +103,12 @@ public class UUIDEntityLookup {
 			return Settings.IPLANT_ROLES_SERVICE + uuid;
 		} else if (entityType.equals(UUIDType.TENANT)) {
 			return Settings.IPLANT_TENANTS_SERVICE + uuid;
-//		} else if (entityType.equals(UUIDType.LAMBDA)) {
-//			return Settings.IPLANT_LAMBDA_SERVICE + uuid;
+		} else if (entityType.equals(UUIDType.REACTOR)) {
+			return Settings.IPLANT_REACTOR_SERVICE + uuid;
+		} else if (entityType.equals(UUIDType.ABACO_AGENT)) {
+			return Settings.IPLANT_ABACO_SERVICE + uuid;
+		} else if (entityType.equals(UUIDType.REPOSITORY)) {
+			return Settings.IPLANT_REPOSITORY_SERVICE + uuid;
 		} else {
 			throw new UUIDException("Unable to resolve " + entityType.name().toLowerCase() 
 					+ " identifier to a known resource.");

@@ -212,6 +212,20 @@ services:
     networks:
       - backend
       - thirdparty
+      
+  uuids:
+    extends:
+      file: common.yml
+      service: java_api
+    image: uuid-api:$AGAVE_VERSION
+    volumes:
+      - '/var/log/splunk/uuid:/opt/tomcat/logs'
+    labels:
+      - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/uuid
+      - traefik.backend=uuid
+    networks:
+      - backend
+      - thirdparty
 
   postits:
     extends:

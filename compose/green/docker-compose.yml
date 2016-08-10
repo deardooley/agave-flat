@@ -173,6 +173,18 @@ services:
     environment:
       - 'CONTAINER_STACK=green'
   
+  uuids:
+    extends:
+      file: '../service-definitions.yml'
+      service: uuids
+    # command: catalina.sh jpda run 2>&1
+    ports:
+      - "80"
+#      - "8078:80"
+#      - "8459:443"
+    environment:
+      - 'CONTAINER_STACK=green'
+      
   postits:
     extends:
       file: '../service-definitions.yml'
