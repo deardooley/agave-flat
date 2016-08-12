@@ -160,6 +160,7 @@ public class LoginConfig extends RemoteConfig implements LastUpdatable
 				JSONObject jsonAuth = jsonConfig.getJSONObject("auth");
 				
 				if (jsonAuth == null) {
+					// TODO: allow empty login configs to inherit the previous auth config if ownerhsip is consistent.
 					throw new SystemArgumentException("Invalid 'login.auth' value. Please specify a " +
 							"JSON object representing a valid 'login.auth' configuration.");
 				}

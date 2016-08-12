@@ -514,7 +514,7 @@ public class Local implements RemoteDataClient
                         } 
     	                FileUtils.copyFileToDirectory(srcPath, destPath);
     	            } else {
-    	                // TODO: this is an error. dir no exist, thorw exception ,i think
+    	                // TODO: this is an error. dir no exist, throw exception, I think
     	                // check pems on parent directory
                         File parentPath = destPath.getParentFile();
                         

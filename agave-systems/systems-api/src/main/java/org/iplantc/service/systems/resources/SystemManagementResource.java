@@ -92,7 +92,6 @@ public class SystemManagementResource extends AbstractSystemListResource
 		
 		try 
 		{
-		
 			if (StringUtils.isEmpty(systemId))
 			{
 			    Map<SearchTerm, Object> searchCriteria = getQueryParameters();
