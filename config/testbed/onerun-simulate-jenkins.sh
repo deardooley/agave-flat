@@ -3,7 +3,7 @@
 # assumes a previous maven run to install all jars into local maven repo
 # run from the root of agave project
 #  mvn -s config/maven/settings-SAMPLE.xml -f pom.xml  -P agave,plain  clean install
-# usage: config/testbed/onerun-simulate-jenkins.sh <workdir> <module> <container list> <utest runner image to use> <users home dir that is running tests>
+# usage: config/testbed/onerun-simulate-jenkins.sh <workdir> <module> <container list> <utest runner image to use> <users home dir that is running tests(parent to .m2 location)>
 #  config/testbed/onerun-simulate-jenkins.sh `pwd` notifications "mysql beanstalkd mongodb" agaveapi/mvn-runner /home/apim
 
 WORKSPACE=$1

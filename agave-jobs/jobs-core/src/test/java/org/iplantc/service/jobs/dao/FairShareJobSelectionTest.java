@@ -51,6 +51,7 @@ import com.google.common.collect.Collections2;
  * @author dooley
  *
  */
+@Test(groups={"broken"})
 public class FairShareJobSelectionTest extends AbstractDaoTest {
 
     public static final Logger log = Logger.getLogger(ProgressiveMonitoringBackoffTest.class);

@@ -9,9 +9,10 @@ services:
   # Java & Maven enabled platform
   ##############################################################
   utest:
-    #image: agaveapi/slave-mvn-runner:1.0 for jenkins vs. agaveapi/mvn-runner for mac virtualbox setup
+    #image values: agaveapi/slave-mvn-runner:1.0 for jenkins vs. agaveapi/mvn-runner for mac virtualbox setup
     image: ${IMAGE}
     command: sh /sources/config/testbed/run-utests.sh
+    #command: sleep 1200
     labels:
       agaveapi.test: "utest"
     environment:
@@ -20,7 +21,7 @@ services:
       USER_HOME: ${USER_HOME}
     volumes:
       - ../..:/sources
-      - ~/.m2:$USER_HOME/.m2
+      - ~/.m2:/home/apim/.m2
       #- ~/.docker:/root/.docker:ro
       #- /var/run/docker.sock:/docker.sock
 
@@ -28,69 +29,72 @@ services:
   # MySQL
   ##############################################################
   mysql:
-    image: mysql:5.7
+    image: agaveapi/mysql:5.6-devtz
     ports:
-      - '3306'
+      - '3306:3306'
+    restart: on-failure
     hostname: mysql.example.com
-    cpu_shares: 4096
-    mem_limit: 512m
     labels:
       agaveapi.test: "utest"
-  #  volumes_from:
-  #    - 'mysqlvol'
+    volumes_from:
+      - 'mysqlvol'
     environment:
       MYSQL_ROOT_PASSWORD: changeit
       MYSQL_DATABASE: agavecore
       MYSQL_USER: agaveuser
       MYSQL_PASSWORD: password
+      MYSQL_TEST_DATABASE: test
 
-  #mysqlvol:
-  #  image: mysql:5.7
-  #  command: sleep 120
-  #  mem_limit: 64m
+  mysqlvol:
+    image: agaveapi/mysql:5.6-devtz
+    command: sleep 90
+    mem_limit: 64m
 
 
-  ##############################################################
-  # MongoDB
-  ##############################################################
+##############################################################
+# MongoDB
+##############################################################
   mongodb:
     image: agaveapi/mongodb:2.6
     hostname: mongodb
-    mem_limit: 1024m
+    restart: on-failure
     labels:
       agaveapi.test: "utest"
     environment:
-      - MONGODB_PASS=password
-  #  volumes_from:
-  #    - mongodbvol
+      - MONGODB_ADMIN_PASS=changeit
+      - MONGODB_PASSWORD=password
+      - MONGODB_USERNAME=agaveuser
+      - MONGODB_DATABASE=api
+    volumes_from:
+      - mongodbvol
     ports:
-      - '27017'
+      - '27017:27017'
 
-  #mongodbvol:
-  #  image: agaveapi/mongodb:2.6
-  #  command: sleep 120
-  #  mem_limit: 64m
+  mongodbvol:
+    image: agaveapi/mongodb:2.6
+    command: sleep 120
+    mem_limit: 64m
 
-  ##############################################################
-  # Beanstalkd
-  ##############################################################
+##############################################################
+# Beanstalkd
+##############################################################
   beanstalkd:
     image: agaveapi/beanstalkd:latest
     command: /usr/bin/beanstalkd -b /var/lib/beanstalkd/binlog
     hostname: beanstalkd
-    mem_limit: 256m
+    mem_limit: 512m
     labels:
       agaveapi.test: "utest"
-  #  volumes_from:
-  #    - beanstalkdvol
+    restart: on-failure
+    volumes_from:
+      - beanstalkdvol
     ports:
-      - '11300'
+      - '11300:11300'
 
-  #beanstalkdvol:
-  #  image: agaveapi/beanstalkd:latest
-  #  command: sleep 60
-  #  mem_limit: 64m
-
+  beanstalkdvol:
+    image: agaveapi/beanstalkd:latest
+    command: sleep 60
+    mem_limit: 64m
 
   ##############################################################
   # Mail
@@ -217,9 +221,9 @@ services:
     environment:
       - 'GLOBUS_TCP_PORT_RANGE=50000,50100'
 
-  ##############################################################
-  # Pushpin
-  ##############################################################
+##############################################################
+# Pushpin
+##############################################################
   pushpin:
     image: agaveapi/pushpin:1.6.0
     extra_hosts:
@@ -228,5 +232,6 @@ services:
     mem_limit: 512m
     restart: on-failure
     ports:
-      - '7999'
-      - '5561'
+      - '7999:7999'
+      - '5561:5561'
+

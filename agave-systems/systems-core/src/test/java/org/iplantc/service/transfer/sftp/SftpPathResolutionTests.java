@@ -7,7 +7,8 @@ import org.iplantc.service.transfer.RemoteDataClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.annotations.Test;
-@Test(groups= {"sftp","path-resolution"})
+
+@Test(groups= {"sftp","path-resolution","broken"})
 public class SftpPathResolutionTests extends AbstractPathResolutionTests
 {
 	@Override

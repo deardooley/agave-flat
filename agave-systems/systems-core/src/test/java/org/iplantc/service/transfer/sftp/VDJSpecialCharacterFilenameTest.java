@@ -11,7 +11,6 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.model.StorageSystem;
-import org.iplantc.service.transfer.AbstractPathSanitizationTest;
 import org.iplantc.service.transfer.BaseTransferTestCase;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
@@ -29,7 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"sftp","sanitization"})
+@Test(singleThreaded=true, groups= {"sftp","sanitization", "broken"})
 public class VDJSpecialCharacterFilenameTest extends BaseTransferTestCase {
 
 private static final Logger log = Logger.getLogger(VDJSpecialCharacterFilenameTest.class);

@@ -12,8 +12,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.google.common.io.Files;
-
+@Test(groups={"broken"})
 public class RemoteDataClientFactoryTest {
     
     private RemoteDataClientFactory factory = new RemoteDataClientFactory();

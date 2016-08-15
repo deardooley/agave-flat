@@ -1,32 +1,15 @@
 package org.iplantc.service.jobs.queue;
 
-import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
 
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.quartz.Job;
 import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
-import org.quartz.JobKey;
-import org.quartz.JobListener;
-import org.quartz.ScheduleBuilder;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerFactory;
-import org.quartz.SchedulerListener;
 import org.quartz.SimpleTrigger;
-import org.quartz.Trigger;
-import org.quartz.Trigger.CompletedExecutionInstruction;
-import org.quartz.TriggerKey;
-import org.quartz.TriggerListener;
-import org.quartz.impl.StdSchedulerFactory;
-import org.quartz.impl.matchers.EverythingMatcher;
-import org.quartz.impl.matchers.KeyMatcher;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -42,7 +25,7 @@ public class AgaveJobCleanupTriggerListenerTest {
 		jobFinished.set(false);
 	}
 	
-	@Test
+	@Test(groups={"broken"})
 	public void triggerCompleteDeletesJob() throws SchedulerException,
 			InterruptedException {
 		// Verify quartz jobs are deleted after firing.

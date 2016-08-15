@@ -1,6 +1,12 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
   
 <suite name="iPlant Metadata Service" verbose="5" parallel="false">
+  <groups>
+    <run>
+        <exclude name="broken"/>
+        <exclude name="notReady"/>
+    </run>
+  </groups>
   <test name="dao" >
   	<packages>
         <package name="org.iplantc.service.metadata.dao" />

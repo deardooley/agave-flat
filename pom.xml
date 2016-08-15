@@ -83,6 +83,11 @@
 			<name>Iron.io Maven repo</name>
 			<url>http://iron-io.github.com/maven/repository</url>
 		</repository>
+        <repository>
+            <id>jcenter</id>
+            <name>Public testng repository</name>
+            <url>http://jcenter.bintray.com</url>
+        </repository>
 	</repositories>
 
 	<pluginRepositories>
@@ -97,16 +102,130 @@
 	</pluginRepositories>
 
 	<properties>
+	    <!-- This build's label -->
+	    <foundation.service.version>${project.version}-r${buildNumber}</foundation.service.version>
+	    
+	    <!-- Below are the version numbers for all software on which we explicitly depend. -->
+	    <!-- If a library or plugin appears as a dependency in some pom file, then that    -->
+	    <!-- artifact's version number should in the lists below for easy managment and    -->
+	    <!-- access.  Version numbers are organized into 2 lists, one for plugins and the  -->
+	    <!-- other for library dependencies.                                               -->
+	    <!--                                                                               -->
+	    <!--                    PLEASE KEEP THESE LISTS ALPHABETIZED                       -->
+
+	    <!-- PLUGIN Versions (in alphabetical order) -->
+	    <buildnumber-maven-plugin.version>1.3</buildnumber-maven-plugin.version>
+	    <docker-maven-plugin.version>0.3.3</docker-maven-plugin.version>
+	    <exec-maven-plugin.versionRange>[1.3.2,)</exec-maven-plugin.versionRange>
+	    <flyway-maven-plugin.version>4.0</flyway-maven-plugin.version>
+	    <flyway-maven-plugin.versionRange>[4.0,)</flyway-maven-plugin.versionRange>
+	    <gmaven-plugin.versionRange>[1.5,)</gmaven-plugin.versionRange>
+	    <jetty-maven-plugin.version>8.1.9.v20130131</jetty-maven-plugin.version>
+	    <jgitflow-maven-plugin.version>1.0-m5.1</jgitflow-maven-plugin.version>
+	    <maven-antrun-plugin.versionRange>[1.7,)</maven-antrun-plugin.versionRange>
+	    <maven-assembly-plugin.version>2.2-beta-2</maven-assembly-plugin.version>
+	    <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
+	    <maven-deploy-plugin.version>2.5</maven-deploy-plugin.version>
+	    <maven-install-plugin.version>2.5.1</maven-install-plugin.version>
+	    <maven-jar-plugin.version>2.5</maven-jar-plugin.version>
+	    <maven-jar-plugin.versionRange>[2.5,)</maven-jar-plugin.versionRange>
+	    <maven-php-plugin.version>2.0.2</maven-php-plugin.version>
+	    <maven-shade-plugin.version>2.4.3</maven-shade-plugin.version>
+	    <maven-site-plugin.version>3.3</maven-site-plugin.version>
+	    <maven-soapui-extension-plugin.version>4.6.3.1</maven-soapui-extension-plugin.version>
+	    <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
+	    <maven-war-plugin.version>2.4</maven-war-plugin.version>
+	    <org.eclipse.m2e.lifecycle-mapping.version>1.0.0</org.eclipse.m2e.lifecycle-mapping.version>
+	    <sonar-maven-plugin.version>3.6.2</sonar-maven-plugin.version>
+	    
+	    <!-- PLUGIN Version special cases -->
+	    <maven-compiler-plugin.METADATA.version>2.3.2</maven-compiler-plugin.METADATA.version>
+	    <maven-surefire-plugin.METADATA.version>2.13</maven-surefire-plugin.METADATA.version>
+	    
+	    <!-- LIBRARY Versions (in alphabetical order) -->
+	    <amqp-client.version>3.1.4</amqp-client.version>
+	    <ant.version>1.8.2</ant.version>
+	    <BeanstalkClient.version>1.6.0</BeanstalkClient.version>
+	    <commons-codec.version>1.7</commons-codec.version>
+	    <commons-exec.version>1.1</commons-exec.version>
+	    <commons-fileupload.version>1.2.2</commons-fileupload.version>
+	    <commons-io.version>2.1</commons-io.version>
+	    <commons-lang.version>2.5</commons-lang.version>
+	    <commons-math3.version>3.5</commons-math3.version>
+	    <commons-validator.version>1.4.0</commons-validator.version>
+	    <c3p0.version>0.9.1.2</c3p0.version>
+	    <el-api.version>2.2</el-api.version>
+	    <flyway-core.version>4.0</flyway-core.version>
+	    <gsissh.version>0.12.1</gsissh.version>
+	    <gson.version>2.2.4</gson.version>
+        <guava.version>17.0</guava.version>
+        <guice.version>4.0</guice.version>
+	    <hibernate-entitymanager.version>3.6.10.Final</hibernate-entitymanager.version>
+	    <hibernate-validator-annotation-processor.version>5.0.1.Final</hibernate-validator-annotation-processor.version>
+	    <hibernate-validator.version>4.1.0.Final</hibernate-validator.version>
+	    <httpclient.version>4.3.4</httpclient.version>
+	    <httpmime.version>4.3.1</httpmime.version>
+	    <ironmq.version>3.0.2</ironmq.version>
+	    <jackson-antpathfilter.version>1.0.1</jackson-antpathfilter.version>
+	    <jackson.version>2.5.5</jackson.version>
+	    <jargon-core.version>4.0.2.4-RELEASE</jargon-core.version>
+	    <jasypt.version>1.9.0</jasypt.version>
+	    <javax.el.version>2.2.4</javax.el.version>
+	    <javax.ws.rs-api.version>2.0-m10</javax.ws.rs-api.version>
+	    <jboss-logging.version>3.1.3.GA</jboss-logging.version>
+	    <jclouds.version>1.9.2</jclouds.version>
+	    <jetty.ajp.version>6.1</jetty.ajp.version>
+	    <jetty.core.version>6.1</jetty.core.version>
+	    <jetty.https.version>6.1</jetty.https.version>
+	    <jetty.util.version>6.1</jetty.util.version>
+	    <jglobus.version>2.1.0</jglobus.version>
+	    <joda-time.version>2.2</joda-time.version>
+	    <json-path.version>2.2.0</json-path.version>
+	    <json-schema-validator.version>2.0.1</json-schema-validator.version>
+	    <json.version>20090211</json.version>
+	    <junit.version>3.8.1</junit.version>
+	    <log4j.version>1.2.17</log4j.version>
+	    <mail.version>1.4.6</mail.version>
+	    <maverick.version>1.6.3</maverick.version>
+	    <mongo-java-driver.version>2.14.1</mongo-java-driver.version>
+	    <mongojack.version>2.6.0</mongojack.version>
+	    <mysql-connector-java.version>5.1.38</mysql-connector-java.version>
+	    <nimbus-jose-jwt.version>2.20</nimbus-jose-jwt.version>
+	    <pat.version>1.5.3</pat.version>
+	    <plexus-archiver.version>3.0.1</plexus-archiver.version>
+	    <plexus-log4j-logging.version>1.0</plexus-log4j-logging.version>
+	    <plexus-utils.version>3.0.15</plexus-utils.version>
+	    <powermock.version>1.6.4</powermock.version>
+	    <quartz.version>2.1.7</quartz.version>
+	    <reflections.version>0.9.9-RC1</reflections.version>
+	    <reportng.version>1.1.4</reportng.version>
+	    <restlet.version>2.3.4</restlet.version>
+	    <sendgrid-java.version>2.2.2</sendgrid-java.version>
+	    <servlet-api.version>2.4</servlet-api.version>
+	    <simple-http.version>1.0-jdk6</simple-http.version>
+	    <simple-jndi.version>0.11.4.1</simple-jndi.version>
+	    <slf4j-api.version>1.6.1</slf4j-api.version>
+	    <slf4j-log4j12.version>1.6.1</slf4j-log4j12.version>
+	    <spring.version>3.2.0.RELEASE</spring.version>
+	    <testng.version>6.9.12</testng.version>
+	    <twilio-java-sdk.version>3.4.1</twilio-java-sdk.version>
+	    <uuid.version>3.4.0</uuid.version>
+	    <validator-collection.version>2.1.6</validator-collection.version>
+	    <xstream.version>1.4.1</xstream.version>
+	    
+	    <!-- LIBRARY Version special cases -->
+	    <hibernate-validator.PROFILES.version>5.0.1.Final</hibernate-validator.PROFILES.version>
+	    <reportng.METADATA.version>1.1.2</reportng.METADATA.version>
+	   
+	    <!-- OTHER properties (in alphabetical order) -->
+	    <docker.image.commit.hash>${buildNumber}</docker.image.commit.hash>
+        <force.check.update>true</force.check.update>
+        <force.check.version>true</force.check.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<foundation.service.version>${project.version}-r${buildNumber}</foundation.service.version>
-		<restlet.version>2.3.4</restlet.version>
+        <project.inceptionYear>2011</project.inceptionYear>
+        <skip.docker.build>true</skip.docker.build>
 		<sonar.language>java</sonar.language>
-		<spring.version>3.2.0.RELEASE</spring.version>
-		<force.check.update>true</force.check.update>
-		<force.check.version>true</force.check.version>
-		<project.inceptionYear>2011</project.inceptionYear>
-		<skip.docker.build>true</skip.docker.build>
-		<docker.image.commit.hash>${buildNumber}</docker.image.commit.hash>
+		
 	</properties>
 
 	<build>
@@ -124,7 +243,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>buildnumber-maven-plugin</artifactId>
-				<version>1.3</version>
+				<version>${buildnumber-maven-plugin.version}</version>
 				<executions>
 					<execution>
 						<id>last-commit-hash</id>
@@ -151,7 +270,7 @@
 			<plugin>
 				<groupId>external.atlassian.jgitflow</groupId>
 				<artifactId>jgitflow-maven-plugin</artifactId>
-				<version>1.0-m5.1</version>
+				<version>${jgitflow-maven-plugin.version}</version>
 				<configuration>
 					<allowSnapshots>false</allowSnapshots>
 					<allowUntracked>false</allowUntracked>
@@ -177,7 +296,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.1</version>
+					<version>${maven-compiler-plugin.version}</version>
 					<executions>
 						<execution>
 							<id>default-compile</id>
@@ -206,27 +325,27 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-site-plugin</artifactId>
-					<version>3.3</version>
+					<version>${maven-site-plugin.version}</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.19.1</version>
+					<version>${maven-surefire-plugin.version}</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-assembly-plugin</artifactId>
-					<version>2.2-beta-2</version>
+					<version>${maven-assembly-plugin.version}</version>
 				</plugin>
 				<plugin>
 					<groupId>com.spotify</groupId>
 					<artifactId>docker-maven-plugin</artifactId>
-					<version>0.3.3</version>
+					<version>${docker-maven-plugin.version}</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-deploy-plugin</artifactId>
-					<version>2.5</version>
+					<version>${maven-deploy-plugin.version}</version>
 					<configuration>
 						<skip>true</skip>
 					</configuration>
@@ -234,12 +353,12 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-install-plugin</artifactId>
-					<version>2.5.1</version>
+					<version>${maven-install-plugin.version}</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-war-plugin</artifactId>
-					<version>2.4</version>
+					<version>${maven-war-plugin.version}</version>
 					<configuration>
 						<packagingExcludes>
 							WEB-INF/lib/servlet-api*.jar,
@@ -251,12 +370,12 @@
 				<plugin>
 					<groupId>org.codehaus.sonar</groupId>
 					<artifactId>sonar-maven-plugin</artifactId>
-					<version>3.6.2</version>
+					<version>${sonar-maven-plugin.version}</version>
 				</plugin>
 				<plugin>
 					<groupId>org.phpmaven</groupId>
 					<artifactId>maven-php-plugin</artifactId>
-					<version>2.0.2</version>
+					<version>${maven-php-plugin.version}</version>
 				</plugin>
 
 				<!--This plugin's configuration is used to store Eclipse m2e settings
@@ -264,7 +383,7 @@
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
+					<version>${org.eclipse.m2e.lifecycle-mapping.version}</version>
 					<configuration>
 						<lifecycleMappingMetadata>
 							<pluginExecutions>
@@ -297,6 +416,18 @@
 		</snapshotRepository>
 	</distributionManagement>
 
+    <!--                   Global Dependencies                        -->
+    <!--                                                              -->
+    <!-- Only add dependencies here that are used by EVERY submodule. -->
+    <dependencies>
+        <dependency>
+            <!-- There are non-test compile dependencies on testng -->
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${testng.version}</version>
+        </dependency>
+    </dependencies>
+    
 	<modules>
 		<module>agave-auth</module>
 		<module>agave-common</module>

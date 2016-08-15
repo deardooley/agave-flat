@@ -42,6 +42,8 @@
 						<skip.create-db>true</skip.create-db>
 						<maven.test.skip>true</maven.test.skip>
 						<skipTests>true</skipTests>
+						<docker.registry.id>docker-registry</docker.registry.id>
+						<docker.registry.url>https://index.docker.io/v1/</docker.registry.url>
 						<docker.registry.username>agaveapi</docker.registry.username>
 				</properties>
 		</profile>
@@ -235,7 +237,7 @@
 				<foundation.db.test.jndi.connection>java:comp/env/jdbc/iplant_io</foundation.db.test.jndi.connection>
 				<foundation.db.test.host>mysql</foundation.db.test.host>
 				<foundation.db.test.port>3306</foundation.db.test.port>
-				<foundation.db.test.database>test</foundation.db.test.database>
+				<foundation.db.test.database>agavecore</foundation.db.test.database>
 				<foundation.db.test.username>agaveuser</foundation.db.test.username>
 				<foundation.db.test.password>password</foundation.db.test.password>
 				<foundation.db.test.url>jdbc:mysql://${foundation.db.test.host}:${foundation.db.test.port}/${foundation.db.test.database}?sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true</foundation.db.test.url>

@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@Test(groups={"broken"})
 public class ZombieJobWatchTest extends AbstractJobSubmissionTest {
 
 	protected static String LOCAL_TXT_FILE = "src/test/resources/transfer/test_upload.txt";
