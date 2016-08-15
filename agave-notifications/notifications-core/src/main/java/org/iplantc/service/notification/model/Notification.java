@@ -705,9 +705,9 @@ public class Notification
 								.put("href", 
 										TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE) + getUuid()));
 			
-			linksObject.put("history", (ObjectNode)mapper.createObjectNode()
-								.put("href", 
-										TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE) + getUuid() + "/history"));
+//			linksObject.put("history", (ObjectNode)mapper.createObjectNode()
+//								.put("href", 
+//										TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE) + getUuid() + "/history"));
 
 			linksObject.put("attempts", (ObjectNode)mapper.createObjectNode()
 								.put("href", 
