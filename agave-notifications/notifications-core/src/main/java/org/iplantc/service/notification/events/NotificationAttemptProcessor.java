@@ -9,7 +9,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.exceptions.MessagingException;
 import org.iplantc.service.common.messaging.MessageClientFactory;
-import org.iplantc.service.common.messaging.MessageQueueClient;
+import org.iplantc.service.common.messaging.clients.MessageQueueClient;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.notification.Settings;
 import org.iplantc.service.notification.dao.FailedNotificationAttemptQueue;

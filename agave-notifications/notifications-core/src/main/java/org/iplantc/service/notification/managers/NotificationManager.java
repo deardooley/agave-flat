@@ -3,7 +3,7 @@ package org.iplantc.service.notification.managers;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.exceptions.MessagingException;
 import org.iplantc.service.common.messaging.MessageClientFactory;
-import org.iplantc.service.common.messaging.MessageQueueClient;
+import org.iplantc.service.common.messaging.clients.MessageQueueClient;
 import org.iplantc.service.notification.Settings;
 import org.iplantc.service.notification.dao.NotificationDao;
 import org.iplantc.service.notification.exceptions.NotificationException;

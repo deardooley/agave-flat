@@ -1,4 +1,4 @@
-package org.iplantc.service.common.messaging;
+package org.iplantc.service.common.messaging.model.enumerations;
 
 public enum MessageQueueType
 {

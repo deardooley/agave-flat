@@ -3,6 +3,8 @@ package org.iplantc.service.common.messaging;
 import io.iron.ironmq.Cloud;
 
 import org.iplantc.service.common.Settings;
+import org.iplantc.service.common.messaging.clients.BeanstalkClient;
+import org.iplantc.service.common.messaging.model.Message;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;

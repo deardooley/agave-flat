@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 
 import org.iplantc.service.common.messaging.MessageClientFactory;
-import org.iplantc.service.common.messaging.MessageQueueClient;
+import org.iplantc.service.common.messaging.clients.MessageQueueClient;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.notification.AbstractNotificationTest;
 import org.iplantc.service.notification.Settings;

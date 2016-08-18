@@ -9,7 +9,7 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
-import org.iplantc.service.common.messaging.MessageQueueClient;
+import org.iplantc.service.common.messaging.clients.MessageQueueClient;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.Settings;
@@ -351,6 +351,8 @@ public class ArchiveWatch extends AbstractJobWatch
 							    try {
 							        this.job = JobManager.updateStatus(job, JobStatusType.CLEANING_UP, "Attempt "
 							                + attempts + " failed to archive job output.");
+							        log.error("Attempt " + attempts + " for job " + getJob().getUuid()
+							                + " failed to archive output.", e);
 							    } catch (Exception e1) {
 							        log.error("Attempt " + attempts + " for job " + getJob().getUuid()
 							                + " failed to archive output.", e);

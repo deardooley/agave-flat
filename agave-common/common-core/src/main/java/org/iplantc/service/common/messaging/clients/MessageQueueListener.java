@@ -1,4 +1,4 @@
-package org.iplantc.service.common.messaging;
+package org.iplantc.service.common.messaging.clients;
 
 import org.iplantc.service.common.exceptions.MessageProcessingException;
 

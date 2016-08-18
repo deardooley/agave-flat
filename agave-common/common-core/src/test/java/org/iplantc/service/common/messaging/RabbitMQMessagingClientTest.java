@@ -2,6 +2,8 @@ package org.iplantc.service.common.messaging;
 
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.exceptions.MessagingException;
+import org.iplantc.service.common.messaging.clients.RabbitMQClient;
+import org.iplantc.service.common.messaging.model.Message;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

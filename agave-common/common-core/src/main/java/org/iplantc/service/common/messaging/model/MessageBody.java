@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.iplantc.service.common.messaging;
+package org.iplantc.service.common.messaging.model;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 

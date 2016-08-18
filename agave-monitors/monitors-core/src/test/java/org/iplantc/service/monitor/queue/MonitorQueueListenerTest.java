@@ -3,7 +3,7 @@ package org.iplantc.service.monitor.queue;
 import java.io.IOException;
 
 import org.iplantc.service.common.messaging.MessageClientFactory;
-import org.iplantc.service.common.messaging.MessageQueueClient;
+import org.iplantc.service.common.messaging.clients.MessageQueueClient;
 import org.iplantc.service.monitor.AbstractMonitorTest;
 import org.iplantc.service.monitor.Settings;
 import org.iplantc.service.monitor.dao.MonitorDao;

@@ -8,7 +8,7 @@ import org.hibernate.StaleObjectStateException;
 import org.iplantc.service.common.dao.TenantDao;
 import org.iplantc.service.common.exceptions.MessagingException;
 import org.iplantc.service.common.messaging.MessageClientFactory;
-import org.iplantc.service.common.messaging.MessageQueueClient;
+import org.iplantc.service.common.messaging.clients.MessageQueueClient;
 import org.iplantc.service.common.model.Tenant;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.monitor.Settings;

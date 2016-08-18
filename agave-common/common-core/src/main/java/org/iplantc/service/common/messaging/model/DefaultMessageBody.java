@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.iplantc.service.common.messaging;
+package org.iplantc.service.common.messaging.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,7 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Abstract {@link org.iplantc.service.common.messaging.MessageBody} implementation
+ * Abstract {@link org.iplantc.service.common.messaging.model.MessageBody} implementation
  * class providing the minimum information needed to process any message
  * send in the API.
  * 

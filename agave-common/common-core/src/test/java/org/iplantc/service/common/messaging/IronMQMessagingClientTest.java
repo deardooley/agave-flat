@@ -4,6 +4,8 @@ import io.iron.ironmq.Client;
 import io.iron.ironmq.Cloud;
 import io.iron.ironmq.Queue;
 
+import org.iplantc.service.common.messaging.clients.IronMQClient;
+import org.iplantc.service.common.messaging.model.Message;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

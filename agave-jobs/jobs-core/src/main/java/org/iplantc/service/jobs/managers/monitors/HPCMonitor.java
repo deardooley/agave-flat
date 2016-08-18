@@ -112,6 +112,9 @@ public class HPCMonitor extends AbstractJobMonitor {
 				                this.job = JobManager.updateStatus(job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
 				                log.debug("Job " + job.getUuid() + " finished.");
 				            }
+				            else {
+				            	createArchiveTask(job);
+				            }
 						}
 						else if (java.util.Arrays.asList(StringUtils.split(result)).contains("Eqw")) 
 						{

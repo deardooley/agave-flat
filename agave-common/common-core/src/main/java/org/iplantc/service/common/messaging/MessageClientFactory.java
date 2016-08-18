@@ -3,6 +3,12 @@ package org.iplantc.service.common.messaging;
 import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.exceptions.MessagingException;
+import org.iplantc.service.common.messaging.clients.BeanstalkClient;
+import org.iplantc.service.common.messaging.clients.IronBeanstalkClient;
+import org.iplantc.service.common.messaging.clients.IronMQClient;
+import org.iplantc.service.common.messaging.clients.MessageQueueClient;
+import org.iplantc.service.common.messaging.clients.RabbitMQClient;
+import org.iplantc.service.common.messaging.model.enumerations.MessageQueueType;
 
 public class MessageClientFactory {
 

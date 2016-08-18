@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.iplantc.service.common.messaging;
+package org.iplantc.service.common.messaging.clients;
 
 import io.iron.ironmq.Cloud;
 
@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.exceptions.MessageProcessingException;
 import org.iplantc.service.common.exceptions.MessagingException;
+import org.iplantc.service.common.messaging.model.Message;
 
 import com.surftools.BeanstalkClient.Job;
 import com.surftools.BeanstalkClientImpl.ClientImpl;

@@ -6,16 +6,9 @@ import javax.validation.ConstraintValidatorContext;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
-import org.iplantc.service.common.auth.AuthorizationHelper;
-import org.iplantc.service.common.exceptions.UUIDException;
-import org.iplantc.service.common.persistence.TenancyHelper;
-import org.iplantc.service.common.uuid.AgaveUUID;
-import org.iplantc.service.notification.exceptions.NotificationException;
 import org.iplantc.service.notification.exceptions.NotificationPolicyViolationException;
-import org.iplantc.service.notification.model.constraints.ValidAssociatedUuid;
 import org.iplantc.service.notification.model.constraints.ValidNotifiationPolicy;
 import org.iplantc.service.notification.model.enumerations.RetryStrategyType;
-import org.iplantc.service.notification.util.ServiceUtils;
 
 public class ValidNotifiationPolicyValidator implements ConstraintValidator<ValidNotifiationPolicy, Object> {
 	

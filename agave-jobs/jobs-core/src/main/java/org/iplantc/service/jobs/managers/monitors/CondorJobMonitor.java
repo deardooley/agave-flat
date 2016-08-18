@@ -333,6 +333,9 @@ public class CondorJobMonitor extends AbstractJobMonitor
                 this.job = JobManager.updateStatus(this.job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
                 log.debug("Job " + this.job.getUuid() + " finished.");
             }
+            else {
+            	createArchiveTask(job);
+            }
         } 
         // if the runtime log says it failed, we need to kill the job. we leave the assets
         // in place...

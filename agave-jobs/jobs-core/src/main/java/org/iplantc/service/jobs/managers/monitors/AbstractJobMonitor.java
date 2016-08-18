@@ -9,11 +9,21 @@ import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Logger;
+import org.iplantc.service.common.exceptions.MessagingException;
+import org.iplantc.service.common.messaging.MessageClientFactory;
+import org.iplantc.service.common.messaging.clients.MessageQueueClient;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.scripts.SubmitScript;
 import org.iplantc.service.jobs.model.scripts.SubmitScriptFactory;
+import org.iplantc.service.jobs.queue.managers.ArchiveQueueManager;
+import org.iplantc.service.notification.Settings;
+import org.iplantc.service.notification.dao.NotificationDao;
+import org.iplantc.service.notification.exceptions.NotificationException;
+import org.iplantc.service.notification.model.Notification;
+import org.iplantc.service.notification.queue.messaging.NotificationMessageBody;
+import org.iplantc.service.notification.queue.messaging.NotificationMessageContext;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
@@ -166,4 +176,10 @@ public abstract class AbstractJobMonitor implements JobMonitor {
 	 */
 	@Override
 	public abstract Job monitor() throws RemoteJobMonitoringException, SystemUnavailableException, ClosedByInterruptException;
+	
+	@Override
+	public boolean createArchiveTask(Job job) {
+		ArchiveQueueManager archiveQueueManager = new ArchiveQueueManager();
+		return archiveQueueManager.push(job.getUuid(), job.getOwner(), job.getTenantId(), 0);
+    }
 }

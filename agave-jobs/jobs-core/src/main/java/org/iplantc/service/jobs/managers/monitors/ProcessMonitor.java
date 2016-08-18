@@ -105,6 +105,9 @@ public class ProcessMonitor extends AbstractJobMonitor
 				                this.job = JobManager.updateStatus(this.job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
 				                log.debug("Job " + this.job.getUuid() + " finished.");
 				            }
+				            else {
+				            	createArchiveTask(job);
+				            }
 						} else {
 						    if (!StringUtils.isBlank(result)) {
 						        log.debug("Unrecognized response from status check for job " + this.job.getUuid() + ": " + result);

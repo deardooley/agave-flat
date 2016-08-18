@@ -63,11 +63,6 @@
 			<version>${json.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>commons-validator</groupId>
-			<artifactId>commons-validator</artifactId>
-			<version>${commons-validator.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>com.twilio.sdk</groupId>
 			<artifactId>twilio-java-sdk</artifactId>
 			<version>${twilio-java-sdk.version}</version>

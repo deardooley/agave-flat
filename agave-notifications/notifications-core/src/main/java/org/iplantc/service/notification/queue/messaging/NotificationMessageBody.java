@@ -3,7 +3,7 @@
  */
 package org.iplantc.service.notification.queue.messaging;
 
-import org.iplantc.service.common.messaging.DefaultMessageBody;
+import org.iplantc.service.common.messaging.model.DefaultMessageBody;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -15,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NotificationMessageBody extends DefaultMessageBody<NotificationMessageContext>
 {
-
     /**
      * Default no-args contructor
      */

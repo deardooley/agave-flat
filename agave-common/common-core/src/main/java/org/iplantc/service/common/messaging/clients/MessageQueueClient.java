@@ -1,10 +1,11 @@
-package org.iplantc.service.common.messaging;
+package org.iplantc.service.common.messaging.clients;
 
 import java.util.List;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.iplantc.service.common.exceptions.MessageProcessingException;
 import org.iplantc.service.common.exceptions.MessagingException;
+import org.iplantc.service.common.messaging.model.Message;
 
 public interface MessageQueueClient {
 

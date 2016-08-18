@@ -77,4 +77,12 @@ public interface JobMonitor {
 	throws RemoteDataException, IOException, AuthenticationException, 
 		SystemUnavailableException, RemoteCredentialException;
 
+	
+    /**
+     * Sends an archiving task to the message queue for reliable processing
+     * by a worker.
+     * @param job the job to archive
+     * @return true if the archive message was successfully sent. false otherwise
+     */
+    public boolean createArchiveTask(Job job);
 }

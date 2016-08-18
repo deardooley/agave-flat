@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.iplantc.service.common.messaging;
+package org.iplantc.service.common.messaging.clients;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.exceptions.MessageProcessingException;
 import org.iplantc.service.common.exceptions.MessagingException;
+import org.iplantc.service.common.messaging.model.Message;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;

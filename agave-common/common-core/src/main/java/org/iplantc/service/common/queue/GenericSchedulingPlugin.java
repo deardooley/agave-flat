@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.discovery.ServiceCapability;
 import org.iplantc.service.common.discovery.ServiceCapabilityConfiguration;
-import org.iplantc.service.common.messaging.MessageQueueListener;
+import org.iplantc.service.common.messaging.clients.MessageQueueListener;
 import org.joda.time.DateTime;
 import org.quartz.Job;
 import org.quartz.JobDetail;
