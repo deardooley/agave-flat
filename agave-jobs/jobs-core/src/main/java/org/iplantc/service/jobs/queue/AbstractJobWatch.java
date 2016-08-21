@@ -209,20 +209,4 @@ public abstract class AbstractJobWatch implements WorkerWatch {
         
         return job;
     }
-
-//    /**
-//     * @return the jobProducerFactory
-//     */
-//    public synchronized JobProducerFactory getJobProducerFactory() {
-//        return jobProducerFactory;
-//    }
-//
-//    /**
-//     * @param jobProducerFactory the jobProducerFactory to set
-//     */
-//    @Override
-//    public synchronized void setJobProducerFactory(JobProducerFactory jobProducerFactory) {
-//        this.jobProducerFactory = jobProducerFactory;
-//    }
-
 }
