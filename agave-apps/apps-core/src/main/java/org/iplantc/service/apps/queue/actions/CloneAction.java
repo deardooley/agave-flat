@@ -33,6 +33,7 @@ import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.manager.SystemManager;
+import org.iplantc.service.systems.manager.SystemRoleManager;
 import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.RemoteSystem;
@@ -455,13 +456,16 @@ public class CloneAction extends AbstractWorkerAction<Software> {
                     + "has no default execution system. Please specify a target execution system "
                     + "on which to run the cloned app or define a default execution system.");
         } 
-        else if (!executionSystem.getUserRole(getClonedSoftwareOwner()).canPublish()) {
-            throw new PermissionException(
-                    "User does not have permission to publish applications on the target " + 
-                    "execution system. Verify you have been granted a " + RoleType.PUBLISHER +
-                    "role on the target execution system " + executionSystem.getSystemId());
+        else {
+        	SystemRoleManager roleManager = new SystemRoleManager(executionSystem);
+            
+        	if (!roleManager.getEffectiveRoleForPrincipal(getClonedSoftwareOwner()).canPublish()) {
+	            throw new PermissionException(
+	                    "User does not have permission to publish applications on the target " + 
+	                    "execution system. Verify you have been granted a " + RoleType.PUBLISHER +
+	                    "role on the target execution system " + executionSystem.getSystemId());
+	        }
         }
-        
         return executionSystem;
     }
     
@@ -480,6 +484,8 @@ public class CloneAction extends AbstractWorkerAction<Software> {
                 throw new SystemUnknownException("No storage system found matching " 
                         + clonedSoftwareStorageSystemId);
             } else {
+            	// skip role and permission test here as they are explicitly checked
+            	// when we build the deployment path later on.
                 storageSystem = this.systemManager.getUserDefaultStorageSystem(getClonedSoftwareOwner());
             }
         }

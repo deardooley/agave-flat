@@ -5,9 +5,14 @@ import org.iplantc.service.apps.Settings;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.dao.SoftwarePermissionDao;
 import org.iplantc.service.apps.exceptions.SoftwareException;
+import org.iplantc.service.apps.exceptions.SoftwarePermissionException;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwarePermission;
+import org.iplantc.service.apps.model.enumerations.SoftwareRoleType;
 import org.iplantc.service.apps.util.ServiceUtils;
+import org.iplantc.service.common.auth.AuthorizationHelper;
+import org.iplantc.service.systems.manager.SystemRoleManager;
+import org.iplantc.service.systems.model.SystemRole;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
 
 public class SoftwarePermissionManager {
@@ -186,4 +191,71 @@ public class SoftwarePermissionManager {
 //                userResponsible);
 		
 	}
+
+	/**
+	 * Returns the permission the given {@code principal} has for the {@link #software} 
+	 * based on the scope, user, group permissions. No {@link RemoteSytem} {@link SystemRole}s 
+	 * are taken into consideration.
+	 * 
+	 * @param principal
+	 * @return  the assigned {@link SoftwarePermission} or a {@link SoftwarePermission} with {@link PermissionType#NONE} if no permission is assigned for the user.
+	 * @throws SoftwarePermissionException
+	 */
+	public SoftwarePermission getEffectivePermissionForPrincipal(String principal) 
+	throws SoftwarePermissionException 
+	{
+		if (StringUtils.isEmpty(principal)) {
+			return new SoftwarePermission(principal, PermissionType.NONE);
+		}
+		else if (AuthorizationHelper.isTenantAdmin(principal)) {
+			return new SoftwarePermission(principal, PermissionType.ALL);
+		}
+		else {
+			SoftwarePermission pricipalPermission = _getUserOrGroupRoleForUserOnApp(principal);
+			
+			return pricipalPermission;
+		}
+	}
+	
+	/**
+	 * Returns the {@link SoftwarePermission} assigned to a given user or  
+	 * an implicit permission if the {@link Software} is public.
+	 * @param principal
+	 * @return the assigned {@link SoftwarePermission} or a {@link SoftwarePermission} with {@link PermissionType#NONE} if no permission is assigned for the user.
+	 */
+	protected SoftwarePermission _getUserOrGroupRoleForUserOnApp(String principal) {
+		
+		SoftwarePermission userPermission = null;
+		
+		// no role for empty users
+		if (StringUtils.isEmpty(principal)) {
+			userPermission = new SoftwarePermission(principal, PermissionType.NONE);
+		}
+		else {
+			// lookup the user permissions in the db
+			userPermission = SoftwarePermissionDao.getUserSoftwarePermissions(principal, software.getId());
+			
+			// owners have their role implicitly
+			if (userPermission == null) {
+				// all users have PermissionType.READ_EXECUTE unless explicitly revoked 
+				if (software.isPubliclyAvailable()) {
+					userPermission = new SoftwarePermission(principal, PermissionType.READ_EXECUTE);
+				}
+				// owners have all permissions to their apps until published.
+				else if (StringUtils.equals(principal, software.getOwner())) {
+					userPermission = new SoftwarePermission(principal, PermissionType.ALL);
+				}
+				// private apps must be granted explicitly
+				else {
+					userPermission = new SoftwarePermission(principal, PermissionType.NONE);
+				}
+			}
+			else {
+				// public apps honor standard private app permissions
+			}
+		}
+		
+		return userPermission;
+	}
+
 }

@@ -15,14 +15,18 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.apps.dao.SoftwarePermissionDao;
+import org.iplantc.service.apps.exceptions.SoftwarePermissionException;
 import org.iplantc.service.apps.managers.ApplicationManager;
 import org.iplantc.service.apps.managers.SoftwarePermissionManager;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwarePermission;
+import org.iplantc.service.apps.model.enumerations.SoftwareRoleType;
 import org.iplantc.service.apps.resources.SoftwarePermissionCollection;
 import org.iplantc.service.apps.util.ServiceUtils;
+import org.iplantc.service.common.auth.AuthorizationHelper;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
+import org.iplantc.service.systems.manager.SystemRoleManager;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
 import org.restlet.data.Status;
 import org.restlet.representation.Representation;
@@ -48,34 +52,50 @@ public class SoftwarePermissionCollectionImpl extends AbstractSoftwareCollection
         {
             Software software = getSoftwareFromPathValue(softwareId);
         
-            if (software.isPubliclyAvailable()) 
-            {
-                throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-                        "Share permissions are not suported on public applications.");
-            }
+            SoftwarePermissionManager pm = new SoftwarePermissionManager(software);
             
-            if (new SoftwarePermissionManager(software).canRead(getAuthenticatedUsername()))
+            SystemRoleManager roleManager = new SystemRoleManager(software.getExecutionSystem());
+            
+//            if (software.isPubliclyAvailable() && 
+//            		!roleManager.getEffectiveRoleForPrincipal(getAuthenticatedUsername()).canAdmin())  
+//            {
+//                throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+//                		"User does not have permission to set permissions for app " +
+//                                software.getUniqueName() + "", 
+//                        new SoftwarePermissionException());
+////                "Share permissions are not suported on public applications.");
+//            }
+            
+            if (pm.canRead(getAuthenticatedUsername()))
             {
-                String jsonPermissions = 
-                        new SoftwarePermission(software, software.getOwner(), PermissionType.ALL).toJSON();
-                    
-                List<SoftwarePermission> pems = SoftwarePermissionDao.getSoftwarePermissions(software.getId());
-                if (ServiceUtils.isAdmin(getAuthenticatedUsername())) {
-                    boolean foundCurrentUser = false;
-                    for (SoftwarePermission pem: pems) {
-                        if (StringUtils.equals(getAuthenticatedUsername(), pem.getUsername())) {
-                            pem.setPermission(PermissionType.ALL);
-                            foundCurrentUser = true;
-                        }
-                    }
-                    if (!foundCurrentUser) {
-                        pems.add(new SoftwarePermission(software, getAuthenticatedUsername(), PermissionType.ALL));
-                    }
-                }
+                String jsonPermissions = null;
                 
-                for (SoftwarePermission pem: pems)
-                {
-                    jsonPermissions += "," + pem.toJSON();
+                if (software.isPubliclyAvailable() && 
+                		roleManager.getEffectiveRoleForPrincipal(getAuthenticatedUsername()).canAdmin()) {
+                    
+                	jsonPermissions = new SoftwarePermission(software, software.getOwner(), PermissionType.ALL).toJSON();
+                    
+	                List<SoftwarePermission> pems = SoftwarePermissionDao.getSoftwarePermissions(software.getId());
+	                if (ServiceUtils.isAdmin(getAuthenticatedUsername())) {
+	                    boolean foundCurrentUser = false;
+	                    for (SoftwarePermission pem: pems) {
+	                        if (StringUtils.equals(getAuthenticatedUsername(), pem.getUsername())) {
+	                            pem.setPermission(PermissionType.ALL);
+	                            foundCurrentUser = true;
+	                        }
+	                    }
+	                    if (!foundCurrentUser) {
+	                        pems.add(new SoftwarePermission(software, getAuthenticatedUsername(), PermissionType.ALL));
+	                    }
+	                }
+	                
+	                for (SoftwarePermission pem: pems)
+	                {
+	                    jsonPermissions += "," + pem.toJSON();
+	                }
+                }
+                else {
+                	jsonPermissions = pm.getEffectivePermissionForPrincipal(getAuthenticatedUsername()).toJSON();
                 }
                 
                 jsonPermissions = "[" + jsonPermissions + "]";
@@ -108,10 +128,16 @@ public class SoftwarePermissionCollectionImpl extends AbstractSoftwareCollection
         {
             Software software = getSoftwareFromPathValue(softwareId);
             
-            if (software.isPubliclyAvailable()) 
+            SystemRoleManager roleManager = new SystemRoleManager(software.getExecutionSystem());
+            
+            if (software.isPubliclyAvailable() && 
+            		!roleManager.getEffectiveRoleForPrincipal(getAuthenticatedUsername()).canAdmin())  
             {
-                throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-                        "Share permissions are not suported on public applications.");
+                throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+                		"User does not have permission to set permissions for app " +
+                                software.getUniqueName() + "", 
+                        new SoftwarePermissionException());
+//                "Share permissions are not suported on public applications.");
             }
             
             SoftwarePermissionManager pm = new SoftwarePermissionManager(software);
@@ -224,10 +250,16 @@ public class SoftwarePermissionCollectionImpl extends AbstractSoftwareCollection
         {
             Software software = getSoftwareFromPathValue(softwareId);
             
-            if (software.isPubliclyAvailable()) 
+            SystemRoleManager roleManager = new SystemRoleManager(software.getExecutionSystem());
+            
+            if (software.isPubliclyAvailable() && 
+            		!roleManager.getEffectiveRoleForPrincipal(getAuthenticatedUsername()).canAdmin())  
             {
-                throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-                        "Share permissions are not suported on public applications.");
+                throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+                		"User does not have permission to clear permissions for app " +
+                                software.getUniqueName() + "", 
+                        new SoftwarePermissionException());
+//                "Share permissions are not suported on public applications.");
             }
             
             SoftwarePermissionManager pm = new SoftwarePermissionManager(software);

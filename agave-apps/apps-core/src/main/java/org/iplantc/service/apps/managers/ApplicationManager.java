@@ -29,6 +29,7 @@ import org.iplantc.service.io.permissions.PermissionManager;
 import org.iplantc.service.notification.dao.NotificationDao;
 import org.iplantc.service.notification.model.Notification;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
+import org.iplantc.service.systems.manager.SystemRoleManager;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.json.JSONException;
@@ -667,8 +668,8 @@ public class ApplicationManager
 		} else if (newSoftware.getExecutionSystem() == null) {
 		    throw new SystemUnknownException("No execution system given.");
 		} else {
-			return ServiceUtils.isAdmin(username) || (
-					newSoftware.getExecutionSystem().getUserRole(username).canPublish());
+			SystemRoleManager roleManager = new SystemRoleManager(newSoftware.getExecutionSystem());
+			return roleManager.getEffectiveRoleForPrincipal(username).canPublish();
 		}
 	}
 

@@ -51,6 +51,7 @@ import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
 import org.iplantc.service.systems.exceptions.SystemException;
+import org.iplantc.service.systems.manager.SystemRoleManager;
 import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
 import org.iplantc.service.systems.model.enumerations.RoleType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
@@ -379,66 +380,22 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 		return roles;
 	}
 
+	/**
+	 * Returns the effective {@link SystemRole} for a username in the 
+	 * current tenant. This is deprecated in favor of {@link SystemRoleManager#getEffectiveRoleForPrincipal(String)}
+	 * which is what this method now delegates to.
+	 * 
+	 * @param username
+	 * @deprecated
+	 * @see {@link SystemRoleManager#getEffectiveRoleForPrincipal(String)}
+	 * @return
+	 */
 	@Transient
+	@Deprecated
 	public SystemRole getUserRole(String username)
 	{
-		if (StringUtils.isEmpty(username)) {
-			return new SystemRole(username, RoleType.NONE);
-		}
-		else if (username.equals(owner))
-		{
-			return new SystemRole(username, RoleType.OWNER);
-		}
-		else if (ServiceUtils.isAdmin(username))
-		{
-			return new SystemRole(username, RoleType.ADMIN);
-		}
-		else
-		{
-			SystemRole worldRole = new SystemRole(Settings.WORLD_USER_USERNAME, RoleType.NONE);
-//			SystemRole publicRole = new SystemRole(Settings.PUBLIC_USER_USERNAME, RoleType.NONE);
-			for(SystemRole role: getRoles()) {
-				if(role.getUsername().equals(username)) {
-					if (role.getRole() == RoleType.PUBLISHER && getType() == RemoteSystemType.STORAGE) {
-						return new SystemRole(username, RoleType.USER);
-					} else {
-						return role;
-					}
-				} else if (role.getUsername().equals(Settings.WORLD_USER_USERNAME)) {
-					worldRole = role;
-//				} else if (role.getUsername().equals(Settings.PUBLIC_USER_USERNAME)) {
-//					publicRole = role;
-				}
-			}
-
-			if ( isPubliclyAvailable())
-			{
-				if (!getType().equals(RemoteSystemType.EXECUTION) && worldRole.canRead())
-				{
-					return new SystemRole(username, RoleType.GUEST);
-				}
-//				else if (worldRole.canRead() || publicRole.canRead())
-//				{
-//					if (worldRole.getRole().intVal() >= publicRole.getRole().intVal()) {
-//						return worldRole;
-//					} else {
-//						return publicRole;
-//					}
-//				}
-//				else if (worldRole.canRead())
-//				{
-//					return worldRole;
-//				}
-				else
-				{
-					return new SystemRole(username, RoleType.USER);
-				}
-			}
-			else
-			{
-				return new SystemRole(username, RoleType.NONE);
-			}
-		}
+		SystemRoleManager roleManager = new SystemRoleManager(this);
+		return roleManager.getEffectiveRoleForPrincipal(username);
 	}
 
 	/**

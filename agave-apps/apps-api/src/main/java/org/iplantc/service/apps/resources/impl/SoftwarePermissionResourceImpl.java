@@ -14,12 +14,14 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.apps.Settings;
 import org.iplantc.service.apps.dao.SoftwarePermissionDao;
+import org.iplantc.service.apps.exceptions.SoftwarePermissionException;
 import org.iplantc.service.apps.managers.ApplicationManager;
 import org.iplantc.service.apps.managers.SoftwarePermissionManager;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwarePermission;
 import org.iplantc.service.apps.resources.SoftwarePermissionResource;
 import org.iplantc.service.apps.util.ServiceUtils;
+import org.iplantc.service.common.auth.AuthorizationHelper;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.clients.AgaveProfileServiceClient;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
@@ -42,7 +44,7 @@ public class SoftwarePermissionResourceImpl extends AbstractSoftwareResource imp
     public SoftwarePermissionResourceImpl() {}
     
     /* (non-Javadoc)
-     * @see org.iplantc.service.apps.resources.impl.SoftwarePermissionResource#getNotification(java.lang.String, java.lang.String)
+     * @see org.iplantc.service.apps.resources.impl.SoftwarePermissionResource#getUserSoftwarePermission(java.lang.String, java.lang.String)
      */
     @GET
     @Override
@@ -59,15 +61,17 @@ public class SoftwarePermissionResourceImpl extends AbstractSoftwareResource imp
                 throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
                         "No shared software found matching " + softwareId);
             }
-            else if (software.isPubliclyAvailable()) 
-            {
-                throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-                        "Share permissions are not suported on public applications.");
-            }
+//            else if (software.isPubliclyAvailable()) 
+//            {
+//                throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
+//                        "Share permissions are not suported on public applications.");
+//            }
             
-            if (new SoftwarePermissionManager(software).canRead(getAuthenticatedUsername()))
+            SoftwarePermissionManager pm = new SoftwarePermissionManager(software);
+            if (pm.canRead(getAuthenticatedUsername()))
             {
-                SoftwarePermission pem = SoftwarePermissionDao.getUserSoftwarePermissions(sharedUsername, software.getId());
+            	SoftwarePermission pem = pm.getEffectivePermissionForPrincipal(getAuthenticatedUsername());
+//                SoftwarePermission pem = SoftwarePermissionDao.getUserSoftwarePermissions(sharedUsername, software.getId());
                 try 
                 {
                     // check validate username
@@ -77,21 +81,10 @@ public class SoftwarePermissionResourceImpl extends AbstractSoftwareResource imp
                             Settings.IRODS_USERNAME, 
                             Settings.IRODS_PASSWORD);
                     
-                    if (authClient.getUser(sharedUsername) == null) {
+                    if (authClient.getUser(sharedUsername) == null || pem.getPermission() == PermissionType.NONE) {
                         throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
                                 "No permissions found for user " + sharedUsername);
                     } else {
-                        if (pem == null) {
-                            if (ServiceUtils.isAdmin(sharedUsername)) {
-                                pem = new SoftwarePermission(software, sharedUsername, PermissionType.ALL);
-                            } else if (StringUtils.equals(sharedUsername, software.getOwner())) {
-                                pem = new SoftwarePermission(software, sharedUsername, PermissionType.ALL);
-                            } else {
-                                throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-                                        "No permissions found for user " + sharedUsername);
-                            }
-                            
-                        }
                         return Response.ok(new AgaveSuccessRepresentation(pem.toJSON())).build();
                     }
                 } catch (Exception e) {
@@ -130,10 +123,14 @@ public class SoftwarePermissionResourceImpl extends AbstractSoftwareResource imp
         {
             Software software = getSoftwareFromPathValue(softwareId);
             
-            if (software.isPubliclyAvailable()) 
+            if (software.isPubliclyAvailable() && 
+            		!AuthorizationHelper.isTenantAdmin(getAuthenticatedUsername())) 
             {
-                throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-                        "Share permissions are not suported on public applications.");
+                throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+                		"User does not have permission to set permissions for app " +
+                                software.getUniqueName() + "", 
+                        new SoftwarePermissionException());
+//                "Share permissions are not suported on public applications.");
             }
             
             SoftwarePermissionManager pm = new SoftwarePermissionManager(software);
@@ -266,10 +263,14 @@ public class SoftwarePermissionResourceImpl extends AbstractSoftwareResource imp
         {
             Software software = getSoftwareFromPathValue(softwareId);
             
-            if (software.isPubliclyAvailable()) 
+            if (software.isPubliclyAvailable() && 
+            		!AuthorizationHelper.isTenantAdmin(getAuthenticatedUsername())) 
             {
-                throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-                        "Share permissions are not suported on public applications.");
+                throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+                		"User does not have permission to set permissions for app " +
+                                software.getUniqueName() + "", 
+                        new SoftwarePermissionException());
+//                "Share permissions are not suported on public applications.");
             }
             
             SoftwarePermissionManager pm = new SoftwarePermissionManager(software);

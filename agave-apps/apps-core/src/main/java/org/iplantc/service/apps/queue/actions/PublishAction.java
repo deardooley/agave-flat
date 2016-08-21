@@ -20,7 +20,6 @@ import org.iplantc.service.apps.managers.SoftwareEventProcessor;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.enumerations.SoftwareEventType;
 import org.iplantc.service.apps.util.ZipUtil;
-import org.iplantc.service.common.auth.AuthorizationHelper;
 import org.iplantc.service.common.dao.TenantDao;
 import org.iplantc.service.common.exceptions.DependencyException;
 import org.iplantc.service.common.exceptions.DomainException;
@@ -40,6 +39,7 @@ import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.manager.SystemManager;
+import org.iplantc.service.systems.manager.SystemRoleManager;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.StorageSystem;
@@ -121,15 +121,11 @@ public class PublishAction extends AbstractWorkerAction<Software> {
     throws SystemUnavailableException, SystemUnknownException, DependencyException, DomainException, ClosedByInterruptException, PermissionException
     {
         try {
-            if (!AuthorizationHelper.isTenantAdmin(publishingUsername)) {
-                throw new PermissionException("Permission denied. Only tenant administrators may publish apps.");
-            } else {
-                setPublishedSoftware(publish());
-                
-                // send publish event on success
-                SoftwareEventProcessor eventProcessor = new SoftwareEventProcessor();
-                eventProcessor.processPublishEvent(getEntity(), publishedSoftware, getPublishingUsername());
-            }
+    	    setPublishedSoftware(publish());
+            
+            // send publish event on success
+            SoftwareEventProcessor eventProcessor = new SoftwareEventProcessor();
+            eventProcessor.processPublishEvent(getEntity(), publishedSoftware, getPublishingUsername());
         }
         catch (SystemUnknownException e) {
         	getEventProcessor().processSoftwareContentEvent(getEntity(), 
@@ -231,6 +227,14 @@ public class PublishAction extends AbstractWorkerAction<Software> {
                     else {
                         publishedSoftwareExecutionSystem = getEntity().getExecutionSystem();
                     }
+                }
+                
+                // verify permission to publish on the publishedSoftwareExecutionSystem.
+                SystemRoleManager roleManager = new SystemRoleManager(publishedSoftwareExecutionSystem);
+                
+                if (!roleManager.getEffectiveRoleForPrincipal(getPublishingUsername()).canPublish()) {
+                	throw new PermissionException("Permission denied. User does not a PUBLISHER role on " 
+                			+ publishedSoftwareExecutionSystem.getSystemId() + ".");
                 }
                 
                 publishedSoftware.setExecutionSystem(publishedSoftwareExecutionSystem);

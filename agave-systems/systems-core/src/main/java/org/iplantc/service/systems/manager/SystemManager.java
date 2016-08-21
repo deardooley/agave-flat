@@ -145,6 +145,9 @@ public class SystemManager {
     			StringUtils.equals(apiUsername, Settings.WORLD_USER_USERNAME)) {
     		return false;
     	}
+		else if (ServiceUtils.isAdmin(apiUsername)) {
+			return true;
+		}
 		else {
 			SystemRole role = system.getUserRole(apiUsername);
 			if (system.isPubliclyAvailable()) {

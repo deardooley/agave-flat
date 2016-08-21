@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.iplantc.service.common.auth.AuthorizationHelper;
 import org.iplantc.service.common.clients.AgaveProfileServiceClient;
 import org.iplantc.service.common.clients.beans.Profile;
 import org.iplantc.service.common.exceptions.NotificationException;
@@ -49,6 +50,99 @@ public class SystemRoleManager {
 		}
 		this.system = system;
 		this.eventProcessor = new RemoteSystemEventProcessor();
+	}
+	
+	/**
+	 * Returns the effective {@link SystemRole} for a given principal. This 
+	 * method should be used for both 
+	 * @param principal
+	 * @return
+	 * @throws SystemException
+	 */
+	public SystemRole getEffectiveRoleForPrincipal(String principal) throws SystemException {
+		
+		if (StringUtils.isEmpty(principal)) {
+			return new SystemRole(principal, RoleType.NONE);
+		}
+		else if (AuthorizationHelper.isTenantAdmin(principal)) {
+			return new SystemRole(principal, RoleType.ADMIN);
+		}
+		else {
+			
+			SystemRole pricipalRole = _getUserOrGroupRoleForUserOnSystem(principal);
+			
+			// admin and publisher roles apply regardless of system scope. we 
+			// explicitly check the role rather than using the RoleType.can* 
+			// method because we don't want the system owner to get greenlighted
+			// on public systems.
+			if (pricipalRole.getRole() == RoleType.ADMIN || pricipalRole.getRole() == RoleType.PUBLISHER) {
+				return pricipalRole;
+			}
+			// user roles get squashed when a system is published, and 
+			// RoleType.USER is granted everyone unless it's an execution system,
+			// then they get RoleType.GUEST (readonly) access.
+			else if (system.isPubliclyAvailable())
+			{
+				if (system.getType() != RemoteSystemType.EXECUTION && 
+						_getUserOrGroupRoleForUserOnSystem(Settings.WORLD_USER_USERNAME).canRead())
+				{
+					return new SystemRole(principal, RoleType.GUEST);
+				}
+				else {
+					return new SystemRole(principal, RoleType.USER);
+				}
+			}
+			else {
+				return pricipalRole;
+			}
+		}
+	}
+	
+	/**
+	 * Returns the {@link SystemRole} assigned to a given user or to the {@link Settings#WORLD_USER_USERNAME} 
+	 * if no {@link SystemRole} exists for {@code principal}.
+	 * @param principal
+	 * @return
+	 */
+	protected SystemRole _getUserOrGroupRoleForUserOnSystem(String principal) {
+		
+		// no role for empty users
+		if (StringUtils.isEmpty(principal)) {
+			return new SystemRole(principal, RoleType.NONE);
+		}
+		// owners have their role implicitly
+		else if (StringUtils.equals(principal, system.getOwner())) {
+			return new SystemRole(principal, RoleType.OWNER);
+		}
+		
+		// create a restricted role by default.
+		SystemRole effectiveRole = null;
+		
+		// iterate through all roles...we could look this up directly, but they
+		// are eager laoded with the sytem, so we already took the hit.
+		for (SystemRole role: system.getRoles()) {
+			if (role.getUsername().equals(principal)) {
+				// fix any misplaced execution system roles that might have been applied to 
+				// a storage system.
+				if (role.getRole() == RoleType.PUBLISHER && system.getType() == RemoteSystemType.STORAGE) {
+					effectiveRole = new SystemRole(principal, RoleType.USER);
+				} 
+				else {
+					effectiveRole = role;
+				}
+				break;
+			} 
+			// If a world role has been set, grant this to the user if they don't 
+			// have one of their own. This will be overridden by an actual user
+			// role if it comes up later.
+			else if (role.getUsername().equals(Settings.WORLD_USER_USERNAME)) {
+				if (effectiveRole == null) {
+					effectiveRole = new SystemRole(principal, role.getRole());
+				}
+			}
+		}
+		
+		return effectiveRole == null ? new SystemRole(principal, RoleType.NONE) : effectiveRole;
 	}
 
 	/**
