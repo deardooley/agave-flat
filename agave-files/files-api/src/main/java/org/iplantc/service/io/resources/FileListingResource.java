@@ -16,7 +16,6 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
-import org.iplantc.service.common.uri.UrlPathEscaper;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.io.dao.LogicalFileDao;
@@ -38,10 +37,8 @@ import org.joda.time.DateTime;
 import org.json.JSONStringer;
 import org.json.JSONWriter;
 import org.restlet.Request;
-import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.representation.Representation;
-import org.restlet.representation.Variant;
 import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
 
@@ -237,10 +234,11 @@ public class FileListingResource extends AbstractFileResource {
                 String fileName = remoteFileInfo.isFile() ? FilenameUtils.getName(remoteFileInfo.getName()) : ".";
                 
                 String absPath = StringUtils.removeStart(logicalFile.getPath(), remoteSystem.getStorageConfig().getRootDir());
-                absPath = "/" + StringUtils.removeEnd(absPath, "/"); 
+                absPath = StringUtils.removeEnd(absPath, "/");
+                if ((absPath != null) && !absPath.startsWith("/"))  // Avoid multiple leading slashes.
+                	absPath = "/" + absPath;
         		
                 
-//                String absPath = logicalFile.getPath()remoteDataClient.resolvePath(path) + (fileName.equals(".") ? "" : File.separator + fileName);
                 writer.array();
                 // adjust the offset and print the path element only if offset is zero
                 int theLimit = getLimit();
@@ -254,7 +252,6 @@ public class FileListingResource extends AbstractFileResource {
 		                .key("path").value(absPath)
 		                .key("lastModified").value(new DateTime(remoteFileInfo.getLastModified()).toString())
 		                .key("length").value(remoteFileInfo.getSize())
-		//                            .key("owner").value(owner)
 		                .key("permissions").value(sPermission)
 		                .key("format").value(format);
 		                if (isDirectory) {
@@ -323,7 +320,6 @@ public class FileListingResource extends AbstractFileResource {
 								.key("path").value(absChildPath)
 								.key("lastModified").value(new DateTime(file.getLastModified()).toString())
 								.key("length").value(file.getSize())
-	//							.key("owner").value(owner)
 								.key("permissions").value(sPermission)
 								.key("format").value(format)
 								.key("system").value(remoteSystem.getSystemId());
@@ -344,9 +340,6 @@ public class FileListingResource extends AbstractFileResource {
 	                            	.key("system").object()
 	                            		.key("href").value(remoteSystem.getPublicLink())
 	                            	.endObject()
-//	        	                	.key("metadata").object()
-//		    	            			.key("href").value(getMetadataLink(remoteSystem, relativePath))
-//		    	            		.endObject()
 	                            .endObject()
 							.endObject();
 	                	}
