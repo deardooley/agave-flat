@@ -55,7 +55,6 @@ import org.iplantc.service.io.queue.UploadJob;
 import org.iplantc.service.io.util.PathResolver;
 import org.iplantc.service.io.util.ServiceUtils;
 import org.iplantc.service.notification.model.Notification;
-import org.iplantc.service.notification.util.EntityWithNotificationReferenceSerializer;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemException;
@@ -92,10 +91,6 @@ import org.restlet.resource.Put;
 import org.restlet.resource.ResourceException;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Files;
 
 /**
