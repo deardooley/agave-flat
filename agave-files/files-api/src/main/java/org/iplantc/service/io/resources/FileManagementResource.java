@@ -1592,7 +1592,12 @@ public class FileManagementResource extends AbstractFileResource
 			catch (FileNotFoundException e) {
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
 						e.getMessage(), e);
-			} catch (ResourceException e) {
+			} 
+            catch (IllegalArgumentException e) {
+                throw new ResourceException(Status.CLIENT_ERROR_CONFLICT,
+                        e.getMessage(), e);
+            } 
+			catch (ResourceException e) {
 				throw e;
 			} 
 			catch (RemoteDataException e) {
