@@ -945,12 +945,14 @@ public class MaverickSFTP implements RemoteDataClient
 
 	@Override
 	public void doRename(String oldpath, String newpath) 
-	throws IOException, FileNotFoundException, RemoteDataException
+	throws IOException, FileNotFoundException, RemoteDataException, IllegalArgumentException
 	{
+		String resolvedSourcePath = null;
+		String resolvedDestPath = null;
 		try
 		{
-			String resolvedSourcePath = resolvePath(oldpath);
-			String resolvedDestPath = resolvePath(newpath);
+			resolvedSourcePath = resolvePath(oldpath);
+			resolvedDestPath = resolvePath(newpath);
 			
 //			if (StringUtils.startsWith(resolvedDestPath, resolvedSourcePath)) {
 //				throw new RemoteDataException("Cannot rename a file or director into its own subtree");
@@ -966,7 +968,11 @@ public class MaverickSFTP implements RemoteDataClient
 		catch (SftpStatusException e) {
 			if (e.getMessage().toLowerCase().contains("no such file")) {
 				throw new FileNotFoundException("No such file or directory");
-			} else {
+			} 
+			else if (doesExistSafe(resolvedDestPath)) {
+				throw new IllegalArgumentException("Destination already exists: " + oldpath);
+			}
+			else {
 				throw new RemoteDataException("Failed to rename " + oldpath + " to " + newpath, e);
 			}
 		}
@@ -1008,7 +1014,7 @@ public class MaverickSFTP implements RemoteDataClient
 	 */
 	@Override
 	public void copy(String remotesrc, String remotedest, RemoteTransferListener listener) 
-	throws IOException, FileNotFoundException, RemoteDataException
+	throws IOException, FileNotFoundException, RemoteDataException, IllegalArgumentException
 	{
 		if (!doesExist(remotesrc)) {
 			throw new FileNotFoundException("No such file or directory");
@@ -1072,6 +1078,11 @@ public class MaverickSFTP implements RemoteDataClient
 					}
 					if (StringUtils.containsIgnoreCase(builder.toString(), "No such file or directory")) {
 					    throw new FileNotFoundException("No such file or directory");
+					} 
+					else if (StringUtils.startsWithIgnoreCase(builder.toString(), "cp:")) {
+					    // We use the heuristic that a copy failure due to invalid 
+					    // user input produces a message that begins with 'cp:'.
+					    throw new IllegalArgumentException("Copy failure: " + builder.toString().substring(3));
 					} else {
 					    throw new RemoteDataException("Failed to perform a remote copy command on " + host + ". " + 
 					            builder.toString());
@@ -1089,7 +1100,7 @@ public class MaverickSFTP implements RemoteDataClient
 				throw new RemoteDataException("Failed to authenticate to remote host");
 			}
 		}
-		catch(FileNotFoundException | RemoteDataException e) {
+		catch(FileNotFoundException | RemoteDataException | IllegalArgumentException e) {
 			throw e;
 		}
 		catch (Throwable t)
@@ -1261,6 +1272,27 @@ public class MaverickSFTP implements RemoteDataClient
 		sftpClient = null;
 	}
 	
+    /** Determine if a resolved path exists without throwing exceptions.
+     * If the path exists, true is returned.  If the path does not exist
+     * or if the command fails for any reason, false is returned.
+     * 
+     * @param resolvedPath a fully resolved pathname
+     * @return true if there's positive confirmation that the path represents
+     *         an existing object, false otherwise. 
+     */
+    private boolean doesExistSafe(String resolvedPath)
+    {
+        // Is it worth trying?
+        if (resolvedPath == null) return false;
+        
+        // See if we get any attributes back.
+        SftpFileAttributes atts = null;
+        try {atts = stat(resolvedPath);}
+          catch (Exception e){}
+        if (atts == null) return false;
+          else return true;  // object found
+    }
+    
 	@Override
 	public boolean doesExist(String path) throws IOException, RemoteDataException
 	{

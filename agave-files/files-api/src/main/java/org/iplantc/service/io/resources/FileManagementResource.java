@@ -35,6 +35,7 @@ import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.AgaveErrorRepresentation;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
+import org.iplantc.service.common.util.AgaveStringUtils;
 import org.iplantc.service.data.transform.FileTransform;
 import org.iplantc.service.data.transform.FileTransformProperties;
 import org.iplantc.service.io.Settings;
@@ -55,7 +56,6 @@ import org.iplantc.service.io.queue.UploadJob;
 import org.iplantc.service.io.util.PathResolver;
 import org.iplantc.service.io.util.ServiceUtils;
 import org.iplantc.service.notification.model.Notification;
-import org.iplantc.service.notification.util.EntityWithNotificationReferenceSerializer;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemException;
@@ -92,10 +92,6 @@ import org.restlet.resource.Put;
 import org.restlet.resource.ResourceException;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Files;
 
 /**
@@ -1591,22 +1587,29 @@ public class FileManagementResource extends AbstractFileResource
 			} 
 			catch (FileNotFoundException e) {
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-						e.getMessage(), e);
-			} catch (ResourceException e) {
+						AgaveStringUtils.convertWhitespace(e.getMessage()), e);
+			} 
+            catch (IllegalArgumentException e) {
+                throw new ResourceException(Status.CLIENT_ERROR_CONFLICT,
+                        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
+            } 
+			catch (ResourceException e) {
 				throw e;
 			} 
 			catch (RemoteDataException e) {
-				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e.getMessage(), e);
+				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
+				        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
 			} 
 			catch (Exception e) {
 				log.error("Error performing file operation",e);
 				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-						"File operation failed " + e.getMessage(), e);
+						"File operation failed " + 
+						        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
 			}
 		}
 		catch (ResourceException e) {
 			setStatus(e.getStatus());
-			return new AgaveErrorRepresentation(e.getMessage());
+			return new AgaveErrorRepresentation(AgaveStringUtils.convertWhitespace(e.getMessage()));
 		}
 		finally {
 			try {remoteDataClient.disconnect();} catch (Exception e) {}
