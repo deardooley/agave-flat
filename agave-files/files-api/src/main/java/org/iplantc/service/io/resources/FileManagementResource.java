@@ -35,6 +35,7 @@ import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.AgaveErrorRepresentation;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
+import org.iplantc.service.common.util.AgaveStringUtils;
 import org.iplantc.service.data.transform.FileTransform;
 import org.iplantc.service.data.transform.FileTransformProperties;
 import org.iplantc.service.io.Settings;
@@ -1586,27 +1587,29 @@ public class FileManagementResource extends AbstractFileResource
 			} 
 			catch (FileNotFoundException e) {
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-						e.getMessage(), e);
+						AgaveStringUtils.convertWhitespace(e.getMessage()), e);
 			} 
             catch (IllegalArgumentException e) {
                 throw new ResourceException(Status.CLIENT_ERROR_CONFLICT,
-                        e.getMessage(), e);
+                        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
             } 
 			catch (ResourceException e) {
 				throw e;
 			} 
 			catch (RemoteDataException e) {
-				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e.getMessage(), e);
+				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
+				        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
 			} 
 			catch (Exception e) {
 				log.error("Error performing file operation",e);
 				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-						"File operation failed " + e.getMessage(), e);
+						"File operation failed " + 
+						        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
 			}
 		}
 		catch (ResourceException e) {
 			setStatus(e.getStatus());
-			return new AgaveErrorRepresentation(e.getMessage());
+			return new AgaveErrorRepresentation(AgaveStringUtils.convertWhitespace(e.getMessage()));
 		}
 		finally {
 			try {remoteDataClient.disconnect();} catch (Exception e) {}

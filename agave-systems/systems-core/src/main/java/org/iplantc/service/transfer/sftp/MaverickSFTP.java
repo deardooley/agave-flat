@@ -1014,7 +1014,7 @@ public class MaverickSFTP implements RemoteDataClient
 	 */
 	@Override
 	public void copy(String remotesrc, String remotedest, RemoteTransferListener listener) 
-	throws IOException, FileNotFoundException, RemoteDataException
+	throws IOException, FileNotFoundException, RemoteDataException, IllegalArgumentException
 	{
 		if (!doesExist(remotesrc)) {
 			throw new FileNotFoundException("No such file or directory");
@@ -1078,6 +1078,9 @@ public class MaverickSFTP implements RemoteDataClient
 					}
 					if (StringUtils.containsIgnoreCase(builder.toString(), "No such file or directory")) {
 					    throw new FileNotFoundException("No such file or directory");
+					} 
+					else if (StringUtils.startsWithIgnoreCase(builder.toString(), "cp:")) {
+					    throw new IllegalArgumentException("Copy failure: " + builder.toString().substring(3));
 					} else {
 					    throw new RemoteDataException("Failed to perform a remote copy command on " + host + ". " + 
 					            builder.toString());
@@ -1095,7 +1098,7 @@ public class MaverickSFTP implements RemoteDataClient
 				throw new RemoteDataException("Failed to authenticate to remote host");
 			}
 		}
-		catch(FileNotFoundException | RemoteDataException e) {
+		catch(FileNotFoundException | RemoteDataException | IllegalArgumentException e) {
 			throw e;
 		}
 		catch (Throwable t)
