@@ -1080,6 +1080,8 @@ public class MaverickSFTP implements RemoteDataClient
 					    throw new FileNotFoundException("No such file or directory");
 					} 
 					else if (StringUtils.startsWithIgnoreCase(builder.toString(), "cp:")) {
+					    // We use the heuristic that a copy failure due to invalid 
+					    // user input produces a message that begins with 'cp:'.
 					    throw new IllegalArgumentException("Copy failure: " + builder.toString().substring(3));
 					} else {
 					    throw new RemoteDataException("Failed to perform a remote copy command on " + host + ". " + 
