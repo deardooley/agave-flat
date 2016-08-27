@@ -26,6 +26,7 @@ import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.RemoteTransferListener;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.iplantc.service.transfer.exceptions.RemoteDataSyntaxException;
 import org.iplantc.service.transfer.model.RemoteFilePermission;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
@@ -945,7 +946,7 @@ public class MaverickSFTP implements RemoteDataClient
 
 	@Override
 	public void doRename(String oldpath, String newpath) 
-	throws IOException, FileNotFoundException, RemoteDataException, IllegalArgumentException
+	throws IOException, FileNotFoundException, RemoteDataException, RemoteDataSyntaxException
 	{
 		String resolvedSourcePath = null;
 		String resolvedDestPath = null;
@@ -970,7 +971,7 @@ public class MaverickSFTP implements RemoteDataClient
 				throw new FileNotFoundException("No such file or directory");
 			} 
 			else if (doesExistSafe(resolvedDestPath)) {
-				throw new IllegalArgumentException("Destination already exists: " + oldpath);
+				throw new RemoteDataSyntaxException("Destination already exists: " + newpath);
 			}
 			else {
 				throw new RemoteDataException("Failed to rename " + oldpath + " to " + newpath, e);
@@ -994,7 +995,7 @@ public class MaverickSFTP implements RemoteDataClient
 	 */
 	@Override
 	public void copy(String remotefromdir, String remotetodir) 
-	throws IOException, RemoteDataException
+	throws IOException, RemoteDataException, RemoteDataSyntaxException
 	{
 		copy(remotefromdir, remotetodir, null);
 	}
@@ -1014,7 +1015,7 @@ public class MaverickSFTP implements RemoteDataClient
 	 */
 	@Override
 	public void copy(String remotesrc, String remotedest, RemoteTransferListener listener) 
-	throws IOException, FileNotFoundException, RemoteDataException, IllegalArgumentException
+	throws IOException, FileNotFoundException, RemoteDataException, RemoteDataSyntaxException
 	{
 		if (!doesExist(remotesrc)) {
 			throw new FileNotFoundException("No such file or directory");
@@ -1082,7 +1083,7 @@ public class MaverickSFTP implements RemoteDataClient
 					else if (StringUtils.startsWithIgnoreCase(builder.toString(), "cp:")) {
 					    // We use the heuristic that a copy failure due to invalid 
 					    // user input produces a message that begins with 'cp:'.
-					    throw new IllegalArgumentException("Copy failure: " + builder.toString().substring(3));
+					    throw new RemoteDataSyntaxException("Copy failure: " + builder.toString().substring(3));
 					} else {
 					    throw new RemoteDataException("Failed to perform a remote copy command on " + host + ". " + 
 					            builder.toString());
@@ -1100,7 +1101,7 @@ public class MaverickSFTP implements RemoteDataClient
 				throw new RemoteDataException("Failed to authenticate to remote host");
 			}
 		}
-		catch(FileNotFoundException | RemoteDataException | IllegalArgumentException e) {
+		catch(FileNotFoundException | RemoteDataException | RemoteDataSyntaxException e) {
 			throw e;
 		}
 		catch (Throwable t)

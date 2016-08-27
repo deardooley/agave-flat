@@ -68,6 +68,7 @@ import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.RemoteDataClientFactory;
 import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.iplantc.service.transfer.exceptions.RemoteDataSyntaxException;
 import org.json.JSONException;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
@@ -1589,8 +1590,8 @@ public class FileManagementResource extends AbstractFileResource
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
 						AgaveStringUtils.convertWhitespace(e.getMessage()), e);
 			} 
-            catch (IllegalArgumentException e) {
-                throw new ResourceException(Status.CLIENT_ERROR_CONFLICT,
+            catch (RemoteDataSyntaxException e) {
+                throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
                         AgaveStringUtils.convertWhitespace(e.getMessage()), e);
             } 
 			catch (ResourceException e) {
@@ -1629,12 +1630,13 @@ public class FileManagementResource extends AbstractFileResource
 	 * @throws RemoteDataException
 	 * @throws HibernateException
 	 * @throws JSONException 
+	 * @throws RemoteDataSyntaxException 
 	 */
 	protected Representation doRenameOperation(JsonNode jsonInput, String absolutePath,
 			LogicalFile logicalFile, PermissionManager pm)
 			throws ResourceException, PermissionException,
 			FileNotFoundException, IOException, RemoteDataException,
-			HibernateException, JSONException {
+			HibernateException, JSONException, RemoteDataSyntaxException {
 		String message;
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.FILES02.name(),
 				AgaveLogServiceClient.ActivityKeys.IORename.name(),
@@ -1751,12 +1753,13 @@ public class FileManagementResource extends AbstractFileResource
 	 * @throws RemoteDataException
 	 * @throws HibernateException
 	 * @throws JSONException 
+	 * @throws RemoteDataSyntaxException 
 	 */
 	protected AgaveSuccessRepresentation doMoveOperation(JsonNode jsonInput,
 			LogicalFile logicalFile, PermissionManager pm)
 			throws PermissionException, FileNotFoundException,
 			ResourceException, IOException, RemoteDataException,
-			HibernateException, JSONException {
+			HibernateException, JSONException, RemoteDataSyntaxException {
 		String message;
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.FILES02.name(),
 				AgaveLogServiceClient.ActivityKeys.IOMove.name(),
@@ -2048,10 +2051,11 @@ public class FileManagementResource extends AbstractFileResource
 	 * @throws IOException
 	 * @throws RemoteDataException
 	 * @throws JSONException 
+	 * @throws RemoteDataSyntaxException 
 	 * @throws HibernateException
 	 */
 	protected AgaveSuccessRepresentation doCopyOperation(JsonNode jsonInput, String absolutePath, LogicalFile logicalFile, PermissionManager pm)
-	throws PermissionException, FileNotFoundException, ResourceException, IOException, RemoteDataException, JSONException 
+	throws PermissionException, FileNotFoundException, ResourceException, IOException, RemoteDataException, JSONException, RemoteDataSyntaxException 
 	{
 		String message;
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.FILES02.name(),
