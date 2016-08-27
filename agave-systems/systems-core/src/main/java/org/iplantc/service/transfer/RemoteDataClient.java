@@ -3,10 +3,12 @@ package org.iplantc.service.transfer;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.util.List;
 
+import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.iplantc.service.transfer.exceptions.RemoteDataSyntaxException;
+import org.iplantc.service.transfer.gridftp.GridFTP;
 
 /**
  * Interface for interacting with remote file systems. This provides a common 
@@ -240,7 +242,8 @@ public interface RemoteDataClient extends RemoteDataClientPermissionProvider {
 	 * @throws IOException
 	 * @throws RemoteDataException
 	 */
-	public abstract void doRename(String sourcePath, String remoteDestPath) throws IOException, RemoteDataException;
+	public abstract void doRename(String sourcePath, String remoteDestPath) 
+	        throws IOException, RemoteDataException, RemoteDataSyntaxException;
 	
 	/**
 	 * Copy a file item from one place to another on the same system, overwriting 
@@ -251,7 +254,8 @@ public interface RemoteDataClient extends RemoteDataClientPermissionProvider {
 	 * @throws IOException
 	 * @throws RemoteDataException
 	 */
-	public abstract void copy(String sourcePath, String remoteDestPath) throws IOException, RemoteDataException;
+	public abstract void copy(String sourcePath, String remoteDestPath) 
+	        throws IOException, RemoteDataException, RemoteDataSyntaxException;
 	
 	/**
 	 * Copy a file item from one place to another on the same system, overwriting 
@@ -264,7 +268,7 @@ public interface RemoteDataClient extends RemoteDataClientPermissionProvider {
 	 * @throws RemoteDataException
 	 */
 	public void copy(String remoteSourcePath, String remoteDestPath, RemoteTransferListener listener)
-			throws IOException, RemoteDataException;
+			throws IOException, RemoteDataException, RemoteDataSyntaxException;
 	
 	/**
 	 * Returns the native protocol-specific URI for a given path.

@@ -27,6 +27,7 @@ import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.RangeValidationException;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.iplantc.service.transfer.exceptions.RemoteDataSyntaxException;
 import org.iplantc.service.transfer.exceptions.TransferException;
 import org.iplantc.service.transfer.gridftp.GridFTP;
 import org.iplantc.service.transfer.local.Local;
@@ -128,7 +129,7 @@ public class URLCopy
      * @throws ClosedByInterruptException
      */
     public TransferTask copy(String srcPath, String destPath, TransferTask transferTask)
-    throws RemoteDataException, IOException, TransferException, ClosedByInterruptException
+    throws RemoteDataException, RemoteDataSyntaxException, IOException, TransferException, ClosedByInterruptException
     {
         return copy(srcPath, destPath, transferTask, null);
     }
@@ -150,7 +151,7 @@ public class URLCopy
 	 * @throws ClosedByInterruptException
 	 */
 	public TransferTask copy(String srcPath, String destPath, TransferTask transferTask, List<String> exclusions)
-	throws RemoteDataException, IOException, TransferException, ClosedByInterruptException
+	throws RemoteDataException, RemoteDataSyntaxException, IOException, TransferException, ClosedByInterruptException
 	{
 		if (transferTask == null) {
 			throw new TransferException("TransferTask cannot be null. Please provide"
