@@ -328,8 +328,11 @@ public class ExecutionSystem extends RemoteSystem implements SerializableSystem 
 	}
 	
 	public String toString() {
-		return this.getSystemId() + " " + scheduler.name() + " " + 
-				(loginConfig != null ? loginConfig.getProtocol().name() : ""); 
+		return String.format("%s - %s|%s - %s",
+				this.getSystemId(),
+				this.getScheduler().name(),
+				(this.getLoginConfig() != null ? this.getLoginConfig().getProtocol().name() : "null"),
+				this.isPubliclyAvailable() ? "public" : "private"); 
 	}
 
 	@Override

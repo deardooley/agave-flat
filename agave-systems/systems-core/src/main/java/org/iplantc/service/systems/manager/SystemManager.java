@@ -149,14 +149,12 @@ public class SystemManager {
 			return true;
 		}
 		else {
-			SystemRole role = system.getUserRole(apiUsername);
+			SystemRole role = new SystemRoleManager(system).getEffectiveRoleForPrincipal(apiUsername);
 			if (system.isPubliclyAvailable()) {
-				return ServiceUtils.isAdmin(apiUsername);
+				return AuthorizationHelper.isTenantAdmin(apiUsername);
 			} 
 			else {
-				return (ServiceUtils.isAdmin(apiUsername) || 
-						system.isOwnedBy(apiUsername) ||
-						role.canAdmin());
+				return role.canAdmin();
 			}
 		}
 	}

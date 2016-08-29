@@ -20,6 +20,7 @@ import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
 import org.iplantc.service.systems.exceptions.SystemException;
+import org.iplantc.service.systems.exceptions.SystemRoleException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.manager.SystemManager;
@@ -318,8 +319,8 @@ public class SystemRoleResource extends AgaveResource
 							getResponse().setStatus(Status.SUCCESS_CREATED);
 						}
 						
-						SystemRole role = system.getUserRole(name);
-					
+						SystemRole role = roleManager.getEffectiveRoleForPrincipal(name);
+						
 						getResponse().setEntity(new IplantSuccessRepresentation("[" + role.toJSON(system) + "]"));
 					} 
 					catch (IllegalArgumentException iae) {
@@ -331,6 +332,10 @@ public class SystemRoleResource extends AgaveResource
 				}
 				catch (ResourceException e) {
 					throw e;
+				}
+				catch (SystemRoleException e) {
+					throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+							e.getMessage(), e);
 				}
 				catch (SystemException e) {
 					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
@@ -405,26 +410,30 @@ public class SystemRoleResource extends AgaveResource
 			
 			if (systemManager.isManageableByUser(system, username))
 			{
+				SystemRoleManager roleManager = new SystemRoleManager(system);
+//				
 				if (!StringUtils.isEmpty(sharedUsername)) 
 				{
 					// validate the user they are giving roles to exists
 					AgaveProfileServiceClient authClient = new AgaveProfileServiceClient(
 							Settings.IPLANT_PROFILE_SERVICE, Settings.IRODS_USERNAME, Settings.IRODS_PASSWORD);
 					
-					if (authClient.getUser(sharedUsername) == null) 
-					{
+					if (authClient.getUser(sharedUsername) == null) {
 						throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
 							"No roles found for user " + sharedUsername);
-					} else {
-						SystemRole userRole = system.getUserRole(sharedUsername);
-						system.getRoles().remove(userRole);
-						dao.persist(system);
+					} 
+					else {
+//						SystemRole userRole = roleManager.getEffectiveRoleForPrincipal(sharedUsername);
+						roleManager.setRole(sharedUsername, RoleType.NONE, username);
+//						system.getRoles().remove(userRole);
+//						dao.persist(system);
 					}
 				} 
 				else // delete all roles for this system 
 				{
-					system.getRoles().clear();
-					dao.persist(system);
+					roleManager.clearRoles(username);
+//					system.getRoles().clear();
+//					dao.persist(system);
 				}	
 					
 				getResponse().setEntity(new IplantSuccessRepresentation());
@@ -435,6 +444,10 @@ public class SystemRoleResource extends AgaveResource
 						"User does not have the necessary role to update this system", 
 						new PermissionException());
 			}
+		}
+		catch (SystemRoleException e) {
+			throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+					e.getMessage(), e);
 		}
 		catch (ResourceException e) {
 			getResponse().setEntity(

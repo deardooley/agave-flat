@@ -78,7 +78,10 @@ public class StorageSystem extends RemoteSystem implements SerializableSystem {
 	}
 
 	public String toString() {
-		return this.getName() + " (" + this.getSystemId() + ") " + storageConfig.getProtocol().name(); 
+		return String.format("%s - %s - %s", 
+				this.getSystemId(), 
+				storageConfig.getProtocol().name(), 
+				this.isPubliclyAvailable() ? "public" : "private"); 
 	}
 
 	@Override
