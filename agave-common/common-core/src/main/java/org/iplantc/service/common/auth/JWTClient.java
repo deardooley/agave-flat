@@ -62,8 +62,15 @@ public class JWTClient
 	private static final ThreadLocal<JSONObject> threadJWTPayload = new ThreadLocal<JSONObject>();
 	private static final ConcurrentHashMap<String, RSAPublicKey> tenantPublicKeys = new ConcurrentHashMap<String, RSAPublicKey>();
 	
-	private static String getTenantPublicKeyUrl(String tenantId) {
-		return Settings.IPLANT_TENANTS_SERVICE + tenantId + "/keys/jwt";
+	private static String getTenantPublicKeyUrl(String tenantId) throws TenantException {
+		Tenant tenant = new TenantDao().findByTenantId(tenantId);
+		if (tenant != null) {
+			return StringUtils.removeEnd(tenant.getBaseUrl(), "/") + "/apim/v2/publickey";
+		}
+		else {
+			throw new TenantException("No tenant found for id " + tenantId);
+//			return Settings.IPLANT_TENANTS_SERVICE + tenantId + "/keys/signing/public";
+		}
 	}
 			
 	private static InputStream getTenantPublicKeyInputStream(String tenantId) 
