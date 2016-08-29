@@ -600,28 +600,46 @@ public class MetadataCollection extends AgaveResource
     	metadataObject.removeField("_id");
     	metadataObject.removeField("tenantId");
     	BasicDBObject hal = new BasicDBObject();
-    	hal.append("self", new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_METADATA_SERVICE + "data/" + metadataObject.get("uuid"))));
+    	hal.put("self", new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_METADATA_SERVICE) + "data/" + metadataObject.get("uuid")));
+    	hal.put("permissions", new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_METADATA_SERVICE) + "data/" + metadataObject.get("uuid") + "/pems"));
+    	hal.put("owner", new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_PROFILE_SERVICE) + metadataObject.get("owner")));
+    	
     	if (metadataObject.containsField("associationIds"))
     	{
+    		// TODO: break this into a list of object under the associationIds attribute so
+    		// we dont' overwrite the objects in the event there are multiple of the same type.
+    		BasicDBList halAssociationIds = new BasicDBList();
+    		
         	for (Object associatedId : (BasicDBList)metadataObject.get("associationIds")) {
                 AgaveUUID agaveUUID = new AgaveUUID((String)associatedId);
 
                 try {
                     String resourceUrl = agaveUUID.getObjectReference();
-                    hal.append(agaveUUID.getResourceType().name().toLowerCase(),
-                            new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(resourceUrl)));
+                    BasicDBObject assocResource = new BasicDBObject();
+                    assocResource.put("rel", (String)associatedId);
+                    assocResource.put("href", TenancyHelper.resolveURLToCurrentTenant(resourceUrl));
+                    assocResource.put("title", agaveUUID.getResourceType().name().toLowerCase());
+                    halAssociationIds.add(assocResource);
                 }
                 catch (UUIDException e) {
-                    hal.append(agaveUUID.getResourceType().name().toLowerCase(),
-                            new BasicDBObject("href", null));
+                	BasicDBObject assocResource = new BasicDBObject();
+                    assocResource.put("rel", (String)associatedId);
+                    assocResource.put("href", null);
+                    if (agaveUUID != null) {
+                    	assocResource.put("title", agaveUUID.getResourceType().name().toLowerCase());
+                    }
+                    halAssociationIds.add(assocResource);
                 }
             }
+        	
+        	hal.put("associationIds", halAssociationIds);
         }
 
     	if (metadataObject.get("schemaId") != null && !StringUtils.isEmpty(metadataObject.get("schemaId").toString()))
     	{
     		AgaveUUID agaveUUID = new AgaveUUID((String)metadataObject.get("schemaId"));
     		hal.append(agaveUUID.getResourceType().name(), new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(agaveUUID.getObjectReference())));
+    		
     	}
     	metadataObject.put("_links", hal);
 

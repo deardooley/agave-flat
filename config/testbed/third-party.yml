@@ -68,6 +68,28 @@ mongodbvol:
   mem_limit: 64m
 
 ##############################################################
+# Redis
+##############################################################
+
+redis:
+  image: redis:3.0.6-alpine
+  hostname: redis
+  mem_limit: 512m
+  restart: on-failure
+  privileged: true
+  labels:
+    agaveapi.test: "utest"
+  volumes_from:
+    - redisvol
+  ports:
+    - '6379:6379'
+
+redisvol:
+  image: redis:3.0.6-alpine
+  command: sleep 120
+  mem_limit: 64m
+  
+##############################################################
 # Beanstalkd
 ##############################################################
 beanstalkd:

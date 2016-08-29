@@ -125,7 +125,7 @@ public abstract class AgaveApplication extends Application
 			Class<? extends Resource> targetResource, List<Method> unprotectedMethods)
 	{
 		Guard guard = guardFactory.createGuard(getContext(),
-				ChallengeScheme.HTTP_BASIC, "iPlant Agave API", unprotectedMethods);
+				ChallengeScheme.HTTP_BASIC, "The Agave Platform", unprotectedMethods);
 
 		if (guard != null)
 		{
