@@ -42,6 +42,9 @@ function get_tenants()
 			'_links' => array(
 				'self' => array(
 					'href' => $config['iplant.foundation.services']['tenants'].$row['uuid'] 
+				),
+				'publickey' => array(
+					'href' => addTrailingSlash($row['base_url']) . 'apim/v2/publickey'
 				)
 			)
 		);
@@ -56,7 +59,7 @@ function get_tenant_by_id($uuid = '')
 	global $db, $config, $DEBUG;;
 
 	$sql = "select id, name, tenant_id, base_url, contact_email, contact_name, uuid from `".$config['iplant.database']['agave']['tenants']['name'] .
-		"` where uuid = '" . addslashes($uuid) . "' and status = 'LIVE' order by tenant_id asc limit 1";
+		"` where (uuid = '" . addslashes($uuid) . "' or tenant_id = '" . addslashes($uuid) . "') and status = 'LIVE' order by tenant_id asc limit 1";
 
 	if ($DEBUG) error_log ($sql);
 

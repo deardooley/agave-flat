@@ -3,14 +3,24 @@
  */
 package org.iplantc.service.common.auth;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.Security;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.minidev.json.JSONObject;
 
@@ -18,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.clients.AgaveProfileServiceClient;
+import org.iplantc.service.common.clients.HTTPSClient;
 import org.iplantc.service.common.clients.beans.Profile;
 import org.iplantc.service.common.dao.TenantDao;
 import org.iplantc.service.common.exceptions.TenantException;
@@ -30,7 +41,10 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.Requirement;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.ReadOnlyJWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -45,33 +59,128 @@ public class JWTClient
 {
 	private static final Logger log = Logger.getLogger(JWTClient.class);
 	
-	private static final String IDENTITY_STORE_PUBLIC_KEY_FILE = "jwtcert.pem";
 	private static final ThreadLocal<JSONObject> threadJWTPayload = new ThreadLocal<JSONObject>();
-
-	private static RSAPublicKey identityServerPublicKey;
+	private static final ConcurrentHashMap<String, RSAPublicKey> tenantPublicKeys = new ConcurrentHashMap<String, RSAPublicKey>();
 	
-//	public static RSAPublicKey getIdentityServerPublicKey()
-//	throws Exception 
-//	{
-//		if (identityServerPublicKey == null) 
-//		{
-//			InputStream is = null;
-//			try 
-//			{
-//				Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-//				
-//				CertificateFactory cf = CertificateFactory.getInstance("X509", "BC");
-//				is = Thread.currentThread().getContextClassLoader().getResourceAsStream(IDENTITY_STORE_PUBLIC_KEY_FILE);
-//				X509Certificate certificate = (X509Certificate) cf.generateCertificate(is);
-//				identityServerPublicKey = (RSAPublicKey)certificate.getPublicKey();
-//			} 
-//			finally {
-//				try { is.close(); } catch (Exception e) {}
-//			}
-//		}
-//		
-//		return identityServerPublicKey;
-//	}
+	private static String getTenantPublicKeyUrl(String tenantId) throws TenantException {
+		Tenant tenant = new TenantDao().findByTenantId(tenantId);
+		if (tenant != null) {
+			return StringUtils.removeEnd(tenant.getBaseUrl(), "/") + "/apim/v2/publickey";
+		}
+		else {
+			throw new TenantException("No tenant found for id " + tenantId);
+//			return Settings.IPLANT_TENANTS_SERVICE + tenantId + "/keys/signing/public";
+		}
+	}
+			
+	private static InputStream getTenantPublicKeyInputStream(String tenantId) 
+	throws IOException, FileNotFoundException
+	{	
+		HTTPSClient client = null;
+		try {
+			String publicKeyUrl = getTenantPublicKeyUrl(tenantId);
+			client = new HTTPSClient(publicKeyUrl);
+			log.debug("Fetching public key for tenant " + tenantId + " from " + publicKeyUrl + "...");
+			String sPublicKey = client.getText();
+			if (!StringUtils.isEmpty(sPublicKey)) {
+				return new ByteArrayInputStream(sPublicKey.getBytes());
+			}
+			else {
+				throw new FileNotFoundException("No public key found for tenant " + tenantId);
+			}
+		}
+		catch (Exception e) {
+			throw new IOException("Failed to fetch the public key for tenant " + tenantId, e);
+		}
+	}
+	
+	/**
+	 * Fetches the {@link RSAPublicKey} for the given tenant for use in
+	 * verifying the JWT signature.
+	 * 
+	 * @param tenantId
+	 * @return
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
+	 * @throws NoSuchProviderException 
+	 * @throws Exception
+	 */
+	public static RSAPublicKey getTenantPublicKey(String tenantId)
+	throws CertificateException, IOException, TenantException 
+	{
+		RSAPublicKey tenantPublicKey = tenantPublicKeys.get(tenantId);
+		if (tenantPublicKey == null) 
+		{	
+			log.debug("Public key for tenant " + tenantId + " not found in the "
+					+ "service cache. Fetching now...");
+			InputStream is = null;
+			try 
+			{
+				Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+				
+				CertificateFactory cf = CertificateFactory.getInstance("X509", "BC");
+				is = getTenantPublicKeyInputStream(tenantId);
+				X509Certificate certificate = (X509Certificate) cf.generateCertificate(is);
+				tenantPublicKey = (RSAPublicKey)certificate.getPublicKey();
+				tenantPublicKeys.put(tenantId,  tenantPublicKey);
+			} 
+			catch (NoSuchProviderException e) {
+				throw new TenantException("Unable to load public key for tenant " + tenantId 
+						+ ". No security provider found to handle the key type.", e);
+			}
+			catch (FileNotFoundException e) {
+				throw new TenantException("Unable to locate public key for tenant " + tenantId 
+						+ " at " + getTenantPublicKeyUrl(tenantId), e);
+			}
+			catch (IOException e) {
+				throw new TenantException("Unable to fetch public key for tenant " + tenantId 
+						+  " from " + getTenantPublicKeyUrl(tenantId), e);
+			}
+			catch (CertificateException e) {
+				throw new TenantException("Unable to parse public key for tenant " + tenantId 
+						+  " from " + getTenantPublicKeyUrl(tenantId), e);
+			}
+			catch (Exception e) {
+				throw new TenantException("Unable to load public key for tenant " + tenantId 
+						+ ". Unexpected error occurred.", e);
+			}
+			finally {
+				try { is.close(); } catch (Exception e) {}
+			}
+		}
+		
+		return tenantPublicKey;
+	}
+	
+	public JSONObject decodeJwt(String serializedJWT, RSAPublicKey pubKey) throws Exception
+	{
+		// register the SHA256withRSA algorithm with nimbus and Java security so
+		// it will be recognized
+		RSASSAVerifier.SUPPORTED_ALGORITHMS.add(
+			new JWSAlgorithm("SHA256withRSA", Requirement.OPTIONAL));
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+			
+		// Parse the JWT into its constituent parts
+		SignedJWT jwt = SignedJWT.parse(serializedJWT);
+
+		// verify the signature 
+		JWSVerifier verifier = new SHA256withRSAVerifier(pubKey);
+		if (jwt.verify(verifier)) {
+			return jwt.getJWTClaimsSet().toJSONObject();
+		}
+		else {
+			throw new Exception("Bad signature on jwt");
+		}
+	}
+	
+	/**
+	 * Entry method to this class. Parses the JWT and optionally validates 
+	 * the signature against the known public key of the tenant auth server
+	 * if {@link Settings#VERIFY_JWT_SIGNATURE} is true.
+	 * @param serializedToken
+	 * @param tenantId
+	 * @return
+	 */
 	public static boolean parse(String serializedToken, String tenantId)
 	{
 		if (tenantId == null) return false;
@@ -81,41 +190,20 @@ public class JWTClient
 			// Create HMAC signer
 			SignedJWT signedJWT = SignedJWT.parse(serializedToken);
 			
-//			RSASSAVerifier.SUPPORTED_ALGORITHMS.add(new JWSAlgorithm("SHA256withRSA", Requirement.OPTIONAL));
-//			
-//			JWSVerifier verifier = new RSASSAVerifier(getIdentityServerPublicKey()) {
-//				@Override
-//				public boolean verify(final ReadOnlyJWSHeader header, 
-//					              final byte[] signedContent, 
-//					              final Base64URL signature)
-//					throws JOSEException {
-//
-//					
-//					try {
-//						Signature verifier = RSASignature.getInstance("SHA256withRSA");// getRSASignerAndVerifier(JWSAlgorithm.RS256);
-//						
-//						verifier.initVerify(getPublicKey());
-//						verifier.update(signedContent);
-//						return verifier.verify(signature.decode());
-//						
-//					} catch (InvalidKeyException e) {
-//
-//						throw new JOSEException("Invalid public RSA key: " + e.getMessage(), e);
-//
-//					} catch (SignatureException e) {
-//
-//						throw new JOSEException("RSA signature exception: " + e.getMessage(), e);
-//					} catch (NoSuchAlgorithmException e) {
-//						throw new JOSEException("RSA signature exception: " + e.getMessage(), e);
-//					}
-//				}
-//			};
-//            
-//			boolean verifiedSignature = signedJWT.verify(verifier);
-
-//			if (verifiedSignature)
 			if (signedJWT != null)
 			{
+				if (Settings.VERIFY_JWT_SIGNATURE) {
+					
+					RSASSAVerifier.SUPPORTED_ALGORITHMS.add(new JWSAlgorithm("SHA256withRSA", Requirement.OPTIONAL));
+					
+					JWSVerifier verifier = new SHA256withRSAVerifier(getTenantPublicKey(tenantId));
+		            
+					if (!signedJWT.verify(verifier)) {
+						log.error("Invalid JWT signature.");	
+						return false; 
+					}
+				}
+			
 				ReadOnlyJWTClaimsSet claims = signedJWT.getJWTClaimsSet();
 				
 				Date expirationDate = claims.getExpirationTime();
@@ -146,18 +234,19 @@ public class JWTClient
 				
 				return true;
 			}
-			else
-			{
-				log.error("Invalid JWT signature.");
-				return false;
-			} 
-		} catch (ParseException e) {
+			
+		} 
+		catch (TenantException e) {
+			log.error("Failed to validate JWT object.", e);
+		} 
+		catch (ParseException e) {
 			log.error("Failed to parse JWT object. Authentication failed.", e);
-			return false;
-		} catch (Throwable e) {
+		} 
+		catch (Throwable e) {
 			log.error("Error processing JWT header. Authentication failed.", e);
-			return false;
 		}
+		
+		return false;
 	}
 	
 	public static JSONObject getCurrentJWSObject()

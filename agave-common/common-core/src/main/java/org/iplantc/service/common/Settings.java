@@ -50,13 +50,12 @@ public class Settings
     
     protected static final String PROPERTY_FILE = "service.properties";
 
-	
-    
-    /* Debug settings */
+	/* Debug settings */
     public static boolean       DEBUG;
     public static String        DEBUG_USERNAME;
     
     public static String        AUTH_SOURCE;
+    public static boolean		VERIFY_JWT_SIGNATURE;
     
     public static String        API_VERSION;
     public static String        SERVICE_VERSION;
@@ -246,6 +245,8 @@ public class Settings
         
         AUTH_SOURCE = (String) props.get("iplant.auth.source");
         
+        VERIFY_JWT_SIGNATURE = Boolean.valueOf((String) props.getProperty("iplant.verify.jwt.signature", "no"));
+        
         API_VERSION = (String)props.getProperty("iplant.api.version");
         
         if (!StringUtils.isEmpty(System.getProperty("jetty.port"))) {
@@ -332,42 +333,42 @@ public class Settings
         MESSAGING_SERVICE_HOST = (String)props.get("iplant.messaging.host");
         MESSAGING_SERVICE_PORT = Integer.valueOf((String)props.get("iplant.messaging.port"));
         
-        FILES_ENCODING_QUEUE = (String) props.getProperty("iplant.files.service.encoding.queue", "prod.notifications.queue");
-        FILES_ENCODING_TOPIC = (String) props.getProperty("iplant.files.service.encoding.topic");
-        FILES_STAGING_QUEUE = (String) props.getProperty("iplant.files.service.staging.queue");
-        FILES_STAGING_TOPIC = (String) props.getProperty("iplant.files.service.staging.topic");
+        FILES_ENCODING_QUEUE = (String) props.getProperty("iplant.files.service.encoding.queue", "encoding.prod.files.queue");
+        FILES_ENCODING_TOPIC = (String) props.getProperty("iplant.files.service.encoding.topic", "encoding.prod.files.topic");
+        FILES_STAGING_QUEUE = (String) props.getProperty("iplant.files.service.staging.queue", "staging.prod.files.queue");
+        FILES_STAGING_TOPIC = (String) props.getProperty("iplant.files.service.staging.topic", "staging.prod.files.topic");
         
-        TRANSFERS_ENCODING_QUEUE = (String) props.getProperty("iplant.transfers.service.decoding.queue");
-        TRANSFERS_ENCODING_TOPIC = (String) props.getProperty("iplant.transfers.service.decoding.topic");
-        TRANSFERS_ENCODING_QUEUE = (String) props.getProperty("iplant.transfers.service.encoding.queue", "prod.notifications.queue");
-        TRANSFERS_ENCODING_TOPIC = (String) props.getProperty("iplant.transfers.service.encoding.topic");
-        TRANSFERS_STAGING_QUEUE = (String) props.getProperty("iplant.transfers.service.staging.queue");
-        TRANSFERS_STAGING_TOPIC = (String) props.getProperty("iplant.transfers.service.staging.topic");
+        TRANSFERS_DECODING_QUEUE = (String) props.getProperty("iplant.transfers.service.decoding.queue", "decoding.prod.transfers.queue");
+        TRANSFERS_DECODING_TOPIC = (String) props.getProperty("iplant.transfers.service.decoding.topic", "decoding.prod.transfers.topic");
+        TRANSFERS_ENCODING_QUEUE = (String) props.getProperty("iplant.transfers.service.encoding.queue", "encoding.prod.transfers.queue");
+        TRANSFERS_ENCODING_TOPIC = (String) props.getProperty("iplant.transfers.service.encoding.topic", "encoding.prod.transfers.topic");
+        TRANSFERS_STAGING_QUEUE = (String) props.getProperty("iplant.transfers.service.staging.queue", "staging.prod.transfers.queue");
+        TRANSFERS_STAGING_TOPIC = (String) props.getProperty("iplant.transfers.service.staging.topic", "staging.prod.transfers.topic");
         
-        TRANSFORMS_ENCODING_QUEUE = (String) props.getProperty("iplant.transforms.service.encoding.queue");
-        TRANSFORMS_ENCODING_TOPIC = (String) props.getProperty("iplant.transforms.service.encoding.topic");
-        TRANSFORMS_DECODING_QUEUE = (String) props.getProperty("iplant.transforms.service.decoding.queue");
-        TRANSFORMS_DECODING_TOPIC = (String) props.getProperty("iplant.transforms.service.decoding.topic");
-        TRANSFORMS_STAGING_QUEUE = (String) props.getProperty("iplant.transforms.service.staging.queue");
-        TRANSFORMS_STAGING_TOPIC = (String) props.getProperty("iplant.transforms.service.staging.topic");
+        TRANSFORMS_ENCODING_QUEUE = (String) props.getProperty("iplant.transforms.service.encoding.queue", "encoding.prod.transforms.queue");
+        TRANSFORMS_ENCODING_TOPIC = (String) props.getProperty("iplant.transforms.service.encoding.topic", "decoding.prod.transforms.topic");
+        TRANSFORMS_DECODING_QUEUE = (String) props.getProperty("iplant.transforms.service.decoding.queue", "decoding.prod.transforms.queue");
+        TRANSFORMS_DECODING_TOPIC = (String) props.getProperty("iplant.transforms.service.decoding.topic", "decoding.prod.transforms.topic");
+        TRANSFORMS_STAGING_QUEUE = (String) props.getProperty("iplant.transforms.service.staging.queue", "staging.prod.transforms.queue");
+        TRANSFORMS_STAGING_TOPIC = (String) props.getProperty("iplant.transforms.service.staging.topic", "staging.prod.transforms.topic");
         
-        JOBS_STAGING_QUEUE = (String) props.getProperty("iplant.jobs.service.staging.queue");
-        JOBS_STAGING_TOPIC = (String) props.getProperty("iplant.jobs.service.staging.topic");
-        JOBS_SUBMISSION_QUEUE = (String) props.getProperty("iplant.jobs.service.submission.queue");
-        JOBS_SUBMISSION_TOPIC = (String) props.getProperty("iplant.jobs.service.submission.topic");
-        JOBS_MONITORING_QUEUE = (String) props.getProperty("iplant.jobs.service.monitoring.queue");
-        JOBS_MONITORING_TOPIC = (String) props.getProperty("iplant.jobs.service.monitoring.topic");
-        JOBS_ARCHIVING_QUEUE = (String) props.getProperty("iplant.jobs.service.archiving.queue");
-        JOBS_ARCHIVING_TOPIC = (String) props.getProperty("iplant.jobs.service.archiving.topic");
+        JOBS_STAGING_QUEUE = (String) props.getProperty("iplant.jobs.service.staging.queue", "staging.prod.jobs.queue");
+        JOBS_STAGING_TOPIC = (String) props.getProperty("iplant.jobs.service.staging.topic", "staging.prod.jobs.topic");
+        JOBS_SUBMISSION_QUEUE = (String) props.getProperty("iplant.jobs.service.submission.queue", "submission.prod.jobs.queue");
+        JOBS_SUBMISSION_TOPIC = (String) props.getProperty("iplant.jobs.service.submission.topic", "submission.prod.jobs.topic");
+        JOBS_MONITORING_QUEUE = (String) props.getProperty("iplant.jobs.service.monitoring.queue", "monitoring.prod.jobs.queue");
+        JOBS_MONITORING_TOPIC = (String) props.getProperty("iplant.jobs.service.monitoring.topic", "monitoring.prod.jobs.topic");
+        JOBS_ARCHIVING_QUEUE = (String) props.getProperty("iplant.jobs.service.archiving.queue", "archiving.prod.jobs.queue");
+        JOBS_ARCHIVING_TOPIC = (String) props.getProperty("iplant.jobs.service.archiving.topic", "archiving.prod.jobs.topic");
         
-        MONITORS_CHECK_QUEUE = (String) props.getProperty("iplant.monitors.service.checks.queue");
-        MONITORS_CHECK_TOPIC = (String) props.getProperty("iplant.monitors.service.checks.topic");
+        MONITORS_CHECK_QUEUE = (String) props.getProperty("iplant.monitors.service.checks.queue", "checks.prod.monitors.queue");
+        MONITORS_CHECK_TOPIC = (String) props.getProperty("iplant.monitors.service.checks.topic", "checks.prod.monitors.topic");
         
-        APPS_PUBLISHING_QUEUE = (String) props.getProperty("iplant.apps.service.publishing.queue");
-        APPS_PUBLISHING_TOPIC = (String) props.getProperty("iplant.apps.service.publishing.topic");
+        APPS_PUBLISHING_QUEUE = (String) props.getProperty("iplant.apps.service.publishing.queue", "publish.prod.apps.queue");
+        APPS_PUBLISHING_TOPIC = (String) props.getProperty("iplant.apps.service.publishing.topic", "publish.prod.apps.topic");
         
-        USAGETRIGGERS_CHECK_QUEUE = (String) props.getProperty("iplant.usagetriggers.service.queue");
-        USAGETRIGGERS_CHECK_TOPIC = (String) props.getProperty("iplant.usagetriggers.service.topic");
+        USAGETRIGGERS_CHECK_QUEUE = (String) props.getProperty("iplant.usagetriggers.service.queue", "check.prod.usagetriggers.queue");
+        USAGETRIGGERS_CHECK_TOPIC = (String) props.getProperty("iplant.usagetriggers.service.topic", "check.prod.usagetriggers.topic");
 
         
         DEFAULT_PAGE_SIZE = NumberUtils.toInt((String) props.getProperty("iplant.default.page.size", "100"), 100);
