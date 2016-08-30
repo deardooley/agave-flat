@@ -31,7 +31,8 @@ public class IRODSInputStream extends RemoteInputStream<IRODS> {
 			RestartData restart) throws IOException, RemoteDataException
 	{
 		try {
-			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " opening input stream connection for thread");
+			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+					+ " opening input stream connection for thread");
 			input = client.getRawInputStream(file);
 		}
 		catch (JargonException e) {
@@ -57,7 +58,8 @@ public class IRODSInputStream extends RemoteInputStream<IRODS> {
 	{
 		try { input.close(); } catch (Exception e) {};
 		try { client.disconnect(); } catch (Exception e) {}
-		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " aborting input stream connection for thread");
+		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+				+ " aborting input stream connection for thread");
 	}
 
 	// standard InputStream methods
@@ -65,7 +67,8 @@ public class IRODSInputStream extends RemoteInputStream<IRODS> {
 	public void close() throws IOException
 	{
 		abort();
-		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " closing input stream connection for thread");
+		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+				+ " closing input stream connection for thread");
 	}
 
 	public int read(byte[] msg) throws IOException

@@ -207,7 +207,8 @@ public class IRODS implements RemoteDataClient
 	{
 		rootDir = FilenameUtils.normalize(rootDir);
 		rootDir = StringUtils.stripEnd(rootDir," ");
-        if (!StringUtils.isEmpty(rootDir)) {
+        
+		if (!StringUtils.isEmpty(rootDir)) {
 			this.rootDir = rootDir;
 			if (!this.rootDir.endsWith("/")) {
 				this.rootDir += "/";
@@ -1503,7 +1504,9 @@ public class IRODS implements RemoteDataClient
 	@Override
 	public void disconnect()
 	{
-		try { this.accessObjectFactory.closeSessionAndEatExceptions(irodsAccount); } catch (Throwable e) {}
+		try { 
+			this.accessObjectFactory.closeSessionAndEatExceptions(irodsAccount); 
+		} catch (Throwable e) {}
 		this.accessObjectFactory = null;
 		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " closed connection for thread");
 	}
@@ -1644,7 +1647,8 @@ public class IRODS implements RemoteDataClient
                 }
             } 
           
-            log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " opening raw random output stream connection for thread");
+            log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+            		+ " opening raw random output stream connection for thread");
             return getIRODSFileFactory().instanceIRODSRandomAccessFile(file);
 
         }

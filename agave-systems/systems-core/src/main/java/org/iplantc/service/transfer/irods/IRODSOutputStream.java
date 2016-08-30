@@ -49,7 +49,8 @@ public class IRODSOutputStream extends RemoteOutputStream<IRODS> {
 	public void abort()
 	{
 		try { output.close(); } catch (Exception e) {}
-		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " aborting output stream connection for thread");
+		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+				+ " aborting output stream connection for thread");
 		// We need to explicity give the user who just created this file 
 		// ownership on that file because irods won't do this as that
 		// would actually be a reasonable thing to do.
@@ -66,7 +67,8 @@ public class IRODSOutputStream extends RemoteOutputStream<IRODS> {
 	public void close() throws IOException
 	{	
 		abort();
-		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " closing output stream connection for thread");
+		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+				+ " closing output stream connection for thread");
 	}
 
 	public void write(byte[] msg) throws IOException

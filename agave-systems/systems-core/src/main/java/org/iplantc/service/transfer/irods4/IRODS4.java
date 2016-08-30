@@ -11,9 +11,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +33,8 @@ import org.iplantc.service.transfer.RemoteTransferListener;
 import org.iplantc.service.transfer.Settings;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.iplantc.service.transfer.irods.AgaveJargonProperties;
+import org.iplantc.service.transfer.irods.IRODS;
 import org.iplantc.service.transfer.model.RemoteFilePermission;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
@@ -87,6 +91,13 @@ public class IRODS4 implements RemoteDataClient
 	/** integer from some queries signifying user can write to a file */
 	
 	static final int					WRITE_PERMISSIONS	= 1120;
+	
+	private static final ThreadLocal<Hashtable<String, IRODSSession>> 
+	threadLocalIRODSSession = new ThreadLocal<Hashtable<String, IRODSSession>>() {
+		@Override protected Hashtable<String, IRODSSession> initialValue() {
+			return new Hashtable<String, IRODSSession>();
+		}
+	};
 
 	private IRODSProtocolManager		irodsConnectionManager;
 	private IRODSSession				irodsSession;
@@ -157,18 +168,19 @@ public class IRODS4 implements RemoteDataClient
 	
 	public IRODS4 clone()
 	{
-		IRODS4 irods = new IRODS4();
+		IRODS4 irods = new IRODS4(host, 
+				  port, 
+				  username, 
+				  password, 
+				  resource, 
+				  zone, 
+				  rootDir, 
+				  internalUsername, 
+				  homeDir, AuthScheme.GSI);
 		
-		irods.username = this.username;
-		irods.password = this.password;
-		irods.resource = this.resource;
-		irods.host = this.host;
-		irods.port = this.port;
-		irods.zone = this.zone;
-		irods.resource = this.resource;
 		irods.rootDir = this.rootDir;
 		irods.homeDir = this.homeDir;
-		irods.internalUsername =this.internalUsername;
+		
 		irods.credential = this.credential;
 		
 		if (type != null) {
@@ -226,6 +238,19 @@ public class IRODS4 implements RemoteDataClient
         this.rootDir = StringUtils.stripEnd(this.rootDir.replaceAll("/+", "/")," ");
         
 	}
+	
+	public IRODSSession getThreadLocalSession(IRODSAccount account) throws JargonException {
+		IRODSSession session = threadLocalIRODSSession.get().get(account.toString());
+		if ( session == null) {
+			AgaveJargonProperties props = new AgaveJargonProperties();
+			session = new IRODSSession(props);
+			session.setIrodsConnectionManager(IRODSSimpleProtocolManager.instance());
+			threadLocalIRODSSession.get().put(account.toString(), session);
+			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + Thread.currentThread().getId() + " created new session for thread");
+		}
+		
+		return session;
+	}
 
 	@Override
 	public void authenticate() throws RemoteDataException, IOException
@@ -235,32 +260,33 @@ public class IRODS4 implements RemoteDataClient
         
         try 
 		{
-			if (irodsSession == null || !irodsSession.currentConnection(irodsAccount).isConnected()) 
-			{
-				irodsConnectionManager = IRODSSimpleProtocolManager.instance();
-				irodsSession = new IRODSSession(irodsConnectionManager);
-				irodsAccount = getAccount();
-				accessObjectFactory = IRODSAccessObjectFactoryImpl.instance(irodsSession);
-				
-				
-				String accountHomeDir = getDataObjectAO().getIRODSAccount().getHomeDirectory();
-				getIRODSFileFactory().instanceIRODSFile(accountHomeDir);
-			}
+			this.irodsAccount = createAccount();
+	
+			accessObjectFactory = IRODSAccessObjectFactoryImpl.instance(getThreadLocalSession(irodsAccount));
+			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " open connection for thread");
+			doesExist("/");
 		} 
 		catch (AuthenticationException e) {
+			disconnect();
 			throw new RemoteDataException("Failed to authenticate to remote server. " + e.getMessage(), e);
 		}
 		catch(JargonException e) 
 		{
+			disconnect();
 			if (e.getMessage().toLowerCase().contains("unable to start ssl socket")) {
 				throw new RemoteDataException("Unable to validate SSL certificate on the IRODS server used for PAM authentication.", e);
 			} else if (e.getMessage().toLowerCase().contains("connection refused")) {
-				throw new RemoteDataException("Connection refused: Unable to contact IRODS server at " + host + ":" + port);
+				throw new RemoteDataException("Connection refused: Unable to contact IRODS server at " + host + ":" + port, e);
 			} else {
 				throw new RemoteDataException("Failed to connect to remote server.", e);
 			}
 		}
+		catch (ConnectException e) {
+			disconnect();
+			throw new IOException("Connection refused: Unable to contact IRODS server at " + host + ":" + port, e);
+		}
 		catch (Exception e) {
+			disconnect();
 			throw new RemoteDataException("Failed to authenticate to remote server.", e);
 		}
 	}
@@ -320,7 +346,34 @@ public class IRODS4 implements RemoteDataClient
 		return irodsFileFactory;
 	}
 	
-	private IRODSAccount getAccount() throws EncryptionException, JargonException
+	/**
+	 * Returns the current {@link IRODSAccount} or creates a new
+	 * one if none has been set.
+	 * @return
+	 * @throws JargonException 
+	 * @throws EncryptionException 
+	 */
+	private IRODSAccount getIRODSAccount() throws JargonException {
+		if (this.irodsAccount == null) {
+			try {
+				this.irodsAccount = createAccount();
+			} catch (EncryptionException e) {
+				throw new JargonException("Failed to process IRODS credentials.", e);
+			}
+		}
+		
+		return this.irodsAccount;
+	}
+	
+	/**
+	 * Creates a new {@link IRODSAccount} using the connection parameters
+	 * provided in the constructor.
+	 * 
+	 * @return unverified {@link IRODSAccount} object with the proper {@link AuthScheme} configured.
+	 * @throws EncryptionException
+	 * @throws JargonException
+	 */
+	private IRODSAccount createAccount() throws EncryptionException, JargonException
 	{
 		IRODSAccount account = null;
 		if (type.equals(AuthScheme.GSI)) {
@@ -330,7 +383,7 @@ public class IRODS4 implements RemoteDataClient
 		}
 		else 
 		{
-			account = new IRODSAccount(host,port,username, password, rootDir, zone, StringUtils.isEmpty(resource) ? "" : resource);
+			account = new IRODSAccount(host,port,username, password, rootDir, zone, resource);
 			
 			if (type != null) 
 			{
@@ -340,10 +393,6 @@ public class IRODS4 implements RemoteDataClient
 		
 		return account;
 	}
-	
-//	private String escapeSpecialCharacters(String path) {
-//	    return StringUtils.replaceEach(path, new String[] {"&"}, new String[] {"\\&"});
-//	}
 	
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.transfer.RemoteDataClient#resolvePath(java.lang.String)
@@ -1130,17 +1179,42 @@ public class IRODS4 implements RemoteDataClient
 	protected ObjStat stat(String remotepath) 
     throws IOException, RemoteDataException
     {
-	    String resolvedPath = StringUtils.removeEnd(resolvePath(remotepath), "/");
-	    if (StringUtils.equals(remotepath, "/") && StringUtils.isEmpty(resolvedPath)) {
-	        resolvedPath = "/";
-	    }
-	    
+		String resolvedPath = StringUtils.removeEnd(resolvePath(remotepath), "/");
         try
         {
-            return getIRODSFileSystemAO().getObjStat(resolvedPath);
+        	try {
+                
+                return getIRODSFileSystemAO().getObjStat(resolvedPath);
+            } 
+            catch (JargonException e) {
+            	// catch the wrapped socket exception from a dropped connection
+            	// clean up the connection, and retry.
+            	if (e.getCause() instanceof java.net.SocketException) {
+            		log.error("Connection timeout attempting to contact the remote server. Retrying one more time");
+                    // connection should have been closed, but we clean up here
+            		// just to be safe and ensure we don't have an open
+            		// session lingering around anywhere in the underlying code.
+            		disconnect();
+            		
+            		// now re-authenticate to init the new session and 
+            		// get a valid connection to the server
+                    authenticate();
+                    
+                    // retry the stat with the fresh connection
+                    return getIRODSFileSystemAO().getObjStat(resolvedPath);
+            	} else {
+            		throw e;
+            	}
+            }
+            catch(Throwable e) {
+                log.error("Connection timeout attempting to contact the remote server. Retrying one more time");
+                disconnect();
+                authenticate();
+                return getIRODSFileSystemAO().getObjStat(resolvedPath);
+            }   
         } 
         catch (FileNotFoundException e) {
-            throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
+            throw new java.io.FileNotFoundException("No such file or directory");
         }
         catch(JargonException e) {
             if (e.getMessage().toLowerCase().contains("unable to start ssl socket")) {
@@ -1150,7 +1224,7 @@ public class IRODS4 implements RemoteDataClient
             } else {
                 throw new RemoteDataException("Failed to connect to remote server.", e);
             }
-        } 
+        }
 	}
 
 	/* (non-Javadoc)
@@ -1456,11 +1530,11 @@ public class IRODS4 implements RemoteDataClient
 	@Override
 	public void disconnect()
 	{
-		try {
-			accessObjectFactory.closeSessionAndEatExceptions(getAccount());
-			irodsSession = null;
-			accessObjectFactory = null;
-		} catch (Exception e) {}
+		try { 
+			this.accessObjectFactory.closeSessionAndEatExceptions(irodsAccount); 
+		} catch (Throwable e) {}
+		this.accessObjectFactory = null;
+		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " closed IRODS4 connection for thread");
 	}
 
 	/* (non-Javadoc)
@@ -1510,6 +1584,8 @@ public class IRODS4 implements RemoteDataClient
 				}
 			}	
 			
+		    log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+		    		+ " opening IRODS4 raw input stream connection for thread");
 			InputStream in =  irodsFileFactory
 					.instanceIRODSFileInputStream(irodsFile);
 
@@ -1555,6 +1631,8 @@ public class IRODS4 implements RemoteDataClient
 				}
 			}
 			
+			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+					+ " opening raw output stream connection for thread");
 			OutputStream out = new BufferedOutputStream(getIRODSFileFactory()
 					.instanceIRODSFileOutputStream(file));
 
@@ -1599,6 +1677,8 @@ public class IRODS4 implements RemoteDataClient
                 }
             } 
           
+            log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+            		+ " opening raw IRODS4 random output stream connection for thread");
             return getIRODSFileFactory().instanceIRODSRandomAccessFile(file);
 
         }
