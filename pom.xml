@@ -105,6 +105,10 @@
 	    <!-- This build's label -->
 	    <foundation.service.version>${project.version}-r${buildNumber}</foundation.service.version>
 	    
+	    <!-- Java version -->
+	    <java-source.version>1.8</java-source.version>
+	    <java-target.version>1.8</java-target.version>
+	    
 	    <!-- Below are the version numbers for all software on which we explicitly depend. -->
 	    <!-- If a library or plugin appears as a dependency in some pom file, then that    -->
 	    <!-- artifact's version number should in the lists below for easy managment and    -->
@@ -163,6 +167,9 @@
 	    <hibernate-entitymanager.version>3.6.10.Final</hibernate-entitymanager.version>
 	    <hibernate-validator-annotation-processor.version>5.0.1.Final</hibernate-validator-annotation-processor.version>
 	    <hibernate-validator.version>4.1.0.Final</hibernate-validator.version>
+<!--         <hibernate-entitymanager.version>5.2.2.Final</hibernate-entitymanager.version> -->
+<!--         <hibernate-validator-annotation-processor.version>5.2.4.Final</hibernate-validator-annotation-processor.version> -->
+<!--         <hibernate-validator.version>5.2.4.Final</hibernate-validator.version> -->
 	    <httpclient.version>4.3.4</httpclient.version>
 	    <httpmime.version>4.3.1</httpmime.version>
 	    <ironmq.version>3.0.2</ironmq.version>
@@ -309,8 +316,8 @@
 					<configuration>
 						<proc>none</proc>
 						<debug>true</debug>
-						<source>1.7</source>
-						<target>1.7</target>
+						<source>${java-source.version}</source>
+						<target>${java-target.version}</target>
 					</configuration>
 				</plugin>
 

@@ -61,8 +61,8 @@
 				<configuration>
 					<proc>none</proc>
 					<debug>true</debug>
-					<source>1.7</source>
-					<target>1.7</target>
+                    <source>${java-source.version}</source>
+                    <target>${java-target.version}</target>
 					<testSource>1.6</testSource>
 					<testTarget>1.6</testTarget>
 				</configuration>
