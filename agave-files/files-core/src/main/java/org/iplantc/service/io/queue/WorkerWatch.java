@@ -17,7 +17,7 @@ public interface WorkerWatch<T extends QueueTask> extends InterruptableJob {
      * 
      * @return
      */
-    public abstract Long selectNextAvailableQueueTask() throws TaskException ;
+    public abstract String selectNextAvailableQueueTask() throws TaskException ;
 
     public abstract T getQueueTask();
 
@@ -44,6 +44,6 @@ public interface WorkerWatch<T extends QueueTask> extends InterruptableJob {
      */
     public abstract void setTaskComplete(boolean complete);
 
-    public abstract void setQueueTaskId(Long queueTaskId);
+    public abstract void setQueueTaskId(String queueTaskUuid);
 
 }

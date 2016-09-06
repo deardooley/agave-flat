@@ -4,9 +4,13 @@ import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
+import org.iplantc.service.common.exceptions.TaskQueueException;
 import org.iplantc.service.common.persistence.HibernateUtil;
+import org.iplantc.service.common.queue.DistributedBlockingTaskQueue;
+import org.iplantc.service.common.queue.RedLockTaskQueue;
 import org.iplantc.service.io.Settings;
 import org.iplantc.service.io.model.EncodingTask;
 import org.iplantc.service.io.model.StagingTask;
@@ -31,8 +35,10 @@ public class JobProducerFactory implements JobFactory {
     
     private final Logger log = Logger.getLogger(getClass());
  
-    private static final ConcurrentLinkedDeque<Long> stagingJobTaskQueue = new ConcurrentLinkedDeque<Long>();
-    private static final ConcurrentLinkedDeque<Long> encodingJobTaskQueue = new ConcurrentLinkedDeque<Long>();
+    private static final RedLockTaskQueue stagingJobTaskQueue = new RedLockTaskQueue("dataStagingQueue");
+    private static final AtomicLong activeStagingTasks = new AtomicLong(0);
+    private static final RedLockTaskQueue encodingJobTaskQueue = new RedLockTaskQueue("dataEncodingQueue");
+    private static final AtomicLong activeEncodingTasks = new AtomicLong(0);
     
     public JobProducerFactory() {}
 
@@ -46,22 +52,22 @@ public class JobProducerFactory implements JobFactory {
         {
             worker = jobClass.newInstance();
             
-            Long queueTaskId = worker.selectNextAvailableQueueTask();
+            String queueTaskId = worker.selectNextAvailableQueueTask();
 
             if (queueTaskId != null)
             {
                 if (worker instanceof StagingJob  
                         && !stagingJobTaskQueue.contains(queueTaskId) 
-                        && stagingJobTaskQueue.size() < Settings.MAX_STAGING_TASKS) 
+                        && activeStagingTasks.get() < Settings.MAX_STAGING_TASKS) 
                 {
-                    stagingJobTaskQueue.add(queueTaskId);
+                    stagingJobTaskQueue.push(queueTaskId);
                     produceWorker(jobClass, jobDetail.getKey().getGroup(), queueTaskId);
                 }
                 else if (worker instanceof EncodingJob  
                         && !encodingJobTaskQueue.contains(queueTaskId) 
-                        && encodingJobTaskQueue.size() < Settings.MAX_TRANSFORM_TASKS) 
+                        && activeEncodingTasks.get() < Settings.MAX_TRANSFORM_TASKS) 
                 {
-                    encodingJobTaskQueue.add(queueTaskId);
+                    encodingJobTaskQueue.push(queueTaskId);
                     produceWorker(jobClass, jobDetail.getKey().getGroup(), queueTaskId);
                 }
                 else
@@ -97,7 +103,7 @@ public class JobProducerFactory implements JobFactory {
      * @param jobUuid
      * @throws SchedulerException
      */
-    private void produceWorker(Class<? extends WorkerWatch> jobClass, String groupName, Long queueTaskId) 
+    private void produceWorker(Class<? extends WorkerWatch> jobClass, String groupName, String queueTaskId) 
     throws SchedulerException 
     {
         JobDetail jobDetail = org.quartz.JobBuilder.newJob(jobClass)
@@ -129,10 +135,14 @@ public class JobProducerFactory implements JobFactory {
      * consumed by another thread.
      * 
      * @param id of staging entity
+     * @throws TaskQueueException 
+     * @throws IllegalArgumentException 
      */
-    public static void releaseStagingJob(Long taskIdentifier) {
+    public static void releaseStagingJob(String taskIdentifier) 
+    throws IllegalArgumentException, TaskQueueException 
+    {
         if (taskIdentifier != null) {
-            stagingJobTaskQueue.remove(taskIdentifier);
+        	stagingJobTaskQueue.unlock(taskIdentifier);
         }
     }
     
@@ -141,10 +151,14 @@ public class JobProducerFactory implements JobFactory {
      * consumed by another thread.
      * 
      * @param id of encoding entity
+     * @throws TaskQueueException 
+     * @throws IllegalArgumentException 
      */
-    public static void releaseEncodingJob(Long taskIdentifier) {
+    public static void releaseEncodingJob(String taskIdentifier) 
+	throws IllegalArgumentException, TaskQueueException 
+    {
         if (taskIdentifier != null) {
-            encodingJobTaskQueue.remove(taskIdentifier);
+        	encodingJobTaskQueue.unlock(taskIdentifier);
         }
     }
 }

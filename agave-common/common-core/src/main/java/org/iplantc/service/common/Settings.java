@@ -124,6 +124,12 @@ public class Settings
     public static Integer		MAX_PAGE_SIZE;
     public static String        IPLANT_DOCS;
     
+    /* Cache Settings */
+    public static String        				CACHE_HOST;
+    public static int           				CACHE_PORT;
+    public static String        				CACHE_USERNAME;
+    public static String           				CACHE_PASSWORD;
+     
     /* Global notifications */
     public static String                        NOTIFICATION_QUEUE;
     public static String                        NOTIFICATION_TOPIC;
@@ -386,6 +392,12 @@ public class Settings
         DEDICATED_USER_GROUPS = StringUtils.split((String)props.get("iplant.dedicated.user.group.id"), ",");
         
         DEDICATED_SYSTEM_IDS = StringUtils.split((String)props.getProperty("iplant.dedicated.system.id", ""), ",");
+        
+        CACHE_HOST = (String)props.getProperty("iplant.cache.host", "redis");
+        CACHE_PORT = NumberUtils.toInt((String) props.getProperty("iplant.cache.port", "6379"), 6379);
+        CACHE_USERNAME = (String)props.getProperty("iplant.cache.username");
+        CACHE_PASSWORD = (String)props.getProperty("iplant.cache.password");
+        
     }
     
     /**

@@ -22,8 +22,8 @@
 	<properties>
 		<force.check.version>false</force.check.version>
 		<service.war.name>uuid</service.war.name>
-    <hibernate.hbm2ddl>update</hibernate.hbm2ddl>
-    <jetty.daemon>true</jetty.daemon>
+	    <hibernate.hbm2ddl>update</hibernate.hbm2ddl>
+	    <jetty.daemon>true</jetty.daemon>
 	</properties>
 
     <pluginRepositories>
@@ -208,15 +208,15 @@
 								<tag>${project.version}</tag>
 								<tag>latest</tag>
 							</imageTags>
-              <tagInfoFile>target/image_info.json</tagInfoFile>
+              				<tagInfoFile>target/image_info.json</tagInfoFile>
 							<forceTags>true</forceTags>
 							<resources>
-		            <resource>
-		            <targetPath>/</targetPath>
-		            <directory>${project.build.directory}</directory>
-		            <include>${service.war.name}.war</include>
-		          </resource>
-						</resources>
+					          <resource>
+					            <targetPath>/</targetPath>
+					            <directory>${project.build.directory}</directory>
+					            <include>${service.war.name}.war</include>
+					          </resource>
+							</resources>
 						</configuration>
 					</execution>
 					<execution>

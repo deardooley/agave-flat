@@ -191,18 +191,10 @@
 			<artifactId>powermock-api-mockito</artifactId>
 			<version>${powermock.version}</version>
 		</dependency>
-		<!-- <dependency>
-			<groupId>org.uncommons</groupId>
-			<artifactId>reportng</artifactId>
-			<version>${reportng.version}</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.testng</groupId>
-					<artifactId>compile</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency> -->
+		<!-- <dependency> <groupId>org.uncommons</groupId> <artifactId>reportng</artifactId> 
+			<version>${reportng.version}</version> <scope>test</scope> <exclusions> <exclusion> 
+			<groupId>org.testng</groupId> <artifactId>compile</artifactId> </exclusion> 
+			</exclusions> </dependency> -->
 
 
 		<!-- Globus -->
@@ -281,6 +273,16 @@
 			<groupId>ch.mfrey.jackson</groupId>
 			<artifactId>jackson-antpathfilter</artifactId>
 			<version>${jackson-antpathfilter.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.redisson</groupId>
+			<artifactId>redisson</artifactId>
+			<version>2.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+			<version>2.9.0</version>
 		</dependency>
 	</dependencies>
 
