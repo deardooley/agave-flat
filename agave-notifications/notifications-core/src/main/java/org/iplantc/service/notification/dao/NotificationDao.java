@@ -603,8 +603,14 @@ public class NotificationDao extends AbstractDao
 				hql +=   "    AND c.owner = :owner \n";
 			}
             
+           
+            boolean hasVisibleSearchTerm = false;
             for (SearchTerm searchTerm: searchCriteria.keySet()) 
             {
+            	if (StringUtils.equalsIgnoreCase(searchTerm.getSearchField(), "visible")) {
+            		hasVisibleSearchTerm = true;
+            	}
+            	
                 if (searchCriteria.get(searchTerm) == null 
                         || StringUtils.equalsIgnoreCase(searchCriteria.get(searchTerm).toString(), "null")) 
                 {
@@ -618,6 +624,11 @@ public class NotificationDao extends AbstractDao
                 } else {
                     hql += "\n       AND       " + searchTerm.getExpression();
                 }
+            }
+            
+            // hide deleted notifications by default
+            if (!hasVisibleSearchTerm) {
+            	hql += "\n       AND       c.visible = :visiblebydefault";
             }
             
             hql +=  " ORDER BY c.created DESC\n";
@@ -660,6 +671,13 @@ public class NotificationDao extends AbstractDao
                     q = q.replaceAll(":" + searchTerm.getSafeSearchField(), "'" + String.valueOf(searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm))) + "'");
                 }
                 
+            }
+            
+            // hide deleted notifications by default
+            if (!hasVisibleSearchTerm) {
+                query.setBoolean("visiblebydefault", Boolean.TRUE);
+
+                q = q.replaceAll(":visiblebydefault", "1");
             }
             
 //            log.debug(q);
