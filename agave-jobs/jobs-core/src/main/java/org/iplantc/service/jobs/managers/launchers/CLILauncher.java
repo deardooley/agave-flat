@@ -60,7 +60,7 @@ public class CLILauncher extends HPCLauncher
 			// submit the script and echo the pid or dump the output for debugging
 			String submitCommand = " sh -c './"+ batchScriptName + 
 					" 2> " + logFileBaseName + ".err 1> " + logFileBaseName + ".out & export AGAVE_PID=$! " +
-					" && if [[ -n \"$(ps -o comm= -p $AGAVE_PID)\" ]] || [[ -e " + logFileBaseName + ".pid ]]; then echo $AGAVE_PID; else cat " + logFileBaseName + ".err; fi'";
+					" && if [ -n \"$(ps -o comm= -p $AGAVE_PID)\" ] || [ -e " + logFileBaseName + ".pid ]; then echo $AGAVE_PID; else cat " + logFileBaseName + ".err; fi'";
 			
 			String submissionResponse = submissionClient.runCommand(
 					cdCommand + " && " + chmodCommand + " && " + submitCommand);
