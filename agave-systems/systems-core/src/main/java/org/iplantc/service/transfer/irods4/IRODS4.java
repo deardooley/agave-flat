@@ -50,6 +50,7 @@ import org.irods.jargon.core.exception.CatNoAccessException;
 import org.irods.jargon.core.exception.DataNotFoundException;
 import org.irods.jargon.core.exception.DuplicateDataException;
 import org.irods.jargon.core.exception.FileNotFoundException;
+import org.irods.jargon.core.exception.InvalidUserException;
 import org.irods.jargon.core.exception.JargonException;
 import org.irods.jargon.core.exception.JargonRuntimeException;
 import org.irods.jargon.core.exception.SpecificQueryException;
@@ -2002,9 +2003,13 @@ public class IRODS4 implements RemoteDataClient
             }
         } 
         catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to change permission on " + path + " due to insufficient privileges.", e);
+			throw new RemoteDataException("Failed to change permission for " + username + 
+					" on " + path + " due to insufficient privileges.", e);
 		}
-		catch (JargonException e) {
+        catch (InvalidUserException e) {
+        	throw new RemoteDataException("Failed to add read permission for " + username + " on " + path + 
+        			". No user with name " + username + " exists on the remote system.", e);
+        }catch (JargonException e) {
             throw new RemoteDataException(e);
         } 
         catch (IOException e) {
@@ -2037,8 +2042,13 @@ public class IRODS4 implements RemoteDataClient
             }
         } 
         catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to change permission on " + path + " due to insufficient privileges.", e);
+			throw new RemoteDataException("Failed to add read permission for " + username + " on " + path + 
+					" due to insufficient privileges.", e);
 		}
+        catch (InvalidUserException e) {
+        	throw new RemoteDataException("Failed to add read permission for " + username + " on " + path + 
+        			". No user with name " + username + " exists on the remote system.", e);
+        }
 		catch (JargonException e) {
             throw new RemoteDataException(e);
         } 
@@ -2076,8 +2086,13 @@ public class IRODS4 implements RemoteDataClient
             }
         } 
         catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to change permission on " + path + " due to insufficient privileges.", e);
+			throw new RemoteDataException("Failed to remove read permission for " + username + 
+					" on " + path + " due to insufficient privileges.", e);
 		}
+    	catch (InvalidUserException e) {
+        	throw new RemoteDataException("Failed to remove read permission for " + username + 
+        			" on " + path +  ". No user with name " + username + " exists on the remote system.", e);
+        }
 		catch (JargonException e) {
             throw new RemoteDataException(e);
         } 
@@ -2167,9 +2182,13 @@ public class IRODS4 implements RemoteDataClient
             }
         } 
         catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to change permission on " + path + " due to insufficient privileges.", e);
+			throw new RemoteDataException("Failed to add write permission for " + username + 
+					" on " + path + " due to insufficient privileges.", e);
 		}
-		catch (JargonException e) {
+    	catch (InvalidUserException e) {
+        	throw new RemoteDataException("Failed to add write permission for " + username + " on " + path + 
+        			". No user with name " + username + " exists on the remote system.", e);
+        }catch (JargonException e) {
             throw new RemoteDataException(e);
         } 
         catch (java.io.FileNotFoundException e) {
@@ -2208,9 +2227,13 @@ public class IRODS4 implements RemoteDataClient
             }
         } 
     	catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to change permission on " + path + " due to insufficient privileges.", e);
+			throw new RemoteDataException("Failed to remove write permission for " + username + 
+					" on " + path + " due to insufficient privileges.", e);
 		}
-		catch (JargonException e) {
+    	catch (InvalidUserException e) {
+        	throw new RemoteDataException("Failed to remove write permission for " + username + " on " + path + 
+        			". No user with name " + username + " exists on the remote system.", e);
+        }catch (JargonException e) {
             throw new RemoteDataException(e);
         } 
     	catch (java.io.FileNotFoundException e) {
@@ -2258,9 +2281,13 @@ public class IRODS4 implements RemoteDataClient
             }
         } 
         catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to change permission on " + path + " due to insufficient privileges.", e);
+			throw new RemoteDataException("Failed to clear permission for " + username + 
+					" on " + path + " due to insufficient privileges.", e);
 		}
-		catch (JargonException e) {
+    	catch (InvalidUserException e) {
+        	throw new RemoteDataException("Failed to clear permissions for " + username + " on " + path + 
+        			". No user with name " + username + " exists on the remote system.", e);
+        }catch (JargonException e) {
             throw new RemoteDataException(e);
         } 
         catch (java.io.FileNotFoundException e) {

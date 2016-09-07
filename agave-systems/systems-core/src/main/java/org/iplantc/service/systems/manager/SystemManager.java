@@ -1622,6 +1622,7 @@ public class SystemManager {
      * Sets the system availability to true and notifies subscribers
      * @param system the system to make available
      * @param username user who made the request
+     * @return the updated system
      */
     public RemoteSystem enableSystem(RemoteSystem system, String username) 
     throws SystemException, PermissionException
@@ -1653,8 +1654,9 @@ public class SystemManager {
      * Sets the system availability to false and notifies subscribers
      * @param system the system to make available
      * @param username user who made the request
+     * @return the updated system
      */
-    public void disableSystem(RemoteSystem system, String createdBy) 
+    public RemoteSystem disableSystem(RemoteSystem system, String createdBy) 
     throws SystemException, PermissionException
     {
     	if (StringUtils.equalsIgnoreCase(createdBy, Settings.PUBLIC_USER_USERNAME) ||
@@ -1675,7 +1677,7 @@ public class SystemManager {
                 system.setAvailable(false);
                 getDao().persist(system);
                 getEventProcessor().processSystemUpdateEvent(system, SystemEventType.DISABLED, createdBy);
-//                NotificationManager.process(system.getUuid(), "DISABLED", username);
+                return system;
             }
         }
     }
