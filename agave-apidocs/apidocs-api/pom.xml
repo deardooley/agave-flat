@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.iplantc.agave</groupId>
 		<artifactId>apidocs</artifactId>
-		<version>2.1.8</version>
+		<version>2.2.0</version>
 	</parent>
 	<artifactId>apidocs-api</artifactId>
 	<name>iPlant Agave API Swagger Docs</name>
