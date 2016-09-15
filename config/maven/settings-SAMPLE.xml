@@ -394,7 +394,7 @@
 				<foundation.service.monitor.max.tasks>2</foundation.service.monitor.max.tasks>
 				<foundation.service.monitor.jetty.port>13051</foundation.service.monitor.jetty.port>
 				<foundation.service.monitor.jetty.ajp.port>13052</foundation.service.monitor.jetty.ajp.port>
-				<foundation.service.min.monitor.repeat.interval>300</foundation.service.min.monitor.repeat.interval>
+				<foundation.service.min.monitor.repeat.interval>0</foundation.service.min.monitor.repeat.interval>
 				
 				<!-- ************************ Notification service ******************* -->
 

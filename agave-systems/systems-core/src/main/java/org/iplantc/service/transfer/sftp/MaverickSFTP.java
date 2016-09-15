@@ -11,6 +11,7 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +46,13 @@ import com.maverick.ssh.SshException;
 import com.maverick.ssh.SshTunnel;
 import com.maverick.ssh.components.SshKeyPair;
 import com.maverick.ssh1.Ssh1Client;
+import com.maverick.ssh2.AuthenticationProtocol;
+import com.maverick.ssh2.KBIAuthentication;
+import com.maverick.ssh2.KBIPrompt;
+import com.maverick.ssh2.KBIRequestHandler;
 import com.maverick.ssh2.Ssh2Client;
 import com.maverick.ssh2.Ssh2Context;
+import com.maverick.ssh2.Ssh2PublicKeyAuthentication;
 import com.sshtools.net.SocketWrapper;
 import com.sshtools.publickey.SshPrivateKeyFile;
 import com.sshtools.publickey.SshPrivateKeyFileFactory;
@@ -132,6 +138,8 @@ public class MaverickSFTP implements RemoteDataClient
 		
 		updateSystemRoots(rootDir, homeDir);
 	}
+	
+	
 	
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.transfer.RemoteDataClient#getHomeDir()
@@ -233,7 +241,7 @@ public class MaverickSFTP implements RemoteDataClient
 	        ((Ssh2Context)con.getContext(2)).setMacPreferredPositionSC(Ssh2Context.HMAC_SHA1, 1);
 	        ((Ssh2Context)con.getContext(2)).setMacPreferredPositionSC(Ssh2Context.HMAC_MD5, 2);
 	        
-			/**
+	        /**
 			 * Connect to the host
 			 */
 //	         SocketTransport t = null;
@@ -274,16 +282,18 @@ public class MaverickSFTP implements RemoteDataClient
 			
 			ssh2 = (Ssh2Client) ssh;
 			
+			String[] authenticationMethods = ssh2.getAuthenticationMethods(username);
+			int authStatus;
+			
 			if (!StringUtils.isEmpty(publicKey) && !StringUtils.isEmpty(privateKey))
 			{
 				/**
 				 * Authenticate the user using password authentication
 				 */
-				auth = new PublicKeyAuthentication();
+				auth = new Ssh2PublicKeyAuthentication();
 				
 				do {
 					SshPrivateKeyFile pkfile = SshPrivateKeyFileFactory.parse(privateKey.getBytes());
-//					SshPublicKeyFile pubfile = SshPublicKeyFileFactory.parse(publicKey.getBytes());
 					
 					SshKeyPair pair;
 					if (pkfile.isPassphraseProtected()) {
@@ -295,8 +305,19 @@ public class MaverickSFTP implements RemoteDataClient
 
 					((PublicKeyAuthentication)auth).setPrivateKey(pair.getPrivateKey());
 					((PublicKeyAuthentication)auth).setPublicKey(pair.getPublicKey());
+					authStatus = ssh2.authenticate(auth);
+					
+					if (authStatus == SshAuthentication.FURTHER_AUTHENTICATION_REQUIRED && 
+							Arrays.asList(authenticationMethods).contains("keyboard-interactive")) {
+						KBIAuthentication kbi = new KBIAuthentication();
+						kbi.setUsername(username);
+						kbi.setKBIRequestHandler(new MultiFactorKBIRequestHandler(password, null, username, host, port));
+						authStatus = ssh2.authenticate(kbi);
+					}
 				}
-				while (ssh2.authenticate(auth) != SshAuthentication.COMPLETE
+				while (authStatus != SshAuthentication.COMPLETE 
+						&& authStatus != SshAuthentication.FAILED
+						&& authStatus != SshAuthentication.CANCELLED
 						&& ssh.isConnected());
 			}
 			else
@@ -305,41 +326,81 @@ public class MaverickSFTP implements RemoteDataClient
 				 * Authenticate the user using password authentication
 				 */
 				auth = new com.maverick.ssh.PasswordAuthentication();
-	
 				do
 				{
 					((PasswordAuthentication)auth).setPassword(password);
+					
+					auth = checkForPasswordOverKBI(authenticationMethods);
+					
+					authStatus = ssh2.authenticate(auth);
 				}
-				while (ssh2.authenticate(auth) != SshAuthentication.COMPLETE
+				while (authStatus != SshAuthentication.COMPLETE
+						&& authStatus != SshAuthentication.FAILED
+						&& authStatus != SshAuthentication.CANCELLED
 						&& ssh.isConnected());
 			}
 			
-			if (!StringUtils.isEmpty(proxyHost)) 
-			{
-				if (ssh.isAuthenticated()) {
-					SshTunnel tunnel = ssh.openForwardingChannel(host, port,
-							"127.0.0.1", 22, "127.0.0.1", 22, null, null);
-					
-					forwardedConnection = con.connect(tunnel, username);
-					forwardedConnection.authenticate(auth);
-				}
-			} 
-			else if (!ssh.isAuthenticated()) 
-			{
+			if (!ssh.isAuthenticated()) {
 				throw new RemoteDataException("Failed to authenticate to " + host);
 			}
+			else if (!StringUtils.isEmpty(proxyHost)) {
+				SshTunnel tunnel = ssh.openForwardingChannel(host, port,
+						"127.0.0.1", 22, "127.0.0.1", 22, null, null);
+				
+				forwardedConnection = con.connect(tunnel, username);
+				forwardedConnection.authenticate(auth);
+			} 
+			else {
+				// we're connected. carry on
+			}
 		}
-		catch (RemoteDataException e) 
-		{
+		catch (SshException e) {
+			throw new RemoteDataException("Failed to authenticate to " + host, e);
+		}
+		catch (RemoteDataException e) {
 			throw e;
 		}
 		catch (ConnectException e) {
-			throw new RemoteDataException("Connection refused: Unable to contact SFTP server at " + host + ":" + port);
+			throw new RemoteDataException("Connection refused: Unable to contact SFTP server at " + host + ":" + port, e);
 		}
 		catch (Exception e)
 		{
-			throw new RemoteDataException("Failed to authenticate to " + host);
+			throw new RemoteDataException("Failed to authenticate to " + host, e);
 		}
+	}
+	
+	/**
+	 * Looks through the supported auth returned from the server and overrides the
+	 * password auth type if the server only lists keyboard-interactive. This acts
+	 * as a frontline check to override the default behavior and use our 
+	 * {@link MultiFactorKBIRequestHandler}. 
+	 *   
+	 * @param authenticationMethods
+	 * @return a {@link SshAuthentication} based on the ordering and existence of auth methods returned from the server.
+	 */
+	private SshAuthentication checkForPasswordOverKBI(String[] authenticationMethods) {
+		boolean kbiAuthenticationPossible = false;
+		for (int i = 0; i < authenticationMethods.length; i++) {
+			if (authenticationMethods[i].equals("password")) {
+				return auth;
+			}
+			if (authenticationMethods[i].equals("keyboard-interactive")) {
+
+				kbiAuthenticationPossible = true;
+			}
+		}
+
+		if (kbiAuthenticationPossible) {
+			KBIAuthentication kbi = new KBIAuthentication();
+
+			kbi.setUsername(username);
+
+			kbi.setKBIRequestHandler(new MultiFactorKBIRequestHandler(password, null, username, host, port));
+			
+			return kbi;
+		}
+
+		return auth;
 	}
 	
 	private boolean useTunnel() 
