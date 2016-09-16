@@ -9,8 +9,6 @@ class DatabaseUtil
 
 	var $db = null;
 
-	function DatabaseUtil($database_name) { $this->__construct($database_name); }
-
 	function __construct($database_name)
 	{
 		$this->database_name = $database_name;

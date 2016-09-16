@@ -24,11 +24,9 @@ $app = new Illuminate\Foundation\Application;
 |
 */
 
-$env = $app->detectEnvironment(array(
-	'' => array('docker.example.com'),
-	'local' => array('localhost'),
-	'production' => array('preview.agaveapi.co', 'agaveapi.co'),
-));
+$env = $app->detectEnvironment(function() {
+	return 'production';
+});
 
 /*
 |--------------------------------------------------------------------------

@@ -21,6 +21,7 @@ import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobProcessingException;
+import org.iplantc.service.jobs.exceptions.JobTerminationException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.JobPermissionManager;
 import org.iplantc.service.jobs.model.Job;
@@ -384,6 +385,7 @@ public class JobManageResource extends AbstractJobResource {
 		try
 		{
 			job = JobDao.getByUuid(sJobId);
+			
 			if (job == null || !job.isVisible()) {
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
 				getResponse().setEntity(new IplantErrorRepresentation(
@@ -403,19 +405,19 @@ public class JobManageResource extends AbstractJobResource {
 						"User does not have permission to view this job"));
 			}
 		}
-		catch (JobException e)
+		catch (JobException | JobTerminationException e)
 		{
 			getResponse().setEntity(
-					new IplantErrorRepresentation("Failed to kill remote job. " + e.getMessage()));
+					new IplantErrorRepresentation(e.getMessage()));
 			getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-
+			log.error("Failed to hide job " + sJobId, e);
 		}
-		catch (Exception e)
+		catch (Throwable e)
 		{
 			getResponse().setEntity(
 					new IplantErrorRepresentation("Job deletion failed"));
 			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.error("Job deletion failed for user " + username, e);
+			log.error("Failed to hide job " + sJobId, e);
 		}
 
 	}

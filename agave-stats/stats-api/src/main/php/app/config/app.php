@@ -1,5 +1,16 @@
 <?php
 
+function env_or_default($varname, $default='') {
+    if (empty($varname)) {
+        return $default;
+    } else {
+        $envvarname = strtoupper($varname);
+        $envvarname = str_replace('.', '_', $envvarname);
+        $val = getenv($envvarname);
+        return (empty($val) ? $default : $val);
+    }
+}
+
 return array(
 
 	/*
@@ -26,7 +37,7 @@ return array(
 	|
 	*/
 
-	'url' => 'http://'.env_or_default('HOSTNAME', 'docker.example.com').'/stats/v2/',
+	'url' => env_or_default('IPLANT_STATS_SERVICE', 'http://docker.example.com/stats/v2'),
 
 	/*
 	|--------------------------------------------------------------------------
@@ -124,7 +135,7 @@ return array(
 		// 'Mitch\LaravelDoctrine\LaravelDoctrineServiceProvider',
 		'Way\Generators\GeneratorsServiceProvider',
 		'Nwidart\DbExporter\DbExportHandlerServiceProvider',
-		'Jlapp\Swaggervel\SwaggervelServiceProvider',
+		// 'Jlapp\Swaggervel\SwaggervelServiceProvider',
 	),
 
 	/*

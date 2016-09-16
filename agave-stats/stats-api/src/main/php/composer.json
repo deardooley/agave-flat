@@ -9,8 +9,8 @@
 		"mitchellvanw/laravel-doctrine": "0.5.*",
 		"symfony/yaml": "~3.0@dev",
 		"symfony/console": "2.5.x-dev",
-		"lcobucci/jwt": "3.1-dev",
-	  	"jlapp/swaggervel": "1.0.*"
+		"lcobucci/jwt": "3.1.x-dev",
+	  "jlapp/swaggervel": "1.0.*"
 	},
 	"require-dev": {
 		"way/generators": "~2.0",

@@ -41,7 +41,7 @@ function get_tenants()
 			),
 			'_links' => array(
 				'self' => array(
-					'href' => $config['iplant.foundation.services']['tenants'].$row['uuid'] 
+					'href' => $config['iplant.foundation.services']['tenants'].$row['tenant_id']
 				),
 				'publickey' => array(
 					'href' => addTrailingSlash($row['base_url']) . 'apim/v2/publickey'
@@ -85,7 +85,10 @@ function get_tenant_by_id($uuid = '')
 			),
 			'_links' => array(
 				'self' => array(
-					'href' => $config['iplant.foundation.services']['tenants'].$row['uuid'] 
+					'href' => $config['iplant.foundation.services']['tenants'].$row['tenant_id']
+				),
+				'publickey' => array(
+					'href' => addTrailingSlash($row['base_url']) . 'apim/v2/publickey'
 				)
 			)
 		);

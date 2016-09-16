@@ -1,17 +1,5 @@
 <?php
 
-function env_or_default($varname, $default='') {
-    if (empty($varname)) {
-        return $default;
-    } else {
-        $envvarname = strtoupper($varname);
-        $envvarname = str_replace('.', '_', $envvarname);
-        $val = getenv($envvarname);
-        return (empty($val) ? $default : $val);
-    }
-}
-
-
 return array(
 
     // what is the version of the api?

@@ -146,12 +146,13 @@ public class JobsResource extends AbstractJobResource {
 			}
 		}
 		catch (HibernateException e) {
-				log.error("Failed to fetch job listings from db.",e);
+				log.error("Failed to fetch job listings from db.", e);
 				getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
 						return new IplantErrorRepresentation("Unable to fetch job records.");
 		}
 		catch (Exception e)
 		{
+			log.error("Failed to fetch job listings from db.", e);
 			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
 			return new IplantErrorRepresentation(e.getMessage());
 		}
