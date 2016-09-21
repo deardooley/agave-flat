@@ -1,6 +1,6 @@
 {
 	"id": "condor.example.com",
-	"name": "Open Science Grid",
+	"name": "Demo condor system",
 	"status": "UP",
 	"type": "EXECUTION",
 	"description": "Sample Condor system config",

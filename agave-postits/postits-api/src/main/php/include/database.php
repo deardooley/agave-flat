@@ -9,6 +9,10 @@ if (!$db)
 
 mysql_select_db($config['iplant.database.name'], $db);
 
+// force timezone for this connection to line up with PHP timezone
+// this will carry for all database interactions on this connection.
+mysql_query("SET time_zone = 'CDT'");
+
 init_table();
 
 /* Looks up the base url for the tenant's api based on the current tenant id */
@@ -29,7 +33,7 @@ function get_tenant_info($tenant_id='')
 function save_postit($postit)
 {
 	global $db, $config, $DEBUG, $tenant_id;
-
+	
 	$sql = "insert into ".$config['iplant.database.postits.table.name']." (postit_key, token, creator, ip_address, created_at, expires_at, remaining_uses, target_url, target_method, internal_username, tenant_id) values ('".$postit['postit_key']."', '".$postit['token']."', '".$postit['creator']."', '".$_SERVER['REMOTE_ADDR']."', '".$postit['created_at']."', '".$postit['expires_at']."', ".$postit['remaining_uses'].", '".$postit['target_url']."', '".$postit['target_method']."', '" . $postit['internal_username'] . "', '$tenant_id')";
 
 	if ($config['debug']) error_log($sql);

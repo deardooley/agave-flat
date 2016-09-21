@@ -9,7 +9,12 @@ if (!$db)
 {
     format_response('error', 'Could not connect: ' . mysql_error($db), '');
 }
+
 mysql_select_db($config['iplant.database']['agave']['name'], $db);
+
+// force timezone for this connection to line up with PHP timezone
+// this will carry for all database interactions on this connection.
+mysql_query("SET time_zone = 'CDT'");
 
 function get_tenants()
 {

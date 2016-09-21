@@ -27,8 +27,12 @@ class DatabaseUtil
 		if ($this->db->connect_errno) {
 			format_response('error', 'Failed to connect to db: ' . $this->db->connect_error, '');
 		}
+		
+		// force timezone for this connection to line up with PHP timezone
+		// this will carry for all database interactions on this connection.
+		$this->db->query("SET time_zone = 'CDT'")
 	}
-
+	
 	function close()
 	{
 		$this->db->close();

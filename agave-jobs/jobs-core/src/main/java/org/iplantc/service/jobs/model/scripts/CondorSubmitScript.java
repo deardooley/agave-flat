@@ -64,8 +64,8 @@ public class CondorSubmitScript extends AbstractSubmitScript {
         sb.append("output       = " + standardOutputFile + "\n");
         sb.append("log          = " + logFilename + "\n");
         // sb.append("initialdir   = " + initialdir + "\n");
-        sb.append("ShouldTransferFiles  = " + shouldTransferFiles + "\n");
-        sb.append("When_to_transfer_output = " + whenToTransferOutput+"\n");
+        sb.append("should_transfer_files  = " + shouldTransferFiles + "\n");
+        sb.append("when_to_transfer_output = " + whenToTransferOutput+"\n");
         
         List<String> inputs = new ArrayList<String>();
         try 
@@ -112,6 +112,11 @@ public class CondorSubmitScript extends AbstractSubmitScript {
             sb.append("Arguments    = " + arguments + "\n\n");
         }
         sb.append(Queue);
+        sb.append("\n\n");
+        
+        if (!StringUtils.isEmpty(queue.getCustomDirectives())) {
+        	sb.append(queue.getCustomDirectives());
+        }
         sb.append("\n\n");
         
         return sb.toString();

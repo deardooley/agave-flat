@@ -385,7 +385,7 @@ public class SystemManagerTest extends SystemsModelTestCommon
 		};
 	}
 				
-	@Test(dataProvider = "enableSystemProvider", dependsOnMethods={"isManageableBySharedUserTest"})
+	@Test(dataProvider = "enableSystemProvider", dependsOnMethods={"makePublic"})
 	public void enableSystem(RemoteSystem system, String authenticatedUser, boolean shouldThrowException, String message)
 	{
 		RemoteSystem enabledSystem = null;
@@ -406,7 +406,7 @@ public class SystemManagerTest extends SystemsModelTestCommon
 		}
 	}
 
-	@Test(dependsOnMethods={"makePublic"})
+	@Test(dependsOnMethods={"enableSystem"})
 	public void getDefaultExecutionSystem() throws Exception
 	{
 	    RemoteSystem privateExecutionSystem = null;
