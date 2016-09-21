@@ -1803,7 +1803,7 @@ public class FileManagementResource extends AbstractFileResource
 				remoteDataClient.setOwnerPermission(pemUser, destPath, true);
 			} catch (Exception e) {
 				log.error(e.getMessage(), e);
-				message = "Rename was successful, but unable to mirror permissions for user " +
+				message = "Move was successful, but unable to mirror permissions for user " +
 						pemUser + " on new directory " + path;
 //							getResponse().setEntity(new IplantErrorRepresentation(message));
 //				            throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST);
@@ -2129,7 +2129,7 @@ public class FileManagementResource extends AbstractFileResource
 				copiedLogicalFile.setLastUpdated(new Date());
 				LogicalFileDao.persist(copiedLogicalFile);
 				copiedLogicalFile.addContentEvent(new FileEvent(FileEventType.CREATED, 
-						"File item copied from " + copiedLogicalFile.getPublicLink(), 
+						"File item copied from " + logicalFile.getPublicLink(), 
 						getAuthenticatedUsername()));
 				LogicalFileDao.persist(copiedLogicalFile);
 			}
