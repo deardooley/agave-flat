@@ -1716,7 +1716,7 @@ public class FileManagementResource extends AbstractFileResource
 			// not actually exist if the rename operation worked.
 			for (LogicalFile child: LogicalFileDao.findChildren(logicalFile.getPath(), system.getId())) {
 				child.addContentEvent(new FileEvent(FileEventType.DELETED, 
-						"Detected that file item was deleted by an outside source when"
+						"Detected that file item was deleted by an outside source"
 						+ " as part of a rename operation on " + getPublicLink(system, path), 
 						getAuthenticatedUsername()));
 				LogicalFileDao.remove(child);
