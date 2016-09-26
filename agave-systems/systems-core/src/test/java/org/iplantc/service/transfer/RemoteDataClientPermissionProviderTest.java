@@ -150,7 +150,7 @@ public abstract class RemoteDataClientPermissionProviderTest extends BaseTransfe
     		getClient().authenticate();
     		
     		if (!getClient().doesExist(m.getName())) {
-    		    getClient().mkdirs(m.getName());
+    		    getClient().mkdirs(m.getName(), system.getOwner());
     		}
     		
     		if (!getClient().doesExist(m.getName() + "/" + LOCAL_DIR_NAME)) {

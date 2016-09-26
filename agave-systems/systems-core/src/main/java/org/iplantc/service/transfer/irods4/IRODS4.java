@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.iplantc.service.transfer.irods4;
 
@@ -78,22 +78,22 @@ import org.irods.jargon.core.transfer.TransferStatus;
 /**
  * This is the adapter class for iRODS v4.x. Several changes
  * in the iRODS server's permission model, default values, and
- * order of operations for permission and existence testing 
- * necessitates a separate class. For iRODS v3 support, see 
+ * order of operations for permission and existence testing
+ * necessitates a separate class. For iRODS v3 support, see
  * {@link org.iplantc.service.transfer.irods.IRODS}
- * 
+ *
  * @author dooley
  */
-public class IRODS4 implements RemoteDataClient 
+public class IRODS4 implements RemoteDataClient
 {
 	private static final Logger log = Logger.getLogger(IRODS4.class);
 	/** integer from some queries signifying user can read a file */
 	static final int					READ_PERMISSIONS	= 1050;
 	/** integer from some queries signifying user can write to a file */
-	
+
 	static final int					WRITE_PERMISSIONS	= 1120;
-	
-	private static final ThreadLocal<Hashtable<String, IRODSSession>> 
+
+	private static final ThreadLocal<Hashtable<String, IRODSSession>>
 	threadLocalIRODSSession = new ThreadLocal<Hashtable<String, IRODSSession>>() {
 		@Override protected Hashtable<String, IRODSSession> initialValue() {
 			return new Hashtable<String, IRODSSession>();
@@ -104,16 +104,16 @@ public class IRODS4 implements RemoteDataClient
 	private IRODSSession				irodsSession;
 	private IRODSAccount				irodsAccount;
 	private IRODSAccessObjectFactory	accessObjectFactory;
-	
+
 	private CollectionAndDataObjectListAndSearchAO collectionAndDataObjectListAndSearchAO;
 	private DataObjectAO dataObjectAO;
-	private CollectionAO collectionAO; 
+	private CollectionAO collectionAO;
 	private IRODSFileSystemAO fileSystemAO;
 	private DataTransferOperations dataTransferOperations;
 	private IRODSFileFactory irodsFileFactory;
-	
+
 	private AuthScheme type = AuthScheme.STANDARD;
-	
+
 	protected String host;
 	protected int port;
 	protected String username;
@@ -126,13 +126,13 @@ public class IRODS4 implements RemoteDataClient
 	protected GSSCredential credential;
 	protected boolean permissionMirroringRequired = true;
 	private Map<String, IRODSFile> fileInfoCache = new ConcurrentHashMap<String, IRODSFile>();
-	
+
 	protected static final int MAX_BUFFER_SIZE = 4194304; // 4MB
-	
+
 	public IRODS4() {}
-	
+
 	public IRODS4(String host, int port, String username, String password,
-			String resource, String zone, String rootDir, String internalUsername, 
+			String resource, String zone, String rootDir, String internalUsername,
 			String homeDir, AuthScheme type)
 	{
 		this.host = host;
@@ -146,13 +146,13 @@ public class IRODS4 implements RemoteDataClient
 		if (type != null) {
 			this.type = type;
 		}
-		
+
 		updateSystemRoots(rootDir, homeDir);
 
 	}
-	
+
 	public IRODS4(String host, int port, GSSCredential credential,
-			String resource, String zone, String rootDir, String internalUsername, 
+			String resource, String zone, String rootDir, String internalUsername,
 			String homeDir)
 	{
 		this.host = host;
@@ -163,34 +163,34 @@ public class IRODS4 implements RemoteDataClient
 		this.internalUsername = internalUsername;
 		this.credential = credential;
 		this.type = AuthScheme.GSI;
-		
+
 		updateSystemRoots(rootDir, homeDir);
 	}
-	
+
 	public IRODS4 clone()
 	{
-		IRODS4 irods = new IRODS4(host, 
-				  port, 
-				  username, 
-				  password, 
-				  resource, 
-				  zone, 
-				  rootDir, 
-				  internalUsername, 
+		IRODS4 irods = new IRODS4(host,
+				  port,
+				  username,
+				  password,
+				  resource,
+				  zone,
+				  rootDir,
+				  internalUsername,
 				  homeDir, AuthScheme.GSI);
-		
+
 		irods.rootDir = this.rootDir;
 		irods.homeDir = this.homeDir;
-		
+
 		irods.credential = this.credential;
-		
+
 		if (type != null) {
 			irods.type = type;
 		}
-		
+
 		return irods;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.transfer.RemoteDataClient#getHomeDir()
 	 */
@@ -205,8 +205,8 @@ public class IRODS4 implements RemoteDataClient
 	@Override
 	public String getRootDir() {
 		return this.rootDir;
-	}	
-	
+	}
+
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.transfer.RemoteDataClient#updateSystemRoots(java.lang.String, java.lang.String)
 	 */
@@ -215,7 +215,7 @@ public class IRODS4 implements RemoteDataClient
 	{
 		rootDir = FilenameUtils.normalize(rootDir);
 		rootDir = StringUtils.stripEnd(rootDir," ");
-        
+
 		if (!StringUtils.isEmpty(rootDir)) {
 			this.rootDir = rootDir;
 			if (!this.rootDir.endsWith("/")) {
@@ -237,9 +237,9 @@ public class IRODS4 implements RemoteDataClient
 
         this.homeDir = StringUtils.stripEnd(this.homeDir.replaceAll("/+", "/")," ");
         this.rootDir = StringUtils.stripEnd(this.rootDir.replaceAll("/+", "/")," ");
-        
+
 	}
-	
+
 	public IRODSSession getThreadLocalSession(IRODSAccount account) throws JargonException {
 		IRODSSession session = threadLocalIRODSSession.get().get(account.toString());
 		if ( session == null) {
@@ -249,7 +249,7 @@ public class IRODS4 implements RemoteDataClient
 			threadLocalIRODSSession.get().put(account.toString(), session);
 			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + Thread.currentThread().getId() + " created new session for thread");
 		}
-		
+
 		return session;
 	}
 
@@ -258,20 +258,20 @@ public class IRODS4 implements RemoteDataClient
 	{
 	    // clear cache here as we may have stale information in between authentications
         fileInfoCache.clear();
-        
-        try 
+
+        try
 		{
 			this.irodsAccount = createAccount();
-	
+
 			accessObjectFactory = IRODSAccessObjectFactoryImpl.instance(getThreadLocalSession(irodsAccount));
 			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " open connection for thread");
 			doesExist("/");
-		} 
+		}
 		catch (AuthenticationException e) {
 			disconnect();
 			throw new RemoteDataException("Failed to authenticate to remote server. " + e.getMessage(), e);
 		}
-		catch(JargonException e) 
+		catch(JargonException e)
 		{
 			disconnect();
 			if (e.getMessage().toLowerCase().contains("unable to start ssl socket")) {
@@ -291,68 +291,68 @@ public class IRODS4 implements RemoteDataClient
 			throw new RemoteDataException("Failed to authenticate to remote server.", e);
 		}
 	}
-	
+
 	private CollectionAndDataObjectListAndSearchAO getCollectionAndDataObjectListAndSearchAO() throws JargonException
 	{
 		if (collectionAndDataObjectListAndSearchAO == null) {
 			collectionAndDataObjectListAndSearchAO = accessObjectFactory.getCollectionAndDataObjectListAndSearchAO(irodsAccount);
 		}
-		
+
 		return collectionAndDataObjectListAndSearchAO;
 	}
-	
+
 	private CollectionAO getCollectionAO() throws JargonException
 	{
 		if (collectionAO == null) {
-			collectionAO = accessObjectFactory.getCollectionAO(irodsAccount); 
+			collectionAO = accessObjectFactory.getCollectionAO(irodsAccount);
 		}
-		
+
 		return collectionAO;
 	}
-	
+
 	private IRODSFileSystemAO getIRODSFileSystemAO() throws JargonException
 	{
 		if (fileSystemAO == null) {
 		    fileSystemAO = accessObjectFactory.getIRODSFileSystemAO(irodsAccount);
 		}
-		
+
 		return fileSystemAO;
 	}
-	
+
 	private DataObjectAO getDataObjectAO() throws JargonException
 	{
 		if (dataObjectAO == null) {
 			dataObjectAO = accessObjectFactory.getDataObjectAO(irodsAccount);
 		}
-		
+
 		return dataObjectAO;
 	}
-	
-	
+
+
 	private DataTransferOperations getDataTransferOperations() throws JargonException
 	{
 		if (dataTransferOperations == null) {
 			dataTransferOperations = accessObjectFactory.getDataTransferOperations(irodsAccount);
 		}
-		
+
 		return dataTransferOperations;
 	}
-	
+
 	private IRODSFileFactory getIRODSFileFactory() throws JargonException
 	{
 		if (irodsFileFactory == null) {
 			irodsFileFactory = accessObjectFactory.getIRODSFileFactory(irodsAccount);
 		}
-		
+
 		return irodsFileFactory;
 	}
-	
+
 	/**
 	 * Returns the current {@link IRODSAccount} or creates a new
 	 * one if none has been set.
 	 * @return
-	 * @throws JargonException 
-	 * @throws EncryptionException 
+	 * @throws JargonException
+	 * @throws EncryptionException
 	 */
 	private IRODSAccount getIRODSAccount() throws JargonException {
 		if (this.irodsAccount == null) {
@@ -362,14 +362,14 @@ public class IRODS4 implements RemoteDataClient
 				throw new JargonException("Failed to process IRODS credentials.", e);
 			}
 		}
-		
+
 		return this.irodsAccount;
 	}
-	
+
 	/**
 	 * Creates a new {@link IRODSAccount} using the connection parameters
 	 * provided in the constructor.
-	 * 
+	 *
 	 * @return unverified {@link IRODSAccount} object with the proper {@link AuthScheme} configured.
 	 * @throws EncryptionException
 	 * @throws JargonException
@@ -382,19 +382,19 @@ public class IRODS4 implements RemoteDataClient
 			account.setZone(zone);
 			account.setHomeDirectory(rootDir);
 		}
-		else 
+		else
 		{
 			account = new IRODSAccount(host,port,username, password, rootDir, zone, resource);
-			
-			if (type != null) 
+
+			if (type != null)
 			{
 				account.setAuthenticationScheme(type);
 			}
 		}
-		
+
 		return account;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.transfer.RemoteDataClient#resolvePath(java.lang.String)
 	 */
@@ -404,7 +404,7 @@ public class IRODS4 implements RemoteDataClient
 		if (StringUtils.isEmpty(path)) {
 		    return StringUtils.stripEnd(homeDir, " ");
 		}
-		else if (path.startsWith("/")) 
+		else if (path.startsWith("/"))
 		{
 			path = rootDir + path.replaceFirst("/", "");
 		}
@@ -412,26 +412,26 @@ public class IRODS4 implements RemoteDataClient
 		{
 			path = homeDir + path;
 		}
-		
+
 		String adjustedPath = path;
 		if (adjustedPath.endsWith("/..") || adjustedPath.endsWith("/.")) {
 			adjustedPath += File.separator;
 		}
-		
+
 		if (adjustedPath.startsWith("/")) {
 			path = FileUtils.normalize(adjustedPath);
 		} else {
 			path = FilenameUtils.normalize(adjustedPath);
 		}
-		
+
 		if (path == null) {
 			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
 		} else if (!path.startsWith(rootDir)) {
 			if (!path.equals(StringUtils.removeEnd(rootDir, "/"))) {
 				throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
 			}
-		} 
-			
+		}
+
 		return StringUtils.stripEnd(path, " ");
     }
 
@@ -439,12 +439,12 @@ public class IRODS4 implements RemoteDataClient
 	 * @see org.iplantc.service.jobs.io.RemoteDataClient#mkdir(java.lang.String)
 	 */
 	@Override
-	public boolean mkdir(String remotedir) 
+	public boolean mkdir(String remotedir)
 	throws IOException, RemoteDataException
 	{
 		IRODSFile file = null;
-    	
-		try 
+
+		try
 		{
 		    if (doesExist(remotedir)) {
                 return false;
@@ -452,16 +452,16 @@ public class IRODS4 implements RemoteDataClient
                 file = getFile(remotedir);
                 getIRODSFileSystemAO().mkdir(file, false);
 			}
-		} 
+		}
 		catch (DuplicateDataException e) {
 			return false;
-		} 
+		}
 		catch (CatNoAccessException e) {
 			throw new RemoteDataException("Failed to create " + remotedir + " due to insufficient privileges.", e);
-		} 
+		}
 		catch (FileNotFoundException | DataNotFoundException e) {
 			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-		} 
+		}
 		catch (JargonException e) {
 			// check if this means that it already exists, and call that a
 			// 'false' instead of an error
@@ -469,9 +469,9 @@ public class IRODS4 implements RemoteDataClient
 				return false;
 			}
 			throw new RemoteDataException("Failed to create " + remotedir, e);
-		} 
-        
-		
+		}
+
+
 		return true;
 	}
 
@@ -482,8 +482,8 @@ public class IRODS4 implements RemoteDataClient
 	public boolean mkdirs(String remotedir) throws IOException, RemoteDataException
 	{
 		IRODSFile file = null;
-    	
-		try 
+
+		try
 		{
 		    if (doesExist(remotedir)) {
                 return false;
@@ -491,16 +491,16 @@ public class IRODS4 implements RemoteDataClient
                 file = getFile(remotedir);
                 getIRODSFileSystemAO().mkdir(file, true);
             }
-		} 
+		}
 		catch (DuplicateDataException e) {
 			return false;
-		} 
+		}
 		catch (CatNoAccessException e) {
 			throw new RemoteDataException("Failed to create " + remotedir + " due to insufficient privileges.", e);
-		} 
+		}
 		catch (FileNotFoundException | DataNotFoundException e) {
 			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-		} 
+		}
 		catch (JargonException e) {
 			// check if this means that it already exists, and call that a
 			// 'false' instead of an error
@@ -508,15 +508,15 @@ public class IRODS4 implements RemoteDataClient
 				return false;
 			}
 			throw new RemoteDataException("Failed to create " + remotedir, e);
-		} 
-        
-		
+		}
+
+
 		return true;
 	}
-	
+
 	@Override
-    public boolean mkdirs(String remotepath, String authorizedUsername) 
-    throws IOException, RemoteDataException 
+    public boolean mkdirs(String remotepath, String authorizedUsername)
+    throws IOException, RemoteDataException
     {
         if (isPermissionMirroringRequired() && StringUtils.isNotEmpty(authorizedUsername)) {
             String pathBuilder = "";
@@ -528,7 +528,7 @@ public class IRODS4 implements RemoteDataClient
                 } else {
                     pathBuilder = (StringUtils.startsWith(remotepath, "/") ? "/" : "") + token;
                 }
-                
+
                 if (doesExist(pathBuilder)) {
                     continue;
                 } else if (mkdir(pathBuilder)) {
@@ -572,43 +572,43 @@ public class IRODS4 implements RemoteDataClient
 	 * @see org.iplantc.service.jobs.io.RemoteDataClient#ls(java.lang.String)
 	 */
 	@Override
-	public List<RemoteFileInfo> ls(String remotedir) 
+	public List<RemoteFileInfo> ls(String remotedir)
 	throws IOException, RemoteDataException
 	{
 		List<RemoteFileInfo> files = new ArrayList<RemoteFileInfo>();
 		IRODSFile file = null;
-    	
+
 		try
 		{
 			// list irods folder
 			String resolvedPath = resolvePath(remotedir);
-			
+
 			if (resolvedPath.endsWith("/"))
 			{
 				resolvedPath = resolvedPath.substring(0, resolvedPath.length() - 1);
 			}
-			
+
 			file = getFile(remotedir);
-			
-			if (!file.exists()) 
+
+			if (!file.exists())
 			{
 				throw new FileNotFoundException("File/folder does not exist or user lacks access permission");
-			} 
-			else if (file.isFile() && file.canRead()) 
+			}
+			else if (file.isFile() && file.canRead())
 			{
 				files.add(new RemoteFileInfo(file));
-			} 
-			else 
-			{	
+			}
+			else
+			{
 				int pem = getIRODSFileSystemAO().getDirectoryPermissionsForGivenUser(file, username);
-				
+
 				if (pem < FilePermissionEnum.READ.getPermissionNumericValue()) { //getPermissionForUser(username,remotedir).canRead()) {
 					throw new RemoteDataException("Failed to list " + remotedir + " due to insufficient privileges.");
 				}
-			
-				List<CollectionAndDataObjectListingEntry> entries = 
+
+				List<CollectionAndDataObjectListingEntry> entries =
 						getCollectionAndDataObjectListAndSearchAO().listDataObjectsAndCollectionsUnderPath(resolvedPath);
-				
+
 				for (CollectionAndDataObjectListingEntry entry : entries)
 				{
 				    RemoteFileInfo fileInfo = new RemoteFileInfo(entry);
@@ -616,26 +616,26 @@ public class IRODS4 implements RemoteDataClient
 				}
 			}
 			return files;
-		} 
+		}
 		catch (RemoteDataException e) {
 			throw e;
 		}
 		catch (CatNoAccessException e) {
 			throw new RemoteDataException("Failed to create " + remotedir + " due to insufficient privileges.", e);
-		} 
+		}
 		catch (DataNotFoundException e) {
 			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-		} 
+		}
 		catch (FileNotFoundException e) {
 			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-		} 
+		}
 		catch(JargonException e) {
 			throw new RemoteDataException("Failed to list directory " + remotedir, e);
 		}
 		catch(JargonRuntimeException e) {
 			throw new RemoteDataException("Failed to list directory " + remotedir, e);
 		}
-		
+
 	}
 
 	/* (non-Javadoc)
@@ -652,64 +652,64 @@ public class IRODS4 implements RemoteDataClient
 	 * @see org.iplantc.service.jobs.io.RemoteDataClient#get(java.lang.String, java.lang.String, org.iplantc.service.jobs.io.RemoteTransferListener)
 	 */
 	@Override
-	public void get(String remotedir, String localdir, RemoteTransferListener listener) 
+	public void get(String remotedir, String localdir, RemoteTransferListener listener)
 	throws IOException, RemoteDataException
 	{
 		IRODSFile file = null;
-    	
+
 		try
 		{
 		    file = getFile(remotedir);
-			
+
 			if (listener == null) {
 				listener = new RemoteTransferListener(null);
 			}
-			
+
 			if (file.exists())
 			{
 				File localDir = new File(localdir);
-				
+
 				if (file.isDirectory())
 				{
-					if (!localDir.exists()) 
+					if (!localDir.exists())
 					{
 						if (!localDir.getParentFile().exists()) {
 							throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
 						} else {
-							// create the target directory 
+							// create the target directory
 							if (!localDir.mkdir()) {
 								throw new IOException("Failed to create local download directory");
 							}
 						}
-						
-						// recursively copy files into the local folder since irods won't let you specify 
-						// the target folder name 
-						List<CollectionAndDataObjectListingEntry> entries = 
+
+						// recursively copy files into the local folder since irods won't let you specify
+						// the target folder name
+						List<CollectionAndDataObjectListingEntry> entries =
 								getCollectionAndDataObjectListAndSearchAO().listDataObjectsAndCollectionsUnderPath(resolvePath(remotedir));
-						
+
 						for (CollectionAndDataObjectListingEntry entry : entries)
 						{
 						    getDataTransferOperations().getOperation(
-							        file.getAbsolutePath() + "/" + entry.getNodeLabelDisplayValue(), 
-									localDir.getAbsolutePath() + File.separator + entry.getNodeLabelDisplayValue(), 
-									resource, 
-									listener, 
+							        file.getAbsolutePath() + "/" + entry.getNodeLabelDisplayValue(),
+									localDir.getAbsolutePath() + File.separator + entry.getNodeLabelDisplayValue(),
+									resource,
+									listener,
 									getTransferControlBlock());
-							
+
 							TransferStatus statusCallback = listener.getOverallStatusCallback();
 							if (statusCallback != null && statusCallback.getTransferException() != null) {
 								throw statusCallback.getTransferException();
 							}
 						}
-					} 
-					else 
+					}
+					else
 					{
 						getDataTransferOperations().getOperation(
-						        file, 
-								localDir, 
-								listener, 
+						        file,
+								localDir,
+								listener,
 								getTransferControlBlock());
-						
+
 						TransferStatus statusCallback = listener.getOverallStatusCallback();
 						if (statusCallback != null && statusCallback.getTransferException() != null) {
 							throw statusCallback.getTransferException();
@@ -719,31 +719,31 @@ public class IRODS4 implements RemoteDataClient
 				else
 				{
 					getDataTransferOperations().getOperation(
-					        file, 
-							localDir, 
-							listener, 
+					        file,
+							localDir,
+							listener,
 							getTransferControlBlock());
-					
+
 					TransferStatus statusCallback = listener.getOverallStatusCallback();
 					if (statusCallback != null && statusCallback.getTransferException() != null) {
 						throw statusCallback.getTransferException();
-					}	
+					}
 				}
 			}
-			else 
+			else
 			{
 				throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
 			}
-		} 
+		}
 		catch (FileNotFoundException e) {
 			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
 		}
 		catch (CatNoAccessException e) {
 			throw new RemoteDataException("Failed to get " + remotedir + " due to insufficient privileges.", e);
-		} 
+		}
 		catch (DataNotFoundException e) {
 			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-		} 
+		}
 		catch (IOException e) {
 			throw e;
 		}
@@ -753,26 +753,26 @@ public class IRODS4 implements RemoteDataClient
 			} else {
 				throw new RemoteDataException("Failed to get file from irods.", e);
 			}
-		} 
+		}
 		catch (RemoteDataException e) {
 			throw e;
 		}
 		catch (Exception e) {
 			throw new RemoteDataException("Failed to copy file to irods.", e);
-		} 
-        
-		
+		}
+
+
 	}
-	
+
 	/**
 	 * Creates a transfer control block to steer an irods transfer and
 	 * configure the transfer options with {@link #getTransferOptions()}.
-	 * 
-	 * @return 
-	 * @throws JargonException 
+	 *
+	 * @return
+	 * @throws JargonException
 	 */
-	private TransferControlBlock getTransferControlBlock() 
-	throws JargonException 
+	private TransferControlBlock getTransferControlBlock()
+	throws JargonException
 	{
 	    TransferControlBlock transferControlBlock = DefaultTransferControlBlock.instance();
         transferControlBlock.setTransferOptions(getTransferOptions());
@@ -784,10 +784,10 @@ public class IRODS4 implements RemoteDataClient
 	 * This will enable parallelism and set the max thread
 	 * count to 4. Buffer size and TCP window tuning are
 	 * not handled here.
-	 * 
+	 *
 	 * @return
 	 */
-	private TransferOptions getTransferOptions() 
+	private TransferOptions getTransferOptions()
 	{
 	    TransferOptions transferOptions = new TransferOptions();
 	    // disabling parallel transfers in hopes of improving performance overall
@@ -806,20 +806,20 @@ public class IRODS4 implements RemoteDataClient
     {
         append(localpath, remotepath, null);
     }
-    
+
     /* (non-Javadoc)
      * @see org.iplantc.service.transfer.RemoteDataClient#append(java.lang.String, java.lang.String)
      */
     @Override
-    public void append(String localpath, String remotepath, RemoteTransferListener listener)  
+    public void append(String localpath, String remotepath, RemoteTransferListener listener)
     throws IOException, RemoteDataException
     {
-        try 
+        try
         {
             IRODSFile localFile = getFile(localpath);
             IRODSFile destPath = getFile(remotepath);
-            
-            if (!doesExist(remotepath)) 
+
+            if (!doesExist(remotepath))
             {
                 put(localpath, remotepath, listener);
             }
@@ -830,70 +830,70 @@ public class IRODS4 implements RemoteDataClient
                 if (listener != null) {
                     listener.started(localFile.length(), localFile.getAbsolutePath());
                 }
-                
+
                 IRODSRandomAccessFile randomAccessFile = null;
-                
-                if (destPath.isFile()) 
+
+                if (destPath.isFile())
                 {
                     randomAccessFile = getDataTransferOperations().getIRODSFileFactory().instanceIRODSRandomAccessFile(destPath);
-                } 
+                }
                 else {
                     randomAccessFile = getDataTransferOperations().getIRODSFileFactory().instanceIRODSRandomAccessFile(destPath.getAbsolutePath() + "/" + localFile.getName());
                 }
-                
+
                 InputStream in = null;
                 BufferedInputStream bis = null;
                 byte[] b = new byte[MAX_BUFFER_SIZE];
-                
+
                 try {
                     in = new FileInputStream(localFile.getAbsolutePath());
                     bis = new BufferedInputStream(in);
-                    
+
                     randomAccessFile = getDataTransferOperations().getIRODSFileFactory().instanceIRODSRandomAccessFile(destPath);
-                    
+
                     // move to end of file
                     randomAccessFile.seek(0, SeekWhenceType.SEEK_END);
-                    
+
                     long bytesSoFar = 0;
                     int length = 0;
                     long callbackTime = System.currentTimeMillis();
-                    
+
                     if (listener != null) {
                         listener.started(localFile.length(), localpath);
                     }
-                    
-                    while (( length = bis.read(b, 0, MAX_BUFFER_SIZE)) != -1) 
+
+                    while (( length = bis.read(b, 0, MAX_BUFFER_SIZE)) != -1)
                     {
                         bytesSoFar += length;
-                        
+
                         randomAccessFile.write(b, 0, length);
                         if (listener != null) {
                             // update the progress every 15 seconds buffer cycle. This reduced the impact
-                            // from the observing process while keeping the update interval at a 
+                            // from the observing process while keeping the update interval at a
                             // rate the user can somewhat trust
                             if (System.currentTimeMillis() > (callbackTime + 10000))
                             {
                                 callbackTime = System.currentTimeMillis();
-                                
+
                                 listener.progressed(bytesSoFar);
                             }
                         }
-                        
+
                     }
-                    
+
                     if (listener != null) {
                         // update with the final transferred blocks and wrap the transfer.
                         listener.progressed(bytesSoFar);
                         listener.completed();
                     }
-                } 
+                }
                 finally {
                     try { in.close(); } catch (Exception e) {}
                     try { bis.close(); } catch (Exception e) {}
                     try { randomAccessFile.close(); } catch (Exception e) {}
                 }
             }
-        } 
+        }
         catch (IOException e) {
             throw e;
         }
@@ -919,29 +919,29 @@ public class IRODS4 implements RemoteDataClient
 	 * @see org.iplantc.service.jobs.io.RemoteDataClient#put(java.lang.String, java.lang.String, org.iplantc.service.jobs.io.RemoteTransferListener)
 	 */
 	@Override
-	public void put(String localdir, String remotedir, RemoteTransferListener listener) 
+	public void put(String localdir, String remotedir, RemoteTransferListener listener)
 	throws IOException, RemoteDataException
 	{
 		if (StringUtils.isEmpty(localdir)) {
 			throw new RemoteDataException("localdir cannot be null");
 		}
-		
+
 		if ((listener == null)) {
             listener = new RemoteTransferListener(null);
         }
-		
+
 		IRODSFile destFile = null;
 		try
 		{
             destFile = getFile(remotedir);
 			File sourceFile = new File(localdir);
-			
-			if (destFile.exists()) 
+
+			if (destFile.exists())
 			{
 				// can't put dir to file
 				if (sourceFile.isDirectory() && !destFile.isDirectory()) {
 					throw new RemoteDataException("cannot overwrite non-directory: " + remotedir + " with directory " + sourceFile.getName());
-				} 
+				}
 				else if (!sourceFile.isDirectory())
 				{
 					if (destFile.isDirectory())
@@ -955,51 +955,51 @@ public class IRODS4 implements RemoteDataClient
 			// dest path isn't there. make sure the parent directory exists
 			else if (doesExist(remotedir + (StringUtils.isEmpty(remotedir) ? ".." : "/..")))
 			{
-			    // if we are uploading a directory, and source and dest  
-			    if (sourceFile.isDirectory()) 
+			    // if we are uploading a directory, and source and dest
+			    if (sourceFile.isDirectory())
 			    {
 			        try {
     			        listener.started(org.codehaus.plexus.util.FileUtils.sizeOfDirectory(sourceFile), sourceFile.getAbsolutePath());
-    			        
+
     			        mkdir(remotedir);
-    			        
-    			        for (File child: sourceFile.listFiles()) 
-    			        {   
+
+    			        for (File child: sourceFile.listFiles())
+    			        {
     			            String childRemotePath = remotedir + "/" + child.getName();
     	                    TransferTask childTask = null;
     	                    if (listener.getTransferTask() != null) {
     	                        TransferTask parentTask = listener.getTransferTask();
-    	                        String srcPath = parentTask.getSource() + 
-    	                                (StringUtils.endsWith(parentTask.getSource(), "/") ? "" : "/") + 
+    	                        String srcPath = parentTask.getSource() +
+    	                                (StringUtils.endsWith(parentTask.getSource(), "/") ? "" : "/") +
     	                                child.getName();
-    	                        childTask = new TransferTask(srcPath, 
-    	                                                    resolvePath(childRemotePath), 
-    	                                                    parentTask.getOwner(), 
-    	                                                    parentTask.getRootTask(), 
+    	                        childTask = new TransferTask(srcPath,
+    	                                                    resolvePath(childRemotePath),
+    	                                                    parentTask.getOwner(),
+    	                                                    parentTask.getRootTask(),
     	                                                    parentTask);
     	                        TransferTaskDao.persist(childTask);
     	                    }
     	                    IRODSFile childFile = getFile(childRemotePath);
-    	                    
+
     	                    RemoteTransferListener childListener = new RemoteTransferListener(childTask);
-    			            
+
     	                    TransferControlBlock transferControlBlock = getTransferControlBlock();
     	                    getDataTransferOperations().putOperation(child, childFile, childListener, transferControlBlock);
-	                        
+
 	                        TransferStatus statusCallback = childListener.getOverallStatusCallback();
 	                        if (statusCallback != null && statusCallback.getTransferException() != null) {
                                 throw statusCallback.getTransferException();
                             }
     			        }
-    			        
+
     			        listener.completed();
 			        }
-			        catch (Throwable t) 
+			        catch (Throwable t)
 			        {
 			            listener.failed();
 			            throw t;
-			        } 
-			        
+			        }
+
 			        return;
 			    }
 			}
@@ -1009,23 +1009,23 @@ public class IRODS4 implements RemoteDataClient
 			    // to reference.
 				throw new FileNotFoundException("File/folder does not exist or user lacks access permission");
 			}
-			
+
 			// bust cache since this file has now changed
             fileInfoCache.remove(resolvePath(remotedir));
-            
+
             getDataTransferOperations().putOperation(sourceFile, destFile, listener, getTransferControlBlock());
-            
+
             TransferStatus statusCallback = listener.getOverallStatusCallback();
             if (statusCallback != null && statusCallback.getTransferException() != null) {
                 throw statusCallback.getTransferException();
             }
-		} 
+		}
 		catch (CatNoAccessException e) {
 		    throw new RemoteDataException("Failed to put " + remotedir + " due to insufficient privileges.", e);
-		} 
+		}
 		catch (FileNotFoundException | DataNotFoundException e) {
 		    throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-		} 
+		}
 		catch (RemoteDataException | IOException e) {
 		    throw e;
 		}
@@ -1033,22 +1033,22 @@ public class IRODS4 implements RemoteDataClient
 		    throw new RemoteDataException("Failed to transfer file to irods.", e);
 		}
 	}
-	
+
 	@Override
-	public void syncToRemote(String localdir, String remotedir, RemoteTransferListener listener) 
+	public void syncToRemote(String localdir, String remotedir, RemoteTransferListener listener)
 	throws IOException, RemoteDataException
 	{
 		if (StringUtils.isEmpty(localdir)) {
 			throw new RemoteDataException("localdir cannot be null");
 		}
-		
+
 		IRODSFile destFile = null;
 		try
 		{
             destFile = getFile(remotedir);
 			File sourceFile = new File(localdir);
-			
-			if (!destFile.exists()) 
+
+			if (!destFile.exists())
 			{
 				put(localdir, remotedir, listener);
 				return;
@@ -1056,91 +1056,91 @@ public class IRODS4 implements RemoteDataClient
 			else if (sourceFile.isDirectory())
 			{
 				String adjustedRemoteDir = remotedir;
-				
+
 				// can't put dir to file
 				if (!isDirectory(adjustedRemoteDir)) {
 					getFile(adjustedRemoteDir).deleteWithForceOption();
 					put(localdir, adjustedRemoteDir, listener);
 					return;
-				} 
-				else 
+				}
+				else
 				{
 					adjustedRemoteDir += (StringUtils.isEmpty(remotedir) ? "" : "/") + sourceFile.getName();
 					destFile = null;
 					destFile = getFile(adjustedRemoteDir);
 				}
-				
+
 				// Need to check for both source and destination files, as overwrite will not work
 	            // if destination file is not present and will not throw and exception if there is no source file.
-				if ((listener == null)) 
+				if ((listener == null))
 				{
 					listener = new RemoteTransferListener(null);
 				}
-				
+
 				for (File child: sourceFile.listFiles())
 				{
 					String remoteChildPath = adjustedRemoteDir + "/" + child.getName();
-					if (child.isDirectory()) 
+					if (child.isDirectory())
 					{
 						// local is a directory, remote is a file. delete remote file. we will replace with local directory
 						if (!isDirectory(remoteChildPath)) {
 							delete(remoteChildPath);
 						}
-						
+
 						// now create the remote directory
 						mkdir(remoteChildPath);
-						
+
 						syncToRemote(child.getAbsolutePath(), adjustedRemoteDir, listener);
 					}
-					else 
-					{	
+					else
+					{
 						// sync the file or folder now that we've cleaned up
 						syncToRemote(child.getAbsolutePath(), remoteChildPath, listener);
 					}
-				}	
-			} 
+				}
+			}
 			else
 			{
-			    if ((listener == null)) 
+			    if ((listener == null))
                 {
                     listener = new RemoteTransferListener(null);
                 }
-			    
+
 				// sync if file is not there
-				if (!doesExist(remotedir))  
+				if (!doesExist(remotedir))
 				{
 				    // bust cache since this file has now changed
 		            fileInfoCache.remove(resolvePath(remotedir));
-		            
+
 		            getDataTransferOperations().putOperation(sourceFile, destFile, listener, getTransferControlBlock());
-					
+
 					TransferStatus statusCallback = listener.getOverallStatusCallback();
 					if (statusCallback != null && statusCallback.getTransferException() != null) {
 						throw statusCallback.getTransferException();
 					}
 				}
-				else 
+				else
 				{
 					// if the types mismatch, delete remote, use current
-					if (sourceFile.isDirectory() && !destFile.isDirectory() || 
-							sourceFile.isFile() && !destFile.isFile()) 
+					if (sourceFile.isDirectory() && !destFile.isDirectory() ||
+							sourceFile.isFile() && !destFile.isFile())
 					{
 						destFile.deleteWithForceOption();
 						getDataTransferOperations().putOperation(sourceFile, destFile, listener, getTransferControlBlock());
-						
+
 						TransferStatus statusCallback = listener.getOverallStatusCallback();
 						if (statusCallback != null && statusCallback.getTransferException() != null) {
 							throw statusCallback.getTransferException();
 						}
-					} 
+					}
 					// or if the file sizes are different
 					else if (sourceFile.length() != destFile.length())
 					{
 					    // bust cache since this file has now changed
 			            fileInfoCache.remove(resolvePath(remotedir));
-			            
+
 			            getDataTransferOperations().putOperation(sourceFile, destFile, listener, getTransferControlBlock());
-						
+
 						TransferStatus statusCallback = listener.getOverallStatusCallback();
 						if (statusCallback != null && statusCallback.getTransferException() != null) {
 							throw statusCallback.getTransferException();
@@ -1148,18 +1148,18 @@ public class IRODS4 implements RemoteDataClient
 					}
 					else
 					{
-						log.debug("Skipping transfer of " + sourceFile.getPath() + " to " + 
+						log.debug("Skipping transfer of " + sourceFile.getPath() + " to " +
 								destFile.getPath() + " because file is present and of equal size.");
 					}
 				}
 			}
-		} 
+		}
 		catch (CatNoAccessException e) {
 			throw new RemoteDataException("Failed to put " + remotedir + " due to insufficient privileges.", e);
-		} 
+		}
 		catch (DataNotFoundException e) {
 			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-		} 
+		}
 		catch (IOException e) {
 			throw e;
 		}
@@ -1168,7 +1168,7 @@ public class IRODS4 implements RemoteDataClient
 		}
 		catch (JargonException e) {
 			throw new RemoteDataException("Failed to copy file to irods.", e);
-		} 
+		}
 		catch (RemoteDataException e) {
 			throw e;
 		}
@@ -1176,17 +1176,16 @@ public class IRODS4 implements RemoteDataClient
 			throw new RemoteDataException("Failed to copy file to irods.", e);
 		}
 	}
-	
-	protected ObjStat stat(String remotepath) 
+
+	protected ObjStat stat(String remotepath)
     throws IOException, RemoteDataException
     {
 		String resolvedPath = StringUtils.removeEnd(resolvePath(remotepath), "/");
         try
         {
         	try {
-                
-                return getIRODSFileSystemAO().getObjStat(resolvedPath);
-            } 
+        		return getIRODSFileSystemAO().getObjStat(resolvedPath);
+            }
             catch (JargonException e) {
             	// catch the wrapped socket exception from a dropped connection
             	// clean up the connection, and retry.
@@ -1196,11 +1195,11 @@ public class IRODS4 implements RemoteDataClient
             		// just to be safe and ensure we don't have an open
             		// session lingering around anywhere in the underlying code.
             		disconnect();
-            		
-            		// now re-authenticate to init the new session and 
+
+            		// now re-authenticate to init the new session and
             		// get a valid connection to the server
                     authenticate();
-                    
+
                     // retry the stat with the fresh connection
                     return getIRODSFileSystemAO().getObjStat(resolvedPath);
             	} else {
@@ -1212,8 +1211,8 @@ public class IRODS4 implements RemoteDataClient
                 disconnect();
                 authenticate();
                 return getIRODSFileSystemAO().getObjStat(resolvedPath);
-            }   
-        } 
+            }
+        }
         catch (FileNotFoundException e) {
             throw new java.io.FileNotFoundException("No such file or directory");
         }
@@ -1232,14 +1231,14 @@ public class IRODS4 implements RemoteDataClient
 	 * @see org.iplantc.service.jobs.io.RemoteDataClient#isDirectory(java.lang.String)
 	 */
 	@Override
-	public boolean isDirectory(String remotepath) 
+	public boolean isDirectory(String remotepath)
 	throws IOException, RemoteDataException
 	{
 	    ObjStat stat = stat(remotepath);
-        
+
         // should be redundant. Anything other than a collection at the path will
         // throw a org.irods.jargon.core.exception.FileNotFoundException
-        return stat.getObjectType() == ObjectType.COLLECTION || 
+        return stat.getObjectType() == ObjectType.COLLECTION ||
                stat.getObjectType() == ObjectType.LOCAL_DIR;
 	}
 
@@ -1250,11 +1249,11 @@ public class IRODS4 implements RemoteDataClient
 	public boolean isFile(String remotepath) throws IOException, RemoteDataException
 	{
 	    ObjStat stat = stat(remotepath);
-        
+
         // should be redundant. Anything other than a collection at the path will
         // throw a org.irods.jargon.core.exception.FileNotFoundException
-        return stat.getObjectType() == ObjectType.DATA_OBJECT || 
-               stat.getObjectType() == ObjectType.LOCAL_FILE || 
+        return stat.getObjectType() == ObjectType.DATA_OBJECT ||
+               stat.getObjectType() == ObjectType.LOCAL_FILE ||
                stat.getObjectType() == ObjectType.UNKNOWN_FILE;
 	}
 
@@ -1262,7 +1261,7 @@ public class IRODS4 implements RemoteDataClient
 	 * @see org.iplantc.service.jobs.io.RemoteDataClient#length(java.lang.String)
 	 */
 	@Override
-	public long length(String remotepath) 
+	public long length(String remotepath)
 	throws IOException, RemoteDataException
 	{
 	    ObjStat stat = stat(remotepath);
@@ -1273,11 +1272,11 @@ public class IRODS4 implements RemoteDataClient
 	 * @see org.iplantc.service.jobs.io.RemoteDataClient#checksum(java.lang.String)
 	 */
 	@Override
-	public String checksum(String remotepath) 
+	public String checksum(String remotepath)
 	throws IOException, RemoteDataException
 	{
-//		
-    	
+//
+
 		try
 		{
 		    if (isDirectory(remotepath)) {
@@ -1288,20 +1287,20 @@ public class IRODS4 implements RemoteDataClient
 //			    return chksumValue.getChecksumStringValue();
 			    throw new NotImplementedException("Checksum is not currently supported.");
 			}
-		} 
+		}
 	    catch (NotImplementedException e) {
 			throw e;
 		}
 //		catch (CatNoAccessException e) {
 //			throw new RemoteDataException("Failed to perform checksum on " + remotepath + " due to insufficient privileges.", e);
-//		} 
+//		}
 //		catch (DataNotFoundException e) {
 //			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-//		} 
+//		}
 //		catch(JargonException e) {
 //			throw new RemoteDataException("Failed to connect to remote server.", e);
-//		} 
-        
+//		}
+
 	}
 
 	/* (non-Javadoc)
@@ -1312,7 +1311,7 @@ public class IRODS4 implements RemoteDataClient
 	{
 		IRODSFile newFile = null;
 		IRODSFile oldFile = null;
-    	
+
 		try
 		{
 			if (!doesExist(oldpath)) {
@@ -1322,10 +1321,10 @@ public class IRODS4 implements RemoteDataClient
 					throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
 				}
 			}
-			
+
 			newFile = getFile(newpath);
 			oldFile = getFile(oldpath);
-			
+
 			oldFile.renameTo(newFile);
 		}
 		catch (IOException e) {
@@ -1333,13 +1332,13 @@ public class IRODS4 implements RemoteDataClient
 		}
 		catch (CatNoAccessException e) {
 			throw new RemoteDataException("Failed to rename " + oldpath + " due to insufficient privileges.", e);
-		} 
+		}
 		catch (DataNotFoundException e) {
 			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-		} 
+		}
 		catch (JargonException e) {
 			throw new RemoteDataException("Rename operation failed: " + e.getCause().getMessage(), e);
-		} 
+		}
 		catch (JargonRuntimeException e) {
 			if (e.getCause() instanceof CatNoAccessException) {
 				throw new RemoteDataException("Failed to rename " + oldpath + " due to insufficient privileges.", e);
@@ -1362,39 +1361,39 @@ public class IRODS4 implements RemoteDataClient
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.jobs.io.RemoteDataClient#copy(java.lang.String, java.lang.String, org.iplantc.service.jobs.io.RemoteTransferListener)
 	 */
-	
+
 	@Override
-	public void copy(String sourcePath, String destPath, RemoteTransferListener listener) 
+	public void copy(String sourcePath, String destPath, RemoteTransferListener listener)
 	throws IOException, RemoteDataException
 	{
 		IRODSFile sourceFile = null;
 		IRODSFile destFile = null;
-		
+
 		try
 		{
 			if (listener == null) {
 				listener = new RemoteTransferListener(null);
 			}
-			
+
 			if (StringUtils.equals(sourcePath, destPath)) {
 				// ignore copies onto self
 				listener.completed();
 				return;
 			}
-			
+
 			sourceFile = getFile(sourcePath);
 			destFile = getFile(destPath);
-			
-			
+
+
 			if (isDirectory(sourcePath))
 			{
-				if (destFile.exists()) 
+				if (destFile.exists())
 				{
 					// can't put dir to file
 					if (!isDirectory(destPath)) {
 						throw new RemoteDataException("cannot overwrite non-directory: " + destPath + " with directory " + sourceFile.getName());
-					} 
-					else if (!getPermissionForUser(username, destPath).canWrite()) 
+					}
+					else if (!getPermissionForUser(username, destPath).canWrite())
 		            {
 		                throw new RemoteDataException("Failed to copy " + sourcePath + " due to insufficient privileges.");
 		            }
@@ -1409,14 +1408,14 @@ public class IRODS4 implements RemoteDataClient
 				{
 					// nothing we can do here
 					throw new FileNotFoundException("File/folder does not exist or user lacks access permission");
-				} 
-				else if (!destFile.mkdir()) 
+				}
+				else if (!destFile.mkdir())
 				{
 				    throw new RemoteDataException("Failed to create destination path " + destPath);
 				}
-			} 
+			}
 			// source is a file, does the destination exist?
-			else if (!doesExist(destPath)) 
+			else if (!doesExist(destPath))
             {
 			    // that's fine. is the parent directory there?
 			    if (!doesExist(destPath + (StringUtils.isEmpty(destPath) ? ".." : "/.."))) {
@@ -1425,24 +1424,24 @@ public class IRODS4 implements RemoteDataClient
                 }
             }
 			// destination exists, do we have permission to write there?
-			else if (!getPermissionForUser(username, destPath).canWrite()) 
+			else if (!getPermissionForUser(username, destPath).canWrite())
 			{
 				throw new RemoteDataException("Failed to copy " + sourcePath + " due to insufficient privileges.");
 			}
-            
+
 			getDataTransferOperations().copy(sourceFile, destFile, listener, null);
-			
+
 			TransferStatus statusCallback = listener.getOverallStatusCallback();
 			if (statusCallback != null && statusCallback.getTransferException() != null) {
 				throw statusCallback.getTransferException();
-			}	
-		} 
+			}
+		}
 		catch (CatNoAccessException e) {
 			throw new RemoteDataException("Failed to copy " + sourcePath + " due to insufficient privileges.", e);
-		} 
+		}
 		catch (DataNotFoundException e) {
 			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-		} 
+		}
 		catch (IOException e) {
 			throw e;
 		}
@@ -1451,14 +1450,14 @@ public class IRODS4 implements RemoteDataClient
 		}
 		catch (JargonException e) {
 			throw new RemoteDataException("Failed to copy file or directory .", e);
-		} 
+		}
 		catch (RemoteDataException e) {
 			throw e;
 		}
 		catch (Exception e) {
 			throw new RemoteDataException("Failed to copy file or directory to irods.", e);
 		}
-		 
+
 	}
 
 	/* (non-Javadoc)
@@ -1493,21 +1492,21 @@ public class IRODS4 implements RemoteDataClient
                     fileInfoCache.remove(path);
                 }
             }
-            
+
 			if (isDirectory(remotedir)) {
 			    file = getFile(remotedir);
-	            file.delete();               
+	            file.delete();
 			} else {
 			    file = getFile(remotedir);
 			    file.deleteWithForceOption();
 			}
-		} 
+		}
 		catch (IOException e) {
 			throw e;
 		}
 		catch (RemoteDataException e) {
 			throw e;
-		} 
+		}
 		catch (JargonRuntimeException | CatNoAccessException e) {
 			throw new RemoteDataException("Failed to delete " + remotedir + " due to insufficient privileges.", e);
 		}
@@ -1531,8 +1530,8 @@ public class IRODS4 implements RemoteDataClient
 	@Override
 	public void disconnect()
 	{
-		try { 
-			this.accessObjectFactory.closeSessionAndEatExceptions(irodsAccount); 
+		try {
+			this.accessObjectFactory.closeSessionAndEatExceptions(irodsAccount);
 		} catch (Throwable e) {}
 		this.accessObjectFactory = null;
 		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " closed IRODS4 connection for thread");
@@ -1544,17 +1543,29 @@ public class IRODS4 implements RemoteDataClient
 	@Override
 	public boolean doesExist(String path) throws IOException, RemoteDataException
 	{
+		String resolvedPath = StringUtils.removeEnd(resolvePath(path), "/");
+        
 		try
 		{
-		    stat(path);
-		    return true;
-		} 
-		catch (java.io.FileNotFoundException e) { 
-		    return false;
+			return getIRODSFileFactory().instanceIRODSFile(resolvedPath).exists();
+//			stat(path);
+//		    return true;
 		}
-		catch(IOException | RemoteDataException e) {
-			throw e;
-		} 
+		catch (JargonException e) {
+			if (e.getMessage().toLowerCase().contains("unable to start ssl socket")) {
+                throw new RemoteDataException("Unable to validate SSL certificate on the IRODS server used for PAM authentication.", e);
+            } else if (e.getMessage().toLowerCase().contains("connection refused")) {
+                throw new RemoteDataException("Connection refused: Unable to contact IRODS server at " + host + ":" + port);
+            } else {
+                throw new RemoteDataException("Failed to connect to remote server.", e);
+            }
+		}
+//		catch (java.io.FileNotFoundException e) {
+//		    return false;
+//		}
+//		catch(IOException | RemoteDataException e) {
+//			throw e;
+//		}
 	}
 
 	public InputStream getRawInputStream(String remotepath) throws JargonException, RemoteDataException, IOException
@@ -1562,7 +1573,7 @@ public class IRODS4 implements RemoteDataClient
 		IRODSFile irodsFile = null;
 		try
 		{
-		    try 
+		    try
 		    {
 		        if (isDirectory(remotepath)) {
 					throw new RemoteDataException("Cannot open output stream to directory " + remotepath);
@@ -1572,7 +1583,7 @@ public class IRODS4 implements RemoteDataClient
 				        throw new RemoteDataException("Permission denied");
 				    }
 				}
-			} 
+			}
 		    // no such file/folder
 		    catch (java.io.FileNotFoundException e) {
 			    String resolvedParentPath = remotepath + (StringUtils.isEmpty(remotepath) ? ".." : "/..");
@@ -1583,9 +1594,9 @@ public class IRODS4 implements RemoteDataClient
 				} else {
 				    irodsFile = getFile(remotepath);
 				}
-			}	
-			
-		    log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+			}
+
+		    log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()
 		    		+ " opening IRODS4 raw input stream connection for thread");
 			InputStream in =  irodsFileFactory
 					.instanceIRODSFileInputStream(irodsFile);
@@ -1600,15 +1611,15 @@ public class IRODS4 implements RemoteDataClient
 		}
 		catch (Exception e) {
 			throw new RemoteDataException("Failed to obtain remote output stream for " + remotepath);
-		} 
+		}
 	}
-	
+
 	public OutputStream getRawOutputStream(String remotepath) throws JargonException, RemoteDataException, IOException
 	{
 		IRODSFile file = null;
-		try 
+		try
 		{
-			if (doesExist(remotepath)) 
+			if (doesExist(remotepath))
 			{
 				if (isDirectory(remotepath)) {
 					throw new RemoteDataException("Cannot open output stream to directory " + remotepath);
@@ -1618,21 +1629,21 @@ public class IRODS4 implements RemoteDataClient
     					throw new RemoteDataException("Permission denied");
     				}
 				}
-			} 
+			}
 			else {
 			    String remoteParentPath = FilenameUtils.getFullPathNoEndSeparator(remotepath);// + (StringUtils.isEmpty(remotepath) ? ".." : "/..");
                 if (!doesExist(remoteParentPath)) {
 					throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-				} 
+				}
                 else if (!hasWritePermission(remoteParentPath, username)) {
 			            throw new RemoteDataException("Permission denied");
-			    } 
+			    }
                 else {
 				    file = getFile(remotepath);
 				}
 			}
-			
-			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+
+			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()
 					+ " opening raw output stream connection for thread");
 			OutputStream out = new BufferedOutputStream(getIRODSFileFactory()
 					.instanceIRODSFileOutputStream(file));
@@ -1647,16 +1658,16 @@ public class IRODS4 implements RemoteDataClient
         }
         catch (Exception e) {
 			throw new RemoteDataException("Failed to obtain remote output stream for " + remotepath);
-		} 
-        
+		}
+
 	}
-	
+
 	public DataOutput getRawRandomAccessOutputStream(String remotepath) throws JargonException, RemoteDataException, IOException
     {
         IRODSFile file = null;
-        try 
+        try
         {
-            if (doesExist(remotepath)) 
+            if (doesExist(remotepath))
             {
                 if (isDirectory(remotepath)) {
                     throw new RemoteDataException("Cannot open output stream to directory " + remotepath);
@@ -1666,7 +1677,7 @@ public class IRODS4 implements RemoteDataClient
                         throw new RemoteDataException("Permission denied");
                     }
                 }
-            } 
+            }
             else {
                 String resolvedParentPath = remotepath + (StringUtils.isEmpty(remotepath) ? ".." : "/..");
                 if (!doesExist(resolvedParentPath)) {
@@ -1676,9 +1687,9 @@ public class IRODS4 implements RemoteDataClient
                 } else {
                     file = getFile(remotepath);
                 }
-            } 
-          
-            log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+            }
+
+            log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()
             		+ " opening raw IRODS4 random output stream connection for thread");
             return getIRODSFileFactory().instanceIRODSRandomAccessFile(file);
 
@@ -1691,23 +1702,23 @@ public class IRODS4 implements RemoteDataClient
         }
         catch (Exception e) {
             throw new RemoteDataException("Failed to obtain remote output stream for " + remotepath);
-        } 
-        
+        }
+
     }
-	
+
 	public IRODSFile getFile(String path) throws JargonException, RemoteDataException, IOException
 	{
 	    String resolvedPath = resolvePath(path);
 	    try {
     	    IRODSFile irodsFile = fileInfoCache.get(resolvedPath);
             // check the cache so we can save a query when possible
-            if (irodsFile == null) 
+            if (irodsFile == null)
             {
                 IRODSFileFactory irodsFileFactory = getIRODSFileFactory();
                 irodsFile = irodsFileFactory.instanceIRODSFile(resolvedPath);
                 fileInfoCache.put(resolvedPath, irodsFile);
             }
-            
+
             return irodsFile;
 	    } catch (JargonException e) {
 	        // invalidate cache of this entry
@@ -1715,7 +1726,7 @@ public class IRODS4 implements RemoteDataClient
 	        throw e;
 	    }
 	}
-	
+
 	@Override
 	public RemoteFileInfo getFileInfo(String path) throws RemoteDataException, IOException
 	{
@@ -1736,45 +1747,45 @@ public class IRODS4 implements RemoteDataClient
      * @throws RemoteDataException
      */
     @Override
-    public List<RemoteFilePermission> getAllPermissionsWithUserFirst(String path, String username) 
-    throws RemoteDataException, IOException 
+    public List<RemoteFilePermission> getAllPermissionsWithUserFirst(String path, String username)
+    throws RemoteDataException, IOException
     {
 
         List<RemoteFilePermission> pems = getAllPermissions(path);
         List<RemoteFilePermission> filteredPems = new ArrayList<RemoteFilePermission>();
-        
+
         for (RemoteFilePermission pem : pems) {
             if (pem.getUsername().equals(username)) {
                 filteredPems.add(pem);
-                
+
                 break;
             }
         }
-        
+
         for (RemoteFilePermission pem : pems) {
         	if (!pem.getUsername().equals(username)) {
                 filteredPems.add(pem);
             }
         }
-        
+
         return filteredPems;
     }
 
     @Override
-    public List<RemoteFilePermission> getAllPermissions(String path) 
-    throws RemoteDataException, IOException 
+    public List<RemoteFilePermission> getAllPermissions(String path)
+    throws RemoteDataException, IOException
     {
-    	IRODSFile file = null; 
+    	IRODSFile file = null;
     	List<RemoteFilePermission> remotePems = new ArrayList<RemoteFilePermission>();
-        
-    	try 
+
+    	try
     	{
     		if (!doesExist(path)) {
     			throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
-    		} 
+    		}
 
     		// jargon will roll up groups to user lists and return everyone. On public files and collections
-    		// this is brutal. We can't know for sure when this might happen, so we proactively look for our 
+    		// this is brutal. We can't know for sure when this might happen, so we proactively look for our
     		// public and community users to hopefully avoid this situation.
     		try {
     			PermissionType publicUserPermission = getPermissionForUser(Settings.PUBLIC_USER_USERNAME, path, true);
@@ -1790,12 +1801,12 @@ public class IRODS4 implements RemoteDataClient
     				return remotePems;
     			}
     		} catch (Exception e) {}
-    		
+
             file = getFile(path);
-            
+
             List<UserFilePermission> pems = null;
             // UPDATE jargon-core so you have the list method!!
-            
+
             if (file.isFile()) {
             	pems = getDataObjectAO().listPermissionsForDataObject(file.getAbsolutePath());
             } else {
@@ -1824,70 +1835,70 @@ public class IRODS4 implements RemoteDataClient
             throw e;
         } catch (Throwable e) {
         	throw new RemoteDataException(e);
-        } 
+        }
     }
 
-    
+
     @Override
-    public PermissionType getPermissionForUser(String username, String path) 
-    throws RemoteDataException, IOException 
+    public PermissionType getPermissionForUser(String username, String path)
+    throws RemoteDataException, IOException
     {
     	return getPermissionForUser(username, path, false);
     }
-    
-    private PermissionType getPermissionForUser(String username, String path, boolean skipOwnerCheck) 
-    throws RemoteDataException, IOException 
+
+    private PermissionType getPermissionForUser(String username, String path, boolean skipOwnerCheck)
+    throws RemoteDataException, IOException
     {
     	IRODSFile file = null;
-    	
-        try 
+
+        try
         {
-        	FilePermissionEnum pem = null;
-        	
-        	if (doesExist(path)) 
-        	{
-        		if (isDirectory(path)) 
-        		{
-                	try {
-                		pem = getCollectionAO().getPermissionForCollection(StringUtils.removeEnd(resolvePath(path), "/"), username, zone);//.getPermissionForUserName(file.getAbsolutePath(), username);
-                	} catch (SpecificQueryException e) {
-                		throw new RemoteDataException("Group ACL setup scripts have not been run on the IRODS server yet. Please contact your system administrator and ask him to complete the setup process.");
-                	}
-                }
-            	else
-                {
+    		FilePermissionEnum pem = null;
+
+        	if (doesExist(path)) {
+        		if (isDirectory(path)) {
+	            	try {
+	            		pem = getCollectionAO().getPermissionForCollection(StringUtils.removeEnd(resolvePath(path), "/"), username, zone);//.getPermissionForUserName(file.getAbsolutePath(), username);
+	            	} catch (SpecificQueryException e) {
+	            		throw new RemoteDataException("Group ACL setup scripts have not been run on the IRODS server yet. Please contact your system administrator and ask him to complete the setup process.");
+	            	}
+        		}
+            	else {
             		UserFilePermission userPem = getDataObjectAO().getPermissionForDataObjectForUserName(StringUtils.removeEnd(resolvePath(path), "/"), username);
-                	
+
                 	// need to check parent for permissions due to strict permissions.
                     if (userPem == null || userPem.getFilePermissionEnum().compareTo(FilePermissionEnum.NULL) <= 0) {
                     	userPem = getDataObjectAO().getPermissionForDataObjectForUserName(
                     			getDataObjectAO().instanceIRODSFileForPath(resolvePath(path)).getParent(), username);
                     }
-                    
+
                     pem = userPem == null ? null : userPem.getFilePermissionEnum();
-                }
+            	}
         	}
-        	else
-        	{
-        	    return PermissionType.NONE;
-        	    
-//        		file = getFile(path);
-//                
-//            	// check the parent folder to get the parent pem
-//            	do {
-//    				file = (IRODSFile) file.getParentFile();
-//    			} while (!file.exists() && file.getAbsolutePath().startsWith(rootDir));
-//    			
-//                UserFilePermission userPem = getCollectionAO().getPermissionForUserName(file.getAbsolutePath(), username);
-//                pem = userPem == null ? null : userPem.getFilePermissionEnum();
+        	else {
+				// there seems to be some confusion over the behavior of the above check.
+				// in some situations it's not returning the proper user inherited permission
+				// and, as a result, this always fails permissions on files and folders that
+				// do not exist. So, we're rolling back to the irods3 behavior here.
+        	    // return PermissionType.NONE;
+
+       			file = getFile(path);
+
+           		// check the parent folder to get the parent pem
+           		do {
+					file = (IRODSFile) file.getParentFile();
+				} while (!file.exists() && file.getAbsolutePath().startsWith(rootDir));
+
+           		UserFilePermission userPem = getCollectionAO().getPermissionForUserName(file.getAbsolutePath(), username);
+           		pem = userPem == null ? null : userPem.getFilePermissionEnum();
         	}
-            
+
             if (pem == null) {
                 return PermissionType.NONE;
             }
-            
+
 //            System.out.println("Permission for " + username + " on "  + resolvePath(path) + " is " + pem.name());
-            
+
             if (pem.getPermissionNumericValue() <= FilePermissionEnum.NULL.getPermissionNumericValue()) {
                 return PermissionType.NONE;
             } else if (pem.getPermissionNumericValue() == FilePermissionEnum.EXECUTE.getPermissionNumericValue()) {
@@ -1901,7 +1912,7 @@ public class IRODS4 implements RemoteDataClient
             } else {
                 throw new RemoteDataException("Unhandled FilePermissionEnum in conversion to RemoteFilePermission");
             }
-        } 
+        }
         catch (IOException e) {
         	throw e;
         }
@@ -1910,173 +1921,173 @@ public class IRODS4 implements RemoteDataClient
 		}
 		catch (FileNotFoundException e) {
             throw new RemoteDataException("File/folder not found");
-        } 
+        }
         catch (JargonException e) {
             throw new RemoteDataException(e);
-        } 
+        }
     }
 
 
     @Override
-    public boolean hasReadPermission(String path, String username) 
-    throws RemoteDataException, IOException 
+    public boolean hasReadPermission(String path, String username)
+    throws RemoteDataException, IOException
     {
     	PermissionType userPem = getPermissionForUser(username, path);
         if (userPem.equals(PermissionType.READ) || userPem.equals(PermissionType.ALL)) {
         	return true;
         }
-        
+
         PermissionType publicPem = getPermissionForUser(Settings.PUBLIC_USER_USERNAME, path, true);
         if (publicPem.equals(PermissionType.READ) || publicPem.equals(PermissionType.ALL)) {
         	return true;
         }
-        
+
         PermissionType worldPem = getPermissionForUser(Settings.WORLD_USER_USERNAME, path, true);
         if (worldPem.equals(PermissionType.READ) || worldPem.equals(PermissionType.ALL)) {
         	return true;
         }
-        
+
         return false;
 
     }
 
     @Override
     public boolean hasWritePermission(String path, String username)
-    throws RemoteDataException, IOException 
+    throws RemoteDataException, IOException
     {
     	PermissionType userPem = getPermissionForUser(username, path);
         if (userPem.equals(PermissionType.WRITE) || userPem.equals(PermissionType.ALL)) {
         	return true;
         }
-         
+
         PermissionType publicPem = getPermissionForUser(Settings.PUBLIC_USER_USERNAME, path, true);
         if (publicPem.equals(PermissionType.WRITE) || publicPem.equals(PermissionType.ALL)) {
         	return true;
         }
-         
+
         PermissionType worldPem = getPermissionForUser(Settings.WORLD_USER_USERNAME, path, true);
         if (worldPem.equals(PermissionType.WRITE) || worldPem.equals(PermissionType.ALL)) {
          	return true;
         }
-         
+
         return false;
     }
 
     @Override
     public boolean hasExecutePermission(String path, String username)
-    throws RemoteDataException, IOException 
+    throws RemoteDataException, IOException
     {
         PermissionType userPem = getPermissionForUser(username, path);
         if (userPem.equals(PermissionType.EXECUTE) || userPem.equals(PermissionType.ALL)) {
         	return true;
         }
-        
+
         PermissionType publicPem = getPermissionForUser(Settings.PUBLIC_USER_USERNAME, path, true);
         if (publicPem.equals(PermissionType.EXECUTE) || publicPem.equals(PermissionType.ALL)) {
         	return true;
         }
-        
+
         PermissionType worldPem = getPermissionForUser(Settings.WORLD_USER_USERNAME, path, true);
         if (worldPem.equals(PermissionType.EXECUTE) || worldPem.equals(PermissionType.ALL)) {
         	return true;
         }
-        
+
         return false;
     }
 
 
     @Override
-    public void setOwnerPermission(String username, String path, boolean recursive) 
-    throws RemoteDataException, IOException 
+    public void setOwnerPermission(String username, String path, boolean recursive)
+    throws RemoteDataException, IOException
     {
     	IRODSFile file = null;
-        try 
+        try
         {
         	if (getPermissionForUser(username, path).equals(PermissionType.ALL)) return;
-        	
+
             file = getFile(path);
-            
+
             if (file.isFile()) {
             	getDataObjectAO().setAccessPermissionOwn(zone, file.getAbsolutePath(), username);
             } else {
                 getCollectionAO().setAccessPermissionOwn(zone, file.getAbsolutePath(), username, recursive);
             }
-        } 
+        }
         catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to change permission for " + username + 
+			throw new RemoteDataException("Failed to change permission for " + username +
 					" on " + path + " due to insufficient privileges.", e);
 		}
         catch (InvalidUserException e) {
-        	throw new RemoteDataException("Failed to add read permission for " + username + " on " + path + 
+        	throw new RemoteDataException("Failed to add read permission for " + username + " on " + path +
         			". No user with name " + username + " exists on the remote system.", e);
         }catch (JargonException e) {
             throw new RemoteDataException(e);
-        } 
+        }
         catch (IOException e) {
             throw e;
-        } 
-        
+        }
+
     }
 
     @Override
-    public void setReadPermission(String username, String path, boolean recursive) 
-    throws RemoteDataException, IOException 
+    public void setReadPermission(String username, String path, boolean recursive)
+    throws RemoteDataException, IOException
     {
     	IRODSFile file = null;
-        try 
+        try
         {
             PermissionType userPem = getPermissionForUser(username, path);
         	if (userPem.canRead()) return;
-        	
-            
+
+
             if (userPem.canWrite()) {
                 setOwnerPermission(username, path, recursive);
             } else {
                 file = getFile(path);
-                
+
                 if (file.isFile()) {
                 	getDataObjectAO().setAccessPermissionRead(zone, file.getAbsolutePath(), username);
                 } else {
                     getCollectionAO().setAccessPermissionRead(zone, file.getAbsolutePath(), username, recursive);
                 }
             }
-        } 
+        }
         catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to add read permission for " + username + " on " + path + 
+			throw new RemoteDataException("Failed to add read permission for " + username + " on " + path +
 					" due to insufficient privileges.", e);
 		}
         catch (InvalidUserException e) {
-        	throw new RemoteDataException("Failed to add read permission for " + username + " on " + path + 
+        	throw new RemoteDataException("Failed to add read permission for " + username + " on " + path +
         			". No user with name " + username + " exists on the remote system.", e);
         }
 		catch (JargonException e) {
             throw new RemoteDataException(e);
-        } 
+        }
         catch (IOException e) {
             throw e;
-        } 
-        
+        }
+
     }
 
     @Override
-    public void removeReadPermission(String username, String path, boolean recursive) 
-    throws RemoteDataException, IOException 
+    public void removeReadPermission(String username, String path, boolean recursive)
+    throws RemoteDataException, IOException
     {
-    	try 
+    	try
         {
     		PermissionType pem = getPermissionForUser(username, path);
     		if (!pem.canRead()) {
     			return;
-    		} 
-    		else if (pem.canWrite()) 
+    		}
+    		else if (pem.canWrite())
             {
                 if (isFile(path)) {
                 	getDataObjectAO().setAccessPermissionWrite(zone, resolvePath(path), username);
                 } else {
                     getCollectionAO().setAccessPermissionWrite(zone, resolvePath(path), username, recursive);
                 }
-            } 
-            else 
+            }
+            else
             {
                 if (isFile(path)) {
                     getDataObjectAO().removeAccessPermissionsForUser(zone, resolvePath(path), username);
@@ -2084,35 +2095,35 @@ public class IRODS4 implements RemoteDataClient
                     getCollectionAO().removeAccessPermissionForUser(zone, resolvePath(path), username, recursive);
                 }
             }
-        } 
+        }
         catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to remove read permission for " + username + 
+			throw new RemoteDataException("Failed to remove read permission for " + username +
 					" on " + path + " due to insufficient privileges.", e);
 		}
     	catch (InvalidUserException e) {
-        	throw new RemoteDataException("Failed to remove read permission for " + username + 
+        	throw new RemoteDataException("Failed to remove read permission for " + username +
         			" on " + path +  ". No user with name " + username + " exists on the remote system.", e);
         }
 		catch (JargonException e) {
             throw new RemoteDataException(e);
-        } 
+        }
         catch (java.io.FileNotFoundException e) {
             throw new RemoteDataException(e);
         }
     }
 
     @Override
-    public void setPermissionForUser(String username, String path, PermissionType type, boolean recursive) 
-    throws RemoteDataException, IOException 
+    public void setPermissionForUser(String username, String path, PermissionType type, boolean recursive)
+    throws RemoteDataException, IOException
     {
-    	try 
+    	try
         {
             int perms = type.getUnixValue();
-            
-            if (perms == 1 || perms == 3 || perms == 5) 
+
+            if (perms == 1 || perms == 3 || perms == 5)
             {
             	throw new RemoteDataException("Execute permissions are not supported on IRODS systems.");
-            } 
+            }
             else if (perms<2) {
                 if (isFile(path)) {
                     getDataObjectAO().removeAccessPermissionsForUser(zone, resolvePath(path), username);
@@ -2146,23 +2157,23 @@ public class IRODS4 implements RemoteDataClient
                 //Execution currently not supported.
             }
 
-        } 
+        }
         catch (CatNoAccessException e) {
 			throw new RemoteDataException("Failed to change permission on " + path + " due to insufficient privileges.", e);
 		}
 		catch(JargonException e) {
             throw new RemoteDataException(e);
-        } 
+        }
         catch (java.io.FileNotFoundException e) {
             throw new RemoteDataException(e);
         }
     }
 
     @Override
-    public void setWritePermission(String username, String path, boolean recursive) 
-    throws RemoteDataException, IOException 
+    public void setWritePermission(String username, String path, boolean recursive)
+    throws RemoteDataException, IOException
     {
-    	try 
+    	try
         {
     		PermissionType pem = getPermissionForUser(username, path);
         	if (!doesExist(path)) {
@@ -2173,34 +2184,34 @@ public class IRODS4 implements RemoteDataClient
         	}
         	else if (pem.canRead()) {
                 setOwnerPermission(username, path, recursive);
-            } 
+            }
             else if (isFile(path)) {
                 getDataObjectAO().setAccessPermissionWrite(zone, resolvePath(path), username);
             }
             else {
                 getCollectionAO().setAccessPermissionWrite(zone, resolvePath(path), username, recursive);
             }
-        } 
+        }
         catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to add write permission for " + username + 
+			throw new RemoteDataException("Failed to add write permission for " + username +
 					" on " + path + " due to insufficient privileges.", e);
 		}
     	catch (InvalidUserException e) {
-        	throw new RemoteDataException("Failed to add write permission for " + username + " on " + path + 
+        	throw new RemoteDataException("Failed to add write permission for " + username + " on " + path +
         			". No user with name " + username + " exists on the remote system.", e);
         }catch (JargonException e) {
             throw new RemoteDataException(e);
-        } 
+        }
         catch (java.io.FileNotFoundException e) {
             throw new RemoteDataException(e);
         }
     }
 
     @Override
-    public void removeWritePermission(String username, String path, boolean recursive) 
-    throws RemoteDataException, IOException 
+    public void removeWritePermission(String username, String path, boolean recursive)
+    throws RemoteDataException, IOException
     {
-    	try 
+    	try
     	{
     		PermissionType pem = getPermissionForUser(username, path);
     		if (!doesExist(path)) {
@@ -2209,15 +2220,15 @@ public class IRODS4 implements RemoteDataClient
     		else if (!pem.canWrite()) {
     			return;
     		}
-    		else if (hasReadPermission(path, username)) 
+    		else if (hasReadPermission(path, username))
             {
             	if (isFile(path)) {
                 	getDataObjectAO().setAccessPermissionRead(zone, resolvePath(path), username);
                 } else {
                     getCollectionAO().setAccessPermissionRead(zone, resolvePath(path), username, recursive);
                 }
-            } 
-            else 
+            }
+            else
             {
                 if (isFile(path)) {
                 	getDataObjectAO().removeAccessPermissionsForUser(zone, resolvePath(path), username);
@@ -2225,24 +2236,24 @@ public class IRODS4 implements RemoteDataClient
                     getCollectionAO().removeAccessPermissionForUser(zone, resolvePath(path), username, recursive);
                 }
             }
-        } 
+        }
     	catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to remove write permission for " + username + 
+			throw new RemoteDataException("Failed to remove write permission for " + username +
 					" on " + path + " due to insufficient privileges.", e);
 		}
     	catch (InvalidUserException e) {
-        	throw new RemoteDataException("Failed to remove write permission for " + username + " on " + path + 
+        	throw new RemoteDataException("Failed to remove write permission for " + username + " on " + path +
         			". No user with name " + username + " exists on the remote system.", e);
         }catch (JargonException e) {
             throw new RemoteDataException(e);
-        } 
+        }
     	catch (java.io.FileNotFoundException e) {
             throw new RemoteDataException(e);
         }
     }
 
     @Override
-    public void setExecutePermission(String username, String path, boolean recursive) throws RemoteDataException 
+    public void setExecutePermission(String username, String path, boolean recursive) throws RemoteDataException
     {
     	throw new RemoteDataException("Execute permissions are not supported on IRODS systems.");
     }
@@ -2253,15 +2264,15 @@ public class IRODS4 implements RemoteDataClient
     }
 
     @Override
-    public void clearPermissions(String username, String path, boolean recursive) 
-    throws RemoteDataException, IOException 
+    public void clearPermissions(String username, String path, boolean recursive)
+    throws RemoteDataException, IOException
     {
-    	try 
+    	try
         {
             //List<UserFilePermission> pems = null;
             if (isFile(path)) {
             	getDataObjectAO().removeAccessPermissionsForUser(zone, resolvePath(path), username);
-                
+
 //                pems = dao.listPermissionsForDataObject(file.getAbsolutePath());
 //                for (UserFilePermission pem: pems) {
 //                	if (StringUtils.equals(pem.getUserName(), username)) {
@@ -2279,38 +2290,38 @@ public class IRODS4 implements RemoteDataClient
 //                	}
 //                }
             }
-        } 
+        }
         catch (CatNoAccessException e) {
-			throw new RemoteDataException("Failed to clear permission for " + username + 
+			throw new RemoteDataException("Failed to clear permission for " + username +
 					" on " + path + " due to insufficient privileges.", e);
 		}
     	catch (InvalidUserException e) {
-        	throw new RemoteDataException("Failed to clear permissions for " + username + " on " + path + 
+        	throw new RemoteDataException("Failed to clear permissions for " + username + " on " + path +
         			". No user with name " + username + " exists on the remote system.", e);
         }catch (JargonException e) {
             throw new RemoteDataException(e);
-        } 
+        }
         catch (java.io.FileNotFoundException e) {
             throw new RemoteDataException(e);
-        } 
+        }
     }
 
     // Does this function make sense without the context of a user?
 
     @Override
     @Deprecated
-    public String getPermissions(String path) throws RemoteDataException, IOException 
+    public String getPermissions(String path) throws RemoteDataException, IOException
     {
     	IRODSFile file = null;
-    	
-        try 
+
+        try
         {
         	if (!doesExist(path)) {
         		throw new java.io.FileNotFoundException("File/folder does not exist or user lacks access permission");
         	}
-        	
+
             file = this.irodsFileFactory.instanceIRODSFile(resolvePath(path));
-            
+
             // modify this method to return all permissions for the given file
             if (file.canRead() && file.canWrite() && file.canExecute()) {
                 return "all";
@@ -2327,21 +2338,21 @@ public class IRODS4 implements RemoteDataClient
             } else {
                 return "none";
             }
-        } 
+        }
         catch (JargonException e) {
             throw new RemoteDataException(e);
-        } 
+        }
         catch (java.io.FileNotFoundException e) {
             throw new RemoteDataException(e);
-        } 
-        
+        }
+
     }
-	
-	public String resolveFileName(String name) 
+
+	public String resolveFileName(String name)
 	throws JargonException, IOException, RemoteDataException
 	{
 		String newName = name.trim();
-		
+
 		for (int i = 0; doesExist(newName); i++)
 		{
 			String basename = FilenameUtils.getBaseName(name);
@@ -2361,11 +2372,11 @@ public class IRODS4 implements RemoteDataClient
 	{
 		return permissionMirroringRequired;
 	}
-	
+
 	/**
-	 * Overrides the default behavior of requiring permission mirroring on irods 
+	 * Overrides the default behavior of requiring permission mirroring on irods
 	 * systems.
-	 * 
+	 *
 	 * @param permissionMirroringRequired
 	 */
 	public void setPermissionMirroringRequired(boolean permissionMirroringRequired) {
@@ -2457,173 +2468,173 @@ public class IRODS4 implements RemoteDataClient
 	{
 		return host;
 	}
-	
+
 //	class AgaveJargonProperties extends SettableJargonProperties {
 //	    public AgaveJargonProperties() {
 //	        super();
 //	        mergeProperties();
 //	    }
-//	    
+//
 //	    protected void mergeProperties() {
 //	        super.setReconnect(true);
 //	    }
-//	    
+//
 //	    public void enableParallelism(int numberOfThreads) {
-//	        
+//
 //	        // do use a thread pool for connections
 //	        super.setUseTransferThreadsPool(false);
-//            
+//
 //            // use parallel transfers whenever possible
 //            super.setUseParallelTransfer(true);
-//            
+//
 //            // max 16 parallel threads
 //            super.setMaxParallelThreads(16);
-//            
+//
 //            // max 4 thread transfer pool on directory copy
 //            super.setTransferThreadPoolMaxSimultaneousTransfers(numberOfThreads);
 //	    }
-//	    
+//
 //	    public void disableParallelism() {
-//            
+//
 //            // do use a thread pool for connections
 //            super.setUseTransferThreadsPool(false);
-//            
+//
 //            // use parallel transfers whenever possible
 //            super.setUseParallelTransfer(false);
-//            
+//
 //            // disable parallel transfers
 //            super.setUseParallelTransfer(false);
-//            
-//            super.setMaxParallelThreads(1);      
-//            
+//
+//            super.setMaxParallelThreads(1);
+//
 //            super.setTransferThreadPoolMaxSimultaneousTransfers(1);
 //        }
-//	    
+//
 //	    public void adjustInputBufferSize(int maxInputBufferSizeKB) {
-//	        
+//
 //	        // primary tcp receive window size in KB
 //            super.setPrimaryTcpReceiveWindowSize(maxInputBufferSizeKB);
-//            
+//
 //            // parallel window size is in Bytes
 //            super.setParallelTcpReceiveWindowSize(MAX_BUFFER_SIZE);
-//            
+//
 //            // this controls the buffer size used to handle raw input stream
-//            // from irods. Should be smaller than window size 
+//            // from irods. Should be smaller than window size
 //            super.setInternalInputStreamBufferSize(MAX_BUFFER_SIZE);
-//            
+//
 //            // buffer side when doing chunked read from irods. Best if this
 //            // lines up with remote irods server buffer size. If this is less
 //            // than the internal input stream buffer size, jargon will internally
-//            // start paginating reads from a memory buffer using array copies, 
+//            // start paginating reads from a memory buffer using array copies,
 //            // which will slow things down.
 //            super.setGetBufferSize(MAX_BUFFER_SIZE);
 //	    }
-//	    
+//
 //	    public void adjustOutputBufferSize(int maxInputBufferSizeKB) {
 //	        // primary tcp send window size in KB
 //            super.setPrimaryTcpSendWindowSize(maxInputBufferSizeKB);
-//            
+//
 //            super.setParallelTcpSendWindowSize(MAX_BUFFER_SIZE);
-//            
+//
 //            // no buffer on output stream, just write afap
 //            super.setInternalOutputStreamBufferSize(-1);
-//            
+//
 //            // buffer side when doing chunked writes to irods. Best if this
 //            // lines up with remote irods server buffer size
 //            super.setPutBufferSize(MAX_BUFFER_SIZE);
 //	    }
 //	}
-//	
+//
 //	AgaveJargonProperties inputStreamSessionProperties = new AgaveJargonProperties() {
 //	    public void mergeProperties() {
-//	        
-//            
+//
+//
 //            // primary tcp receive window size in KB
 //            super.setPrimaryTcpReceiveWindowSize(primaryTcpReceiveWindowSize);
-//            
+//
 //            // primary tcp send window size in KB
 //            super.setPrimaryTcpSendWindowSize(primaryTcpSendWindowSize);
-//            
+//
 //            // primary internal input stream buffer in KB
 //            super.setInternalInputStreamBufferSize(MAX_BUFFER_SIZE);
-//            
+//
 //            // primary internal input stream buffer in KB
 //            super.setInternalOutputStreamBufferSize(MAX_BUFFER_SIZE);
-//            
+//
 //            super.setInternalInputStreamBufferSize(MAX_BUFFER_SIZE);
-//            
+//
 //            super.setInternalOutputStreamBufferSize(MAX_BUFFER_SIZE);
-//            
-//            
+//
+//
 //            // max 4 thread transfer pool on directory copy
 //            jargonProperties.setTransferThreadPoolMaxSimultaneousTransfers(4);
-//    
+//
 //            // 15 second timeout
 //            jargonProperties.setTransferThreadPoolTimeoutMillis(15000);
 //	    }
 //	}
-//	
+//
 //	private JargonProperties outputStreamSessionProperties = new SettableJargonProperties() {
 //        public SettableJargonProperties() {
 //            // do use a thread pool for connections
 //            jargonProperties.setUseTransferThreadsPool(true);
-//            
+//
 //            // use parallel transfers whenever possible
 //            jargonProperties.setUseParallelTransfer(true);
-//            
+//
 //            jargonProperties.setMaxParallelThreads(0);
-//            
+//
 //            jargonProperties.setParallelTcpReceiveWindowSize(parallelTcpReceiveWindowSize);
-//            
+//
 //            jargonProperties.setUseParallelTransfer(true);
-//            
+//
 //            // max 4 thread transfer pool on directory copy
 //            jargonProperties.setTransferThreadPoolMaxSimultaneousTransfers(4);
-//    
+//
 //            // 15 second timeout
 //            jargonProperties.setTransferThreadPoolTimeoutMillis(15000);
 //        }
 //    };
-//	
+//
 //	private JargonProperties getOperationSessionProperties = new SettableJargonProperties() {
 //        public SettableJargonProperties() {
 //            // do use a thread pool for connections
 //            jargonProperties.setUseTransferThreadsPool(true);
-//            
+//
 //            // use parallel transfers whenever possible
 //            jargonProperties.setUseParallelTransfer(true);
-//            
+//
 //            jargonProperties.setMaxParallelThreads(0);
-//            
+//
 //            jargonProperties.setParallelTcpReceiveWindowSize(parallelTcpReceiveWindowSize);
-//            
+//
 //            jargonProperties.setUseParallelTransfer(true);
-//            
+//
 //            // max 4 thread transfer pool on directory copy
 //            jargonProperties.setTransferThreadPoolMaxSimultaneousTransfers(4);
-//    
+//
 //            // 15 second timeout
 //            jargonProperties.setTransferThreadPoolTimeoutMillis(15000);
 //        }
 //    };
-//    
+//
 //    private JargonProperties putOperationSessionProperties = new SettableJargonProperties() {
 //        public SettableJargonProperties() {
 //            // do use a thread pool for connections
 //            jargonProperties.setUseTransferThreadsPool(true);
-//            
+//
 //            // use parallel transfers whenever possible
 //            jargonProperties.setUseParallelTransfer(true);
-//            
+//
 //            jargonProperties.setMaxParallelThreads(0);
-//            
+//
 //            jargonProperties.setParallelTcpReceiveWindowSize(parallelTcpReceiveWindowSize);
-//            
+//
 //            jargonProperties.setUseParallelTransfer(true);
-//            
+//
 //            // max 4 thread transfer pool on directory copy
 //            jargonProperties.setTransferThreadPoolMaxSimultaneousTransfers(4);
-//    
+//
 //            // 15 second timeout
 //            jargonProperties.setTransferThreadPoolTimeoutMillis(15000);
 //        }

@@ -25,7 +25,7 @@ public class Irods4RemoteDataClientPermissionProviderTest extends IrodsRemoteDat
      */
     @Override
     protected JSONObject getSystemJson() throws JSONException, IOException {
-        //return jtd.getTestDataObject(STORAGE_SYSTEM_TEMPLATE_DIR + "/" + "irods4.example.com.json");
-    	return jtd.getTestDataObject(STORAGE_SYSTEM_TEMPLATE_DIR + "/" + "qairods.cyverse.org.json");
+        return jtd.getTestDataObject(STORAGE_SYSTEM_TEMPLATE_DIR + "/" + "irods4.example.com.json");
+//    	return jtd.getTestDataObject(STORAGE_SYSTEM_TEMPLATE_DIR + "/" + "qairods.cyverse.org.json");
     }
 }

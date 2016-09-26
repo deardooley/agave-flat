@@ -308,10 +308,16 @@ public class FilePermissionResource extends AbstractFileResource
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 						"No username specified");
 			} 
-			else if (shareUsername.equalsIgnoreCase(owner) || shareUsername.equalsIgnoreCase(username)) {
-				// don't set permissions for the owner.
-				return new AgaveSuccessRepresentation();
-			}
+//			else if ((shareUsername.equalsIgnoreCase(owner) || shareUsername.equalsIgnoreCase(username))
+//					&& !system.getStorageConfig().isMirrorPermissions()) {
+//				// don't set permissions for the owner.
+//				PermissionManager pm = new PermissionManager(system, remoteDataClient, logicalFile, shareUsername);
+//                
+//				RemoteFilePermission userPem = pm.getUserPermission(logicalFile.getPath());
+//                return new AgaveSuccessRepresentation("[" + userPem.toJSON(path, logicalFile.getSystem().getSystemId()) + "]");
+//                
+//				return new AgaveSuccessRepresentation();
+//			}
 			
 			try 
 			{

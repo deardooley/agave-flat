@@ -1,6 +1,6 @@
 ###############################################################
-# Core Science APIs - Blue Instances
-# blue.yml
+# Core Science APIs - Static Instances
+# docker-compose.yml
 #
 # This contains the core service configuration for a static 
 # (non-load balanced instance) deployment. This is often helpful
@@ -90,9 +90,9 @@ services:
     command: catalina.sh jpda run 2>&1
     ports:
       - "8084:80"
-      - "52985:52911"
-      - "10185:10001"
-      - "10285:10002"
+      - "52984:52911"
+      - "10184:10001"
+      - "10284:10002"
       - "8447:443"
     environment:
       - 'ENABLE_REMOTE_DEBUG=1'

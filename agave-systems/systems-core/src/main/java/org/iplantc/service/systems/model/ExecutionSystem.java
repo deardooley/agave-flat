@@ -423,7 +423,8 @@ public class ExecutionSystem extends RemoteSystem implements SerializableSystem 
 						.key("protocol").value(this.storageConfig.getProtocol().name())
 						.key("rootDir").value(this.storageConfig.getRootDir())
 						.key("homeDir").value(this.storageConfig.getHomeDir());
-						if (this.storageConfig.getProtocol().equals(StorageProtocolType.IRODS)) {
+						if (this.storageConfig.getProtocol() == StorageProtocolType.IRODS || 
+								this.storageConfig.getProtocol() == StorageProtocolType.IRODS4) {
 							js.key("zone").value(this.storageConfig.getZone());
 							js.key("resource").value(this.storageConfig.getResource());
 						} 
