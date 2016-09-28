@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"sftp","sftp-password", "filesystem"})
+@Test(singleThreaded=true, groups= {"sftp","sftp-password", "filesystem", "broken"})
 public class SftpPasswordRemoteDataClientTest extends AbstractRemoteDataClientTest {
 
 	/* (non-Javadoc)

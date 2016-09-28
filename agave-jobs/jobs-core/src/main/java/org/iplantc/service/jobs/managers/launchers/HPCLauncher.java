@@ -335,6 +335,9 @@ public class HPCLauncher extends AbstractJobLauncher
         }
     }
 	
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.jobs.managers.launchers.AbstractJobLauncher#submitJobToQueue()
+	 */
 	@Override
 	protected String submitJobToQueue() throws JobException, SchedulerException
 	{

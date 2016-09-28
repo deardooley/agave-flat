@@ -153,12 +153,14 @@ public enum AgaveServiceType {
     		"^repositories/\\*|[0-9a-f]+-[0-9a-f]+-[0-9]+-" + UUIDType.REPOSITORY.getCode() + "|[0-9a-fA-F_\\-]{2-32}",
 			"^repositories/(\\*|[0-9a-f]+-[0-9a-f]+-[0-9]+-" + UUIDType.REPOSITORY.getCode() + "|[0-9a-fA-F_\\-]{2-32})/(pems|history,types)/(\\*|[0-9a-fA-F_\\-]+)", // individual or all of a particular subresource
 		}),
-//    	REPOSITORY_EVENT("053"),
-    LAMBDA(new String[] {
-    		"^repositories/\\*|[0-9a-f]+-[0-9a-f]+-[0-9]+-" + UUIDType.LAMBDA.getCode() + "|[0-9a-fA-F_\\-]{2-32}",
-			"^repositories/(\\*|[0-9a-f]+-[0-9a-f]+-[0-9]+-" + UUIDType.LAMBDA.getCode() + "|[0-9a-fA-F_\\-]{2-32})/(pems|history,repositories)/(\\*|[0-9a-fA-F_\\-]+)", // individual or all of a particular subresource
+    REACTOR(new String[] {
+    		"^reactors/\\*|[0-9a-f]+-[0-9a-f]+-[0-9]+-" + UUIDType.REACTOR.getCode() + "|[0-9a-fA-F_\\-]{2-32}",
+			"^reactors/(\\*|[0-9a-f]+-[0-9a-f]+-[0-9]+-" + UUIDType.REACTOR.getCode() + "|[0-9a-fA-F_\\-]{2-32})/(pems|history,repositories)/(\\*|[0-9a-fA-F_\\-]+)", // individual or all of a particular subresource
 		}),
-//    	LAMBDA_EVENT("053"),
+	ABACO(new String[] {
+    		"^abaco/\\*|[0-9a-f]+-[0-9a-f]+-[0-9]+-" + UUIDType.ABACO_AGENT.getCode() + "|[0-9a-fA-F_\\-]{2-32}",
+			"^abaco/(\\*|[0-9a-f]+-[0-9a-f]+-[0-9]+-" + UUIDType.ABACO_AGENT.getCode() + "|[0-9a-fA-F_\\-]{2-32})/(pems|history,repositories)/(\\*|[0-9a-fA-F_\\-]+)", // individual or all of a particular subresource
+		}),
 	REALTIME(new String[] {
 			"^groups/\\*|[0-9a-f]+-[0-9a-f]+-[0-9]+-" + UUIDType.REALTIME_CHANNEL.getCode() + "|[0-9a-fA-F_\\-]{2-32}",
 			"^groups/(\\*|[0-9a-f]+-[0-9a-f]+-[0-9]+-" + UUIDType.REALTIME_CHANNEL.getCode() + "|[0-9a-fA-F_\\-]{2-32})/(pems|history)/(\\*|[0-9a-fA-F_\\-]+)", // individual or all of a particular subresource

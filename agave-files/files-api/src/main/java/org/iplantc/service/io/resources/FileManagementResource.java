@@ -35,6 +35,7 @@ import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.AgaveErrorRepresentation;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
+import org.iplantc.service.common.util.AgaveStringUtils;
 import org.iplantc.service.data.transform.FileTransform;
 import org.iplantc.service.data.transform.FileTransformProperties;
 import org.iplantc.service.io.Settings;
@@ -55,9 +56,10 @@ import org.iplantc.service.io.queue.UploadJob;
 import org.iplantc.service.io.util.PathResolver;
 import org.iplantc.service.io.util.ServiceUtils;
 import org.iplantc.service.notification.model.Notification;
-import org.iplantc.service.notification.util.EntityWithNotificationReferenceSerializer;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
+import org.iplantc.service.systems.exceptions.SystemException;
+import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.RemoteSystem;
@@ -66,6 +68,7 @@ import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.RemoteDataClientFactory;
 import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.iplantc.service.transfer.exceptions.RemoteDataSyntaxException;
 import org.json.JSONException;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
@@ -90,10 +93,6 @@ import org.restlet.resource.Put;
 import org.restlet.resource.ResourceException;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Files;
 
 /**
@@ -158,12 +157,16 @@ public class FileManagementResource extends AbstractFileResource
     	
 		} 
     	catch (ResourceException e) {
-		   try {remoteDataClient.disconnect();} catch (Exception e1) {}
-		   throw e;
+    		try {remoteDataClient.disconnect();} catch (Exception e1) {}
+    		setStatus(e.getStatus());
+    		getResponse().setEntity(new AgaveErrorRepresentation(e.getMessage()));
+    		throw e;
     	}
     	catch (Throwable e) {
-		   try {remoteDataClient.disconnect();} catch (Exception e1) {}
-		   throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
+    		try {remoteDataClient.disconnect();} catch (Exception e1) {}
+		   	setStatus(Status.SERVER_ERROR_INTERNAL);
+	   		getResponse().setEntity(new AgaveErrorRepresentation("Unexpected error while processing this request"));
+	   		throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
 				   "Unexpected error while processing this request",e);
     	}
     }
@@ -232,12 +235,13 @@ public class FileManagementResource extends AbstractFileResource
 	        }
     		else {
     			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-    					"No system found to satisfy the request.");
+    					"No system found to satisfy the request.", 
+    					new SystemUnknownException());
     		}
 		} 
 		catch (RemoteDataException e) {
         	throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-					"Failed to carry out ");
+					"Failed to connect to the remote system. "+ e.getMessage(), e);
 		} catch (RemoteCredentialException | IOException e) {
 			throw new ResourceException(Status.SERVER_ERROR_BAD_GATEWAY,
 					"Failed to authenticate to the remote system. " + e.getMessage(), e);
@@ -259,7 +263,8 @@ public class FileManagementResource extends AbstractFileResource
             	
             	if (system == null) {
             		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-							"No resource found for user with system id " + systemId);
+							"No system found for user with id " + systemId,
+							new SystemUnknownException());
             	}
             } 
             else { 
@@ -269,17 +274,20 @@ public class FileManagementResource extends AbstractFileResource
             	if (system == null) {
             		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
 							"No default storage system found. Please register a system " +
-							"and set it as your default.");
+							"and set it as your default.",
+							new SystemUnknownException());
             	}
             }
             
             if (!system.isAvailable()) {
             	throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-						"System " + systemId + " is not currently available.");
+						"System " + systemId + " is not currently available.",
+						new SystemUnavailableException());
             }
             else if (system.getStatus() != SystemStatusType.UP) {
             	throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-            			"System " + systemId + " is " + system.getStatus().name());
+            			"System " + systemId + " is " + system.getStatus().name(),
+            			new SystemUnavailableException());
             }
             
             return system;
@@ -289,7 +297,8 @@ public class FileManagementResource extends AbstractFileResource
 		}
         catch (Exception e) {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-            		"Failed to fetch user system");
+            		"Failed to fetch user system", 
+            		new SystemException());
         }
 	}
 
@@ -1579,22 +1588,29 @@ public class FileManagementResource extends AbstractFileResource
 			} 
 			catch (FileNotFoundException e) {
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-						e.getMessage(), e);
-			} catch (ResourceException e) {
+						AgaveStringUtils.convertWhitespace(e.getMessage()), e);
+			} 
+            catch (RemoteDataSyntaxException e) {
+                throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
+                        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
+            } 
+			catch (ResourceException e) {
 				throw e;
 			} 
 			catch (RemoteDataException e) {
-				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e.getMessage(), e);
+				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
+				        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
 			} 
 			catch (Exception e) {
 				log.error("Error performing file operation",e);
 				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-						"File operation failed " + e.getMessage(), e);
+						"File operation failed " + 
+						        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
 			}
 		}
 		catch (ResourceException e) {
 			setStatus(e.getStatus());
-			return new AgaveErrorRepresentation(e.getMessage());
+			return new AgaveErrorRepresentation(AgaveStringUtils.convertWhitespace(e.getMessage()));
 		}
 		finally {
 			try {remoteDataClient.disconnect();} catch (Exception e) {}
@@ -1614,12 +1630,13 @@ public class FileManagementResource extends AbstractFileResource
 	 * @throws RemoteDataException
 	 * @throws HibernateException
 	 * @throws JSONException 
+	 * @throws RemoteDataSyntaxException 
 	 */
 	protected Representation doRenameOperation(JsonNode jsonInput, String absolutePath,
 			LogicalFile logicalFile, PermissionManager pm)
 			throws ResourceException, PermissionException,
 			FileNotFoundException, IOException, RemoteDataException,
-			HibernateException, JSONException {
+			HibernateException, JSONException, RemoteDataSyntaxException {
 		String message;
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.FILES02.name(),
 				AgaveLogServiceClient.ActivityKeys.IORename.name(),
@@ -1699,7 +1716,7 @@ public class FileManagementResource extends AbstractFileResource
 			// not actually exist if the rename operation worked.
 			for (LogicalFile child: LogicalFileDao.findChildren(logicalFile.getPath(), system.getId())) {
 				child.addContentEvent(new FileEvent(FileEventType.DELETED, 
-						"Detected that file item was deleted by an outside source when"
+						"Detected that file item was deleted by an outside source"
 						+ " as part of a rename operation on " + getPublicLink(system, path), 
 						getAuthenticatedUsername()));
 				LogicalFileDao.remove(child);
@@ -1736,12 +1753,13 @@ public class FileManagementResource extends AbstractFileResource
 	 * @throws RemoteDataException
 	 * @throws HibernateException
 	 * @throws JSONException 
+	 * @throws RemoteDataSyntaxException 
 	 */
 	protected AgaveSuccessRepresentation doMoveOperation(JsonNode jsonInput,
 			LogicalFile logicalFile, PermissionManager pm)
 			throws PermissionException, FileNotFoundException,
 			ResourceException, IOException, RemoteDataException,
-			HibernateException, JSONException {
+			HibernateException, JSONException, RemoteDataSyntaxException {
 		String message;
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.FILES02.name(),
 				AgaveLogServiceClient.ActivityKeys.IOMove.name(),
@@ -1785,7 +1803,7 @@ public class FileManagementResource extends AbstractFileResource
 				remoteDataClient.setOwnerPermission(pemUser, destPath, true);
 			} catch (Exception e) {
 				log.error(e.getMessage(), e);
-				message = "Rename was successful, but unable to mirror permissions for user " +
+				message = "Move was successful, but unable to mirror permissions for user " +
 						pemUser + " on new directory " + path;
 //							getResponse().setEntity(new IplantErrorRepresentation(message));
 //				            throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST);
@@ -1799,6 +1817,10 @@ public class FileManagementResource extends AbstractFileResource
 			destLogicalFile = LogicalFileDao.findBySystemAndPath(system, remoteDataClient.resolvePath(destPath));
 		} catch (Exception e) {}
 
+		String sourceUrl = logicalFile.getPublicLink();
+		String destUrl = null;
+		
+		// no logical file for destination, this is an add or update
 		if (destLogicalFile == null)
 		{
 			destLogicalFile = logicalFile.clone();
@@ -1809,19 +1831,33 @@ public class FileManagementResource extends AbstractFileResource
 			destLogicalFile.setOwner(username);
 			destLogicalFile.setInternalUsername(internalUsername);
 			destLogicalFile.setLastUpdated(new Date());
-
+			
+			// set the resulting url of the destination for use in events
+			destUrl = destLogicalFile.getPublicLink();
+			
+			// fire event before record update so the notification event references the source record
 			logicalFile.addContentEvent(new FileEvent(FileEventType.MOVED, 
-					"Moved from " + logicalFile.getPublicLink() + " to " + destLogicalFile.getPublicLink(), 
+					"Moved from " + sourceUrl + " to " + destUrl, 
 					getAuthenticatedUsername()));
-			// no logical file for destination, this is an add or update
+			
+			// now update source path and name to reference the new location. This will
+			// carry the history with it.
 			logicalFile.setPath(remoteDataClient.resolvePath(destPath));
+			logicalFile.setName(FilenameUtils.getName(logicalFile.getPath()));
+			logicalFile.setLastUpdated(new Date());
+			
 			LogicalFileDao.persist(logicalFile);
 		}
 		else
 		{
 			destLogicalFile.setName(FilenameUtils.getName(destLogicalFile.getPath()));
+			
+			// set the resulting url of the destination for use in events
+			destUrl = destLogicalFile.getPublicLink();
+			
 			destLogicalFile.addContentEvent(new FileEvent(FileEventType.OVERWRITTEN, 
-					"Overwritten by a move from " + logicalFile.getSourceUri(), 
+					"Overwritten by a move from " + logicalFile.getPublicLink() + 
+					" to " + destLogicalFile.getPublicLink(), 
 					getAuthenticatedUsername()));
 			LogicalFileDao.persist(destLogicalFile);
 		}
@@ -1836,12 +1872,19 @@ public class FileManagementResource extends AbstractFileResource
 															system.getId());
 
 			for (LogicalFile child: nonOverlappingChildren) {
+				// capture the original url to the child
+				String sourceChildUrl = child.getPublicLink();
+				
+				// update the path and timestamp
 				child.setPath(StringUtils.replaceOnce(child.getPath(), logicalFile.getPath(), destLogicalFile.getPath()));
 				child.setLastUpdated(new Date());
-				LogicalFileDao.persist(child);
+				
+				// add event
 				child.addContentEvent(new FileEvent(FileEventType.MOVED, 
-						"File item copied from " + child.getPublicLink(), 
+						"File item moved from " + sourceChildUrl + " to " + child.getPublicLink(), 
 						getAuthenticatedUsername()));
+				
+				// update afterwards so the event has the original child path 
 				LogicalFileDao.persist(child);
 			}
 
@@ -1850,7 +1893,7 @@ public class FileManagementResource extends AbstractFileResource
 				if (!nonOverlappingChildren.contains(child))
 				{
 					child.addContentEvent(new FileEvent(FileEventType.OVERWRITTEN, "Possibly overwritten as "
-							+ "part of file item copied from " + getPublicLink(system, path), 
+							+ "part of file item move from " + StringUtils.replace(child.getPublicLink(), destUrl, sourceUrl) + " to " + child.getPublicLink(), 
 							getAuthenticatedUsername()));
 					LogicalFileDao.persist(child);
 				}
@@ -2008,10 +2051,11 @@ public class FileManagementResource extends AbstractFileResource
 	 * @throws IOException
 	 * @throws RemoteDataException
 	 * @throws JSONException 
+	 * @throws RemoteDataSyntaxException 
 	 * @throws HibernateException
 	 */
 	protected AgaveSuccessRepresentation doCopyOperation(JsonNode jsonInput, String absolutePath, LogicalFile logicalFile, PermissionManager pm)
-	throws PermissionException, FileNotFoundException, ResourceException, IOException, RemoteDataException, JSONException 
+	throws PermissionException, FileNotFoundException, ResourceException, IOException, RemoteDataException, JSONException, RemoteDataSyntaxException 
 	{
 		String message;
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.FILES02.name(),
@@ -2079,12 +2123,13 @@ public class FileManagementResource extends AbstractFileResource
 				copiedLogicalFile.setSourceUri(logicalFile.getPublicLink());
 				copiedLogicalFile.setPath(remoteDataClient.resolvePath(destPath));
 				copiedLogicalFile.setSystem(system);
+				copiedLogicalFile.setName(FilenameUtils.getName(copiedLogicalFile.getPath()));
 				copiedLogicalFile.setOwner(StringUtils.isEmpty(owner) ? username : owner);
 		        copiedLogicalFile.setInternalUsername(internalUsername);
 				copiedLogicalFile.setLastUpdated(new Date());
 				LogicalFileDao.persist(copiedLogicalFile);
 				copiedLogicalFile.addContentEvent(new FileEvent(FileEventType.CREATED, 
-						"File item copied from " + copiedLogicalFile.getPublicLink(), 
+						"File item copied from " + logicalFile.getPublicLink(), 
 						getAuthenticatedUsername()));
 				LogicalFileDao.persist(copiedLogicalFile);
 			}

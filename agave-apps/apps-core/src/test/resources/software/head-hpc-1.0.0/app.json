@@ -1,0 +1,97 @@
+{
+	"available": true, 
+	"checkpointable": false, 
+	"deploymentPath": "testuser/agave/apps/head-hpc-1.0.0", 
+	"executionSystem": "storage.example.com", 
+	"executionType": "HPC", 
+	"helpURI": "http://www.gnu.org/software/coreutils/manual/html_node/head-invocation.html#head-invocation", 
+	"icon":"https://agaveapi.co/wp-content/uploads/2016/02/Agave-white-retina.png",
+	"inputs": [
+		{
+			"details": {
+				"description": "Select an input file", 
+				"label": "Target File", 
+				"visible": true
+			}, 
+			"id": "inputfile", 
+			"semantics": {
+				"fileTypes": [
+					"TEXT-0"
+				], 
+				"minCardinality": 1, 
+				"ontology": [
+					"0"
+				]
+			}, 
+			"value": {
+				"default": "agave://irods-password.example.com/testuser/science-api-samples/README.md", 
+				"required": false, 
+				"validator": "", 
+				"visible": true
+			}
+		}
+	], 
+	"label": "Head", 
+	"longDescription": "This is an application you can use to inspect the beginning of a file.", 
+	"modules": [],
+	"name": "head-hpc", 
+	"ontology": [], 
+	"outputs": [
+		{
+			"defaultValue": "null", 
+			"details": {
+				"description": "", 
+				"label": ""
+			}, 
+			"id": "outputtextfile", 
+			"semantics": {
+				"fileTypes": [
+					""
+				], 
+				"maxCardinality": 1, 
+				"minCardinality": 1, 
+				"ontology": [
+					"http://sswapmeet.sswap.info/util/TextDocument"
+				]
+			}, 
+			"value": {
+				"default": "null", 
+				"validator": "*.txt"
+			}
+		}
+	], 
+	"parallelism": "SERIAL", 
+	"parameters": [
+		{
+			"defaultValue": "10", 
+			"details": {
+				"description": "Equivalent to -n command flag", 
+				"label": "Extract the first k lines"
+			}, 
+			"id": "numberoflines", 
+			"semantics": {
+				"ontology": [
+					"xs:integer"
+				]
+			}, 
+			"value": {
+				"default": "10", 
+				"required": true, 
+				"type": "number", 
+				"validator": "[0-9]+", 
+				"visible": true
+			}
+		}
+	], 
+	"public": true, 
+	"revision": 1, 
+	"shortDescription": "Extract first lines or bytes from a file", 
+	"tags": [
+		"file", 
+		"coreutils", 
+		"gnu"
+	], 
+	"templatePath": "wrapper.sh", 
+	"testPath": "test/test.sh", 
+	"version": "5.97"
+}

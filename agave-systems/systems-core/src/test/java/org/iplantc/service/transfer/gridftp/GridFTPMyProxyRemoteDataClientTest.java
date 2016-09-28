@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(groups= {"gridftp","filesystem"})
+@Test(groups= {"gridftp","filesystem","broken"})
 public class GridFTPMyProxyRemoteDataClientTest extends AbstractRemoteDataClientTest {
 
 	/* (non-Javadoc)

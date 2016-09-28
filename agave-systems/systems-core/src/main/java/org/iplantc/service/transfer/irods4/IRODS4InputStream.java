@@ -10,7 +10,7 @@ import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.irods.jargon.core.exception.JargonException;
 
 public class IRODS4InputStream extends RemoteInputStream<IRODS4> {
-	private static final Logger	logger	= Logger.getLogger(IRODS4InputStream.class);
+	private static final Logger	log	= Logger.getLogger(IRODS4InputStream.class);
 
 	protected InputStream		input;
 
@@ -31,6 +31,8 @@ public class IRODS4InputStream extends RemoteInputStream<IRODS4> {
 	{
 		try
 		{
+			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+					+ " opening IRODS4 input stream connection for thread");
 			input = client.getRawInputStream(file);
 		}
 		catch (JargonException e)
@@ -50,7 +52,7 @@ public class IRODS4InputStream extends RemoteInputStream<IRODS4> {
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			logger.debug("Failed to get size", e);
+			log.debug("Failed to get size", e);
 		}
 		return rep;
 	}
@@ -59,6 +61,8 @@ public class IRODS4InputStream extends RemoteInputStream<IRODS4> {
 	{
 		try { input.close(); } catch (Exception e) {};
 		try { client.disconnect(); } catch (Exception e) {}
+		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+				+ " aborting IRODS4 input stream connection for thread");
 	}
 
 	// standard InputStream methods
@@ -66,6 +70,8 @@ public class IRODS4InputStream extends RemoteInputStream<IRODS4> {
 	public void close() throws IOException
 	{
 		abort();
+		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+				+ " closing IRODS4 input stream connection for thread");
 	}
 
 	public int read(byte[] msg) throws IOException

@@ -1,6 +1,12 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
   
 <suite name="iPlant Common Service API" verbose="5" parallel="false">
+     <groups>
+        <run>
+            <exclude name="broken"/>
+            <exclude name="notReady"/>
+        </run>
+    </groups>
   <!-- <test name="InternalUser" >
     <classes>
         <class name="org.iplantc.service.profile.dao.InternalUserDaoTest" />

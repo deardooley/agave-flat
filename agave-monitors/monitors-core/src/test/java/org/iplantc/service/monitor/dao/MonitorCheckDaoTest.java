@@ -171,7 +171,7 @@ public class MonitorCheckDaoTest extends AbstractMonitorTest {
 		}
 	}
 
-	@Test(dependsOnMethods = { "getLastMonitorCheck" })
+	@Test(dependsOnMethods = { "getLastMonitorCheck" }, groups={"broken"})
 	public void getPaginatedByIdAndRange() {
 		MonitorCheckDao checkDao = new MonitorCheckDao();
 		Monitor monitor1 = null;

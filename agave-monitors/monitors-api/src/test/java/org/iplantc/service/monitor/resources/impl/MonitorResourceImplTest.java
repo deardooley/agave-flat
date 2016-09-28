@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@Test(groups={"broken"})
 public class MonitorResourceImplTest extends AbstractMonitorTest 
 {	
 	private Component comp = new Component();

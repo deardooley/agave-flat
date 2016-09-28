@@ -20,15 +20,33 @@ import org.restlet.representation.Representation;
  * @author dooley
  *
  */
-@Path("{uuid}/attempts")
 public interface NotificationAttemptCollection {
 
+	/**
+	 * Lists all {@link NotificationAttempt}s from the dead message queue for this {@link Notification}
+	 * @param notificationUuid
+	 * @return
+	 */
 	@GET
-	@Path("{uuid}/attempts")
 	public Response getNotificationAttempts(@PathParam("uuid") String notificationUuid);
 	
+	/**
+	 * Forces a notification to fire upon user request. Anything other than a 
+	 * simple {@code FORCED_EVENT} event requires admin permissions.
+	 * 
+	 * @param uuid
+	 * @param input
+	 * @return
+	 */
+	@POST
+	public Response fireNotification(@PathParam("uuid") String uuid, Representation input);
+	
+	/**
+	 * Removes all {@link NotificationAttempt}s from the dead message queue for this {@link Notification}
+	 * @param notificationUuid
+	 * @return
+	 */
 	@DELETE
-	@Path("{uuid}/attempts")
 	public Response clearNotificationAttempts(@PathParam("uuid") String notificationUuid);
 
 	

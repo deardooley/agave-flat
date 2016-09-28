@@ -112,7 +112,8 @@ public class StorageSystem extends RemoteSystem implements SerializableSystem {
 						.key("rootDir").value(this.storageConfig.getRootDir())
 						.key("homeDir").value(this.storageConfig.getHomeDir())
 						.key("publicAppsDir").value(this.storageConfig.getPublicAppsDir());
-						if (this.storageConfig.getProtocol() == StorageProtocolType.IRODS) {
+						if (this.storageConfig.getProtocol() == StorageProtocolType.IRODS || 
+								this.storageConfig.getProtocol() == StorageProtocolType.IRODS4) {
 							js.key("zone").value(this.storageConfig.getZone());
 							js.key("resource").value(this.storageConfig.getResource());
 						} 

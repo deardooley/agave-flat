@@ -23,6 +23,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.systems.Settings;
@@ -337,7 +338,7 @@ public class BatchQueue implements LastUpdatable, Comparable<BatchQueue> {
 		{
 			if (maxRequestedTime.length() > 19) {
 				throw new SystemException("'system.queues.maxRequestedTime' must be less than 19 characters.");
-			} else if (!ServiceUtils.isValidRequestedJobTime(maxRequestedTime)) {
+			} else if (!TimeUtils.isValidRequestedJobTime(maxRequestedTime)) {
 				throw new SystemException("'system.queues.maxRequestedTime' must be in the form of hh:mm:ss.");
 			}
 		}
@@ -813,7 +814,7 @@ public class BatchQueue implements LastUpdatable, Comparable<BatchQueue> {
 							else 
 								return (name == null ? (q.name == null ? 0 : -1) : name.compareTo(q.name));
 						else
-							return ServiceUtils.compareRequestedJobTimes(maxRequestedTime, q.maxRequestedTime);
+							return TimeUtils.compareRequestedJobTimes(maxRequestedTime, q.maxRequestedTime);
 					else
 						return NumberUtils.compare((maxProcessorsPerNode == -1 ? Long.MAX_VALUE : maxProcessorsPerNode), (q.maxProcessorsPerNode == -1 ? Long.MAX_VALUE : q.maxProcessorsPerNode));
 				else

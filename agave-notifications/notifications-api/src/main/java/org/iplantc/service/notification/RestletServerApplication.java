@@ -50,7 +50,7 @@ public class RestletServerApplication extends AgaveServerApplication
                 rrcs.add(NotificationCollectionImpl.class);
                 rrcs.add(NotificationAttemptResourceImpl.class);
                 rrcs.add(NotificationAttemptCollectionImpl.class);
-                rrcs.add(FireNotificationResourceImpl.class);
+//                rrcs.add(FireNotificationResourceImpl.class);
                 rrcs.add(QuartzResourceImpl.class);
                 rrcs.add(QuartzUtilityResource.class);
                 return rrcs;

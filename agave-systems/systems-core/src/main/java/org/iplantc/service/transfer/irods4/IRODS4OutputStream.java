@@ -20,6 +20,8 @@ public class IRODS4OutputStream extends RemoteOutputStream<IRODS4> {
 		this.outFile = remotePath;
 		try 
 		{
+			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+					+ " opening IRODS4 output stream connection for thread");
 			this.output = client.getRawOutputStream(remotePath);
 		}
 		catch (IOException e) {
@@ -33,21 +35,23 @@ public class IRODS4OutputStream extends RemoteOutputStream<IRODS4> {
 		}
 	}
 
-	public IRODS4OutputStream(IRODS4 client, String file, boolean passive,
-			int type, boolean append) throws IOException, RemoteDataException
-	{
-		this.outFile = file;
-		try {
-			this.output = client.getRawOutputStream(file);
-		}
-		catch (JargonException e) {
-			throw new RemoteDataException("Failed to obtain remote output stream for " + file);
-		}
-	}
+//	public IRODS4OutputStream(IRODS4 client, String file, boolean passive,
+//			int type, boolean append) throws IOException, RemoteDataException
+//	{
+//		this.outFile = file;
+//		try {
+//			this.output = client.getRawOutputStream(file);
+//		}
+//		catch (JargonException e) {
+//			throw new RemoteDataException("Failed to obtain remote output stream for " + file);
+//		}
+//	}
 
 	public void abort()
 	{
 		try { output.close(); } catch (Exception e) {}
+		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+				+ " aborting IRODS4 output stream connection for thread");
 		
 		// We need to explicity give the user who just created this file 
 		// ownership on that file because irods won't do this as that
@@ -62,9 +66,10 @@ public class IRODS4OutputStream extends RemoteOutputStream<IRODS4> {
 	}
 
 	public void close() throws IOException
-	{
-		
+	{	
 		abort();
+		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  
+				+ " closing IRODS4 output stream connection for thread");
 	}
 
 	public void write(byte[] msg) throws IOException

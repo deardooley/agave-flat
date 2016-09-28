@@ -37,6 +37,10 @@ public class AbstractNotificationResource extends AbstractAgaveResource {
         if (existingNotification == null) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
                     "No notification found matching " + uuid);
+        } 
+        else if (!existingNotification.isVisible()) {
+            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
+                    "Notification " + uuid + " has been deleted.");
         } else {
         	NotificationPermissionManager pm = new NotificationPermissionManager(existingNotification);
         	if (!pm.canRead(getAuthenticatedUsername())) {

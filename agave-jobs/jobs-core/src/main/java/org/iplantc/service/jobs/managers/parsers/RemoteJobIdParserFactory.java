@@ -15,12 +15,16 @@ public class RemoteJobIdParserFactory {
 				return new LSFJobIdParser();
 			case MOAB: 
 				return new MoabJobIdParser();
+			case CUSTOM_PBS:
 			case PBS: 
 				return new PBSJobIdParser();
+			case CUSTOM_GRIDENGINE:
 			case SGE: 
 				return new SGEJobIdParser();
+			case CUSTOM_SLURM:
 			case SLURM: 
 				return new SlurmJobIdParser();
+			case CUSTOM_TORQUE:
 			case TORQUE: 
 				return new TorqueJobIdParser();
 			case FORK:

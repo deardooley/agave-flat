@@ -11,6 +11,7 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.RemoteTransferListener;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.iplantc.service.transfer.exceptions.RemoteDataSyntaxException;
 import org.iplantc.service.transfer.model.RemoteFilePermission;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
@@ -44,8 +46,13 @@ import com.maverick.ssh.SshException;
 import com.maverick.ssh.SshTunnel;
 import com.maverick.ssh.components.SshKeyPair;
 import com.maverick.ssh1.Ssh1Client;
+import com.maverick.ssh2.AuthenticationProtocol;
+import com.maverick.ssh2.KBIAuthentication;
+import com.maverick.ssh2.KBIPrompt;
+import com.maverick.ssh2.KBIRequestHandler;
 import com.maverick.ssh2.Ssh2Client;
 import com.maverick.ssh2.Ssh2Context;
+import com.maverick.ssh2.Ssh2PublicKeyAuthentication;
 import com.sshtools.net.SocketWrapper;
 import com.sshtools.publickey.SshPrivateKeyFile;
 import com.sshtools.publickey.SshPrivateKeyFileFactory;
@@ -131,6 +138,8 @@ public class MaverickSFTP implements RemoteDataClient
 		
 		updateSystemRoots(rootDir, homeDir);
 	}
+	
+	
 	
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.transfer.RemoteDataClient#getHomeDir()
@@ -232,7 +241,7 @@ public class MaverickSFTP implements RemoteDataClient
 	        ((Ssh2Context)con.getContext(2)).setMacPreferredPositionSC(Ssh2Context.HMAC_SHA1, 1);
 	        ((Ssh2Context)con.getContext(2)).setMacPreferredPositionSC(Ssh2Context.HMAC_MD5, 2);
 	        
-			/**
+	        /**
 			 * Connect to the host
 			 */
 //	         SocketTransport t = null;
@@ -273,16 +282,18 @@ public class MaverickSFTP implements RemoteDataClient
 			
 			ssh2 = (Ssh2Client) ssh;
 			
+			String[] authenticationMethods = ssh2.getAuthenticationMethods(username);
+			int authStatus;
+			
 			if (!StringUtils.isEmpty(publicKey) && !StringUtils.isEmpty(privateKey))
 			{
 				/**
 				 * Authenticate the user using password authentication
 				 */
-				auth = new PublicKeyAuthentication();
+				auth = new Ssh2PublicKeyAuthentication();
 				
 				do {
 					SshPrivateKeyFile pkfile = SshPrivateKeyFileFactory.parse(privateKey.getBytes());
-//					SshPublicKeyFile pubfile = SshPublicKeyFileFactory.parse(publicKey.getBytes());
 					
 					SshKeyPair pair;
 					if (pkfile.isPassphraseProtected()) {
@@ -294,8 +305,19 @@ public class MaverickSFTP implements RemoteDataClient
 
 					((PublicKeyAuthentication)auth).setPrivateKey(pair.getPrivateKey());
 					((PublicKeyAuthentication)auth).setPublicKey(pair.getPublicKey());
+					authStatus = ssh2.authenticate(auth);
+					
+					if (authStatus == SshAuthentication.FURTHER_AUTHENTICATION_REQUIRED && 
+							Arrays.asList(authenticationMethods).contains("keyboard-interactive")) {
+						KBIAuthentication kbi = new KBIAuthentication();
+						kbi.setUsername(username);
+						kbi.setKBIRequestHandler(new MultiFactorKBIRequestHandler(password, null, username, host, port));
+						authStatus = ssh2.authenticate(kbi);
+					}
 				}
-				while (ssh2.authenticate(auth) != SshAuthentication.COMPLETE
+				while (authStatus != SshAuthentication.COMPLETE 
+						&& authStatus != SshAuthentication.FAILED
+						&& authStatus != SshAuthentication.CANCELLED
 						&& ssh.isConnected());
 			}
 			else
@@ -304,41 +326,81 @@ public class MaverickSFTP implements RemoteDataClient
 				 * Authenticate the user using password authentication
 				 */
 				auth = new com.maverick.ssh.PasswordAuthentication();
-	
 				do
 				{
 					((PasswordAuthentication)auth).setPassword(password);
+					
+					auth = checkForPasswordOverKBI(authenticationMethods);
+					
+					authStatus = ssh2.authenticate(auth);
 				}
-				while (ssh2.authenticate(auth) != SshAuthentication.COMPLETE
+				while (authStatus != SshAuthentication.COMPLETE
+						&& authStatus != SshAuthentication.FAILED
+						&& authStatus != SshAuthentication.CANCELLED
 						&& ssh.isConnected());
 			}
 			
-			if (!StringUtils.isEmpty(proxyHost)) 
-			{
-				if (ssh.isAuthenticated()) {
-					SshTunnel tunnel = ssh.openForwardingChannel(host, port,
-							"127.0.0.1", 22, "127.0.0.1", 22, null, null);
-					
-					forwardedConnection = con.connect(tunnel, username);
-					forwardedConnection.authenticate(auth);
-				}
-			} 
-			else if (!ssh.isAuthenticated()) 
-			{
+			if (!ssh.isAuthenticated()) {
 				throw new RemoteDataException("Failed to authenticate to " + host);
 			}
+			else if (!StringUtils.isEmpty(proxyHost)) {
+				SshTunnel tunnel = ssh.openForwardingChannel(host, port,
+						"127.0.0.1", 22, "127.0.0.1", 22, null, null);
+				
+				forwardedConnection = con.connect(tunnel, username);
+				forwardedConnection.authenticate(auth);
+			} 
+			else {
+				// we're connected. carry on
+			}
 		}
-		catch (RemoteDataException e) 
-		{
+		catch (SshException e) {
+			throw new RemoteDataException("Failed to authenticate to " + host, e);
+		}
+		catch (RemoteDataException e) {
 			throw e;
 		}
 		catch (ConnectException e) {
-			throw new RemoteDataException("Connection refused: Unable to contact SFTP server at " + host + ":" + port);
+			throw new RemoteDataException("Connection refused: Unable to contact SFTP server at " + host + ":" + port, e);
 		}
 		catch (Exception e)
 		{
-			throw new RemoteDataException("Failed to authenticate to " + host);
+			throw new RemoteDataException("Failed to authenticate to " + host, e);
 		}
+	}
+	
+	/**
+	 * Looks through the supported auth returned from the server and overrides the
+	 * password auth type if the server only lists keyboard-interactive. This acts
+	 * as a frontline check to override the default behavior and use our 
+	 * {@link MultiFactorKBIRequestHandler}. 
+	 *   
+	 * @param authenticationMethods
+	 * @return a {@link SshAuthentication} based on the ordering and existence of auth methods returned from the server.
+	 */
+	private SshAuthentication checkForPasswordOverKBI(String[] authenticationMethods) {
+		boolean kbiAuthenticationPossible = false;
+		for (int i = 0; i < authenticationMethods.length; i++) {
+			if (authenticationMethods[i].equals("password")) {
+				return auth;
+			}
+			if (authenticationMethods[i].equals("keyboard-interactive")) {
+
+				kbiAuthenticationPossible = true;
+			}
+		}
+
+		if (kbiAuthenticationPossible) {
+			KBIAuthentication kbi = new KBIAuthentication();
+
+			kbi.setUsername(username);
+
+			kbi.setKBIRequestHandler(new MultiFactorKBIRequestHandler(password, null, username, host, port));
+			
+			return kbi;
+		}
+
+		return auth;
 	}
 	
 	private boolean useTunnel() 
@@ -945,12 +1007,14 @@ public class MaverickSFTP implements RemoteDataClient
 
 	@Override
 	public void doRename(String oldpath, String newpath) 
-	throws IOException, FileNotFoundException, RemoteDataException
+	throws IOException, FileNotFoundException, RemoteDataException, RemoteDataSyntaxException
 	{
+		String resolvedSourcePath = null;
+		String resolvedDestPath = null;
 		try
 		{
-			String resolvedSourcePath = resolvePath(oldpath);
-			String resolvedDestPath = resolvePath(newpath);
+			resolvedSourcePath = resolvePath(oldpath);
+			resolvedDestPath = resolvePath(newpath);
 			
 //			if (StringUtils.startsWith(resolvedDestPath, resolvedSourcePath)) {
 //				throw new RemoteDataException("Cannot rename a file or director into its own subtree");
@@ -966,7 +1030,11 @@ public class MaverickSFTP implements RemoteDataClient
 		catch (SftpStatusException e) {
 			if (e.getMessage().toLowerCase().contains("no such file")) {
 				throw new FileNotFoundException("No such file or directory");
-			} else {
+			} 
+			else if (doesExistSafe(resolvedDestPath)) {
+				throw new RemoteDataSyntaxException("Destination already exists: " + newpath);
+			}
+			else {
 				throw new RemoteDataException("Failed to rename " + oldpath + " to " + newpath, e);
 			}
 		}
@@ -988,7 +1056,7 @@ public class MaverickSFTP implements RemoteDataClient
 	 */
 	@Override
 	public void copy(String remotefromdir, String remotetodir) 
-	throws IOException, RemoteDataException
+	throws IOException, RemoteDataException, RemoteDataSyntaxException
 	{
 		copy(remotefromdir, remotetodir, null);
 	}
@@ -1008,7 +1076,7 @@ public class MaverickSFTP implements RemoteDataClient
 	 */
 	@Override
 	public void copy(String remotesrc, String remotedest, RemoteTransferListener listener) 
-	throws IOException, FileNotFoundException, RemoteDataException
+	throws IOException, FileNotFoundException, RemoteDataException, RemoteDataSyntaxException
 	{
 		if (!doesExist(remotesrc)) {
 			throw new FileNotFoundException("No such file or directory");
@@ -1072,6 +1140,11 @@ public class MaverickSFTP implements RemoteDataClient
 					}
 					if (StringUtils.containsIgnoreCase(builder.toString(), "No such file or directory")) {
 					    throw new FileNotFoundException("No such file or directory");
+					} 
+					else if (StringUtils.startsWithIgnoreCase(builder.toString(), "cp:")) {
+					    // We use the heuristic that a copy failure due to invalid 
+					    // user input produces a message that begins with 'cp:'.
+					    throw new RemoteDataSyntaxException("Copy failure: " + builder.toString().substring(3));
 					} else {
 					    throw new RemoteDataException("Failed to perform a remote copy command on " + host + ". " + 
 					            builder.toString());
@@ -1089,7 +1162,7 @@ public class MaverickSFTP implements RemoteDataClient
 				throw new RemoteDataException("Failed to authenticate to remote host");
 			}
 		}
-		catch(FileNotFoundException | RemoteDataException e) {
+		catch(FileNotFoundException | RemoteDataException | RemoteDataSyntaxException e) {
 			throw e;
 		}
 		catch (Throwable t)
@@ -1261,6 +1334,27 @@ public class MaverickSFTP implements RemoteDataClient
 		sftpClient = null;
 	}
 	
+    /** Determine if a resolved path exists without throwing exceptions.
+     * If the path exists, true is returned.  If the path does not exist
+     * or if the command fails for any reason, false is returned.
+     * 
+     * @param resolvedPath a fully resolved pathname
+     * @return true if there's positive confirmation that the path represents
+     *         an existing object, false otherwise. 
+     */
+    private boolean doesExistSafe(String resolvedPath)
+    {
+        // Is it worth trying?
+        if (resolvedPath == null) return false;
+        
+        // See if we get any attributes back.
+        SftpFileAttributes atts = null;
+        try {atts = stat(resolvedPath);}
+          catch (Exception e){}
+        if (atts == null) return false;
+          else return true;  // object found
+    }
+    
 	@Override
 	public boolean doesExist(String path) throws IOException, RemoteDataException
 	{

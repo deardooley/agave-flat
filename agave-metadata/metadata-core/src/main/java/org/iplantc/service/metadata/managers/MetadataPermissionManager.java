@@ -89,8 +89,9 @@ public class MetadataPermissionManager {
 	public void setPermission(String username, String sPermission)
 			throws MetadataException, PermissionException
 	{
-		if (!ServiceUtils.isValid(username)) { throw new MetadataException(
-				"Invalid username"); }
+		if (!ServiceUtils.isValid(username)) { 
+			throw new MetadataException("Invalid username"); 
+		}
 
 		if (owner.equals(username))
 			return;

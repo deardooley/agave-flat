@@ -42,6 +42,8 @@
 						<skip.create-db>true</skip.create-db>
 						<maven.test.skip>true</maven.test.skip>
 						<skipTests>true</skipTests>
+						<docker.registry.id>docker-registry</docker.registry.id>
+						<docker.registry.url>https://index.docker.io/v1/</docker.registry.url>
 						<docker.registry.username>agaveapi</docker.registry.username>
 				</properties>
 		</profile>
@@ -173,7 +175,7 @@
 				<iplant.community.charge.number>TG-MCB110022</iplant.community.charge.number>
 				<iplant.community.myproxy.server>myproxy.teragrid.org</iplant.community.myproxy.server>
 				<iplant.community.myproxy.port>7512</iplant.community.myproxy.port>
-				
+
 				<irods.username>rods</irods.username>
 				<irods.password>rods</irods.password>
 				<irods.zone>testuser</irods.zone>
@@ -191,7 +193,7 @@
 
 				<foundation.api.page.size.default>100</foundation.api.page.size.default>
 				<foundation.api.page.size.max>250</foundation.api.page.size.max>
-				
+
 				<!-- ********************** SSL Properties ************************* -->
 				<foundation.keystore.path>/home/agave/jssecacerts</foundation.keystore.path>
 				<foundation.trusted.certs.path>/home/agave/.globus/certificates</foundation.trusted.certs.path>
@@ -235,18 +237,18 @@
 				<foundation.db.test.jndi.connection>java:comp/env/jdbc/iplant_io</foundation.db.test.jndi.connection>
 				<foundation.db.test.host>mysql</foundation.db.test.host>
 				<foundation.db.test.port>3306</foundation.db.test.port>
-				<foundation.db.test.database>test</foundation.db.test.database>
+				<foundation.db.test.database>agavecore</foundation.db.test.database>
 				<foundation.db.test.username>agaveuser</foundation.db.test.username>
 				<foundation.db.test.password>password</foundation.db.test.password>
 				<foundation.db.test.url>jdbc:mysql://${foundation.db.test.host}:${foundation.db.test.port}/${foundation.db.test.database}?sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true</foundation.db.test.url>
 				<foundation.db.test.bootstrap>jdbc:mysql://${foundation.db.test.host}:${foundation.db.test.port}/mavenbootstrap?sessionVariables=FOREIGN_KEY_CHECKS=0&amp;relaxAutoCommit=true</foundation.db.test.bootstrap>
 				<foundation.db.test.driver>com.mysql.jdbc.Driver</foundation.db.test.driver>
-				
+
 				<!-- **************** AWS Credentials for Integration Tests ********** -->
 				<aws.bucket></aws.bucket>
 				<aws.access.key></aws.access.key>
 				<aws.secret.key></aws.secret.key>
-			
+
 				<!-- *********************************************************************
 				**************************************************************************
 				**																		**
@@ -325,6 +327,19 @@
 
 				<foundation.service.docs>${foundation.base.url}/docs/v2</foundation.service.docs>
 
+				<!-- ************************ Tenants service ************************ -->
+
+				<foundation.service.tenants>${foundation.base.url}/tenants/v2</foundation.service.tenants>
+
+				<!-- ************************ Usage service ************************ -->
+
+				<foundation.service.usage>${foundation.base.url}/usage/v2</foundation.service.usage>
+				<foundation.v1.db.host>mysql</foundation.v1.db.host>
+				<foundation.v1.db.port>3306</foundation.v1.db.port>
+				<foundation.v1.db.database>iplant-api</foundation.v1.db.database>
+				<foundation.v1.db.username>agaveuser</foundation.v1.db.username>
+				<foundation.v1.db.password>password</foundation.v1.db.password>
+
 
 				<!-- ************************ PostIts service ************************ -->
 				<foundation.service.proxy>${foundation.base.url}</foundation.service.proxy>
@@ -392,8 +407,8 @@
 				<foundation.service.monitor.max.tasks>2</foundation.service.monitor.max.tasks>
 				<foundation.service.monitor.jetty.port>13051</foundation.service.monitor.jetty.port>
 				<foundation.service.monitor.jetty.ajp.port>13052</foundation.service.monitor.jetty.ajp.port>
-				<foundation.service.min.monitor.repeat.interval>300</foundation.service.min.monitor.repeat.interval>
-				
+				<foundation.service.min.monitor.repeat.interval>0</foundation.service.min.monitor.repeat.interval>
+
 				<!-- ************************ Notification service ******************* -->
 
 				<foundation.service.notif>${foundation.base.url}/notifications/v2</foundation.service.notif>
@@ -405,7 +420,7 @@
 				<foundation.service.notif.max.tasks>1</foundation.service.notif.max.tasks>
 				<foundation.service.notif.jetty.port>13051</foundation.service.notif.jetty.port>
 				<foundation.service.notif.jetty.ajp.port>13052</foundation.service.notif.jetty.ajp.port>
-				
+
 				<foundation.service.notif.failed.db.host>mongodb</foundation.service.notif.failed.db.host>
 				<foundation.service.notif.failed.db.port>27017</foundation.service.notif.failed.db.port>
 				<foundation.service.notif.failed.db.user>agaveuser</foundation.service.notif.failed.db.user>
@@ -413,16 +428,16 @@
 				<foundation.service.notif.failed.db.scheme>notifications</foundation.service.notif.failed.db.scheme>
 				<foundation.service.notif.failed.db.size>1048576</foundation.service.notif.failed.db.size>
 				<foundation.service.notif.failed.db.limit>10000</foundation.service.notif.failed.db.limit>
-				
+
 				<foundation.service.notif.slack.icon.emoji></foundation.service.notif.slack.icon.emoji>
 				<foundation.service.notif.slack.icon.url>http://www.gravatar.com/avatar/4a01bd7c64dbb313035b23fe521f75e6</foundation.service.notif.slack.icon.url>
 				<foundation.service.notif.slack.username>AgaveBot</foundation.service.notif.slack.username>
-				
+
 				<foundation.sms.provider>LOG</foundation.sms.provider>
 				<foundation.twilio.sid></foundation.twilio.sid>
 				<foundation.twilio.token></foundation.twilio.token>
 				<foundation.twilio.phone.number></foundation.twilio.phone.number>
-				
+
 				<foundation.realtime.provider>pushpin</foundation.realtime.provider>
 				<foundation.realtime.url>http://localhost:7999</foundation.realtime.url>
 				<foundation.realtime.realm.key></foundation.realtime.realm.key>

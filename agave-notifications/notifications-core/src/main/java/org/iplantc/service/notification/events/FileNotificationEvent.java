@@ -172,21 +172,52 @@ public class FileNotificationEvent extends AbstractEventFilter {
                         body = StringUtils.replace(body, "${FILE_MIMETYPE}", jsonEntity.has("mimeType") ? jsonEntity.get("mimeType").asText(): "");
                         body = StringUtils.replace(body, "${FILE_TYPE}", jsonEntity.has("type") ? jsonEntity.get("type").asText(): "");
                         body = StringUtils.replace(body, "${FILE_JSON}", jsonEntity.toString());
-                    } else if (json.has("permission") ) {
+                    } 
+			    	if (json.has("permission") ) {
                     	JsonNode jsonPermission = json.get("permission");
                         body = StringUtils.replace(body, "${PERMISSION_ID}", jsonPermission.has("id") ? jsonPermission.get("id").asText() : "");
                         body = StringUtils.replace(body, "${PERMISSION_PERMISSION}", jsonPermission.has("permission") ? jsonPermission.get("permission").asText() : "");
                         body = StringUtils.replace(body, "${PERMISSION_USERNAME}", jsonPermission.has("username") ? jsonPermission.get("username").asText() : "");
                         body = StringUtils.replace(body, "${PERMISSION_LASTUPDATED}", jsonPermission.has("lastUpdated") ? jsonPermission.get("lastUpdated").asText() : "");
                         body = StringUtils.replace(body, "${PERMISSION_JSON}", jsonPermission.toString());
-                    } else if (json.has("id")) {
+                    } 
+			    	if (json.has("id")) {
                     	body = StringUtils.replace(body, "${FILE_ID}", json.has("id") ? json.get("id").asText() : "");
                         body = StringUtils.replace(body, "${FILE_NAME}", json.has("name") ? json.get("name").asText() : "");
                         body = StringUtils.replace(body, "${FILE_OWNER}", json.has("owner") ? json.get("owner").asText() : "");
                         body = StringUtils.replace(body, "${FILE_URL}", json.has("_links") ? json.get("_links").get("href").get("self").asText() : "");
                         body = StringUtils.replace(body, "${FILE_ASSOCIATEDIDS}", json.has("associatedIds") ? new DateTime(json.get("associatedIds").asText()).toString(): "");
                         body = StringUtils.replace(body, "${FILE_JSON}", json.toString());
-			        }
+			        } 
+			    	if (json.has("system")) {
+			    		JsonNode jsonSystem = json.get("system");
+			    		body = StringUtils.replace(body, "${SYSTEM_ID}", jsonSystem.hasNonNull("id") ? jsonSystem.get("id").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_STATUS}", jsonSystem.hasNonNull("status") ? jsonSystem.get("status").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_TYPE}", jsonSystem.hasNonNull("type") ? jsonSystem.get("type").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_NAME}", jsonSystem.hasNonNull("name") ? jsonSystem.get("name").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_PUBLIC}", jsonSystem.hasNonNull("public") ? jsonSystem.get("public").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_GLOBALDEFAULT}", jsonSystem.hasNonNull("public") ? jsonSystem.get("public").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_LASTUPDATED}", jsonSystem.hasNonNull("lastUpdated") ? jsonSystem.get("lastUpdated").asText() : "");
+						
+						JsonNode jsonSystemStorage = jsonSystem.get("storage");
+						body = StringUtils.replace(body, "${SYSTEM_STORAGE_PROTOCOL}", jsonSystemStorage.hasNonNull("protocol") ? jsonSystemStorage.get("protocol").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_STORAGE_HOST}", jsonSystemStorage.hasNonNull("host") ? jsonSystemStorage.get("host").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_STORAGE_PORT}", jsonSystemStorage.hasNonNull("port") ? jsonSystemStorage.get("port").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_STORAGE_RESOURCE}", jsonSystemStorage.hasNonNull("resource") ? jsonSystemStorage.get("resource").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_STORAGE_ZONE}", jsonSystemStorage.hasNonNull("zone") ? jsonSystemStorage.get("zone").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_STORAGE_ROOTDIR}", jsonSystemStorage.hasNonNull("rootDir") ? jsonSystemStorage.get("rootDir").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_STORAGE_HOMEDIR}", jsonSystemStorage.hasNonNull("homeDir") ? jsonSystemStorage.get("homeDir").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_STORAGE_AUTH_TYPE}", jsonSystemStorage.hasNonNull("auth") && jsonSystemStorage.get("auth").hasNonNull("type") ? jsonSystemStorage.get("auth").get("type").asText() : "");
+						body = StringUtils.replace(body, "${SYSTEM_STORAGE_CONTAINER}", jsonSystemStorage.hasNonNull("container") ? jsonSystemStorage.get("container").asText() : "");
+						
+						if (jsonSystem.hasNonNull("login")) {
+							JsonNode jsonSystemLogin = jsonSystem.get("login");
+    						body = StringUtils.replace(body, "${SYSTEM_LOGIN_PROTOCOL}", jsonSystemLogin.hasNonNull("protocol") ? jsonSystemLogin.get("protocol").asText() : "");
+    						body = StringUtils.replace(body, "${SYSTEM_LOGIN_HOST}", jsonSystemLogin.hasNonNull("host") ? jsonSystemLogin.get("host").asText() : "");
+    						body = StringUtils.replace(body, "${SYSTEM_LOGIN_PORT}", jsonSystemLogin.hasNonNull("port") ? jsonSystemLogin.get("port").asText() : "");
+    						body = StringUtils.replace(body, "${SYSTEM_LOGIN_AUTH_TYPE}", jsonSystemLogin.hasNonNull("auth") && jsonSystemLogin.get("auth").hasNonNull("type") ? jsonSystemLogin.get("auth").get("type").asText() : "");
+						}
+			    	}
 			    }
 			    body = StringUtils.replace(body, "${RAW_JSON}", mapper.writer().withDefaultPrettyPrinter().writeValueAsString(getCustomNotificationMessageContextData()));
 		    } catch (Exception e) {

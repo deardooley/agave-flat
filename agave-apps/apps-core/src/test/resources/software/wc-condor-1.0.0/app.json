@@ -1,0 +1,70 @@
+{
+    "icon":"https://agaveapi.co/wp-content/uploads/2016/02/Agave-white-retina.png",
+    "available":true,
+    "name":"wc-condor",
+    "parallelism":"SERIAL",
+    "version":"1.0.0",
+    "helpURI":"http://www.gnu.org/s/coreutils/manual/html_node/wc-invocation.html",
+    "label":"wc condor",
+    "shortDescription":"Count words in a file",
+    "longDescription":"",
+    "tags":[
+        "textutils",
+        "gnu"
+    ],
+    "ontology":[
+        "http://sswapmeet.sswap.info/algorithms/wc"
+    ],
+    "executionSystem":"condor.example.com",
+    "executionType":"CONDOR",
+    "deploymentSystem":"storage.example.com",
+    "deploymentPath":"testuser/agave/apps/wc-condor-1.0.0",
+    "templatePath":"/wrapper.sh",
+    "testPath":"test/test.sh",
+    "checkpointable":"false",
+    "modules":[],
+    "inputs":[
+        {
+            "id":"query1",
+            "value":{
+                "default":"agave://irods-password.example.com/testuser/science-api-samples/README.md",
+                "validator":"",
+                "required":true
+            },
+            "details":{
+                "label":"File to count words in: ",
+                "description":""
+            },
+            "semantics":{
+                "ontology":[
+                    "http://sswapmeet.sswap.info/util/TextDocument"
+                ],
+                "minCardinality":1,
+                "fileTypes":[
+                    "text-0"
+                ]
+            }
+        }
+    ],
+    "outputs":[
+        {
+            "id":"outputWC",
+            "value":{
+                "default":"wc_out.txt",
+                "validator":""
+            },
+            "details":{
+                "label":"Text file",
+                "description":"Results of WC"
+            },
+            "semantics":{
+                "ontology":[
+                    "http://sswapmeet.sswap.info/util/TextDocument"
+                ],
+                "minCardinality": 1,
+                "maxCardinality": 1,
+                "fileType":"text-0"
+            }
+        }
+    ]
+}

@@ -30,6 +30,7 @@ import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.apps.model.enumerations.SoftwareParameterType;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.exceptions.PermissionException;
+import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.io.dao.LogicalFileDao;
 import org.iplantc.service.io.model.LogicalFile;
 import org.iplantc.service.io.permissions.PermissionManager;
@@ -287,19 +288,6 @@ public class JobManager {
                     }
                 }
 
-//				try
-//				{
-//					killer = JobKillerFactory.getInstance(job);
-//					killer.attack();
-//
-//					break;
-//				}
-//				catch (JobException e)
-//				{
-//					log.debug("Failed to stop job " + job.getUuid() + " on attempt " + retries +
-//							". Aborting further kill attempts. " + e.getMessage());
-//					break;
-//				}
 			}
 
 			// Occasionally the status check will have run or the job will actually complete
@@ -340,15 +328,21 @@ public class JobManager {
 	 * updates the timestamp.
 	 *
 	 * @param jobId
-	 * @throws Exception
+	 * @throws JobException
 	 */
-	public static Job hide(long jobId) throws Exception
+	public static Job hide(long jobId) throws JobTerminationException, JobException
 	{
 		Job job = JobDao.getById(jobId);
 
 		if (!job.isRunning())
 		{
-			job.setVisible(Boolean.FALSE);
+			try {
+				job.setVisible(Boolean.FALSE);
+				JobDao.persist(job);
+			}
+			catch (Throwable e) {
+				throw new JobException("Failed to update job " + job.getUuid() + ".", e);
+			}
 		}
 		else
 		{
@@ -356,30 +350,34 @@ public class JobManager {
 			try {
 				killer = JobKillerFactory.getInstance(job);
 				killer.attack();
-			} catch (JobException e) {
-				log.debug("Failed to stop job " + job.getUuid() + " at user's request. This may be caused by a ghost process.", e);
+			} 
+			catch (SystemUnavailableException e) {
+				throw new JobTerminationException("Failed to stop job " + job.getUuid() + 
+						". Execution system is unavailable", e);
 			}
-			job.setVisible(Boolean.FALSE);
-			job.setStatus(JobStatusType.STOPPED, "Job deleted by user.");
-			job.setLastUpdated(new Date());
-			job.setEndTime(job.getLastUpdated());
+			catch (RemoteExecutionException e) {
+				throw new JobTerminationException("Failed to stop " + job.getUuid()
+						+ " at user's request. An error occurred communicating "
+						+ "with the remote host", e);
+			}
+			catch (JobTerminationException e) {
+				throw e;
+			}
+			catch (Throwable t) {
+				throw new JobException("Unexpected error stopping job " + job.getUuid() + 
+						" at user's request.", t);
+			}
+			finally {
+				job.setVisible(Boolean.FALSE);
+				job.setStatus(JobStatusType.STOPPED, "Job deleted by user.");
+				Date jobHiddenDate = new Date();
+				job.setLastUpdated(jobHiddenDate);
+				job.setEndTime(jobHiddenDate);
+				JobDao.persist(job);
+			}
 		}
-
-		JobDao.persist(job);
-
+		
 		return job;
-	}
-
-	public static void main(String[] args) {
-		try
-		{
-			JobManager.hide(98);
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-
 	}
 
 	/**
@@ -2094,7 +2092,7 @@ public class JobManager {
 		}
 
 		if (queue.getMaxRequestedTime() != null &&
-				org.iplantc.service.systems.util.ServiceUtils.compareRequestedJobTimes(queue.getMaxRequestedTime(), requestedTime) == -1)
+				TimeUtils.compareRequestedJobTimes(queue.getMaxRequestedTime(), requestedTime) == -1)
 
 		{
 			return false;

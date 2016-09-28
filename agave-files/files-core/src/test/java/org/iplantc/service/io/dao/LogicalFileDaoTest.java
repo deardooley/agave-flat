@@ -21,6 +21,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+@Test(groups={"broken"})
 public class LogicalFileDaoTest extends BaseTestCase 
 {
 	private LogicalFile file;

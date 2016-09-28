@@ -16,6 +16,7 @@ import org.hibernate.Transaction;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.ImprovedNamingStrategy;
+import org.iplantc.service.common.persistence.time.CdtTimestampType;
 import org.reflections.Reflections;
 import org.reflections.scanners.ResourcesScanner;
 import org.reflections.scanners.SubTypesScanner;
@@ -62,6 +63,9 @@ public class HibernateUtil {
 				configuration.addAnnotatedClass(clazz);
 			}
 			configuration.setNamingStrategy(new ImprovedNamingStrategy());
+			
+			// adding to properly handle conversion of dates to/from the db in UTC
+			configuration.registerTypeOverride(new CdtTimestampType());
 			
 			// uncomment to see hql of all schema export statments.
 //			new SchemaExport(configuration).create(true, false);

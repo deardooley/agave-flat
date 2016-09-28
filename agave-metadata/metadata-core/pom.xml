@@ -81,60 +81,6 @@
 				</configuration>
 			</plugin>
 
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>sql-maven-plugin</artifactId>
-				<dependencies>
-					<dependency>
-						<groupId>mysql</groupId>
-						<artifactId>mysql-connector-java</artifactId>
-						<version>5.1.22</version>
-					</dependency>
-				</dependencies>
-
-				<!-- common configuration shared by all executions -->
-				<configuration>
-					<driver>${foundation.db.driver}</driver>
-					<url>${foundation.db.bootstrap}</url>
-					<username>${foundation.db.username}</username>
-					<password>${foundation.db.password}</password>
-					<settingsKey>sensibleKey</settingsKey>
-					<!--all executions are ignored if -Dmaven.test.skip=true -->
-					<!-- skip>${maven.test.skip}</skip -->
-					<skip>true</skip>
-				</configuration>
-				<executions>
-					<execution>
-						<id>drop-db-before-test-if-any</id>
-						<phase>process-test-resources</phase>
-						<goals>
-							<goal>execute</goal>
-						</goals>
-						<configuration>
-							<!-- need another database to drop the targeted one -->
-							<url>${foundation.db.bootstrap}</url>
-							<autocommit>true</autocommit>
-							<sqlCommand>drop database test</sqlCommand>
-							<!-- ignore error when database is not avaiable -->
-							<onError>continue</onError>
-						</configuration>
-					</execution>
-
-					<execution>
-						<id>create-db</id>
-						<phase>process-test-resources</phase>
-						<goals>
-							<goal>execute</goal>
-						</goals>
-						<configuration>
-							<url>${foundation.db.bootstrap}</url>
-							<!-- no transaction -->
-							<autocommit>true</autocommit>
-							<sqlCommand>create database test</sqlCommand>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 		<pluginManagement>
 			<plugins>
@@ -143,7 +89,7 @@
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
+					<version>${org.eclipse.m2e.lifecycle-mapping.version}</version>
 					<configuration>
 						<lifecycleMappingMetadata>
 							<pluginExecutions>
@@ -156,7 +102,7 @@
 											gmaven-plugin
 										</artifactId>
 										<versionRange>
-											[1.5,)
+											${gmaven-plugin.versionRange}
 										</versionRange>
 										<goals>
 											<goal>compile</goal>
@@ -164,25 +110,6 @@
 											<goal>
 												generateTestStubs
 											</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore></ignore>
-									</action>
-								</pluginExecution>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>
-											org.codehaus.mojo
-										</groupId>
-										<artifactId>
-											sql-maven-plugin
-										</artifactId>
-										<versionRange>
-											[1.5,)
-										</versionRange>
-										<goals>
-											<goal>execute</goal>
 										</goals>
 									</pluginExecutionFilter>
 									<action>
@@ -203,25 +130,29 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
-			<version>2.14.1</version>
+			<version>${mongo-java-driver.version}</version>
 		</dependency>
 
 		<!-- JSON Schema Validator -->
 		<dependency>
 			<groupId>com.github.fge</groupId>
 			<artifactId>json-schema-validator</artifactId>
-			<version>2.0.1</version>
+			<version>${json-schema-validator.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.google.guava</groupId>
 					<artifactId>guava</artifactId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jackson-databind</artifactId>
+					<groupId>com.fasterxml.jackson.core</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>17.0</version>
+			<version>${guava.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -231,15 +162,9 @@
 
 		<!-- Testing -->
 		<dependency>
-			<groupId>org.testng</groupId>
-			<artifactId>testng</artifactId>
-			<version>6.1.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.uncommons</groupId>
 			<artifactId>reportng</artifactId>
-			<version>1.1.2</version>
+			<version>${reportng.METADATA.version}</version>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
@@ -251,13 +176,13 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
+			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- <dependency>
 			<groupId>org.mongojack</groupId>
 			<artifactId>mongojack</artifactId>
-			<version>2.6.0</version>
+			<version>${mongojack.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>persistence-api</artifactId>
@@ -268,13 +193,13 @@
 		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
-			<version>4.0</version>
+			<version>${guice.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>cz.jirutka.validator</groupId>
 			<artifactId>validator-collection</artifactId>
-			<version>2.1.6</version>
+			<version>${validator-collection.version}</version>
 		</dependency>
 	</dependencies>
 </project>

@@ -20,30 +20,6 @@
                             "paramType": "query",
                             "required": false,
                             "type": "String"
-                        },
-                        {
-                            "allowMultiple": false,
-                            "description": "Filter everything but default systems from the response",
-                            "name": "defaultOnly",
-                            "paramType": "query",
-                            "required": false,
-                            "type": "boolean"
-                        },
-                        {
-                            "allowMultiple": false,
-                            "description": "Filter everything but public systems from the response",
-                            "name": "publicOnly",
-                            "paramType": "query",
-                            "required": false,
-                            "type": "boolean"
-                        },
-                        {
-                            "allowMultiple": false,
-                            "description": "Filter everything but private systems from the response.",
-                            "name": "privateOnly",
-                            "paramType": "query",
-                            "required": false,
-                            "type": "boolean"
                         }
                     ],
                     "summary": "List and/or search for systems available to you.",

@@ -3,7 +3,7 @@ target
 *~
 testrun.log
 
-# test reports 
+# test reports
 testreports
 
 # Intellij metadata files
@@ -43,6 +43,7 @@ test-output
 cache
 tutum
 docker-compose.yml
+!compose/*/docker-compose.yml
 config/maven/settings.xml
 scriptBuildAll.sh
 scriptRunAll.sh
@@ -55,3 +56,7 @@ Migrations - Migrate Sandbox.launch
 Migrations - Migrate Staging.launch
 Migrations - Migrate Prod.launch
 Migrations - Migrate Benchmarks.launch
+qairods.cyverse.org.json
+agave-systems/systems-core/src/test/resources/systems/storage/sftp-password-kbi.example.com.json
+agave-systems/systems-core/src/test/resources/systems/storage/sftp-sshkeys-kbi.example.com.json
+compose/proxy/logs

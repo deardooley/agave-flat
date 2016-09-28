@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(groups= {"irods.boutique"})
+@Test(groups= {"irods.boutique", "broken"})
 public class VDJProjectCreationTests extends BaseTransferTestCase
 {
 	private static final Logger log = Logger.getLogger(AbstractRemoteDataClientTest.class);

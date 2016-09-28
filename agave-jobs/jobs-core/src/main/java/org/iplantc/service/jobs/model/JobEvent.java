@@ -71,7 +71,6 @@ public class JobEvent {
 		this.description = description;
 		this.ipAddress = ServiceUtils.getLocalIP();
 		this.createdBy = createdBy;
-		this.created = new Date();
 	}
 	
 	public JobEvent(JobStatusType status, String description, String createdBy)

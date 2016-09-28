@@ -6,6 +6,7 @@ import static org.iplantc.service.jobs.model.enumerations.JobStatusType.ARCHIVIN
 import static org.iplantc.service.jobs.model.enumerations.JobStatusType.CLEANING_UP;
 import static org.iplantc.service.jobs.model.enumerations.JobStatusType.HEARTBEAT;
 import static org.iplantc.service.jobs.model.enumerations.JobStatusType.RUNNING;
+import static org.iplantc.service.jobs.model.enumerations.JobStatusType.STOPPED;
 
 import java.io.FileNotFoundException;
 
@@ -57,16 +58,11 @@ public class JobCallbackManager {
             throw new ObjectNotFoundException(null, "No job found with given id");
         } 
         else if (!job.isVisible()) {
-            throw new JobCallbackException("Failed to process callback. Job has already been deleted.");
+            throw new JobCallbackException("Ignoring " + callback.getStatus() + 
+            		" callback on job " + job.getUuid() + ". Job has already been deleted.");
         }
         else 
         {
-//            if (!job.isRunning() && JobStatusType.isRunning(callback.getStatus()))
-//            {
-//                // can't set a stopped job back to running. Bad request
-//                throw new JobCallbackException("Job " + callback.getJob().getUuid() + " is not running.");
-//            }
-            
             TenancyHelper.setCurrentEndUser(job.getOwner());
             TenancyHelper.setCurrentTenantId(job.getTenantId());
             
@@ -74,6 +70,11 @@ public class JobCallbackManager {
             
             String message = null;
             JobStatusType status = callback.getStatus();
+            
+            if (job.getStatus() == STOPPED && JobStatusType.isRunning(callback.getStatus())) {
+                // can't set a stopped job back to running. Bad request
+                throw new JobCallbackException("Job " + callback.getJob().getUuid() + " is currently stopped.");
+            }
             
             // the HEARTBEAT status is used to update the job timestamp and is used
             // by app developers just to keep aware of a job being alive.

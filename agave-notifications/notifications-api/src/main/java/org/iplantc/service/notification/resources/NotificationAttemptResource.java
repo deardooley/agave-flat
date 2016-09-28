@@ -20,7 +20,6 @@ public interface NotificationAttemptResource {
 										   @PathParam("failureUuid") String failureUuid);
 	
 	@DELETE
-	
 	public Response deleteNotificationAttempt(@PathParam("notificationUuid") String notificationUuid, 
 									   		  @PathParam("failureUuid") String failureUuid);
 }

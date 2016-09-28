@@ -21,7 +21,7 @@ function format_response($status='success', $message='', $result='', $http_respo
 	if ($http_response_code) header($http_response_code);
 
 	// if a naked response is requested, strip content down to just the result or message (if error)
-	if (isset($_GET['naked']) && strtolower($_GET['naked']) == 'true') 
+	if (isset($_GET['naked']) && strtolower($_GET['naked']) == 'true')
 	{
 		if ($status == 'success') {
 			$content = $result;
@@ -30,12 +30,12 @@ function format_response($status='success', $message='', $result='', $http_respo
 		}
 	}
 	// if not naked, give standard wrapper
-	else 
+	else
 	{
-		$content = array("status" => $status, "message" => $message, "result" => $result, "version" => "2.1.0-r8274");
+		$content = array("status" => $status, "message" => $message, "result" => $result, "version" => $config['service.version']);
 	}
-	
-	if (is_array($content)) 
+
+	if (is_array($content))
 	{
 		if (isset($_GET['pretty']) && strtolower($_GET['pretty']) == 'true') {
 			//echo str_replace('\/', '/', json_encode($content, JSON_PRETTY_PRINT));
@@ -48,7 +48,7 @@ function format_response($status='success', $message='', $result='', $http_respo
 	{
 		echo $content;
 	}
-	
+
 	die();
 }
 
@@ -66,7 +66,7 @@ function prettyPrint($json, $spaces=2) {
     $in_quotes = false;
     $ends_line_level = NULL;
     $json_length = strlen( $json );
-    
+
     $indent = str_repeat(' ', $spaces);
 
     for( $i = 0; $i < $json_length; $i++ ) {

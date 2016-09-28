@@ -75,7 +75,7 @@ public class NotificationAttemptProcessorTest extends AbstractNotificationTest {
 		};
 	}
 	
-  @Test
+  @Test()
   public void fire() throws DisabledNotificationException, NotificationException, MissingNotificationException, IOException, UUIDException {
 	 
     Notification notification = createEmailNotification();
@@ -113,7 +113,7 @@ public class NotificationAttemptProcessorTest extends AbstractNotificationTest {
     
   }
   
-  @Test
+  @Test()
   public void fireSavesNotificationWhenItFails() throws DisabledNotificationException, NotificationException, MissingNotificationException, IOException, UUIDException {
 		 
 	    Notification notification = createWebhookNotification();

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.apps.model.Software;
+import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.jobs.exceptions.JobProcessingException;
 import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.ExecutionSystem;
@@ -171,7 +172,7 @@ public class JobRequestQueueProcessor {
 		}
 
 		if (queue.getMaxRequestedTime() != null &&
-				org.iplantc.service.systems.util.ServiceUtils.compareRequestedJobTimes(queue.getMaxRequestedTime(), requestedTime) == -1)
+				TimeUtils.compareRequestedJobTimes(queue.getMaxRequestedTime(), requestedTime) == -1)
 
 		{
 			return false;

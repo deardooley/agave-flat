@@ -45,6 +45,7 @@ import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -520,10 +521,12 @@ public class Notification
         enumModule.setDeserializers(new CaseInsensitiveEnumDeserializer());
 
         ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+        
         mapper.registerModule(enumModule);
 		
 		try {
-			Notification notification = mapper.treeToValue(json, Notification.class);
+			Notification notification = mapper.readValue(json.toString(), Notification.class);
 			
 			ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 	        Validator validator = factory.getValidator();
@@ -657,9 +660,9 @@ public class Notification
 	}
 
 	
+	@SuppressWarnings("deprecation")
 	public String toJSON() throws NotificationException  
 	{
-		String output = null;
 		ObjectMapper mapper = new ObjectMapper();
 		try
 		{
@@ -702,9 +705,9 @@ public class Notification
 								.put("href", 
 										TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE) + getUuid()));
 			
-			linksObject.put("history", (ObjectNode)mapper.createObjectNode()
-								.put("href", 
-										TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE) + getUuid() + "/history"));
+//			linksObject.put("history", (ObjectNode)mapper.createObjectNode()
+//								.put("href", 
+//										TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE) + getUuid() + "/history"));
 
 			linksObject.put("attempts", (ObjectNode)mapper.createObjectNode()
 								.put("href", 

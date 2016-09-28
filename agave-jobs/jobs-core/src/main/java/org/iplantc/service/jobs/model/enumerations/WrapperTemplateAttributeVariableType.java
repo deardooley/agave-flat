@@ -4,12 +4,14 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.util.Slug;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.ExecutionSystem;
+import org.iplantc.service.systems.util.ServiceUtils;
 import org.joda.time.DateTime;
 
 
@@ -30,6 +32,8 @@ public enum WrapperTemplateAttributeVariableType implements WrapperTemplateVaria
 	IPLANT_CORES_REQUESTED,
 	AGAVE_JOB_PROCESSORS_PER_NODE,
 	AGAVE_JOB_MEMORY_PER_NODE,
+	AGAVE_JOB_MAX_RUNTIME,
+	AGAVE_JOB_MAX_RUNTIME_MILLISECONDS,
 	AGAVE_JOB_ARCHIVE_URL,
 
 	AGAVE_JOB_OWNER,
@@ -102,6 +106,19 @@ public enum WrapperTemplateAttributeVariableType implements WrapperTemplateVaria
 		else if (this == AGAVE_JOB_MEMORY_PER_NODE)
 		{
 			return String.valueOf(job.getMemoryPerNode());
+		}
+		else if (this == AGAVE_JOB_MAX_RUNTIME)
+		{
+			return String.valueOf(job.getMaxRunTime());
+		}
+		else if (this == AGAVE_JOB_MAX_RUNTIME_MILLISECONDS)
+		{
+			try {
+				return String.valueOf(TimeUtils.getMillisecondsForMaxTimeValue(job.getMaxRunTime()));
+			}
+			catch (Exception e) {
+				return "0";
+			}
 		}
 		else if (this == AGAVE_JOB_OWNER)
 		{

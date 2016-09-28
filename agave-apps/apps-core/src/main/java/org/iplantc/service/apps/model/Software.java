@@ -81,6 +81,7 @@ import org.iplantc.service.apps.exceptions.SoftwareException;
 import org.iplantc.service.apps.model.enumerations.ParallelismType;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.systems.dao.SystemDao;
@@ -1894,7 +1895,7 @@ public class Software {
 			if (jsonNode.get("defaultMaxRunTime").isTextual())
 			{
 				String defaultRequestedTime = jsonNode.get("defaultMaxRunTime").asText();
-				if (!org.iplantc.service.systems.util.ServiceUtils.isValidRequestedJobTime(defaultRequestedTime))
+				if (!TimeUtils.isValidRequestedJobTime(defaultRequestedTime))
 				{
 					throw new SoftwareException(
 							"Invalid defaultMaxRunTime value. "
@@ -1907,7 +1908,7 @@ public class Software {
 					BatchQueue defaultQueue = software.getExecutionSystem().getQueue(software.getDefaultQueue());
 
 					if (!StringUtils.isEmpty(defaultQueue.getMaxRequestedTime()) &&
-							org.iplantc.service.systems.util.ServiceUtils.compareRequestedJobTimes(defaultRequestedTime, defaultQueue.getMaxRequestedTime()) > 0)
+							TimeUtils.compareRequestedJobTimes(defaultRequestedTime, defaultQueue.getMaxRequestedTime()) > 0)
 					{
 						throw new SoftwareException(
 								"Invalid defaultMaxRunTime value. "

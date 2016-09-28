@@ -185,17 +185,22 @@ public class RemoteFilePermissionDao
 	public static void bulkDeleteByUsernameAndlogicalFileId(String username, List<BigInteger> logicalFileIds) 
 	throws PermissionException
 	{
-		if (!ServiceUtils.isValid(username))
+		if (!ServiceUtils.isValid(username)) {
 			throw new PermissionException("Username cannot be null");
-
+		}
+		
+		if (logicalFileIds == null || logicalFileIds.isEmpty()) {
+			return;
+		}
+		
 		try
 		{
 			Session session = getSession();
 
 			String hql = "DELETE FROM `remotefilepermissions` \n"
-					+ "WHERE logical_file_id IN ( "  
-					+ StringUtils.join(logicalFileIds,", ") 
-					+ " ) AND \n"
+					+ "WHERE logical_file_id IN ( '"  
+					+ StringUtils.join(logicalFileIds,"', '") 
+					+ "' ) AND \n"
 					+ "		username = :username AND \n"
 					+ "		tenant_id = :tenantid";
 			

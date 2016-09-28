@@ -169,6 +169,11 @@ public class FileTransformProperties {
 			if (transform.getId().equalsIgnoreCase(id)) {
 				return transform;
 			}
+			else if (transform.getId().toLowerCase().startsWith("raw")) {
+				if (StringUtils.startsWith(transform.getId().toLowerCase(), id.toLowerCase())) {
+					return transform;
+				}
+			}
 		}
 		return null;
 	}

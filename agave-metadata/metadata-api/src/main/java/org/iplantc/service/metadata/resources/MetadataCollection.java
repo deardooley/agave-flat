@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.auth.AuthorizationHelper;
@@ -81,7 +82,7 @@ public class MetadataCollection extends AgaveResource
     private String internalUsername;
 	private String uuid;
     private String userQuery;
-
+    private boolean includeRecordsWithImplicitPermissions = true;
     private MongoClient mongoClient;
     private DB db;
     private DBCollection collection;
@@ -106,7 +107,7 @@ public class MetadataCollection extends AgaveResource
 		Form form = request.getOriginalRef().getQueryAsForm();
 		if (form != null) {
 			userQuery = (String)form.getFirstValue("q");
-
+			
 	        if (!StringUtils.isEmpty(userQuery)) {
 	            try {
 	                userQuery = URLDecoder.decode(userQuery, "UTF-8");
@@ -116,6 +117,26 @@ public class MetadataCollection extends AgaveResource
 	                response.setEntity(new IplantErrorRepresentation("Invalid URL-encoded Character(s)."));
 	            }
 	        }
+	        
+	        // allow admins to de-escelate permissions for querying metadata
+			// so they don't get back every record for every user.
+			if (AuthorizationHelper.isTenantAdmin(this.username)) {
+				// check whether they explicitly ask for unprivileged results..basically query
+				// as a normal user
+				if (form.getNames().contains("privileged") && 
+						!BooleanUtils.toBoolean((String)form.getFirstValue("privileged"))) {
+					this.includeRecordsWithImplicitPermissions = false;
+				}
+				// either they did not provide a "privileged" query parameter or it was true
+				// either way, they get back all results regardless of ownership
+				else {
+					this.includeRecordsWithImplicitPermissions = true;
+				}
+			}
+			// non-admins do not inherit any implicit permissions
+			else {
+				this.includeRecordsWithImplicitPermissions = false;
+			}
 		}
 
         internalUsername = (String) context.getAttributes().get("internalUsername");
@@ -164,15 +185,19 @@ public class MetadataCollection extends AgaveResource
             {
             	AgaveLogServiceClient.log(METADATA02.name(), MetaList.name(), username, "", getRequest().getClientInfo().getUpstreamAddress());
             	
-            	// permissions are separated from the metadata, so we need to look up available uuid for user.
-            	List<String> accessibleUuids = MetadataPermissionDao.getUuidOfAllSharedMetataItemReadableByUser(this.username);
-            	
-            	BasicDBList or = new BasicDBList();
-            	or.add(new BasicDBObject("uuid", new BasicDBObject("$in", accessibleUuids)));
-            	or.add(new BasicDBObject("owner", this.username));
-            	
             	query = new BasicDBObject("tenantId", TenancyHelper.getCurrentTenantId());
-            	query.append("$or", or);
+            	
+            	// filter results if querying without implicity permissions
+            	if (!includeRecordsWithImplicitPermissions) {
+	            	// permissions are separated from the metadata, so we need to look up available uuid for user.
+	            	List<String> accessibleUuids = MetadataPermissionDao.getUuidOfAllSharedMetataItemReadableByUser(this.username);
+	            	
+	            	BasicDBList or = new BasicDBList();
+	            	or.add(new BasicDBObject("uuid", new BasicDBObject("$in", accessibleUuids)));
+	            	or.add(new BasicDBObject("owner", this.username));
+	            	
+	            	query.append("$or", or);
+            	}
             }
         	else 
             {
@@ -201,8 +226,8 @@ public class MetadataCollection extends AgaveResource
                     // append tenancy info
                     query.append("tenantId", TenancyHelper.getCurrentTenantId());
                     
-                    // enforce read access filter 
-                    if (!AuthorizationHelper.isTenantAdmin(this.username)) {
+                    // filter results if querying without implicity permissions
+                    if (!includeRecordsWithImplicitPermissions) {
 	                    // permissions are separated from the metadata, so we need to look up available uuid for user.
 	                	List<String> accessibleUuids = MetadataPermissionDao.getUuidOfAllSharedMetataItemReadableByUser(this.username);
 	                	List<String> accessibleOwners = Arrays.asList(this.username, Settings.PUBLIC_USER_USERNAME, Settings.WORLD_USER_USERNAME);
@@ -211,7 +236,6 @@ public class MetadataCollection extends AgaveResource
 	                	or.add(new BasicDBObject("owner", new BasicDBObject("$in", accessibleOwners)));
 	                	query.append("$or", or);
                     }
-                	
                 }
                 catch(JSONParseException e)
                 {
@@ -600,28 +624,46 @@ public class MetadataCollection extends AgaveResource
     	metadataObject.removeField("_id");
     	metadataObject.removeField("tenantId");
     	BasicDBObject hal = new BasicDBObject();
-    	hal.append("self", new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_METADATA_SERVICE + "data/" + metadataObject.get("uuid"))));
+    	hal.put("self", new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_METADATA_SERVICE) + "data/" + metadataObject.get("uuid")));
+    	hal.put("permissions", new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_METADATA_SERVICE) + "data/" + metadataObject.get("uuid") + "/pems"));
+    	hal.put("owner", new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_PROFILE_SERVICE) + metadataObject.get("owner")));
+    	
     	if (metadataObject.containsField("associationIds"))
     	{
+    		// TODO: break this into a list of object under the associationIds attribute so
+    		// we dont' overwrite the objects in the event there are multiple of the same type.
+    		BasicDBList halAssociationIds = new BasicDBList();
+    		
         	for (Object associatedId : (BasicDBList)metadataObject.get("associationIds")) {
                 AgaveUUID agaveUUID = new AgaveUUID((String)associatedId);
 
                 try {
                     String resourceUrl = agaveUUID.getObjectReference();
-                    hal.append(agaveUUID.getResourceType().name().toLowerCase(),
-                            new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(resourceUrl)));
+                    BasicDBObject assocResource = new BasicDBObject();
+                    assocResource.put("rel", (String)associatedId);
+                    assocResource.put("href", TenancyHelper.resolveURLToCurrentTenant(resourceUrl));
+                    assocResource.put("title", agaveUUID.getResourceType().name().toLowerCase());
+                    halAssociationIds.add(assocResource);
                 }
                 catch (UUIDException e) {
-                    hal.append(agaveUUID.getResourceType().name().toLowerCase(),
-                            new BasicDBObject("href", null));
+                	BasicDBObject assocResource = new BasicDBObject();
+                    assocResource.put("rel", (String)associatedId);
+                    assocResource.put("href", null);
+                    if (agaveUUID != null) {
+                    	assocResource.put("title", agaveUUID.getResourceType().name().toLowerCase());
+                    }
+                    halAssociationIds.add(assocResource);
                 }
             }
+        	
+        	hal.put("associationIds", halAssociationIds);
         }
 
     	if (metadataObject.get("schemaId") != null && !StringUtils.isEmpty(metadataObject.get("schemaId").toString()))
     	{
     		AgaveUUID agaveUUID = new AgaveUUID((String)metadataObject.get("schemaId"));
     		hal.append(agaveUUID.getResourceType().name(), new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(agaveUUID.getObjectReference())));
+    		
     	}
     	metadataObject.put("_links", hal);
 

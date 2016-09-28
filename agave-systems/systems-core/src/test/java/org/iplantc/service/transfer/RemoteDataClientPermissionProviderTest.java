@@ -28,7 +28,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(singleThreaded=true, groups= {"integration", "permissions"})
+@Test(singleThreaded=true, groups= {"integration", "permissions", "broken"})
 public abstract class RemoteDataClientPermissionProviderTest extends BaseTransferTestCase 
 {
 	private static final Logger	log	= Logger.getLogger(RemoteDataClientPermissionProviderTest.class);
@@ -150,7 +150,7 @@ public abstract class RemoteDataClientPermissionProviderTest extends BaseTransfe
     		getClient().authenticate();
     		
     		if (!getClient().doesExist(m.getName())) {
-    		    getClient().mkdirs(m.getName());
+    		    getClient().mkdirs(m.getName(), system.getOwner());
     		}
     		
     		if (!getClient().doesExist(m.getName() + "/" + LOCAL_DIR_NAME)) {

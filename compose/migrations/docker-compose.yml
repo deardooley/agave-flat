@@ -1,0 +1,59 @@
+###############################################################
+# Core Science APIs - Migrations
+# migrations.yml
+#
+# This contains the database migration utilities for updating 
+# and repairing the database. For database backup and snapshots,
+# please see the `config/extras/db` folder.
+#
+# note: Do not run this entire file. In the vast majority of 
+# cases, it is sufficient to run the info, migrate, and validate
+# tasks in succession to handle the database update in its 
+# entirety.
+#
+###############################################################
+
+version: '2'
+
+services:
+
+  migrate:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:migrate"
+  
+  clean:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:clean"
+    
+  info:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:info"
+  
+  validate:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:validate"
+    
+  baseline:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:baseline"
+    
+  repair:
+    extends:
+      file: ../common.yml
+      service: migrations
+    command: "flyway:repair"
+    
+networks:
+  thirdparty:
+    external:
+      name: thirdparty_services

@@ -3,17 +3,13 @@
  */
 package org.iplantc.service.io.model;
 
-import static org.iplantc.service.io.model.enumerations.FileEventType.*;
-
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -30,8 +26,6 @@ import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlElement;
 
-import net.jcip.annotations.GuardedBy;
-
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -45,22 +39,16 @@ import org.iplantc.service.common.uri.UrlPathEscaper;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.io.Settings;
-import org.iplantc.service.io.dao.LogicalFileDao;
 import org.iplantc.service.io.exceptions.FileEventProcessingException;
 import org.iplantc.service.io.manager.FileEventProcessor;
 import org.iplantc.service.io.model.enumerations.FileEventType;
 import org.iplantc.service.io.model.enumerations.StagingTaskStatus;
 import org.iplantc.service.io.model.enumerations.TransformTaskStatus;
-import org.iplantc.service.notification.dao.NotificationDao;
-import org.iplantc.service.notification.exceptions.NotificationException;
-import org.iplantc.service.notification.managers.NotificationManager;
 import org.iplantc.service.notification.model.Notification;
 import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.transfer.model.RemoteFilePermission;
 import org.joda.time.DateTime;
 import org.json.JSONException;
-import org.json.JSONStringer;
-import org.json.JSONWriter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -532,7 +520,7 @@ public class LogicalFile {
 		links.set("self", mapper.createObjectNode()
 	    		.put("href", getPublicLink()));
 	    links.set("system", mapper.createObjectNode()
-				.put("href", system.getPublicLink()));
+				.put("href", getSystem().getPublicLink()));
 		links.put("profile", mapper.createObjectNode()
 				.put("href", getOwnerLink()));
 		links.put("history", mapper.createObjectNode()
@@ -581,20 +569,24 @@ public class LogicalFile {
 	
 	@Transient
 	public String getPublicLink() {
-		String resolvedPath = StringUtils.removeStart(getPath(), system.getStorageConfig().getRootDir());
-		resolvedPath = "/" + StringUtils.removeEnd(resolvedPath, "/"); 
+		String resolvedPath = StringUtils.removeStart(getPath(), getSystem().getStorageConfig().getRootDir());
+		resolvedPath = StringUtils.removeEnd(resolvedPath, "/"); 
+        if ((resolvedPath != null) && !resolvedPath.startsWith("/"))  // Avoid multiple leading slashes.
+        	resolvedPath = "/" + resolvedPath;
 		return TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_IO_SERVICE) + 
-				"media/system/" + system.getSystemId() + "/" + 
+				"media/system/" + getSystem().getSystemId() + "/" + 
 				UrlPathEscaper.escape(resolvedPath);
 		
 	}
 	
 	@Transient
 	public String getEventLink() {
-		String resolvedPath = StringUtils.removeStart(getPath(), system.getStorageConfig().getRootDir());
-		resolvedPath = "/" + StringUtils.removeEnd(resolvedPath, "/"); 
+		String resolvedPath = StringUtils.removeStart(getPath(), getSystem().getStorageConfig().getRootDir());
+		resolvedPath = StringUtils.removeEnd(resolvedPath, "/"); 
+        if ((resolvedPath != null) && !resolvedPath.startsWith("/"))  // Avoid multiple leading slashes.
+        	resolvedPath = "/" + resolvedPath;
 		return TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_IO_SERVICE) + 
-				"history/system/" + system.getSystemId() + "/" + 
+				"history/system/" + getSystem().getSystemId() + "/" + 
 				UrlPathEscaper.escape(resolvedPath);
 	}
 	

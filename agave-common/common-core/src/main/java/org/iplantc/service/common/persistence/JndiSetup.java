@@ -44,9 +44,20 @@ public class JndiSetup
 
             // Put datasource in JNDI context
             ic.bind("java:comp/env/jdbc/" + props.getProperty("ds_name"), ds);
-            
-        } catch (NamingException e) {
+        } 
+        catch (NamingException e) {
             e.printStackTrace();
         }
     }   
+    
+    public static void close() {
+    	InitialContext ic = null;
+        try {
+            ic = new InitialContext();
+            ic.createSubcontext("java:comp/env/jdbc");
+            ic.close();
+        } catch (NamingException e) {
+            e.printStackTrace();
+        }
+    }
 }

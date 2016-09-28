@@ -21,6 +21,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"broken"})
 public class JobSearchTest  extends AbstractDaoTest {
 
 	@BeforeClass

@@ -59,6 +59,9 @@ public class SubmitScriptFactory {
 		else if (scheduler == SchedulerType.CUSTOM_TORQUE) {
 			return new CustomTorqueSubmitScript(job);
 		}
+		else if (scheduler == SchedulerType.CUSTOM_PBS) {
+			return new CustomPbsSubmitScript(job);
+		}
 		else if (scheduler == SchedulerType.CUSTOM_SLURM) {
 			return new CustomSlurmSubmitScript(job);
 		}

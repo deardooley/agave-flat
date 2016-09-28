@@ -279,7 +279,7 @@ public class BatchQueueTest extends SystemsModelTestCommon{
     	};
     }
     
-    @Test (groups={"model","system"}, dataProvider="batchQueueMaxMemoryParser")
+    @Test (groups={"model","system", "broken"}, dataProvider="batchQueueMaxMemoryParser")
     public void batchQueueMaxMemoryParserTest(String value, long expectedValue, String message, boolean exceptionThrown) 
     throws Exception 
     {

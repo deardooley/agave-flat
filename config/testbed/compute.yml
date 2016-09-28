@@ -5,33 +5,37 @@
 ###############################################################
 
 ssh:
-  image: agaveapi/centos-base
+  image: agaveapi/centos-base:latest
   hostname: docker.example.com
   ports:
     - '10111:22'
    
 gsissh:
-  image: agaveapi/centos-base
-  hostname: tunnel.example.com
-  links: 
-    - sftphidden
+  image: agaveapi/gridftp:latest
+  hostname: docker.example.com
   ports:
     - '2222:2222'
 
 slurm:
-  image: agaveapi/slurm
+  image: agaveapi/slurm:latest
   hostname: docker.example.com
   ports:
     - '10133:22'
 
 torque:
-  image: agaveapi/torque
+  image: agaveapi/torque:latest
   hostname: docker.example.com
   ports:
     - '10144:22'
 
 gridengine:
-  image: agaveapi/gridengine
+  image: agaveapi/gridengine:latest
+  hostname: docker.example.com
+  ports:
+    - '10155:22'
+    
+htcondor:
+  image: agaveapi/htcondor:latest
   hostname: docker.example.com
   ports:
     - '10155:22'
@@ -40,4 +44,5 @@ gridengine:
 #   image: agaveapi/openlava:2.2
 #   hostname: docker.example.com
 #   ports:
-#     - '10166:22'
+#     - '10166:22' 
+

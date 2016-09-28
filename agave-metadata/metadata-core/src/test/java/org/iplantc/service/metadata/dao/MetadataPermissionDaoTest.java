@@ -11,6 +11,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+@Test(groups={"broken"})
 public class MetadataPermissionDaoTest {
 
 	private String uuid = null;

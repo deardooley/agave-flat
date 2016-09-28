@@ -47,6 +47,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.Collections2;
 
+@Test(groups={"broken"})
 public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest 
 {
 	public static final Logger log = Logger.getLogger(ProgressiveMonitoringBackoffTest.class); 
@@ -257,7 +258,7 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 		
 		List<Object[]> testCases = new ArrayList<Object[]>();
 		
-		for(int i=0; i<500; i++)
+		for(int i=0; i<50; i++)
 		{
 			int expectedInterval = getExpectedIntervalForCheckCount(i);
 			

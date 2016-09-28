@@ -1,7 +1,28 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
   
 <suite name="iPlant Profile Service API" verbose="5" parallel="false">
-  <!-- <test name="InternalUser" >
+    <groups>
+        <run>
+            <exclude name="broken"/>
+            <exclude name="notReady"/>
+        </run>
+    </groups>
+    <test name="Common core">
+        <packages>
+<!--
+            <package name="org.iplantc.service.common.auth" />
+            <package name="org.iplantc.service.common.dao" />
+            <package name="org.iplantc.service.common.discovery.providers.sql" />
+            <package name="org.iplantc.service.common.messaging" />
+            <package name="org.iplantc.service.common.persistence" />
+            <package name="org.iplantc.service.common.uri" />
+            <package name="org.iplantc.service.common.util" />
+            <package name="org.iplantc.service.common.uuid" />
+-->
+        </packages>
+    </test>
+
+    <!-- <test name="InternalUser" >
     <classes>
         <class name="org.iplantc.service.profile.dao.InternalUserDaoTest" />
         <class name="org.iplantc.service.profile.manager.InternalUserManagerTest" />

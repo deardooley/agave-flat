@@ -1,0 +1,323 @@
+###############################################################
+# Core Science APIs - Static Instances
+# docker-compose.yml
+#
+# This contains the core service configuration for a static 
+# (non-load balanced instance) deployment. This is often helpful
+# in a development environment as the services have fixed ports
+# and can be accessed for remote debugging via JMX.
+# 
+# These services start on a 8xxx port range and block a low
+# range of ports. Make sure to start the `proxy` container
+# from the `'../service-definitions.yml'` file separately from this
+# stack. You do not need to restart the proxy once it is running.
+#
+# Starting:
+# cd $AGAVE_HOME/compose && docker-compose -f proxy.yml up -d proxy
+# cd $AGAVE_HOME/compose/thirdparty && docker-compose up -d 
+# cd $AGAVE_HOME/compose/migrations && docker-compose up -d migrate
+# cd $AGAVE_HOME/compose/static && docker-compose up -d
+# 
+#
+# Recreating:
+# cd $AGAVE_HOME/compose/static && docker-compose up -d --force-recreate
+#
+###############################################################
+
+###############################################################
+#   Agave Core Services (Blue - lb instance)
+###############################################################
+
+
+version: '2'
+
+services:
+  jobs:
+    extends:
+      file: '../service-definitions.yml'
+      service: jobs
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8081:80"
+      - "52981:52911"
+      - "10181:10001"
+      - "10281:10002"
+      - "8444:443"
+      - "50007-50017:50007-50017"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+      - 'GLOBUS_TCP_PORT_RANGE=50007,50017'
+
+  files:
+    extends:
+      file: '../service-definitions.yml'
+      service: files
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8082:80"
+      - "52982:52911"
+      - "10182:10001"
+      - "10282:10002"
+      - "8445:443"
+      - "50301-50310:50301-50310"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+      - 'GLOBUS_TCP_PORT_RANGE=50301,50310'
+
+  apps:
+    extends:
+      file: '../service-definitions.yml'
+      service: apps
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8083:80"
+      - "52983:52911"
+      - "10183:10001"
+      - "10283:10002"
+      - "8446:443"
+      - "50901-50910:50901-50910"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+      - 'GLOBUS_TCP_PORT_RANGE=50901,50910'
+
+  systems:
+    extends:
+      file: '../service-definitions.yml'
+      service: systems
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8084:80"
+      - "52984:52911"
+      - "10184:10001"
+      - "10284:10002"
+      - "8447:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE=true'
+      - 'CONTAINER_STACK=blue'
+
+  monitors:
+    extends:
+      file: '../service-definitions.yml'
+      service: monitors
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8085:80"
+      - "52985:52911"
+      - "10185:10001"
+      - "10285:10002"
+      - "8448:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+
+  profiles:
+    extends:
+      file: '../service-definitions.yml'
+      service: profiles
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8086:80"
+      - "52986:52911"
+      - "10186:10001"
+      - "10286:10002"
+      - "8449:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+
+  metadata:
+    extends:
+      file: '../service-definitions.yml'
+      service: metadata
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8087:80"
+      - "52987:52911"
+      - "10187:10001"
+      - "10287:10002"
+      - "8450:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+      
+  notifications:
+    extends:
+      file: '../service-definitions.yml'
+      service: notifications
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8088:80"
+      - "52988:52911"
+      - "10188:10001"
+      - "10288:10002"
+      - "8451:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+
+  transforms:
+    extends:
+      file: '../service-definitions.yml'
+      service: transforms
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8098:80"
+      - "52998:52911"
+      - "10198:10001"
+      - "10298:10002"
+      - "8461:443"
+      - "50601-50610:50601-50610"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+      - 'GLOBUS_TCP_PORT_RANGE=50601,50610'
+
+  realtime:
+    extends:
+      file: '../service-definitions.yml'
+      service: realtime
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8076:80"
+      - "52976:52911"
+      - "10176:10001"
+      - "10276:10002"
+      - "8458:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+
+  tags:
+    extends:
+      file: '../service-definitions.yml'
+      service: tags
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8077:80"
+      - "52977:52911"
+      - "10177:10001"
+      - "10277:10002"
+      - "8457:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+      
+  uuids:
+    extends:
+      file: '../service-definitions.yml'
+      service: uuids
+    command: catalina.sh jpda run 2>&1
+    ports:
+      - "8078:80"
+      - "8459:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+
+  postits:
+    extends:
+      file: '../service-definitions.yml'
+      service: postits
+    ports:
+      - "8090:80"
+      - "8453:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+
+  usage:
+    extends:
+      file: '../service-definitions.yml'
+      service: usage
+    ports:
+    #  - "80"
+      - "8091:80"
+      - "8454:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+
+  logging:
+    extends:
+      file: '../service-definitions.yml'
+      service: logging
+    ports:
+#      - "80"
+      - "8093:80"
+      - "8456:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+
+  tenants:
+    extends:
+      file: '../service-definitions.yml'
+      service: tenants
+    hostname: api.example.com
+    ports:
+    #  - "80"
+      - "80"
+      - "8455:443"
+    environment:
+      - 'ENABLE_REMOTE_DEBUG=1'
+      - 'CONTAINER_STACK=blue'
+    labels:
+      - 'traefik.frontend.rule=Host:api.example.com;PathStrip:/tenants,/tenants/{id}'
+      - 'traefik.backend=tenants'
+      - "traefik.port=80"
+      - "traefik.protocol=http"
+      - "traefik.frontend.entryPoints=https"
+ 
+  #docs:
+  #  extends:
+  #    file: '../service-definitions.yml'
+  #    service: docs
+  #  ports:
+  #    - "8094:80"
+  #    - "8457:443"
+  #  environment:
+  #    - 'CONTAINER_STACK=blue'
+  #
+  #stats:
+  #  extends:
+  #    file: '../service-definitions.yml'
+  #    service: stats
+  #  ports:
+  #    - "8099:80"
+  #    - "8462:443"
+  #  links:
+  #    - reverseip
+  #    - redis
+  #  environment:
+  #    - 'CONTAINER_STACK=blue'
+  #
+  #reverseip:
+  #  extends:
+  #    file: '../service-definitions.yml'
+  #    service: reverseip
+  #  environment:
+  #    - 'CONTAINER_STACK=blue'
+  #
+  #redis:
+  #  extends:
+  #    file: '../service-definitions.yml'
+  #    service: redis
+  #  volumes:
+  #    - ./cache/redis:/data
+  #  environment:
+  #    - 'CONTAINER_STACK=blue'
+
+networks:
+  thirdparty:
+    external:
+      name: thirdparty_services
+  realtime:
+    external:
+      name: thirdparty_realtime
+  backend:
+    external:
+      name: proxy_backend

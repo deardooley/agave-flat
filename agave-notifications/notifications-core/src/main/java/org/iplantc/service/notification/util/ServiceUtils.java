@@ -538,7 +538,7 @@ public class ServiceUtils {
         }
         // fanout.io realm
         else {
-        	return callbackUrl.matches("^(?:http|https)://([a-zA-Z0-9]+).fanoutcdn.com/(ffp|bayoux)$");
+        	return callbackUrl.matches("^(?:http|https)://([a-zA-Z0-9]+).fanoutcdn.com/(fpp|bayoux)");
     	}
     }
 }

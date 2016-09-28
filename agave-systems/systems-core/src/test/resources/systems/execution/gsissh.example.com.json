@@ -24,7 +24,7 @@
 	],
 	"login": {
 		"host": "docker.example.com",
-		"port": 22,
+		"port": 2222,
 		"protocol": "GSISSH",
 		"auth": {
 			"username": "testuser",

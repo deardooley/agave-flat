@@ -120,40 +120,6 @@
 					</webResources>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>sql-maven-plugin</artifactId>
-				<dependencies>
-					<dependency>
-						<groupId>mysql</groupId>
-						<artifactId>mysql-connector-java</artifactId>
-						<version>5.1.22</version>
-					</dependency>
-				</dependencies>
-				<configuration>
-					<driver>${foundation.db.driver}</driver>
-					<url>${foundation.db.bootstrap}</url>
-					<username>${foundation.db.username}</username>
-					<password>${foundation.db.password}</password>
-					<settingsKey>sensibleKey</settingsKey>
-					<skip>${maven.test.skip}</skip>
-				</configuration>
-				<executions>
-					<execution>
-						<id>create-db</id>
-						<phase>process-test-resources</phase>
-						<goals>
-							<goal>execute</goal>
-						</goals>
-						<configuration>
-							<autocommit>true</autocommit>
-							<srcFiles>
-								<srcFile>target/test-classes/emptytables.sql</srcFile>
-							</srcFiles>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 			<!-- The web assemby -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -193,7 +159,7 @@
 			<plugin>
 				<groupId>com.github.redfish4ktc.soapui</groupId>
 				<artifactId>maven-soapui-extension-plugin</artifactId>
-				<version>4.6.3.1</version>
+				<version>${maven-soapui-extension-plugin.version}</version>
 				<dependencies>
 				</dependencies>
 				<configuration>
@@ -352,7 +318,7 @@
 			</plugin>
 			<!-- ***** jetty plugin properties ****** -->
 			<!-- <plugin> <groupId>org.mortbay.jetty</groupId> <artifactId>jetty-maven-plugin</artifactId>
-				<version>8.1.9.v20130131</version> <configuration> <skip>${maven.test.skip}</skip>
+				<version>${jetty-maven-plugin.version}</version> <configuration> <skip>${maven.test.skip}</skip>
 				<stopKey>STOP</stopKey> <stopPort>9999</stopPort> <scanIntervalSeconds>5</scanIntervalSeconds>
 				<connectors> <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
 				<port>8182</port> </connector> </connectors> <webAppConfig> <contextPath>/usage</contextPath>

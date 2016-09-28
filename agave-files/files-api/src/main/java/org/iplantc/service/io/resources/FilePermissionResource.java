@@ -5,7 +5,9 @@ package org.iplantc.service.io.resources;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
@@ -31,6 +33,7 @@ import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.iplantc.service.transfer.model.RemoteFilePermission;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
 import org.restlet.Request;
+import org.restlet.data.Form;
 import org.restlet.data.Status;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Delete;
@@ -57,6 +60,8 @@ public class FilePermissionResource extends AbstractFileResource
     private String internalUsername;
 	private String owner;
 	private String path;
+	private String searchUsername = null;
+	private PermissionType searchPermission = null;
 
     private RemoteDataClient remoteDataClient;
     private RemoteSystem system;
@@ -68,7 +73,32 @@ public class FilePermissionResource extends AbstractFileResource
 		this.limit = getLimit();
 		this.offset = getOffset();
 		this.internalUsername = getInternalUsername();
-
+		String sPermission = null;
+		Form form = Request.getCurrent().getOriginalRef().getQueryAsForm();
+        if (form != null) {
+        	for (String key: form.getNames()) {
+	        	if (this.searchUsername == null && 
+						StringUtils.trimToEmpty(key).toLowerCase().startsWith("username")) {
+					this.searchUsername = form.getFirstValue(key).toString();
+				}
+				else if (sPermission == null && 
+						StringUtils.trimToEmpty(key).toLowerCase().startsWith("permission")) {
+					sPermission = form.getFirstValue(key).toString();
+				}
+        	}
+		}
+		
+		try {
+			if (StringUtils.isNotEmpty(sPermission)) {
+				this.searchPermission = PermissionType.valueOf(sPermission);
+			}
+		}
+		catch (IllegalArgumentException e) {
+        	throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
+            		"Invalid permission value. Valid values are: " + 
+            		ServiceUtils.explode(",", Arrays.asList(PermissionType.values())));
+        }
+		
         SystemManager sysManager = new SystemManager();
         SystemDao sysDao = new SystemDao();
         //get system ID
@@ -215,12 +245,31 @@ public class FilePermissionResource extends AbstractFileResource
 					} 
 					
 					StringBuilder builder = new StringBuilder();
+					RemoteFilePermission[] pems = null;
+					if (StringUtils.isEmpty(this.searchUsername)) {
+						pems = pm.getAllPermissions(path).toArray(new RemoteFilePermission[]{});
+					}
+					else {
+						PermissionManager searchPermissionManager = new PermissionManager(system, remoteDataClient, logicalFile, this.searchUsername);
+						pems = new RemoteFilePermission[]{searchPermissionManager.getUserPermission(remoteDataClient.resolvePath(path))};
+					}
 					
-					RemoteFilePermission[] pems = pm.getAllPermissions(path).toArray(new RemoteFilePermission[]{});
+					// filter before pagination
+					if (this.searchPermission != null) {
+						List<RemoteFilePermission> filteredPems = new ArrayList<RemoteFilePermission>();
+						for (RemoteFilePermission pem: pems) {
+							if (this.searchPermission == pem.getPermission()) {
+								filteredPems.add(pem);
+							}
+						}
+						pems = filteredPems.toArray(new RemoteFilePermission[]{});
+					}
+					
+					// serialize the filtered permsisions to json
 					for (int i=offset; i< Math.min((limit+offset), pems.length); i++)
 					{
-						RemoteFilePermission pem = pems[i]; 
-					    builder.append( "," + pem.toJSON(path, system.getSystemId()));
+						RemoteFilePermission pem = pems[i];
+						builder.append( "," + pem.toJSON(path, system.getSystemId()));
                     }
 					
 					return new AgaveSuccessRepresentation("[" + StringUtils.removeStart(builder.toString(), ",") + "]");
@@ -308,10 +357,17 @@ public class FilePermissionResource extends AbstractFileResource
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 						"No username specified");
 			} 
-			else if (shareUsername.equalsIgnoreCase(owner) || shareUsername.equalsIgnoreCase(username)) {
-				// don't set permissions for the owner.
-				return new AgaveSuccessRepresentation();
-			}
+			
+//			else if ((shareUsername.equalsIgnoreCase(owner) || shareUsername.equalsIgnoreCase(username))
+//					&& !system.getStorageConfig().isMirrorPermissions()) {
+//				// don't set permissions for the owner.
+//				PermissionManager pm = new PermissionManager(system, remoteDataClient, logicalFile, shareUsername);
+//                
+//				RemoteFilePermission userPem = pm.getUserPermission(logicalFile.getPath());
+//                return new AgaveSuccessRepresentation("[" + userPem.toJSON(path, logicalFile.getSystem().getSystemId()) + "]");
+//                
+//				return new AgaveSuccessRepresentation();
+//			}
 			
 			try 
 			{
@@ -437,11 +493,16 @@ public class FilePermissionResource extends AbstractFileResource
                         		inputJson.hasNonNull("recursive")) {
                         	recursive = BooleanUtils.toBoolean(inputJson.get("recursive").asText());
                         }
-                       
-                        // now set the permission for the target user of this post
+                        
+                        // check for wildcard delete operation. This enables clear operation recursively
+            			if (StringUtils.equals(shareUsername, "*") && grantRead == false && grantWrite == false && grantExecute == false) {
+            				shareUsername = username;
+            			}
+            			
+            			// now set the permission for the target user of this post
                         pm = new PermissionManager(system, remoteDataClient, logicalFile, shareUsername);
                         
-                        if (grantAll)
+            			if (grantAll)
                         {
                         	pm.clearPermissions(recursive);
                         	pm.addAllPermission(path, recursive);
@@ -481,7 +542,7 @@ public class FilePermissionResource extends AbstractFileResource
                         		ServiceUtils.explode(",", Arrays.asList(PermissionType.values())));
                     } 
                     catch (Exception e) {
-                    	log.error("Failed to update permissions for agave://" + systemId + "/" + path, e);
+                    	log.error("Failed to update permissions for agave://" + system.getSystemId() + "/" + path, e);
                         throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
                         		"Failed to update permissions.");
                     }
@@ -498,7 +559,7 @@ public class FilePermissionResource extends AbstractFileResource
 		}
 		catch (Throwable e) {
 			throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-					"Failed to update permissions for " + path);
+					"Failed to update permissions for " + path, e);
 		} 
 		finally {
 			try {remoteDataClient.disconnect();} catch (Exception e) {}
@@ -506,9 +567,10 @@ public class FilePermissionResource extends AbstractFileResource
 	}
 
 	/**
-	 * Processes the delete operation on a particular file or folder. This will clear all permissions
-	 * for that file or directory, but the file or directory itself will remain unchanged. Only owners can grant or change
-	 * permissions.
+	 * Processes the delete operation on a particular file or folder. 
+	 * This will clear all permissions for that file or directory, but 
+	 * the file or directory itself will remain unchanged. Only admin 
+	 * and above can grant or change permissions.
 	 */
 	@Delete
 	public Representation remove() throws ResourceException 
@@ -602,8 +664,13 @@ public class FilePermissionResource extends AbstractFileResource
 //            	   
 					throw new FileNotFoundException("File/folder does not exist");
 				}
-               
-				pm.clearPermissions(false);
+				
+				// check for forced recursive operation in url query...this is the counterpart to 
+				// making a POST { username: "*", permission: "" }
+				String sRecursive = Request.getCurrent().getOriginalRef().getQueryAsForm().getFirstValue("recursive");
+				boolean recursive = BooleanUtils.toBoolean(sRecursive);
+                
+				pm.clearPermissions(recursive);
 				
 				return new AgaveSuccessRepresentation();
 			} 

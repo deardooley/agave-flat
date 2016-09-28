@@ -45,7 +45,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.5</version>
+                <version>${maven-jar-plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>test-compile</phase>
@@ -162,66 +162,6 @@
 				</configuration>
 			</plugin>
 
-			<!-- database cleanup prior to dao tests running -->
-<!--
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>sql-maven-plugin</artifactId>
-
-				<dependencies>
-					<dependency>
-						<groupId>mysql</groupId>
-						<artifactId>mysql-connector-java</artifactId>
-						<version>5.1.22</version>
-					</dependency>
-				</dependencies>
-
-				&lt;!&ndash; common configuration shared by all executions &ndash;&gt;
-				<configuration>
-					<driver>${foundation.db.driver}</driver>
-					<url>${foundation.db.bootstrap}</url>
-					<username>${foundation.db.username}</username>
-					<password>${foundation.db.password}</password>
-					<settingsKey>sensibleKey</settingsKey>
-					&lt;!&ndash;all executions are ignored if -Dmaven.test.skip=true &ndash;&gt;
-					<skip>${maven.test.skip}</skip>
-				</configuration>
-				<executions>
-					<execution>
-						<id>drop-db-before-test-if-any</id>
-						<phase>process-test-resources</phase>
-						<goals>
-							<goal>execute</goal>
-						</goals>
-						<configuration>
-                            <skip>${skip.create-db}</skip>
-							&lt;!&ndash; need another database to drop the targeted one &ndash;&gt;
-							<url>${foundation.db.bootstrap}</url>
-							<autocommit>true</autocommit>
-							<sqlCommand>drop database test</sqlCommand>
-							&lt;!&ndash; ignore error when database is not avaiable &ndash;&gt;
-							<onError>continue</onError>
-						</configuration>
-					</execution>
-
-					<execution>
-						<id>create-db</id>
-						<phase>process-test-resources</phase>
-						<goals>
-							<goal>execute</goal>
-						</goals>
-						<configuration>
-                            <skip>${skip.create-db}</skip>
-							<url>${foundation.db.bootstrap}</url>
-							&lt;!&ndash; no transaction &ndash;&gt;
-							<autocommit>true</autocommit>
-							<sqlCommand>create database test</sqlCommand>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
--->
-
 			<!-- ************************************ -->
 			<!-- *** CODE COVERAGE ** -->
 			<!-- ************************************ -->
@@ -237,7 +177,7 @@
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
+					<version>${org.eclipse.m2e.lifecycle-mapping.version}</version>
 					<configuration>
 						<lifecycleMappingMetadata>
 							<pluginExecutions>
@@ -250,7 +190,7 @@
 											maven-jar-plugin
 										</artifactId>
 										<versionRange>
-											[2.5,)
+											${maven-jar-plugin.versionRange}
 										</versionRange>
 										<goals>
 											<goal>jar</goal>
@@ -269,7 +209,7 @@
 											exec-maven-plugin
 										</artifactId>
 										<versionRange>
-											[1.3.2,)
+											${exec-maven-plugin.versionRange}
 										</versionRange>
 										<goals>
 											<goal>exec</goal>
@@ -306,7 +246,7 @@
 		<dependency>
 			<groupId>com.stevesoft.pat</groupId>
 			<artifactId>pat</artifactId>
-			<version>1.5.3</version>
+			<version>${pat.version}</version>
 		</dependency>
 	</dependencies>
 </project>

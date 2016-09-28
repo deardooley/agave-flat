@@ -631,15 +631,26 @@ public class Job {
 	@Transient
 	public void setStatus(JobStatusType status, String message) throws JobException
 	{
-		// avoid adding duplicate entries over and over from watch 
-		// and monitoring queue updates.
-		if (!this.status.equals(status) || !StringUtils.equals(getErrorMessage(), message)) {
-			setStatus(status);
-			setErrorMessage(message);
-			addEvent(new JobEvent(status, message, getOwner()));
-		} else {
-//			log.debug("Ignoring status update to " + status + " with same message");
-		}
+		setStatus(status, new JobEvent(this, status, message, getOwner()));
+//		// avoid adding duplicate entries over and over from watch 
+//		// and monitoring queue updates.
+//		if (!this.status.equals(status) || !StringUtils.equals(getErrorMessage(), message)) {
+//			// we don't want the job status being updated after the job is deleted as we
+//			// already move it to a terminal state when it's deleted. Here we check for 
+//			// job deletion and, then if visible, propagate the event. Otherwise, we 
+//			// simply add it to the history for reference and move on.
+//			if (this.isVisible()) {
+//				setStatus(status);
+//				setErrorMessage(message);
+//				addEvent(new JobEvent(status, message, getOwner()));
+//			}
+//			else {
+//				message += " Event will be ignored because job has been deleted.";
+//				this.events.add(new JobEvent(this, status, message, getOwner()));
+//			}
+//		} else {
+////			log.debug("Ignoring status update to " + status + " with same message");
+//		}
 	}
 	
 	/**
@@ -655,9 +666,19 @@ public class Job {
 		// avoid adding duplicate entries over and over from watch 
 		// and monitoring queue updates.
 		if (!this.status.equals(status) || !StringUtils.equals(getErrorMessage(), event.getDescription())) {
-			setStatus(status);
-			setErrorMessage(event.getDescription());
-			addEvent(event);
+			// we don't want the job status being updated after the job is deleted as we
+			// already move it to a terminal state when it's deleted. Here we check for 
+			// job deletion and, then if visible, propagate the event. Otherwise, we 
+			// simply add it to the history for reference and move on.
+			if (this.isVisible()) {
+				setStatus(status);
+				setErrorMessage(event.getDescription());
+				addEvent(event);
+			}
+			else {
+				event.setDescription(event.getDescription() + " Event will be ignored because job has been deleted.");
+				this.events.add(event);
+			}
 		} else {
 //			log.debug("Ignoring status update to " + status + " with same message");
 		}

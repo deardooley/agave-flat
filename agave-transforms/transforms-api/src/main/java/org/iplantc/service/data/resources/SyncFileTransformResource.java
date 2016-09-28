@@ -4,6 +4,7 @@
 package org.iplantc.service.data.resources;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 
@@ -11,6 +12,7 @@ import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
@@ -76,6 +78,41 @@ public class SyncFileTransformResource extends AbstractTransformResource
 		getVariants().add(new Variant(MediaType.TEXT_ALL));
 	}
 	
+	
+	
+	/* (non-Javadoc)
+	 * @see org.restlet.resource.Resource#represent(org.restlet.resource.Variant)
+	 */
+	@Override
+	public Representation represent(Variant variant) throws ResourceException {
+		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 
+				AgaveLogServiceClient.ActivityKeys.DataSpecifiedExport.name(), 
+				username, "", getRequest().getClientInfo().getUpstreamAddress());
+		
+		try 
+		{
+			Form queryParams = getRequest().getOriginalRef().getQueryAsForm();
+			
+			return processTransformRequest(queryParams);
+		}
+    	catch (ResourceException e) 
+		{
+    		log.error("Synchronous file transform failed for user " + username, e);
+    		getResponse().setStatus(e.getStatus());
+    		return new IplantErrorRepresentation(e.getMessage());
+			
+			
+		}
+		catch (Throwable e) {
+			log.error("Failed to synchronously transform file for user " + username, e);
+			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
+			return new IplantErrorRepresentation("Failed to synchronously transform file: " + e.getMessage());
+			
+		}
+	}
+
+
+
 	/* (non-Javadoc)
 	 * @see org.restlet.resource.Resource#acceptRepresentation(org.restlet.resource.Representation)
 	 */
@@ -151,7 +188,8 @@ public class SyncFileTransformResource extends AbstractTransformResource
 			
 			if (!tempDir.mkdirs()) {
 				throw new ResourceException(Status.SERVER_ERROR_BAD_GATEWAY, 
-						"Unable to create temp directory to transform file", new IOException());
+						"Unable to create temp directory to transform file", 
+						new IOException());
 			}
 
 			
@@ -166,7 +204,8 @@ public class SyncFileTransformResource extends AbstractTransformResource
 				else 
 				{
 					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
-							"Invalid sourceUrl value. Please specify a valid URI to a file.");
+							"Invalid sourceUrl value. Please specify a valid URI to a file.",
+							new TransformException());
 				}
 			}
 			else
@@ -184,7 +223,8 @@ public class SyncFileTransformResource extends AbstractTransformResource
 				{
 					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
 							"Invalid sourceFormat value. If specified, sourceFormat must be either raw or one of the " +
-							"known transform types registered with the API's transforms service.");
+							"known transform types registered with the API's transforms service.",
+							new TransformException());
 				}
 			}
 			
@@ -197,7 +237,8 @@ public class SyncFileTransformResource extends AbstractTransformResource
 				{
 					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
 							"Invalid destFormat value. If specified, sourceFormat must be either raw or one of the " +
-							"known transform types registered with the API's transforms service.");
+							"known transform types registered with the API's transforms service.",
+							new TransformException());
 				}
 			}
 			else
@@ -215,7 +256,8 @@ public class SyncFileTransformResource extends AbstractTransformResource
 				{
 					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
 							"Invalid name value. If specified, name must be a "
-							+ "valid filename for the downloaded item.");
+							+ "valid filename for the downloaded item.",
+							new TransformException());
 				}
 			}
 			else
@@ -260,12 +302,16 @@ public class SyncFileTransformResource extends AbstractTransformResource
 //					LogicalFileDao.removeSubtree(logicalFile);
 //				}
 				
-				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "File does not exist");
+				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
+						"File does not exist",
+						new FileNotFoundException());
 			} 
 			else if (remoteClient.isDirectory(path)) 
 			{ 
 				// return file listing
-				throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED, "Directory analysis not supported");
+				throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED, 
+						"Directory analysis not supported",
+						new NotImplementedException());
 			} 
 			else 
 			{
@@ -288,11 +334,13 @@ public class SyncFileTransformResource extends AbstractTransformResource
 				try {
 					if (!pm.canRead(remoteClient.resolvePath(path))) {
 						throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-								"User does not have access to view the requested resource");
+								"User does not have access to view the requested resource",
+								new PermissionException());
 					}
 				} catch (PermissionException e) {
 					throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-							"Failed to retrieve permissions for " + path + ", " + e.getMessage());
+							"Failed to retrieve permissions for " + path + ", " + e.getMessage(),
+							new PermissionException());
 				}
 				
 				log.debug("Requested format for " + path + " is " + sourceFormat);
@@ -315,7 +363,8 @@ public class SyncFileTransformResource extends AbstractTransformResource
 	    			nativeTransform = transformProps.getTransform(sourceFormat);
 	    			if (nativeTransform == null) {
 	    				throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-	    						"Original transform is no longer supported");
+	    						"Original transform is no longer supported", 
+	    						new NotImplementedException());
 	    			}
 	    		} catch (TransformException e) {
 	    			throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
@@ -357,7 +406,7 @@ public class SyncFileTransformResource extends AbstractTransformResource
 			String previousIterationPath = localPath;
 
 			for (FileTransformFilter filter: decoder.getFilters()) {
-				File decodedOutputFile = File.createTempFile(FilenameUtils.getName(path) + "-" + System.currentTimeMillis(), Slug.toSlug(filter.getName()).toLowerCase(), tempDir);
+				File decodedOutputFile = File.createTempFile(FilenameUtils.getName(path), "." + Slug.toSlug(filter.getName()).toLowerCase(), tempDir);
 				String sourcePathForIteration = null;
 				
 				try {
@@ -373,7 +422,8 @@ public class SyncFileTransformResource extends AbstractTransformResource
 					// cleanup the file
 					FileUtils.deleteQuietly(decodedOutputFile);
 					
-                    throw new ResourceException(Status.SERVER_ERROR_INTERNAL, message);
+                    throw new ResourceException(Status.SERVER_ERROR_INTERNAL, message,
+                    		new TransformException());
 				} 
 				
 				previousIterationPath = decodedOutputFile.getAbsolutePath();
@@ -381,10 +431,17 @@ public class SyncFileTransformResource extends AbstractTransformResource
 			
 			// rename the file so download and/or staging is clean
 			if (StringUtils.isNotEmpty(downloadFilname)) {
-        		File dowloadFile = new File(previousIterationPath, downloadFilname);
-        		new File(previousIterationPath).renameTo(dowloadFile);
+				File previousFile = new File(previousIterationPath);
+				File dowloadFile = new File(previousFile.getParentFile(), downloadFilname);
+				previousFile.renameTo(dowloadFile);
         		previousIterationPath = dowloadFile.getAbsolutePath();
         	}
+			else {
+				File previousFile = new File(previousIterationPath);
+				File dowloadFile = new File(previousFile.getParentFile(), FilenameUtils.getName(path) + "." + nativeTransform.getFileExtensions());
+				previousFile.renameTo(dowloadFile);
+        		previousIterationPath = dowloadFile.getAbsolutePath();
+			}
         	
 			// serve it up directly if it's a file. Saves download time staging back to source
 			final File decodedFinalOutput = new File(previousIterationPath);
@@ -421,7 +478,7 @@ public class SyncFileTransformResource extends AbstractTransformResource
 		}
 		catch (Throwable e)
 		{
-			throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e.getMessage());
+			throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e.getMessage(), e);
 		} 
 		finally {
 			try { remoteClient.disconnect(); } catch (Exception e) {}

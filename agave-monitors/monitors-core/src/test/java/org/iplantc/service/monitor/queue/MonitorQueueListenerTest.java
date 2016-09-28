@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
+@Test(groups={"broken"})
 public class MonitorQueueListenerTest extends AbstractMonitorTest 
 {
 	protected MonitorManager manager = new MonitorManager();

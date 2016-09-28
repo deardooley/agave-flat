@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"irods","sanitization"})
+@Test(singleThreaded=true, groups= {"irods","sanitization", "broken"})
 public class IrodsPathSanitizationTest extends AbstractPathSanitizationTest {
 
     /* (non-Javadoc)

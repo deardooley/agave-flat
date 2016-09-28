@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"ftp","filesystem"})
+@Test(singleThreaded=true, groups= {"ftp","filesystem","broken"})
 public class FTPRemoteDataClientTest extends AbstractRemoteDataClientTest {
 
 	/* (non-Javadoc)

@@ -16,6 +16,7 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -38,7 +39,6 @@ import org.iplantc.service.notification.exceptions.NotificationException;
 import org.iplantc.service.notification.managers.NotificationPermissionManager;
 import org.iplantc.service.notification.model.Notification;
 import org.iplantc.service.notification.model.NotificationPolicy;
-import org.iplantc.service.notification.model.enumerations.NotificationStatusType;
 import org.iplantc.service.notification.resources.NotificationCollection;
 import org.iplantc.service.notification.util.ServiceUtils;
 import org.restlet.Request;
@@ -71,7 +71,7 @@ public class NotificationCollectionImpl extends AbstractNotificationCollection i
 	 */
 	@Override
 	@GET
-	public Response getNotifications()
+	public Response getNotifications(@PathParam("associatedUuid") String associatedUuid)
 	{	
 		try
 		{	

@@ -1683,7 +1683,9 @@ public class PermissionManager {
 //            			new RemoteFilePermission(child.getId(), apiUsername, child.getInternalUsername(), PermissionType.NONE, recursive));
 //            	LogicalFileDao.persist(child);
         	}
+        	
         	RemoteFilePermissionDao.bulkDeleteByUsernameAndlogicalFileId(apiUsername, childIds);
+        			
         	FileEventDao.persistAllRaw(bulkEvents);
     	}
 

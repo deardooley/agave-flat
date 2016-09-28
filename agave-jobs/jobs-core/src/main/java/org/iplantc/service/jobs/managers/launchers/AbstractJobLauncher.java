@@ -152,29 +152,26 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	@Override
 	public String resolveRuntimeNotificationMacros(String wrapperTemplate) {
 	    // process the notification template first so there is no confusion or namespace conflict prior to resolution
-        Pattern defaultCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|(.*)\\}");
+        Pattern defaultCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|(?:([a-zA-Z0-9_,\\s]*))\\}");
         Matcher callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
-        if (callbackMatcher.matches()) {
-            while(callbackMatcher.find()) 
-            {
-            	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
-                        job, "JOB_RUNTIME_CALLBACK_EVENT", StringUtils.split(callbackMatcher.group(1), ","));
-                
-                wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
-            }
+        while (callbackMatcher.matches()) {
+        	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
+                    job, "JOB_RUNTIME_CALLBACK_EVENT", StringUtils.split(callbackMatcher.group(1), ","));
+            
+            wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
+            
+            callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
         }
         
-        Pattern customCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|([a-zA-Z0-9_]*)\\|(.*)\\}");
+        Pattern customCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|([a-zA-Z0-9_\\s]*)\\|(?:([a-zA-Z0-9_,\\s]*))\\}");
         callbackMatcher = customCallbackPattern.matcher(wrapperTemplate);
-        if (callbackMatcher.matches()) {
-            while(callbackMatcher.find()) 
-            {
-            	
-                String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
-                        job, callbackMatcher.group(1), StringUtils.split(callbackMatcher.group(2), ","));
-                
-                wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
-            }
+        while (callbackMatcher.matches()) {
+            String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
+                    job, callbackMatcher.group(1), StringUtils.split(callbackMatcher.group(2), ","));
+            
+            wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
+            
+            callbackMatcher = customCallbackPattern.matcher(wrapperTemplate);
         }
         
         return wrapperTemplate;
@@ -437,6 +434,15 @@ public abstract class AbstractJobLauncher implements JobLauncher
 
     public abstract File processApplicationTemplate() throws JobException;
     
+    /**
+     * Pushes the app assets which are currently on the staging server to the job 
+     * work directory on the execution system. 
+     * TODO: use a server-side copy when possible and avoid bringing the apps
+     * assets to the staging server alltogther. All we <i>really</i> need is the
+     * wrapper template.
+     * 
+     * @throws JobException
+     */
     protected void stageSofwareApplication() throws JobException 
     {	
     	TransferTask transferTask;
@@ -578,6 +584,15 @@ public abstract class AbstractJobLauncher implements JobLauncher
     }
         
         
+    /**
+     * Make the remote call to start the job on the remote system. This will need to
+     * handle the invocation command, remote connection, parsing of the response to
+     * get the job id, and updating of the job status on success or failure.
+     * 
+     * @return
+     * @throws JobException
+     * @throws SchedulerException
+     */
     protected abstract String submitJobToQueue() throws JobException, SchedulerException;
     
     /* (non-Javadoc)

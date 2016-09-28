@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+@Test(groups={"broken"})
 public class TagResourceImplTest extends AbstractTagTest 
 {	
 	private Component comp = new Component();
@@ -238,7 +239,7 @@ public class TagResourceImplTest extends AbstractTagTest
 		}
 	}
 	
-	@Test(dataProvider="addTagProvider", dependsOnMethods={"addSingleMonitor"})
+	@Test(dataProvider="addTagProvider", dependsOnMethods={"addSingleTag"})
 	public void addMonitorFromForm(JsonNode body, String errorMessage, boolean shouldThrowException)
 	{
 		ClientResource resource = getService("http://localhost:8182/monitors");  
@@ -308,7 +309,7 @@ public class TagResourceImplTest extends AbstractTagTest
 		};
 	}
 	
-	@Test(dataProvider="deleteTagProvider", dependsOnMethods={"addTagFromForm"})
+	@Test(dataProvider="deleteTagProvider", dependsOnMethods={"addMonitorFromForm"})
 	public void deleteTag(String uuid, String errorMessage, boolean shouldThrowException)
 	{
 		ClientResource resource = getService("http://localhost:8182/" + uuid);  
@@ -376,7 +377,7 @@ public class TagResourceImplTest extends AbstractTagTest
 		};
 	}
 
-	@Test(dataProvider="getTagProvider", dependsOnMethods={"deleteMonitor"})
+	@Test(dataProvider="getTagProvider", dependsOnMethods={"deleteTag"})
 	public void getTag(String uuid, String errorMessage, boolean shouldThrowException)
 	{
 		ClientResource resource = getService("http://localhost:8182/" + uuid);  

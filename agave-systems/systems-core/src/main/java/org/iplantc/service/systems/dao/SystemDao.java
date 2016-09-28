@@ -208,15 +208,18 @@ public class SystemDao extends AbstractDao {
             session.flush();
 
             return system;
-        } catch (ObjectNotFoundException e) {
+        } 
+        catch (ObjectNotFoundException e) {
             return null;
-        } catch (HibernateException ex) {
+        } 
+        catch (HibernateException ex) {
             throw ex;
-        } finally {
+        } 
+        finally {
             try {
                 HibernateUtil.commitTransaction();
-            } catch (Throwable e) {
-            }
+            } 
+            catch (Throwable e) {}
         }
     }
     

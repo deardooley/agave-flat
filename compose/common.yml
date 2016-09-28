@@ -28,14 +28,11 @@ services:
 
   java_api:
     hostname: api.example.com
-    restart: "always"
+    restart: "on-failure"
     mem_limit: 1024m
     extra_hosts:
-      - 'mysql.example.com:192.168.99.1'
-      - 'mongodb.example.com:192.168.99.100'
-      - 'beanstalkd.example.com:192.168.99.100'
-      - 'realtime.example.com:192.168.99.100'
-      - 'logging.example.com:192.168.99.100'
+#      - 'mysql.example.com:192.168.99.100'
+      - 'mysql:192.168.99.100'
     environment:
       - 'IPLANT_SLAVE_MODE=false'
       - 'IPLANT_DEDICATED_TENANT_ID='
@@ -44,27 +41,27 @@ services:
       - 'IPLANT_MAX_RELAY_TRANSFER_SIZE=2'
       - 'IPLANT_MAX_PAGE_SIZE=500'
       - 'IPLANT_DEFAULT_PAGE_SIZE=100'
-      - 'MYSQL_HOST=mysql.example.com'
-      - 'MYSQL_USERNAME=agaveuser'
+      - 'MYSQL_HOST=mysql'
+      - 'MYSQL_PORT=3306'
       - 'MYSQL_PASSWORD=password'
       - 'MYSQL_DATABASE=agavecore'
-      - 'IPLANT_METADATA_DB_HOST=mongodb.example.com'
+      - 'IPLANT_METADATA_DB_HOST=mongodb'
       - 'IPLANT_METADATA_DB_PORT=27017'
       - 'IPLANT_METADATA_DB_USER=agaveuser'
       - 'IPLANT_METADATA_DB_PWD=password'
-      - 'IPLANT_LOG_SERVICE=http://logging.example.com/logging'
+      - 'IPLANT_LOG_SERVICE=http://logging'
       - 'IPLANT_NOTIFICATION_SERVICE_QUEUE=dev.notifications.queue'
       - 'IPLANT_NOTIFICATION_SERVICE_TOPIC=dev.notifications.topic'
-      - 'IPLANT_NOTIFICATION_FAILED_DB_HOST=mongodb.example.com'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_HOST=mongodb'
       - 'IPLANT_NOTIFICATION_FAILED_DB_PORT=27017'
       - 'IPLANT_NOTIFICATION_FAILED_DB_USER=agaveuser'
       - 'IPLANT_NOTIFICATION_FAILED_DB_PWD=password'
       - 'IPLANT_NOTIFICATION_FAILED_DB_SCHEME=api'
-      - 'IPLANT_MESSAGING_HOST=beanstalkd.example.com'
+      - 'IPLANT_MESSAGING_HOST=beanstalkd'
       - 'IPLANT_MESSAGING_PORT=11300'
       - 'IPLANT_MIN_MONITOR_REPEAT_INTERVAL=0'
       - 'REALTIME_PROVIDER=pushpin'
-      - 'REALTIME_URL=http://realtime.example.com:5561'
+      - 'REALTIME_URL=http://pushpin:5561'
       - 'REALTIME_REALM_ID='
       - 'REALTIME_REALM_KEY='
       - 'MAIL_SMTPS_PROVIDER=log'
@@ -94,23 +91,18 @@ services:
     labels:
       - "traefik.port=80"
       - "traefik.protocol=http"
-      - "traefik.frontend.entryPoints=https"
+      - "traefik.frontend.entryPoints=http,https"
     networks:
       - backend
-      - internal
-
-
+      - thirdparty
 
   php_api:
     hostname: api.example.com
     mem_limit: 1024m
-    restart: "always"
+    restart: "on-failure"
     extra_hosts:
-      - 'mysql.example.com:192.168.99.1'
-      - 'mongodb.example.com:192.168.99.100'
-      - 'beanstalkd.example.com:192.168.99.100'
-      - 'realtime.example.com:192.168.99.100'
-      - 'logging.example.com:192.168.99.100'
+      - 'mysql:192.168.99.100' 
+#      - 'mysql.example.com:192.168.99.100'       
     environment:
       - 'IPLANT_SLAVE_MODE=false'
       - 'IPLANT_DEDICATED_TENANT_ID='
@@ -119,28 +111,28 @@ services:
       - 'IPLANT_MAX_RELAY_TRANSFER_SIZE=2'
       - 'IPLANT_MAX_PAGE_SIZE=500'
       - 'IPLANT_DEFAULT_PAGE_SIZE=100'
-      - 'MYSQL_HOST=mysql.example.com'
+      - 'MYSQL_HOST=mysql'
       - 'MYSQL_PORT=3306'
       - 'MYSQL_USERNAME=agaveuser'
       - 'MYSQL_PASSWORD=password'
       - 'MYSQL_DATABASE=agavecore'
-      - 'IPLANT_METADATA_DB_HOST=mongodb.example.com'
+      - 'IPLANT_METADATA_DB_HOST=mongodb'
       - 'IPLANT_METADATA_DB_PORT=27017'
       - 'IPLANT_METADATA_DB_USER=agaveuser'
       - 'IPLANT_METADATA_DB_PWD=password'
-      - 'IPLANT_LOG_SERVICE=http://logging.example.com/logging'
+      - 'IPLANT_LOG_SERVICE=http://logging'
       - 'IPLANT_NOTIFICATION_SERVICE_QUEUE=dev.notifications.queue'
       - 'IPLANT_NOTIFICATION_SERVICE_TOPIC=dev.notifications.topic'
-      - 'IPLANT_NOTIFICATION_FAILED_DB_HOST=mongodb.example.com'
+      - 'IPLANT_NOTIFICATION_FAILED_DB_HOST=mongodb'
       - 'IPLANT_NOTIFICATION_FAILED_DB_PORT=27017'
       - 'IPLANT_NOTIFICATION_FAILED_DB_USER=agaveuser'
       - 'IPLANT_NOTIFICATION_FAILED_DB_PWD=password'
       - 'IPLANT_NOTIFICATION_FAILED_DB_SCHEME=api'
-      - 'IPLANT_MESSAGING_HOST=beanstalkd.example.com'
+      - 'IPLANT_MESSAGING_HOST=beanstalkd'
       - 'IPLANT_MESSAGING_PORT=11300'
       - 'IPLANT_MIN_MONITOR_REPEAT_INTERVAL=0'
       - 'REALTIME_PROVIDER=pushpin'
-      - 'REALTIME_URL=http://realtime.example.com:5561'
+      - 'REALTIME_URL=http://pushpin:5561'
       - 'REALTIME_REALM_ID='
       - 'REALTIME_REALM_KEY='
       - 'MAIL_SMTPS_PROVIDER=log'
@@ -162,15 +154,17 @@ services:
     labels:
       - "traefik.port=80"
       - "traefik.protocol=http"
-      - "traefik.frontend.entryPoints=https"
-    # networks:
-    #   - backend
-    #   - internal
+      - "traefik.frontend.entryPoints=http,https"
+    networks:
+      - backend
+      - thirdparty
 
   migrations:
-    image: agaveapi/core-migrations:$AGAVE_VERSION
+    image: agave-migrations:$AGAVE_VERSION
+    extra_hosts:
+      - 'mysql:192.168.99.100'
     environment:
-      - 'MYSQL_HOST=mysql.example.com'
+      - 'MYSQL_HOST=mysql'
       - 'MYSQL_USERNAME=agaveuser'
       - 'MYSQL_PASSWORD=password'
       - 'MYSQL_DATABASE=agavecore'
@@ -178,10 +172,15 @@ services:
       - '.:/sources'
       - '~/.m2:/root/.m2'
     networks:
-      - backend
-      - internal
+      - thirdparty
 
 networks:
+  thirdparty:
+    external:
+      name: thirdparty_services
+  realtime:
+    external:
+      name: thirdparty_realtime
   backend:
-  internal:
-  frontend:
+    external:
+      name: compose_backend

@@ -138,7 +138,8 @@ public class JSONTestDataUtil
     public POJONode makeJsonObj(Object obj)
     {
     	ObjectMapper mapper = new ObjectMapper();
-    	return mapper.getNodeFactory().POJONode(obj);
+//    	return mapper.getNodeFactory().POJONode(obj);
+    	return (POJONode)mapper.getNodeFactory().pojoNode(obj);
     }
 
 

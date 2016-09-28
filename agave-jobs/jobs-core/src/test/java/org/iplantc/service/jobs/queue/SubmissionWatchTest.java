@@ -41,6 +41,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"broken"})
 public class SubmissionWatchTest extends AbstractJobSubmissionTest 
 {
     private static final Logger log = Logger.getLogger(StagingWatch.class);
@@ -550,7 +551,7 @@ public class SubmissionWatchTest extends AbstractJobSubmissionTest
 
                     @Override
                     public void jobToBeExecuted(JobExecutionContext context) {
-                        log.debug("working on a new job");                        
+                        log.debug("working on a new job " + context.getMergedJobDataMap().getString("uuid"));                        
                     }
 
                     @Override
@@ -561,7 +562,8 @@ public class SubmissionWatchTest extends AbstractJobSubmissionTest
                     @Override
                     public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
                         if (e == null) {
-                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
+                            log.error("Completed job " + context.getMergedJobDataMap().getString("uuid") + 
+                            		". " + jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
                         } else {
                             log.error("Transfer failed",e);
                         }

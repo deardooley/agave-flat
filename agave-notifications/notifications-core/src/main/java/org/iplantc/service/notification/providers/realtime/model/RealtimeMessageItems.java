@@ -1,5 +1,6 @@
 package org.iplantc.service.notification.providers.realtime.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -10,7 +11,7 @@ import java.util.List;
  *
  */
 public class RealtimeMessageItems {
-    private List<ChannelMessage> items;
+    private List<ChannelMessage> items = new ArrayList<ChannelMessage>();
     
     public RealtimeMessageItems(List<ChannelMessage> items) {
         this.setItems(items);
@@ -20,13 +21,19 @@ public class RealtimeMessageItems {
      * @return the items
      */
     public List<ChannelMessage> getItems() {
-        return items;
+    	if (items == null) {
+        	items = new ArrayList<ChannelMessage>();
+        }
+    	return items;
     }
 
     /**
      * @param items the items to set
      */
     public void setItems(List<ChannelMessage> items) {
-        this.items = items;
+    	getItems().clear();
+    	if (items != null) {
+    		getItems().addAll(items);
+    	}
     }
 }

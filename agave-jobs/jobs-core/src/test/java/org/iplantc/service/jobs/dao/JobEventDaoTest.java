@@ -14,6 +14,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"broken"})
 public class JobEventDaoTest extends AbstractDaoTest
 {
 	JobEventDao dao = new JobEventDao();

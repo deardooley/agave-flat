@@ -1,10 +1,5 @@
 #!/bin/bash
 
-source ~/.bashrc
-
-# iRODS environment is initialized in the .bashrc file
-# iinit is already initialized and available 
-
 # These parameters are passed in by the service
 sourcePath=$1
 destPath=$2

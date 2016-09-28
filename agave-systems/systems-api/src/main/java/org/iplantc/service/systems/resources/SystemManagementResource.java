@@ -92,7 +92,6 @@ public class SystemManagementResource extends AbstractSystemListResource
 		
 		try 
 		{
-		
 			if (StringUtils.isEmpty(systemId))
 			{
 			    Map<SearchTerm, Object> searchCriteria = getQueryParameters();
@@ -692,7 +691,7 @@ public class SystemManagementResource extends AbstractSystemListResource
                             username, "", getRequest().getClientInfo().getUpstreamAddress());
                     
                     try {
-                    	RemoteSystem updatedSystem = systemManager.enableSystem(system, username);
+                    	RemoteSystem updatedSystem = systemManager.disableSystem(system, username);
                     	
                     	// determine at run time if this is the user's default system of this type
 						JSONObject jSystem = new JSONObject(updatedSystem.toJSON());

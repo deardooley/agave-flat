@@ -23,7 +23,7 @@ import org.restlet.representation.Representation;
 public interface NotificationCollection {
 
 	@GET
-	public Response getNotifications();
+	public Response getNotifications(@PathParam("associatedUuid") String associatedUuid);
 	
 	@POST
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)

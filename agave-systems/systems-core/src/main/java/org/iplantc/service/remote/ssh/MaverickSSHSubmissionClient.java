@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -13,6 +14,7 @@ import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.remote.exceptions.RemoteExecutionException;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.iplantc.service.transfer.sftp.MultiFactorKBIRequestHandler;
 
 import com.maverick.ssh.PasswordAuthentication;
 import com.maverick.ssh.PublicKeyAuthentication;
@@ -24,8 +26,10 @@ import com.maverick.ssh.SshConnector;
 import com.maverick.ssh.SshSession;
 import com.maverick.ssh.components.SshKeyPair;
 import com.maverick.ssh1.Ssh1Client;
+import com.maverick.ssh2.KBIAuthentication;
 import com.maverick.ssh2.Ssh2Client;
 import com.maverick.ssh2.Ssh2Context;
+import com.maverick.ssh2.Ssh2PublicKeyAuthentication;
 import com.sshtools.net.ForwardingClient;
 import com.sshtools.net.SocketWrapper;
 import com.sshtools.publickey.SshPrivateKeyFile;
@@ -183,12 +187,16 @@ public class MaverickSSHSubmissionClient implements RemoteSubmissionClient
 			}
 			
 			ssh2 = (Ssh2Client) ssh;
+			
+			String[] authenticationMethods = ssh2.getAuthenticationMethods(username);
+			int authStatus;
+			
 			if (!StringUtils.isEmpty(publicKey) && !StringUtils.isEmpty(privateKey))
 			{
 				/**
 				 * Authenticate the user using password authentication
 				 */
-				auth = new PublicKeyAuthentication();
+				auth = new Ssh2PublicKeyAuthentication();
 				
 				do {
 					SshPrivateKeyFile pkfile = SshPrivateKeyFileFactory.parse(privateKey.getBytes());
@@ -202,8 +210,20 @@ public class MaverickSSHSubmissionClient implements RemoteSubmissionClient
 
 					((PublicKeyAuthentication)auth).setPrivateKey(pair.getPrivateKey());
 					((PublicKeyAuthentication)auth).setPublicKey(pair.getPublicKey());
+					
+					authStatus = ssh2.authenticate(auth);
+					
+					if (authStatus == SshAuthentication.FURTHER_AUTHENTICATION_REQUIRED && 
+							Arrays.asList(authenticationMethods).contains("keyboard-interactive")) {
+						KBIAuthentication kbi = new KBIAuthentication();
+						kbi.setUsername(username);
+						kbi.setKBIRequestHandler(new MultiFactorKBIRequestHandler(password, null, username, hostname, port));
+						authStatus = ssh2.authenticate(kbi);
+					}
 				}
-				while (ssh2.authenticate(auth) != SshAuthentication.COMPLETE
+				while (authStatus != SshAuthentication.COMPLETE
+						&& authStatus != SshAuthentication.FAILED
+						&& authStatus != SshAuthentication.CANCELLED
 						&& ssh.isConnected());
 			}
 			else
@@ -212,12 +232,17 @@ public class MaverickSSHSubmissionClient implements RemoteSubmissionClient
 				 * Authenticate the user using password authentication
 				 */
 				auth = new com.maverick.ssh.PasswordAuthentication();
-	
 				do
 				{
 					((PasswordAuthentication)auth).setPassword(password);
+					
+					auth = checkForPasswordOverKBI(authenticationMethods);
+					
+					authStatus = ssh2.authenticate(auth);
 				}
-				while (ssh2.authenticate(auth) != SshAuthentication.COMPLETE
+				while (authStatus != SshAuthentication.COMPLETE
+						&& authStatus != SshAuthentication.FAILED
+						&& authStatus != SshAuthentication.CANCELLED
 						&& ssh.isConnected());
 			}
 			
@@ -230,6 +255,40 @@ public class MaverickSSHSubmissionClient implements RemoteSubmissionClient
 			log.error("Unable to authenticate ", t);
 			throw new RemoteExecutionException("Failed to authenticate to " + hostname + ":" + port, t);
 		} 
+	}
+	
+	/**
+	 * Looks through the supported auth returned from the server and overrides the
+	 * password auth type if the server only lists keyboard-interactive. This acts
+	 * as a frontline check to override the default behavior and use our 
+	 * {@link MultiFactorKBIRequestHandler}. 
+	 *   
+	 * @param authenticationMethods
+	 * @return a {@link SshAuthentication} based on the ordering and existence of auth methods returned from the server.
+	 */
+	private SshAuthentication checkForPasswordOverKBI(String[] authenticationMethods) {
+		boolean kbiAuthenticationPossible = false;
+		for (int i = 0; i < authenticationMethods.length; i++) {
+			if (authenticationMethods[i].equals("password")) {
+				return auth;
+			}
+			if (authenticationMethods[i].equals("keyboard-interactive")) {
+
+				kbiAuthenticationPossible = true;
+			}
+		}
+
+		if (kbiAuthenticationPossible) {
+			KBIAuthentication kbi = new KBIAuthentication();
+
+			kbi.setUsername(username);
+
+			kbi.setKBIRequestHandler(new MultiFactorKBIRequestHandler(password, null, username, hostname, port));
+			
+			return kbi;
+		}
+
+		return auth;
 	}
 
 	/* (non-Javadoc)

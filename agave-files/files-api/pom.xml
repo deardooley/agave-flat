@@ -154,7 +154,7 @@
 			<plugin>
 				<groupId>com.github.redfish4ktc.soapui</groupId>
 				<artifactId>maven-soapui-extension-plugin</artifactId>
-				<version>4.6.3.1</version>
+				<version>${maven-soapui-extension-plugin.version}</version>
 				<dependencies>
 				</dependencies>
 				<configuration>
@@ -351,12 +351,12 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.6.1</version>
+			<version>${slf4j-log4j12.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
-			<version>4.3.4</version>
+			<version>${httpclient.version}</version>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>

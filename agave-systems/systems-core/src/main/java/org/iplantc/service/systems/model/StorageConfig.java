@@ -478,8 +478,12 @@ public class StorageConfig extends RemoteConfig implements LastUpdatable
 				JSONObject jsonAuth = jsonConfig.getJSONObject("auth");
 
 				if (jsonAuth == null) {
-					throw new SystemArgumentException("Invalid 'storage.auth' value. Please specify a " +
-							"JSON object representing a valid 'storage.auth' configuration.");
+					if (config.getDefaultAuthConfig() == null) {
+						throw new SystemArgumentException("Invalid 'storage.auth' value. Please specify a " +
+								"JSON object representing a valid 'storage.auth' configuration.");
+					} else {
+						// reusing the existing auth config.
+					}
 				}
 				else
 				{
@@ -501,7 +505,8 @@ public class StorageConfig extends RemoteConfig implements LastUpdatable
 					}
 				}
 			}
-			else if (config.getProtocol() != StorageProtocolType.LOCAL) {
+			else if (config.getDefaultAuthConfig() == null
+					&& config.getProtocol() != StorageProtocolType.LOCAL) {
 				throw new SystemArgumentException("No 'storage.auth' value specified. Please specify a " +
 							"JSON object representing a valid 'storage.auth' configuration.");
 			}
