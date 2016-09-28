@@ -10,6 +10,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.auth.AuthorizationHelper;
+import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
@@ -74,7 +75,8 @@ public class RuntimeConfigurationResource extends AgaveResource
         else 
         {
             throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, 
-                    "User does not have permission to view this service configuration");
+                    "User does not have permission to view this service configuration", 
+                    new PermissionException());
             
         }
 	}
@@ -159,19 +161,61 @@ public class RuntimeConfigurationResource extends AgaveResource
             for (Field field: Settings.class.getDeclaredFields()) {
                 int mods = field.getModifiers();
                 
-                if (Modifier.isFinal(mods) && Modifier.isPrivate(mods)) {
+                if (Modifier.isFinal(mods) || Modifier.isPrivate(mods)) {
                     continue;
                 } else {
 //                for (Entry<Object,Object> entry: props.entrySet()) {
 //                if (field.isAccessible()) {
-                    config.put(field.getName(), field.get(null).toString());
+                	try {
+	                	System.out.println(field.getName());
+	                	System.out.println(field.getName() + "=" + field.get(null).toString());
+	                	if (field.get(null) == null) {
+	                		config.putNull(field.getName());
+	                	}
+	                	else {
+	                		Class<?> t = field.getType();
+	                		if (t == int.class) {
+	                			config.put(field.getName(), field.getInt(null));
+	                		}
+	                		else if (t == double.class){ 
+	                			config.put(field.getName(), field.getDouble(null));
+	                		}
+	                		else if (t == long.class){ 
+	                			config.put(field.getName(), field.getLong(null));
+	                		}
+	                		else if (t == boolean.class){ 
+	                			config.put(field.getName(), field.getBoolean(null));
+	                		}
+	                		else if (t == float.class){ 
+	                			config.put(field.getName(), field.getFloat(null));
+	                		}
+	                		else if (t == byte.class){ 
+	                			config.put(field.getName(), field.getByte(null));
+	                		}
+	                		else if (t == char.class){ 
+	                			config.put(field.getName(), field.getChar(null));
+	                		}
+	                		else {
+	                			config.put(field.getName(), field.get(null).toString());
+	                		}
+	                	}
+                	} 
+                	catch (Throwable t) {
+                		log.error("Failed to read property " + field.getName() + " from runtime environment.", t);
+                	}
+                    
 //                }
                 }
             }
             
             for (String editableFieldName: getEditableRuntimeConfigurationFields()) {
                 Field field = Settings.class.getDeclaredField(editableFieldName);
-                config.put(editableFieldName, field.get(Settings.class).toString());
+                int mods = field.getModifiers();
+                if (Modifier.isFinal(mods) || Modifier.isPrivate(mods)) {
+                    continue;
+                } else {
+                	config.put(editableFieldName, field.get(Settings.class).toString());
+                }
             }
             
             ObjectNode environment = mapper.createObjectNode();
@@ -180,9 +224,9 @@ public class RuntimeConfigurationResource extends AgaveResource
             }
             
             ObjectNode json = (ObjectNode)mapper.createObjectNode();
-            json.put("container", container);
-            json.put("configuration", config);
-            json.put("environment", environment);
+            json.set("container", container);
+            json.set("configuration", config);
+            json.set("environment", environment);
             
             return json;
         } 

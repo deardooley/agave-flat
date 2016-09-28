@@ -1515,9 +1515,35 @@ public class FileManagementResource extends AbstractFileResource
 			LogicalFile logicalFile = LogicalFileDao.findBySystemAndPath(system, absolutePath);
 
             PermissionManager pm = new PermissionManager(system, remoteDataClient, logicalFile, username);
-
+            
+            // this is the action they're requesting be performed
+			FileOperationType operation = null; 
 			try {
-				if (!pm.canWrite(absolutePath)) {
+				if (jsonInput.hasNonNull("action")) {
+					operation = FileOperationType.valueOfIgnoreCase(jsonInput.get("action").asText());
+				}
+				else {
+					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
+							"Please provide a file action to perform",
+							new TaskException());
+				}
+			} 
+			catch(ResourceException e) {
+				throw e;
+			}
+			catch (Exception e) {
+				throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED, 
+						"Action " + operation + " not supported", e);
+			}
+			
+			// make sure the user has permissions to do what they want to do
+			try {
+				if (operation == COPY && !pm.canRead(absolutePath)) {
+					throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+							"User does not have access to view the requested path " + path,
+				    		new PermissionException());
+				}
+				else if (!pm.canWrite(absolutePath)) {
 					throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
 							"User does not have access to modify the requested path " + path,
 				    		new PermissionException());
@@ -1540,27 +1566,6 @@ public class FileManagementResource extends AbstractFileResource
 					logicalFile.setSystem(system);
 					logicalFile.setInternalUsername(internalUsername);
 					logicalFile.setStatus(StagingTaskStatus.STAGING_COMPLETED);
-				}
-				
-				
-				// this is the action they're requesting be performed
-				FileOperationType operation = null; 
-				try {
-					if (jsonInput.hasNonNull("action")) {
-						operation = FileOperationType.valueOfIgnoreCase(jsonInput.get("action").asText());
-					}
-					else {
-						throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
-								"Please provide a file action to perform",
-								new TaskException());
-					}
-				} 
-				catch(ResourceException e) {
-					throw e;
-				}
-				catch (Exception e) {
-					throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED, 
-							"Action " + operation + " not supported", e);
 				}
 				
 				String message = "";
