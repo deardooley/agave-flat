@@ -703,9 +703,9 @@ public class JobRequestProcessor {
 
             return job;
         }
-        catch (Exception e)
+        catch (Throwable e)
         {
-            throw new JobProcessingException(500, "Failed to submit the reqeuest to the job queue.", e);
+            throw new JobProcessingException(500, "Failed to submit the request to the job queue.", e);
         }
 	}
 

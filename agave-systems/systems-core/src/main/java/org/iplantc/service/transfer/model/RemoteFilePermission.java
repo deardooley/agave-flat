@@ -296,7 +296,7 @@ public class RemoteFilePermission implements Comparable<RemoteFilePermission>, L
 			.key("recursive").value(isRecursive())
 			.key("_links").object()
             	.key("self").object()
-            		.key("href").value(TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_IO_SERVICE) + "pems/system/" + systemId + "/" + encodedPath)
+            		.key("href").value(TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_IO_SERVICE) + "pems/system/" + systemId + "/" + encodedPath + "?username.eq=" + getUsername())
 	        	.endObject()
 	        	.key("file").object()
             		.key("href").value(TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_IO_SERVICE) + "media/system/" + systemId + "/" + encodedPath)

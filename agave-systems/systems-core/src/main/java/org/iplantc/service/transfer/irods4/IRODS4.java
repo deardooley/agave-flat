@@ -261,11 +261,11 @@ public class IRODS4 implements RemoteDataClient
 
         try
 		{
-			this.irodsAccount = createAccount();
+			this.irodsAccount = getIRODSAccount();
 
-			accessObjectFactory = IRODSAccessObjectFactoryImpl.instance(getThreadLocalSession(irodsAccount));
+//			accessObjectFactory = IRODSAccessObjectFactoryImpl.instance(getThreadLocalSession(irodsAccount));
 			log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " open connection for thread");
-			doesExist("/");
+			stat("/");
 		}
 		catch (AuthenticationException e) {
 			disconnect();
@@ -295,7 +295,7 @@ public class IRODS4 implements RemoteDataClient
 	private CollectionAndDataObjectListAndSearchAO getCollectionAndDataObjectListAndSearchAO() throws JargonException
 	{
 		if (collectionAndDataObjectListAndSearchAO == null) {
-			collectionAndDataObjectListAndSearchAO = accessObjectFactory.getCollectionAndDataObjectListAndSearchAO(irodsAccount);
+			collectionAndDataObjectListAndSearchAO = getAccessObjectFactory().getCollectionAndDataObjectListAndSearchAO(irodsAccount);
 		}
 
 		return collectionAndDataObjectListAndSearchAO;
@@ -304,7 +304,7 @@ public class IRODS4 implements RemoteDataClient
 	private CollectionAO getCollectionAO() throws JargonException
 	{
 		if (collectionAO == null) {
-			collectionAO = accessObjectFactory.getCollectionAO(irodsAccount);
+			collectionAO = getAccessObjectFactory().getCollectionAO(getIRODSAccount());
 		}
 
 		return collectionAO;
@@ -313,7 +313,7 @@ public class IRODS4 implements RemoteDataClient
 	private IRODSFileSystemAO getIRODSFileSystemAO() throws JargonException
 	{
 		if (fileSystemAO == null) {
-		    fileSystemAO = accessObjectFactory.getIRODSFileSystemAO(irodsAccount);
+		    fileSystemAO = getAccessObjectFactory().getIRODSFileSystemAO(getIRODSAccount());
 		}
 
 		return fileSystemAO;
@@ -322,7 +322,7 @@ public class IRODS4 implements RemoteDataClient
 	private DataObjectAO getDataObjectAO() throws JargonException
 	{
 		if (dataObjectAO == null) {
-			dataObjectAO = accessObjectFactory.getDataObjectAO(irodsAccount);
+			dataObjectAO = getAccessObjectFactory().getDataObjectAO(getIRODSAccount());
 		}
 
 		return dataObjectAO;
@@ -332,7 +332,7 @@ public class IRODS4 implements RemoteDataClient
 	private DataTransferOperations getDataTransferOperations() throws JargonException
 	{
 		if (dataTransferOperations == null) {
-			dataTransferOperations = accessObjectFactory.getDataTransferOperations(irodsAccount);
+			dataTransferOperations = getAccessObjectFactory().getDataTransferOperations(getIRODSAccount());
 		}
 
 		return dataTransferOperations;
@@ -341,10 +341,19 @@ public class IRODS4 implements RemoteDataClient
 	private IRODSFileFactory getIRODSFileFactory() throws JargonException
 	{
 		if (irodsFileFactory == null) {
-			irodsFileFactory = accessObjectFactory.getIRODSFileFactory(irodsAccount);
+			irodsFileFactory = getAccessObjectFactory().getIRODSFileFactory(getIRODSAccount());
 		}
 
 		return irodsFileFactory;
+	}
+	
+	private IRODSAccessObjectFactory getAccessObjectFactory() throws JargonException 
+	{
+		if (accessObjectFactory == null) {
+			accessObjectFactory = IRODSAccessObjectFactoryImpl.instance(getThreadLocalSession(getIRODSAccount()));
+		}
+		
+		return accessObjectFactory;
 	}
 
 	/**
@@ -1531,7 +1540,7 @@ public class IRODS4 implements RemoteDataClient
 	public void disconnect()
 	{
 		try {
-			this.accessObjectFactory.closeSessionAndEatExceptions(irodsAccount);
+			getAccessObjectFactory().closeSessionAndEatExceptions(irodsAccount);
 		} catch (Throwable e) {}
 		this.accessObjectFactory = null;
 		log.debug(Thread.currentThread().getName() + Thread.currentThread().getId()  + " closed IRODS4 connection for thread");
@@ -1547,25 +1556,27 @@ public class IRODS4 implements RemoteDataClient
         
 		try
 		{
-			return getIRODSFileFactory().instanceIRODSFile(resolvedPath).exists();
-//			stat(path);
-//		    return true;
+//			IRODSFile f = getFile(path);
+//			return f == null ? false : f.exists();
+////			return getIRODSFileFactory().instanceIRODSFile(resolvedPath).exists();
+			stat(path);
+		    return true;
 		}
-		catch (JargonException e) {
-			if (e.getMessage().toLowerCase().contains("unable to start ssl socket")) {
-                throw new RemoteDataException("Unable to validate SSL certificate on the IRODS server used for PAM authentication.", e);
-            } else if (e.getMessage().toLowerCase().contains("connection refused")) {
-                throw new RemoteDataException("Connection refused: Unable to contact IRODS server at " + host + ":" + port);
-            } else {
-                throw new RemoteDataException("Failed to connect to remote server.", e);
-            }
+//		catch (JargonException e) {
+//			if (e.getMessage().toLowerCase().contains("unable to start ssl socket")) {
+//                throw new RemoteDataException("Unable to validate SSL certificate on the IRODS server used for PAM authentication.", e);
+//            } else if (e.getMessage().toLowerCase().contains("connection refused")) {
+//                throw new RemoteDataException("Connection refused: Unable to contact IRODS server at " + host + ":" + port);
+//            } else {
+//                throw new RemoteDataException("Failed to connect to remote server.", e);
+//            }
+//		}
+		catch (java.io.FileNotFoundException e) {
+		    return false;
 		}
-//		catch (java.io.FileNotFoundException e) {
-//		    return false;
-//		}
-//		catch(IOException | RemoteDataException e) {
-//			throw e;
-//		}
+		catch(IOException | RemoteDataException e) {
+			throw e;
+		}
 	}
 
 	public InputStream getRawInputStream(String remotepath) throws JargonException, RemoteDataException, IOException
