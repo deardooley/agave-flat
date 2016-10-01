@@ -57,6 +57,12 @@ public class CondorSubmitScript extends AbstractSubmitScript {
     {
         StringBuilder sb = new StringBuilder();
         sb.append("universe     = " + universe.name() + "\n");
+        
+        if (!StringUtils.isEmpty(queue.getCustomDirectives())) {
+        	sb.append(queue.getCustomDirectives());
+        }
+        sb.append("\n\n");
+        
         sb.append("executable   = " + executable + "\n");
         sb.append("input        = " + transferInputFiles + "\n");
         //sb.append("requirements = " + Requirements + "\n");
@@ -112,11 +118,6 @@ public class CondorSubmitScript extends AbstractSubmitScript {
             sb.append("Arguments    = " + arguments + "\n\n");
         }
         sb.append(Queue);
-        sb.append("\n\n");
-        
-        if (!StringUtils.isEmpty(queue.getCustomDirectives())) {
-        	sb.append(queue.getCustomDirectives());
-        }
         sb.append("\n\n");
         
         return sb.toString();
