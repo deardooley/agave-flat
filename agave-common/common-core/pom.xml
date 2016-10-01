@@ -282,6 +282,12 @@
 			<artifactId>jackson-antpathfilter</artifactId>
 			<version>${jackson-antpathfilter.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>1.2.6</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 </project>

@@ -68,6 +68,7 @@ public class SystemSearchTest  extends SystemsModelTestCommon {
 		        { "description", system.getDescription() },
 		        { "id", system.getSystemId() },
 		        { "lastupdated", new DateTime(system.getLastUpdated()).toString() },
+		        { "lastmodified", new DateTime(system.getLastUpdated()).toString() },
 		        { "name", system.getName() },
 		        { "owner", system.getOwner() },
 		        { "public", system.isPubliclyAvailable() },

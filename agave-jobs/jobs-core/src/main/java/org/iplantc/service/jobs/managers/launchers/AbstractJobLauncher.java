@@ -38,6 +38,7 @@ import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.WrapperTemplateAttributeVariableType;
 import org.iplantc.service.jobs.model.enumerations.WrapperTemplateStatusVariableType;
 import org.iplantc.service.jobs.util.Slug;
+import org.iplantc.service.notification.exceptions.NotificationException;
 import org.iplantc.service.notification.util.EmailMessage;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.systems.dao.SystemDao;
@@ -371,12 +372,17 @@ public abstract class AbstractJobLauncher implements JobLauncher
                                     "User: " + job.getOwner() + "\n" +
                                     "Job: " + job.getUuid() + "\n" +
                                     "Time: " + job.getCreated().toString();
-	    					EmailMessage.send(tenant.getContactName(), 
+	    					try {
+	    						EmailMessage.send(tenant.getContactName(), 
 	    							tenant.getContactEmail(), 
 	    							"Public app " + software.getUniqueName() + " has been corrupted.", 
 	    							message, HTMLizer.htmlize(message));
+	    					} 
+	    					catch (Throwable e3) {
+	    						log.error(message, e3);
+	    					}
 	    					throw new SoftwareException("Public app bundle for " + software.getUniqueName() + 
-	    					        " has changed. Please verify this app and try again.");
+    								" has changed. Please verify this app and try again.");
 	    				}
 	    				
 	    				File standardLocation = new File(tempAppDir, new File(software.getDeploymentPath()).getName());

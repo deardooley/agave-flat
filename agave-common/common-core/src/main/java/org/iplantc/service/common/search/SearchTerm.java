@@ -35,7 +35,7 @@ public class SearchTerm implements Comparable<SearchTerm>
 		IN("%s in :%s"),
 		NIN("%s not in :%s"),
 		LIKE("%s like :%s"),
-		RLIKE("%s REGEXP :%s"),
+		RLIKE("regexp(%s, :%s) = 1"),
 		NLIKE(":%s not like :%s"),
 		BETWEEN("DATE_FORMAT(%s,'%s') >= :%s0 and DATE_FORMAT(%s,'%s') <= :%s1");
 		
@@ -88,7 +88,8 @@ public class SearchTerm implements Comparable<SearchTerm>
 		public Object applyWildcards(Object searchValue) {
 			if (searchValue == null) {
 				searchValue = "";
-			} else if (searchValue instanceof List) {
+			} 
+			else if (searchValue instanceof List) {
 			    if (this == BETWEEN) {
 			        List<String> dates = new ArrayList<String>();
 			        for(Date d: (List<Date>)searchValue) {
@@ -107,9 +108,14 @@ public class SearchTerm implements Comparable<SearchTerm>
 			    }
 			}
 			
-			if (this == LIKE || this == NLIKE || this == RLIKE) {
+			if (this == LIKE || this == NLIKE) {
 				return searchValue.toString().replaceAll("\\*", "%");
-			} else {
+			} 
+			else if (this == RLIKE) {
+				String escapedRegex = StringUtils.replace(searchValue.toString(), "(", "\\(");
+				return StringUtils.replace(escapedRegex, "'", "\'");
+			} 
+			else {
 				return searchValue;
 			}
 		}
@@ -353,7 +359,7 @@ public class SearchTerm implements Comparable<SearchTerm>
 		} else if (this.operator == Operator.BEFORE || this.operator == Operator.AFTER) {
             return String.format(operator.getTemplate(), 
                     prefixedMappedfield, "%Y-%m-%d", getSafeSearchField());
-        } else {
+		} else {
 			return String.format(operator.getTemplate(), 
 					prefixedMappedfield, getSafeSearchField());
 		}

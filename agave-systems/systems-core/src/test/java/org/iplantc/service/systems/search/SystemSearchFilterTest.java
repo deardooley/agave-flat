@@ -84,6 +84,11 @@ public class SystemSearchFilterTest extends SystemsModelTestCommon
 				if (searchTypeMappings.get(key) == Date.class && operator.isSetOperator() && SearchTerm.Operator.BETWEEN != operator) {
 				    continue;
 				}
+				else if (searchTypeMappings.get(key) == Boolean.class && 
+							(operator != SearchTerm.Operator.EQ || operator != SearchTerm.Operator.EQ)) {
+					continue;
+				}
+				
 				String op =  "." + operator.name();
                 
 				testData.add(new Object[]{ key + op, true, "Exact terms with uppercase operator should be accepted" });

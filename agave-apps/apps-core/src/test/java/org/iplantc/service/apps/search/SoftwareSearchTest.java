@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +16,7 @@ import org.iplantc.service.apps.dao.AbstractDaoTest;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.common.persistence.HibernateUtil;
+import org.iplantc.service.systems.search.SystemSearchFilter;
 import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,6 +27,10 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class SoftwareSearchTest  extends AbstractDaoTest {
 
@@ -89,7 +95,8 @@ public class SoftwareSearchTest  extends AbstractDaoTest {
 	        { "id", software.getUniqueName() },
 	        { "inputs.id", software.getInputs().get(0).getKey() },
 	        { "label", software.getLabel() },
-//	        { "lastUpdated", software.getLastUpdated() },
+	        { "lastUpdated", software.getLastUpdated() },
+	        { "lastModified", software.getLastUpdated() },
 	        { "longDescription", software.getLongDescription() },
 	        { "modules", software.getModulesAsList().get(0) },
 	        { "name", software.getName() },
@@ -155,9 +162,9 @@ public class SoftwareSearchTest  extends AbstractDaoTest {
         map.put("lastupdated", formatter.format(software.getLastUpdated()));
         
         List<Software> softwares = SoftwareDao.findMatching(software.getOwner(), new SoftwareSearchFilter().filterCriteria(map), false);
-        Assert.assertNotNull(softwares, "findMatching failed to find any softwares matching starttime.");
-        Assert.assertEquals(softwares.size(), 1, "findMatching returned the wrong number of software records for search by starttime");
-        Assert.assertTrue(softwares.contains(software), "findMatching did not return the saved software when searching by starttime.");
+        Assert.assertNotNull(softwares, "findMatching failed to find any softwares matching lastupdated.");
+        Assert.assertEquals(softwares.size(), 1, "findMatching returned the wrong number of software records for search by lastupdated");
+        Assert.assertTrue(softwares.contains(software), "findMatching did not return the saved software when searching by lastupdated.");
         
         map.clear();
         map.put("created", formatter.format(software.getCreated()));
@@ -166,6 +173,15 @@ public class SoftwareSearchTest  extends AbstractDaoTest {
         Assert.assertNotNull(softwares, "findMatching failed to find any softwares matching created.");
         Assert.assertEquals(softwares.size(), 1, "findMatching returned the wrong number of software records for search by created");
         Assert.assertTrue(softwares.contains(software), "findMatching did not return the saved software when searching by created.");
+        
+        map.clear();
+        map.put("lastmodified", formatter.format(software.getLastUpdated()));
+        
+        softwares = SoftwareDao.findMatching(software.getOwner(), new SoftwareSearchFilter().filterCriteria(map), false);
+        Assert.assertNotNull(softwares, "findMatching failed to find any softwares matching lastmodified.");
+        Assert.assertEquals(softwares.size(), 1, "findMatching returned the wrong number of software records for search by lastmodified");
+        Assert.assertTrue(softwares.contains(software), "findMatching did not return the saved software when searching by lastmodified.");
+        
     }
 	
 	@Test(dependsOnMethods={"findMatchingTime"}, dataProvider="softwaresProvider")
@@ -273,6 +289,69 @@ public class SoftwareSearchTest  extends AbstractDaoTest {
             if (shouldSucceed) {
                 Assert.fail("Searching by date string of the format " 
                     + dateFormattedString + " should " + (shouldSucceed ? "" : "not ") + "succeed",e);
+            }
+        }
+    }
+	
+	
+	@DataProvider
+	protected Object[][] regexSearchTestProvider() throws Exception {
+		List<Object[]> testCases = new ArrayList<Object[]>();
+		
+		ObjectMapper mapper = new ObjectMapper();
+		ArrayNode regexTestCases = (ArrayNode)mapper.readTree(Thread.currentThread().getContextClassLoader().getResourceAsStream("regex_test_cases.txt"));
+		JsonNode regexTestCase = null;
+	    
+	    	
+//	    for (Object[] attribute: softwaresProvider()) {
+	    SystemSearchFilter systemSearchFilter = new SystemSearchFilter();
+		Map<String,Class> searchTypeMappings = systemSearchFilter.getSearchTypeMappings();
+//		for (String key: systemSearchFilter.getSearchTermMappings().keySet())
+//		{
+//			if (searchTypeMappings.get(key) == String.class) {
+			    for(int i=0; i< regexTestCases.size(); i++) {
+//		    	   testCases.add(new Object[] { key,
+			    	regexTestCase = regexTestCases.get(i);
+			    	testCases.add(new Object[] {
+		    			   regexTestCase.get("regex").asText(), 
+		    			   regexTestCase.get("testData").asText(), 
+		    			   regexTestCase.get("shouldSucceed").asBoolean(), 
+		    			   regexTestCase.get("totalMatches").asInt() > 0});
+	    	   }
+//			}
+//		    break;
+//		}
+	    
+	    return testCases.toArray(new Object[][]{});
+	        
+	}
+	
+	@Test(dataProvider="regexSearchTestProvider")//, dependsOnMethods={"dateSearchExpressionTest"}, enabled=true)
+	public void regexSearchTestProvider(String regex, String testData, boolean shouldSucceed, boolean shouldFindMatch) throws Exception
+    {
+		Software software = createSoftware();
+	    software.setLabel(testData);
+	    SoftwareDao.persist(software);
+	    
+	    Map<String, String> map = new HashMap<String, String>();
+        map.put("label.rlike", regex);
+        
+        try
+        {
+            List<Software> softwares = SoftwareDao.findMatching(software.getOwner(), new SoftwareSearchFilter().filterCriteria(map), false);
+            
+//            Assert.assertNotEquals(softwares == null, shouldSucceed, "Searching by regex \"" + regex + "\" should " + (shouldSucceed ? "" : "not ") + "succeed");
+            Assert.assertEquals(softwares.isEmpty(), !shouldSucceed, "No results returned for search for \"" + testData + 
+            		"\" with regex \"" + regex + "\"");
+            
+            if (shouldSucceed) {
+                Assert.assertEquals(softwares.size(), 1, "findMatching returned the wrong number of software records for search by label regex");
+                Assert.assertTrue(softwares.contains(software), "findMatching did not return the saved software.");
+            }
+        }
+        catch (Exception e) {
+            if (shouldSucceed) {
+                Assert.fail("Searching by regex \"" + regex + "\" should " + (shouldSucceed ? "" : "not ") + "succeed",e);
             }
         }
     }

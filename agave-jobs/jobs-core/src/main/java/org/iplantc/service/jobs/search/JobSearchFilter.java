@@ -49,6 +49,8 @@ public class JobSearchFilter extends AgaveResourceSearchFilter
 			searchTermMappings.put("id", "%suuid");
 			searchTermMappings.put("inputs", "%sinputs");
 			searchTermMappings.put("localid", "%slocalJobId");
+			searchTermMappings.put("lastmodified", "%lastUpdated");
+			searchTermMappings.put("lastupdated", "%lastUpdated");
 			searchTermMappings.put("maxruntime", "time_to_sec(%smaxRunTime)");
 			searchTermMappings.put("memorypernode", "%smemoryPerNode");
 			searchTermMappings.put("name", "%sname");
@@ -85,6 +87,8 @@ public class JobSearchFilter extends AgaveResourceSearchFilter
 			searchTypeMappings.put("executionsystem", String.class);
 			searchTypeMappings.put("id", String.class);
 			searchTypeMappings.put("inputs", String.class);
+			searchTypeMappings.put("lastmodified", Date.class);
+			searchTypeMappings.put("lastUpdated", Date.class);
 			searchTypeMappings.put("localid", String.class);
 			searchTypeMappings.put("maxruntime", String.class);
 			searchTypeMappings.put("memorypernode", Double.class);

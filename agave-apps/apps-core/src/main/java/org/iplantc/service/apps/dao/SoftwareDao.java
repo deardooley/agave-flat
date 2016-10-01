@@ -989,16 +989,23 @@ public class SoftwareDao
                         && (searchTerm.getOperator() == SearchTerm.Operator.NEQ || searchTerm.getOperator() == SearchTerm.Operator.EQ )) {
                     // this was explicitly set to 'is null' or 'is not null'
                 }
+                else if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN) {
+                    query.setParameter(searchTerm.getSafeSearchField(), 
+                            searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm)));
+                    q = q.replaceAll(":" + searchTerm.getSafeSearchField(), " '" + String.valueOf(searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm))) + "'");
+                }
                 else 
                 {
                     query.setParameter(searchTerm.getSafeSearchField(), 
                             searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm)));
-                    q = q.replaceAll(":" + searchTerm.getSafeSearchField(), "'" + String.valueOf(searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm))) + "'");
+                    q = StringUtils.replace(q, 
+                    		":" + searchTerm.getSafeSearchField(), 
+                    		"'" + String.valueOf(searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm))) + "'");
                 }
                 
             }
             
-//            log.debug(q);
+            log.debug(q);
             
             List<Software> softwares = query
                     .setFirstResult(offset)

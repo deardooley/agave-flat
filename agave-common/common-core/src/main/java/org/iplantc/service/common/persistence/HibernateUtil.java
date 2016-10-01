@@ -16,6 +16,8 @@ import org.hibernate.Transaction;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.ImprovedNamingStrategy;
+import org.hibernate.dialect.function.SQLFunctionTemplate;
+import org.hibernate.type.StandardBasicTypes;
 import org.iplantc.service.common.persistence.time.CdtTimestampType;
 import org.reflections.Reflections;
 import org.reflections.scanners.ResourcesScanner;
@@ -63,6 +65,8 @@ public class HibernateUtil {
 				configuration.addAnnotatedClass(clazz);
 			}
 			configuration.setNamingStrategy(new ImprovedNamingStrategy());
+			
+			configuration.addSqlFunction("regexp", new SQLFunctionTemplate(StandardBasicTypes.INTEGER, "?1 REGEXP ?2"));
 			
 			// adding to properly handle conversion of dates to/from the db in UTC
 			configuration.registerTypeOverride(new CdtTimestampType());

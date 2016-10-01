@@ -61,6 +61,7 @@ public class SystemSearchFilter extends AgaveResourceSearchFilter
             searchTermMappings.put("description", "%sdescription");
             searchTermMappings.put("id", "%ssystemId");
             searchTermMappings.put("lastupdated", "%slastUpdated");
+            searchTermMappings.put("lastmodified", "%slastUpdated");
             searchTermMappings.put("name", "%sname");
             searchTermMappings.put("owner", "%sowner");
             searchTermMappings.put("public", "%spubliclyAvailable");
@@ -159,6 +160,7 @@ public class SystemSearchFilter extends AgaveResourceSearchFilter
             searchTypeMappings.put("queues.name", String.class);
             searchTypeMappings.put("created", Date.class);
             searchTypeMappings.put("lastupdated", Date.class);
+            searchTypeMappings.put("lastmodified", Date.class);
             searchTypeMappings.put("uuid", String.class);
 		}
 		

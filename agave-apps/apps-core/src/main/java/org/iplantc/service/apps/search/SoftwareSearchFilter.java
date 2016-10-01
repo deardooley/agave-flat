@@ -62,6 +62,7 @@ public class SoftwareSearchFilter extends AgaveResourceSearchFilter
             searchTermMappings.put("inputs.id", "input.key");
             searchTermMappings.put("label", "%slabel");
             searchTermMappings.put("lastupdated", "%slastUpdated");
+            searchTermMappings.put("lastmodified", "%slastUpdated");
             searchTermMappings.put("longdescription", "%slongDescription");
             searchTermMappings.put("name", "%sname");
             searchTermMappings.put("outputs.id", "output.key");
@@ -110,6 +111,7 @@ public class SoftwareSearchFilter extends AgaveResourceSearchFilter
             searchTypeMappings.put("inputs.id", String.class);
             searchTypeMappings.put("label", String.class);
             searchTypeMappings.put("lastupdated", Date.class);
+            searchTypeMappings.put("lastmodified", Date.class);
             searchTypeMappings.put("longdescription", String.class);
             searchTypeMappings.put("modules", String.class);
             searchTypeMappings.put("name", String.class);

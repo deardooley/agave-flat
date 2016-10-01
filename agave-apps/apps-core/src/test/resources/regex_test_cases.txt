@@ -1,0 +1,1472 @@
+[
+  {
+    "regex": "^(a)?a",
+    "testData": "a",
+    "shouldSucceed": 1,
+    "totalMatches": ""
+  },
+  {
+    "regex": "^(aa(bb)?)+$",
+    "testData": "aabbaa",
+    "shouldSucceed": "true",
+    "totalMatches": 2
+  },
+  {
+    "regex": "((a|b)?b)+",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 2
+  },
+  {
+    "regex": "(aaa)?aaa",
+    "testData": "aaa",
+    "shouldSucceed": "true",
+    "totalMatches": 1
+  },
+  {
+    "regex": "^(a(b)?)+$",
+    "testData": "aba",
+    "shouldSucceed": "true",
+    "totalMatches": 2
+  },
+  {
+    "regex": "^(a(b(c)?)?)?abc",
+    "testData": "abc",
+    "shouldSucceed": "true",
+    "totalMatches": 3
+  },
+  {
+    "regex": "^(a(b(c))).*",
+    "testData": "abc",
+    "shouldSucceed": "true",
+    "totalMatches": 3
+  },
+  {
+    "regex": "abc(?x)blah",
+    "testData": "abcblah",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc(?x)  blah",
+    "testData": "abcblah",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc(?x)  blah  blech",
+    "testData": "abcblahblech",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc(?x)  blah # ignore comment",
+    "testData": "abcblah",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a|b",
+    "testData": "z",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a|b",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a|b|cd",
+    "testData": "cd",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a|ad",
+    "testData": "ad",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "z(a|ac)b",
+    "testData": "zacb",
+    "shouldSucceed": "true",
+    "totalMatches": 1
+  },
+  {
+    "regex": "[abc]+",
+    "testData": "ababab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc]+",
+    "testData": "defg",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc]+[def]+[ghi]+",
+    "testData": "zzzaaddggzzz",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-g]+",
+    "testData": "zzzggg",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-g]+",
+    "testData": "mmm",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-]+",
+    "testData": "za-9z",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-\\\\u4444]+",
+    "testData": "za-9z",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[^abc]+",
+    "testData": "ababab",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[^abc]+",
+    "testData": "aaabbbcccdefg",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc^b]",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc^b]",
+    "testData": "^",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc[def]]",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc[def]]",
+    "testData": "e",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-d[0-9][m-p]]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-d[0-9][m-p]]",
+    "testData": "o",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-d[0-9][m-p]]",
+    "testData": 4,
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-d[0-9][m-p]]",
+    "testData": "e",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-d[0-9][m-p]]",
+    "testData": "u",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-d][0-9][m-p]]",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-d][0-9][m-p]]",
+    "testData": "z",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c[d-f[g-i]]]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c[d-f[g-i]]]",
+    "testData": "e",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c[d-f[g-i]]]",
+    "testData": "h",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c[d-f[g-i]]]",
+    "testData": "m",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c[d-f[g-i]]m]",
+    "testData": "m",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc[def]ghi]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc[def]ghi]",
+    "testData": "d",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc[def]ghi]",
+    "testData": "h",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc[def]ghi]",
+    "testData": "w",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c&&[d-f]]",
+    "testData": "a",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c&&[d-f]]",
+    "testData": "e",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c&&[d-f]]",
+    "testData": "z",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-c]&&[d-f]]",
+    "testData": "a",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-c]&&[d-f]]",
+    "testData": "e",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-c]&&[d-f]]",
+    "testData": "z",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c&&d-f]",
+    "testData": "a",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-m&&m-z]",
+    "testData": "m",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-m&&m-z&&a-c]",
+    "testData": "m",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-m&&m-z&&a-z]",
+    "testData": "m",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-m]&&[m-z]]",
+    "testData": "a",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-m]&&[m-z]]",
+    "testData": "m",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-m]&&[m-z]]",
+    "testData": "z",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-m]&&[^a-c]]",
+    "testData": "a",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-m]&&[^a-c]]",
+    "testData": "d",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-m&&[^a-c]]",
+    "testData": "a",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-m&&[^a-c]]",
+    "testData": "d",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-cd-f&&[d-f]]",
+    "testData": "a",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-cd-f&&[d-f]]",
+    "testData": "e",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-c]&&d-fa-c]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-c]&&[d-f][a-c]]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-c][d-f]&&abc]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-c][d-f]&&abc[def]]",
+    "testData": "e",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-c]&&[b-d]&&[c-e]]",
+    "testData": "a",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-c]&&[b-d]&&[c-e]]",
+    "testData": "c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a-c]&&[b-d][c-e]&&[u-z]]",
+    "testData": "c",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc[^bcd]]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[abc[^bcd]]",
+    "testData": "d",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c&&a-d&&a-eghi]",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[a-c&&a-d&&a-eghi]",
+    "testData": "g",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a[b]]&&[b[a]]]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a]&&[b][c][a]&&[^d]]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[a]&&[b][c][a]&&[^d]]",
+    "testData": "d",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[[a-d]&&[c-f]]]",
+    "testData": "a",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[[a-d]&&[c-f]]]",
+    "testData": "c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[[a-d]&&[c-f]]&&[c]]",
+    "testData": "c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[[a-d]&&[c-f]]&&[c]&&c]",
+    "testData": "c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[[a-d]&&[c-f]]&&[c]&&c&&c]",
+    "testData": "c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[[a-d]&&[c-f]]&&[c]&&c&&[cde]]",
+    "testData": "c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[z[abc&&bcd]]",
+    "testData": "c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[z[abc&&bcd]&&[u-z]]",
+    "testData": "z",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[x[abc&&bcd[z]]&&[u-z]]",
+    "testData": "z",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[x[[wz]abc&&bcd[z]]&&[u-z]]",
+    "testData": "z",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[abc]&&[def]abc]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[[abc]&&[def]xyz[abc]]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\pL",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\pL",
+    "testData": 7,
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{L}",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{LC}",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{LC}",
+    "testData": "A",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{IsL}",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{IsLC}",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{IsLC}",
+    "testData": "A",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{IsLC}",
+    "testData": 9,
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\P{IsLC}",
+    "testData": 9,
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{Pi}",
+    "testData": "\\u00ab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\P{Pi}",
+    "testData": "\\u00ac",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{IsPf}",
+    "testData": "\\u00bb",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{P}",
+    "testData": "\\u00bb",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{P}+",
+    "testData": "\\u00bb",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\P{IsPf}",
+    "testData": "\\u00bc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\P{IsP}",
+    "testData": "\\u00bc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{L1}",
+    "testData": "\\u00bc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{L1}+",
+    "testData": "\\u00bc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{L1}",
+    "testData": "\\u02bc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{ASCII}",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{IsASCII}",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\p{IsASCII}",
+    "testData": "\\u0370",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\pLbc",
+    "testData": "abc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[r\\p{InGreek}]c",
+    "testData": "a\\u0370c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a\\p{InGreek}",
+    "testData": "a\\u0370",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a\\P{InGreek}",
+    "testData": "a\\u0370",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a\\P{InGreek}",
+    "testData": "ab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "",
+    "testData": "",
+    "shouldSucceed": "",
+    "totalMatches": ""
+  },
+  {
+    "regex": "",
+    "testData": "",
+    "shouldSucceed": "",
+    "totalMatches": ""
+  },
+  {
+    "regex": "a\\P{^InGreek}",
+    "testData": "",
+    "shouldSucceed": "",
+    "totalMatches": ""
+  },
+  {
+    "regex": "a\\p{InGreek}",
+    "testData": "a\\u0370",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[\\p{InGreek}]c",
+    "testData": "a\\u0370c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[\\P{InGreek}]c",
+    "testData": "a\\u0370c",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[\\P{InGreek}]c",
+    "testData": "abc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[{^InGreek}]c",
+    "testData": "anc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[{^InGreek}]c",
+    "testData": "azc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[\\p{^InGreek}]c",
+    "testData": "",
+    "shouldSucceed": "",
+    "totalMatches": ""
+  },
+  {
+    "regex": "a[\\P{^InGreek}]c",
+    "testData": "",
+    "shouldSucceed": "",
+    "totalMatches": ""
+  },
+  {
+    "regex": "a[\\p{InGreek}]",
+    "testData": "a\\u0370",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[r\\p{InGreek}]c",
+    "testData": "arc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[\\p{InGreek}r]c",
+    "testData": "arc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[r\\p{InGreek}]c",
+    "testData": "arc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[^\\p{InGreek}]c",
+    "testData": "a\\u0370c",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[^\\P{InGreek}]c",
+    "testData": "a\\u0370c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[\\p{InGreek}&&[^\\u0370]]c",
+    "testData": "a\\u0370c",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a.c.+",
+    "testData": "a#c%&",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "ab.",
+    "testData": "ab\\n",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "(?s)ab.",
+    "testData": "ab\\n",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[\\p{L}&&[\\P{InGreek}]]c",
+    "testData": "a\\u6000c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[\\p{L}&&[\\P{InGreek}]]c",
+    "testData": "arc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a[\\p{L}&&[\\P{InGreek}]]c",
+    "testData": "a\\u0370c",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a\\p{InGreek}c",
+    "testData": "a\\u0370c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a\\p{Sc}",
+    "testData": "a$",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "ab\\wc",
+    "testData": "abcc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\W\\w\\W",
+    "testData": "#r#",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\W\\w\\W",
+    "testData": "rrrr#ggg",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc[\\w]",
+    "testData": "abcd",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc[\\sdef]*",
+    "testData": "abc  def",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc[\\sy-z]*",
+    "testData": "abc y z",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc[a-d\\sm-p]*",
+    "testData": "abcaa mn  p",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "ab\\sc",
+    "testData": "ab c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\s\\s\\s",
+    "testData": "blah  err",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\S\\S\\s",
+    "testData": "blah  err",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "ab\\dc",
+    "testData": "ab9c",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\d\\d\\d",
+    "testData": "blah45",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "^abc",
+    "testData": "abcdef",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "^abc",
+    "testData": "bcdabc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a?b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a?b",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a?b",
+    "testData": "aaaccc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": ".?b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a??b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a??b",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a??b",
+    "testData": "aaaccc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": ".??b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a?+b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a?+b",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a?+b",
+    "testData": "aaaccc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": ".?+b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a+b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a+b",
+    "testData": "b",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a+b",
+    "testData": "aaaccc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": ".+b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a+?b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a+?b",
+    "testData": "b",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a+?b",
+    "testData": "aaaccc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": ".+?b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a++b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a++b",
+    "testData": "b",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a++b",
+    "testData": "aaaccc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": ".++b",
+    "testData": "aaaab",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc(?=d)",
+    "testData": "zzzabcd",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc(?=d)",
+    "testData": "zzzabced",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc(?!d)",
+    "testData": "zzabcd",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "abc(?!d)",
+    "testData": "zzabced",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\w(?<=a)",
+    "testData": "###abc###",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\w(?<=a)",
+    "testData": "###ert###",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "(?<!a)\\w",
+    "testData": "###abc###",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "(?<!a)c",
+    "testData": "bc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "(?<!a)c",
+    "testData": "ac",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "(a+b)+",
+    "testData": "ababab",
+    "shouldSucceed": "true",
+    "totalMatches": 1
+  },
+  {
+    "regex": "(a|b)+",
+    "testData": "ccccd",
+    "shouldSucceed": "false",
+    "totalMatches": 1
+  },
+  {
+    "regex": "(ab)+",
+    "testData": "ababab",
+    "shouldSucceed": "true",
+    "totalMatches": 1
+  },
+  {
+    "regex": "(ab)+",
+    "testData": "accccd",
+    "shouldSucceed": "false",
+    "totalMatches": 1
+  },
+  {
+    "regex": "(ab)*",
+    "testData": "ababab",
+    "shouldSucceed": "true",
+    "totalMatches": 1
+  },
+  {
+    "regex": "(ab)(cd*)",
+    "testData": "zzzabczzz",
+    "shouldSucceed": "true",
+    "totalMatches": 2
+  },
+  {
+    "regex": "abc(d)*abc",
+    "testData": "abcdddddabc",
+    "shouldSucceed": "true",
+    "totalMatches": 1
+  },
+  {
+    "regex": "\\*",
+    "testData": "*",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\\\",
+    "testData": "\\",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\\\",
+    "testData": "\\\\\\\\",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "(a*)bc\\1",
+    "testData": "zzzaabcaazzz",
+    "shouldSucceed": "true",
+    "totalMatches": 1
+  },
+  {
+    "regex": "(a*)bc\\1",
+    "testData": "zzzaabcazzz",
+    "shouldSucceed": "true",
+    "totalMatches": 1
+  },
+  {
+    "regex": "(gt*)(dde)*(yu)\\1\\3(vv)",
+    "testData": "zzzgttddeddeyugttyuvvzzz",
+    "shouldSucceed": "true",
+    "totalMatches": 4
+  },
+  {
+    "regex": "a*b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a*b",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a*b",
+    "testData": "aaaccc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": ".*b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a*?b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a*?b",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a*?b",
+    "testData": "aaaccc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": ".*?b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a*+b",
+    "testData": "aaaab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a*+b",
+    "testData": "b",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "a*+b",
+    "testData": "aaaccc",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": ".*+b",
+    "testData": "aaaab",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "(?i)foobar",
+    "testData": "fOobAr",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "f(?i)oobar",
+    "testData": "fOobAr",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "foo(?i)bar",
+    "testData": "fOobAr",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "(?i)foo[bar]+",
+    "testData": "foObAr",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "(?i)foo[a-r]+",
+    "testData": "foObAr",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\Q***\\Eabc",
+    "testData": "***abc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "bl\\Q***\\Eabc",
+    "testData": "bl***abc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\Q***abc",
+    "testData": "***abc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "blah\\Q***\\Eabc",
+    "testData": "blah***abc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\Q***abc",
+    "testData": "***abc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "\\Q*ab",
+    "testData": "*ab",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "blah\\Q***abc",
+    "testData": "blah***abc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "bla\\Q***abc",
+    "testData": "bla***abc",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[ab\\Qdef\\E]",
+    "testData": "d",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[ab\\Q[\\E]",
+    "testData": "[",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\Q]\\E]",
+    "testData": "]",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\Q\\\\E]",
+    "testData": "\\",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\Q(\\E]",
+    "testData": "(",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\n-#]",
+    "testData": "!",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\n-#]",
+    "testData": "-",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\w-#]",
+    "testData": "!",
+    "shouldSucceed": "false",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\w-#]",
+    "testData": "a",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\w-#]",
+    "testData": "-",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\w-#]",
+    "testData": "#",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\043]+",
+    "testData": "blahblah#blech",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\042-\\044]+",
+    "testData": "blahblah#blech",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[\\u1234-\\u1236]",
+    "testData": "blahblah\\u1235blech",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "[^\\043]*",
+    "testData": "blahblah#blech",
+    "shouldSucceed": "true",
+    "totalMatches": 0
+  },
+  {
+    "regex": "(|f)?+",
+    "testData": "foo",
+    "shouldSucceed": "true",
+    "totalMatches": 1
+  }
+]
