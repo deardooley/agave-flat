@@ -1538,10 +1538,12 @@ public class FileManagementResource extends AbstractFileResource
 			
 			// make sure the user has permissions to do what they want to do
 			try {
-				if (operation == COPY && !pm.canRead(absolutePath)) {
-					throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-							"User does not have access to view the requested path " + path,
-				    		new PermissionException());
+				if (operation == COPY) {
+					if (!pm.canRead(absolutePath)) {
+						throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+								"User does not have access to copy the requested path " + path,
+					    		new PermissionException());
+					}
 				}
 				else if (!pm.canWrite(absolutePath)) {
 					throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,

@@ -234,7 +234,7 @@ public class FilePermissionResource extends AbstractFileResource
 							logicalFile.setUuid(new AgaveUUID(UUIDType.FILE).toString());
 	                		logicalFile.setName(new File(path).getName());
                             logicalFile.setSystem(system);
-							logicalFile.setNativeFormat(LogicalFile.RAW);
+							logicalFile.setNativeFormat(remoteDataClient.isDirectory(path) ? LogicalFile.DIRECTORY : LogicalFile.RAW);
 							logicalFile.setOwner(owner == null ? remoteDataClient.getUsername() : owner);
 							logicalFile.setSourceUri("");
 							logicalFile.setPath(remoteDataClient.resolvePath(path));
@@ -489,8 +489,8 @@ public class FilePermissionResource extends AbstractFileResource
                         }
 
                         boolean recursive = false;
-                        if (StringUtils.equalsIgnoreCase(logicalFile.getNativeFormat(), LogicalFile.DIRECTORY) && 
-                        		inputJson.hasNonNull("recursive")) {
+                        if (StringUtils.equalsIgnoreCase(logicalFile.getNativeFormat(), LogicalFile.DIRECTORY)  
+                        		&& inputJson.hasNonNull("recursive")) {
                         	recursive = BooleanUtils.toBoolean(inputJson.get("recursive").asText());
                         }
                         
