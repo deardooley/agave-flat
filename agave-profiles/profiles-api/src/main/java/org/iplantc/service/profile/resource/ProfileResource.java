@@ -22,6 +22,12 @@ public interface ProfileResource {
 	public Response getProfiles(@QueryParam("username") String username,
 								@QueryParam("email") String email,
 								@QueryParam("name") String name,
+								@QueryParam("first_name") String firstname,
+								@QueryParam("firstName") String firstName,
+								@QueryParam("last_name") String lastname,
+								@QueryParam("lastName") String lastName,
+								@QueryParam("full_name") String fullname,
+								@QueryParam("fullName") String fullName,
 								@QueryParam("status") String status,
 								@QueryParam("pretty") boolean pretty);
    
