@@ -90,16 +90,15 @@ public class AbstractJobSubmissionTest {
 	@BeforeClass
 	public void beforeClass() throws Exception {
 	    
-	    clearData();
+		clearData();
         clearJobs();
         clearSoftware();
         clearSystems();
 	    
-	    jtd = JSONTestDataUtil.getInstance();
-	    
+        jtd = JSONTestDataUtil.getInstance();
+		
 	    initSystems();
-        
-	    initSoftware();
+        initSoftware();
 	}
 	
 	@AfterClass

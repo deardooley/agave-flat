@@ -11,7 +11,7 @@ package org.iplantc.service.systems.model.enumerations;
  */
 public enum SchedulerType
 {
-	LSF, LOADLEVELER, PBS, CUSTOM_PBS, SGE, CUSTOM_GRIDENGINE, CONDOR, FORK, COBALT, TORQUE, CUSTOM_TORQUE, MOAB, SLURM, CUSTOM_SLURM, UNKNOWN;
+	LSF, LOADLEVELER, PBS, CUSTOM_PBS, SGE, CUSTOM_GRIDENGINE, CONDOR, CUSTOM_CONDOR, FORK, COBALT, TORQUE, CUSTOM_TORQUE, MOAB, SLURM, CUSTOM_SLURM, UNKNOWN;
 
 	public String getBatchSubmitCommand() 
 	{
@@ -30,6 +30,7 @@ public enum SchedulerType
 			case SGE:
 			case CUSTOM_GRIDENGINE:
 				return "qsub";
+			case CUSTOM_CONDOR:
 			case CONDOR:
 				return "condor_submit";
 			case UNKNOWN:
@@ -61,6 +62,7 @@ public enum SchedulerType
 			case SGE:
 			case CUSTOM_GRIDENGINE:
 				return "qdel ";
+			case CUSTOM_CONDOR:
 			case CONDOR:
 				return "condor_rm ";
 			case UNKNOWN:
@@ -96,6 +98,7 @@ public enum SchedulerType
 			case SGE:
 			case CUSTOM_GRIDENGINE:
 				return "qstat | grep";
+			case CUSTOM_CONDOR:
 			case CONDOR:
 				return "condor_q -format '%d'  JobStatus";
 			case UNKNOWN:

@@ -1,35 +1,63 @@
 {
-	"id": "condor.opensciencegrid.org",
-	"name": "Open Science Grid",
-	"status": "UP",
-	"type": "EXECUTION",
-	"description": "The Open Science Grid (OSG) advances science through open distributed computing. The OSG is a multi-disciplinary partnership to federate local, regional, community and national cyberinfrastructures to meet the needs of research and academic communities at all scales.",
-	"site": "opensciencegrid.org",
-	"executionType": "CONDOR",
-	"default": false,
-	"queues": [
-        {
-            "name": "condorqueue",
-            "maxJobs": 5,
-            "maxMemory": "1GB",
-            "customDirectives": "",
-            "defaut":true
-        }
-    ],
-	"login": {
-		"host": "docker.example.com",
-		"port": 22,
-		"protocol": "LOCAL"
-	},
-	"storage": {
-		"host": "localhost",
-		"port": 22,
-		"protocol": "LOCAL",
-		"rootDir": "/tmp"
-	},
-	"scratchDir": "/tmp",
-	"workDir": "/tmp",
-	"scheduler": "CONDOR",
-	"environment": "",
-	"startupScript": "/home/testuser/.bashrc"
+  "id": "condor.example.com",
+  "name": "Open Science Grid",
+  "status": "UP",
+  "available": true,
+  "type": "EXECUTION",
+  "description": "The Open Science Grid (OSG) advances science through open distributed computing. The OSG is a multi-disciplinary partnership to federate local, regional, community and national cyberinfrastructures to meet the needs of research and academic communities at all scales.",
+  "site": "opensciencegrid.org",
+  "public": true,
+  "globalDefault": false,
+  "executionType": "CONDOR",
+  "scheduler": "CONDOR",
+  "environment": "/condor/scratch",
+  "startupScript": "./bashrc",
+  "maxSystemJobs": 100,
+  "maxSystemJobsPerUser": 10,
+  "workDir": "/condor/scratch/",
+  "scratchDir": "/condor/scratch/",
+  "owner": "dooley",
+  "queues": [
+    {
+      "name": "condorqueue",
+      "default": true,
+      "description": "",
+      "mappedName": null,
+      "maxJobs": 100,
+      "maxUserJobs": 10,
+      "maxNodes": 1,
+      "maxProcessorsPerNode": 1,
+      "maxRequestedTime": "48:00:00",
+      "maxMemoryPerNode": "2GB",
+      "customDirectives": "requirements = (TARGET.FileSystemDomain != \"iplant-condor.tacc.utexas.edu\") && (Arch == \"X86_64\") \n+ProjectName = \"iplant\"\n"
+    }
+  ],
+  "login": {
+    "host": "iplant-condor.tacc.utexas.edu",
+    "port": 22,
+    "protocol": "SSH",
+    "proxy": null,
+    "auth": {
+      "username": "iplant",
+			"password": "nJn6djEqkGmMWASV9b",
+			"publicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCxBic1z5TPoYUYzTgdaiWPML0EFMCNgoSZtc2sgr\/ZolwcPBII2MKRvnZdUsvG894Y66jYlXEmlN7jYc4LxrZKwl7MBl+OI9r9gsLxC7TaB7EbPg85mBEbbRhoPZKDAY9zL0lBXN7pvgfGXy3WNuLtXj9jvszcSokEVXRaBK8cpU37kkl6o9vk++uR6MgsDomDtH2B3josVn6ANppdJAmXcO5+amTwmrtaBEsRB1oOikWfpyDY8PdBjoG\/8iYo\/9772EtRDIsdP5Pu9VRC1+W2QLcNPgcRnf2+mDhvRm\/Gi6cYBw0n9+QyB5pSE0sq3\/lJf6BHQhhy4Un9zmS2NrLh0OIevahAoV7RqcRFZ2GO0g+iyL\/o7bGosz5kgGaJ8RBacTBxFd37GOne6Wm2FloZeA8qpixyceJNxAZEcnl2MzSpgEkKprUf4LfCEOzv03EglTluplMC2ANm5VbB7gfwRlCHWOs0NuRVm2pq3a+qNeirRTUs3vkdygJdVso89T+MTiQBoX0U+8GZZfdk7btcdF8M7ra\/hEaXNhFPepixnmcNDKbEuTZUShGAEpbo+pf8Xxv5fpPbRsOt+2oTZvD4cFCp7iK+9ItSv5LgF7DABGAxhejkFT0fTDo670ClVetfxYiOgV4XTKeLVXQnMu1CanmlHwieHrEfEMk\/8uyphw== dooley@cyverse.org",
+			"privateKey": "-----BEGIN RSA PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-128-CBC,212E0CFB13BEB415B4C2B94DDC230E54\n\nIiGl9RM9cqvt9eFRG+UdWM7XxvpznAG75yT7mez4nkq1Awpg1I+jZVfMsUkCsP6a\nMCBls9hqJRRScim0Ont\/iMWdDTq+kSxaH1y2\/euDwFJI8dmaNyzjm7RXpslX9oah\nZooFCAKNyDH1rjOvkjjjrGHfQAAepFHKdWo9K4mHB\/X1ZA6fxVlGLarAHDp5UqqD\ndq7p9yMvEz2FWK1Tkmr91qz0f6OyHEA6leLVu7OLX+bPAuB\/atD3qbUanJTC+OMu\nCUkALZtjR5+G8oFZaNi18DJKoJVJ33PYGL\/EkwsNqffajKuZP3cRcvrSejLxO95t\nPDNS60kD0t\/SIporohQN+S7Dj6euQ5\/M7b9w7ZNfx7mSqMr89kZGBLdpcQX1FiSb\nS+TF9Di5kYhYcaLWJtOpbOk2q+XQy1Lq27NPzVPc7u7j1wTobaYg+8CijBA5pPa0\n1eeSGD+upcc0z1uxN4VVYfoffE27xAqXF2olUXSkDSwOR0AeywxF0Y0OFDNJvUIw\nuS5HgG7qckx9lPIaWC9v+K1WOycTFl3Qn2A\/FxJu34Pkfyja3V4hxZgDgaMr8TIb\ns1EDSELcHqeGy9DGpl2abapSh3rQKim2iRdddKb8Ck80Hz5w1v\/umzSpum10s\/SN\n7LKrS02RA86edLBiHenFwecXmejM5JmM7vBbN+TzTHS+EyIKlXBFGg9kJazCVd9h\nkqPoZaejFmdqpnrVcTvJZjQIVVGoz+6ZzBEMxfF+lPNTHZ9NDZ5XugAvZnGN8XDc\naW5YevEjEh+lN6SuWW5Vy8XoBYM1a+aCaC6McIKudQvse6dl\/gbBTJE1sBzXF6Bs\n0zRYlBE0HKRvdi8SdB+46q+TBKxyBELaZ+Jd\/q8tqmuYsAH7j5Wzm7lcNeyAeJD1\n2aduAcyGEEuJs9aZOI5HWGfjqkhlkyAn6DUqRWhDyKBEIE009kAAf7n31TDCws94\n\/KD9NgdXJE1XjWGsGYERwqZqPDy7Qyc5chfZt4w\/s5XBS1m7pT7mHCDam5H5+zQF\nRpblnaQB9Dbwztt6zpwpzmEBtn7NVDat1x4cO64PlayfjCDKI3KRdbey8N4P+G6j\n7zis5ak6soNAECf2Ro6Debpky+cyTUqo78F\/TgZYkwXSMIy6t3lGM7CfL72haEui\nDxjUVyLxdQ1O3tVHgmeqp5yKrEHW25wIduGxVy1f5pR57YlXK0kJGiaUvK6W\/qk3\nydUR99HRBkQMhNeYHpGVTtN0If6qLTFmJYJL0RaBBxGD6ROONdV3Y\/loqd9+u3wX\nhPifNmgqx\/qZvD8D8HbeWYhoU5JiNx7yKfAtL+NNum0JeparKw8LK3ODHqyoPH+g\nOZK1BRdotyvfTulX1UmJbA9z6O2\/tBA65JIbDzosVT8T5Vs0vC1WRLjVF2jctDS2\nUcyEUPD+5U4\/Fcwiv+cXAkzxVuK\/6F+6Hvo6ncMP5jtkSLa6NCALPmcXcqCN0ci8\nrhlflcACkor2A+HHQPdL7smN4lo6vTcHyqN+zbUP+h1rDjLADIMsX8BGPWJQAuWu\nEjSuYaOFbzx\/6AIN+K9MryDPT9B75NCoGihRs243s+sHyeIo2HLheQfCmHXDvclI\nZiHAeabAwvD4jg9DEfHMG0fuORgxCoYTLBF4H+8Ex+PVpt3m+YPL27zOrktg0Gv2\nLwXHyWdsK8lLr0A3PDKMpWuwvjCirGcSUfuGsfUENo9Wn3cAM7jbCuwCym7YsQGO\nXPStkNFIe6e\/oaU+HxVbgwP3DqJvRQcbjigolOgsio+cHS8wlpdkuLJFDbjgRIHX\nsmjMjGMgLPs8cQr\/QuWqvNtiZaqI3qwvMYgTZmyBItcnAEvOKK\/uyE+BP55dEAhi\nhshm+kNXJW9P5u9JiQ3l+y1h1ZhEShxHQGGzYd72+TPCYmpxZJaxmexHBolUQYdM\nOjQhXZ2M9CH26cVSEruoOp6dhwgdVtQJDnnpICOffjVeUZk0rCbz4p7wVy7vcd6i\nVzxxXZAeX0T9Eeq2x6Km1jw8oygf8gaDUYogMBP7P6CAzGsEXSqOkV6uycuyAK+Z\npV4ga+v67Q86Rr7dmhrGY7gZBf9dsa1Bo9x+XsXq1ViAb+0BCaHFGtlBo8+JcptL\nv4XDfcWv+pjBIQm8kuX6oBK\/QsH6pKz4+gCyICh7dLx3pKpp7NvqOBVDFmIltsJX\nwx2GWuRG27\/PGfSErBEotmK29fZHkaTukJT5RpasRMV5hyBEgZ\/Cd4tHUmcUQv7a\nV5s\/htP6BH0IqQWkjOH66iH6Ai4hz0TxFUGUUkSOLJUcOinOEnrfj2amlv7NuybR\nofTfM+PIN3Pw+bPydZvVRwemZXGo+K9jYH\/eZebHWlY8eQRfpgX0D0fJdCB9qHNK\nyi2cuHLTmo1RfYV49cPdExdYlc0s6ka4Xic9SEI0I7O6KLALNlqi3G9qe8Zeju4V\n1Vt1hcOTQj4vXt8gD28jlAWEdKSGIF6Tgq2onNGRNAnuXdluaa1Nbr2mJEHPwLz4\nT8JalutKl+ssN4wh83JIo\/w+A27M1CS4o+p+zS2CrQGC0MxXpylRGup8abJIaM2C\nXtzXJgxFlytmYvI7stsA\/n9bjhcLLDGll1nkyBonYuTUwWu8v2VIfRxuHDlCxCy1\nrNDueG1LXuC+dJyGHePjuL4zGmaAdrv5lnCXv\/5WC6Xtw\/IV++J8Q6v\/TPHr+nNe\nP0rkU6BB+xlWP1xIqHM8t2rHCmQCCIv1WCmRoTZSbZszE9xA7JGWi98HcRAH7eXY\n2l5rlJ3aV4jGJPcYYNndBf6owVVaBHcYRX6FfcfElXqdNB0AnuQE5Oy51nJ1cNr6\ngAvf4KY6jWa\/7w7EEo1+Ycse3R6SSkZe6+wnC+dTXIN+lZk\/5ipEug3AivSlLY35\neVP62kuUatLxm72Etx5sK2YFpz9D5x9mE1LGXwEMOWmd7+f54AJc5ntRXDTsfrzG\nI\/b6N0px64njYQ5V\/oPcd+5LZqcB52bj3aIJ1JznPoX37kuDEAo6SvF6NoIktIQY\ndp2MjC8aL1UB8KNMtFyBR89hALQ15PVlBMMTd+X5CVh\/Nube5es41IsY\/Jbe+shE\nAMqiGHB8J\/fcQbBtCzglR8gilBcdsNz8z+lOjr31NKNQTn6rtrtRqLLeAwBlIZdU\n-----END RSA PRIVATE KEY-----",
+			"type": "SSHKEYS"
+    }
+  },
+  "storage": {
+    "host": "iplant-condor.tacc.utexas.edu",
+    "port": 22,
+    "protocol": "SFTP",
+    "rootDir": "/",
+    "homeDir": "/home/iplant",
+    "proxy": null,
+    "auth": {
+      "username": "iplant",
+			"password": "nJn6djEqkGmMWASV9b",
+			"publicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCxBic1z5TPoYUYzTgdaiWPML0EFMCNgoSZtc2sgr\/ZolwcPBII2MKRvnZdUsvG894Y66jYlXEmlN7jYc4LxrZKwl7MBl+OI9r9gsLxC7TaB7EbPg85mBEbbRhoPZKDAY9zL0lBXN7pvgfGXy3WNuLtXj9jvszcSokEVXRaBK8cpU37kkl6o9vk++uR6MgsDomDtH2B3josVn6ANppdJAmXcO5+amTwmrtaBEsRB1oOikWfpyDY8PdBjoG\/8iYo\/9772EtRDIsdP5Pu9VRC1+W2QLcNPgcRnf2+mDhvRm\/Gi6cYBw0n9+QyB5pSE0sq3\/lJf6BHQhhy4Un9zmS2NrLh0OIevahAoV7RqcRFZ2GO0g+iyL\/o7bGosz5kgGaJ8RBacTBxFd37GOne6Wm2FloZeA8qpixyceJNxAZEcnl2MzSpgEkKprUf4LfCEOzv03EglTluplMC2ANm5VbB7gfwRlCHWOs0NuRVm2pq3a+qNeirRTUs3vkdygJdVso89T+MTiQBoX0U+8GZZfdk7btcdF8M7ra\/hEaXNhFPepixnmcNDKbEuTZUShGAEpbo+pf8Xxv5fpPbRsOt+2oTZvD4cFCp7iK+9ItSv5LgF7DABGAxhejkFT0fTDo670ClVetfxYiOgV4XTKeLVXQnMu1CanmlHwieHrEfEMk\/8uyphw== dooley@cyverse.org",
+			"privateKey": "-----BEGIN RSA PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-128-CBC,212E0CFB13BEB415B4C2B94DDC230E54\n\nIiGl9RM9cqvt9eFRG+UdWM7XxvpznAG75yT7mez4nkq1Awpg1I+jZVfMsUkCsP6a\nMCBls9hqJRRScim0Ont\/iMWdDTq+kSxaH1y2\/euDwFJI8dmaNyzjm7RXpslX9oah\nZooFCAKNyDH1rjOvkjjjrGHfQAAepFHKdWo9K4mHB\/X1ZA6fxVlGLarAHDp5UqqD\ndq7p9yMvEz2FWK1Tkmr91qz0f6OyHEA6leLVu7OLX+bPAuB\/atD3qbUanJTC+OMu\nCUkALZtjR5+G8oFZaNi18DJKoJVJ33PYGL\/EkwsNqffajKuZP3cRcvrSejLxO95t\nPDNS60kD0t\/SIporohQN+S7Dj6euQ5\/M7b9w7ZNfx7mSqMr89kZGBLdpcQX1FiSb\nS+TF9Di5kYhYcaLWJtOpbOk2q+XQy1Lq27NPzVPc7u7j1wTobaYg+8CijBA5pPa0\n1eeSGD+upcc0z1uxN4VVYfoffE27xAqXF2olUXSkDSwOR0AeywxF0Y0OFDNJvUIw\nuS5HgG7qckx9lPIaWC9v+K1WOycTFl3Qn2A\/FxJu34Pkfyja3V4hxZgDgaMr8TIb\ns1EDSELcHqeGy9DGpl2abapSh3rQKim2iRdddKb8Ck80Hz5w1v\/umzSpum10s\/SN\n7LKrS02RA86edLBiHenFwecXmejM5JmM7vBbN+TzTHS+EyIKlXBFGg9kJazCVd9h\nkqPoZaejFmdqpnrVcTvJZjQIVVGoz+6ZzBEMxfF+lPNTHZ9NDZ5XugAvZnGN8XDc\naW5YevEjEh+lN6SuWW5Vy8XoBYM1a+aCaC6McIKudQvse6dl\/gbBTJE1sBzXF6Bs\n0zRYlBE0HKRvdi8SdB+46q+TBKxyBELaZ+Jd\/q8tqmuYsAH7j5Wzm7lcNeyAeJD1\n2aduAcyGEEuJs9aZOI5HWGfjqkhlkyAn6DUqRWhDyKBEIE009kAAf7n31TDCws94\n\/KD9NgdXJE1XjWGsGYERwqZqPDy7Qyc5chfZt4w\/s5XBS1m7pT7mHCDam5H5+zQF\nRpblnaQB9Dbwztt6zpwpzmEBtn7NVDat1x4cO64PlayfjCDKI3KRdbey8N4P+G6j\n7zis5ak6soNAECf2Ro6Debpky+cyTUqo78F\/TgZYkwXSMIy6t3lGM7CfL72haEui\nDxjUVyLxdQ1O3tVHgmeqp5yKrEHW25wIduGxVy1f5pR57YlXK0kJGiaUvK6W\/qk3\nydUR99HRBkQMhNeYHpGVTtN0If6qLTFmJYJL0RaBBxGD6ROONdV3Y\/loqd9+u3wX\nhPifNmgqx\/qZvD8D8HbeWYhoU5JiNx7yKfAtL+NNum0JeparKw8LK3ODHqyoPH+g\nOZK1BRdotyvfTulX1UmJbA9z6O2\/tBA65JIbDzosVT8T5Vs0vC1WRLjVF2jctDS2\nUcyEUPD+5U4\/Fcwiv+cXAkzxVuK\/6F+6Hvo6ncMP5jtkSLa6NCALPmcXcqCN0ci8\nrhlflcACkor2A+HHQPdL7smN4lo6vTcHyqN+zbUP+h1rDjLADIMsX8BGPWJQAuWu\nEjSuYaOFbzx\/6AIN+K9MryDPT9B75NCoGihRs243s+sHyeIo2HLheQfCmHXDvclI\nZiHAeabAwvD4jg9DEfHMG0fuORgxCoYTLBF4H+8Ex+PVpt3m+YPL27zOrktg0Gv2\nLwXHyWdsK8lLr0A3PDKMpWuwvjCirGcSUfuGsfUENo9Wn3cAM7jbCuwCym7YsQGO\nXPStkNFIe6e\/oaU+HxVbgwP3DqJvRQcbjigolOgsio+cHS8wlpdkuLJFDbjgRIHX\nsmjMjGMgLPs8cQr\/QuWqvNtiZaqI3qwvMYgTZmyBItcnAEvOKK\/uyE+BP55dEAhi\nhshm+kNXJW9P5u9JiQ3l+y1h1ZhEShxHQGGzYd72+TPCYmpxZJaxmexHBolUQYdM\nOjQhXZ2M9CH26cVSEruoOp6dhwgdVtQJDnnpICOffjVeUZk0rCbz4p7wVy7vcd6i\nVzxxXZAeX0T9Eeq2x6Km1jw8oygf8gaDUYogMBP7P6CAzGsEXSqOkV6uycuyAK+Z\npV4ga+v67Q86Rr7dmhrGY7gZBf9dsa1Bo9x+XsXq1ViAb+0BCaHFGtlBo8+JcptL\nv4XDfcWv+pjBIQm8kuX6oBK\/QsH6pKz4+gCyICh7dLx3pKpp7NvqOBVDFmIltsJX\nwx2GWuRG27\/PGfSErBEotmK29fZHkaTukJT5RpasRMV5hyBEgZ\/Cd4tHUmcUQv7a\nV5s\/htP6BH0IqQWkjOH66iH6Ai4hz0TxFUGUUkSOLJUcOinOEnrfj2amlv7NuybR\nofTfM+PIN3Pw+bPydZvVRwemZXGo+K9jYH\/eZebHWlY8eQRfpgX0D0fJdCB9qHNK\nyi2cuHLTmo1RfYV49cPdExdYlc0s6ka4Xic9SEI0I7O6KLALNlqi3G9qe8Zeju4V\n1Vt1hcOTQj4vXt8gD28jlAWEdKSGIF6Tgq2onNGRNAnuXdluaa1Nbr2mJEHPwLz4\nT8JalutKl+ssN4wh83JIo\/w+A27M1CS4o+p+zS2CrQGC0MxXpylRGup8abJIaM2C\nXtzXJgxFlytmYvI7stsA\/n9bjhcLLDGll1nkyBonYuTUwWu8v2VIfRxuHDlCxCy1\nrNDueG1LXuC+dJyGHePjuL4zGmaAdrv5lnCXv\/5WC6Xtw\/IV++J8Q6v\/TPHr+nNe\nP0rkU6BB+xlWP1xIqHM8t2rHCmQCCIv1WCmRoTZSbZszE9xA7JGWi98HcRAH7eXY\n2l5rlJ3aV4jGJPcYYNndBf6owVVaBHcYRX6FfcfElXqdNB0AnuQE5Oy51nJ1cNr6\ngAvf4KY6jWa\/7w7EEo1+Ycse3R6SSkZe6+wnC+dTXIN+lZk\/5ipEug3AivSlLY35\neVP62kuUatLxm72Etx5sK2YFpz9D5x9mE1LGXwEMOWmd7+f54AJc5ntRXDTsfrzG\nI\/b6N0px64njYQ5V\/oPcd+5LZqcB52bj3aIJ1JznPoX37kuDEAo6SvF6NoIktIQY\ndp2MjC8aL1UB8KNMtFyBR89hALQ15PVlBMMTd+X5CVh\/Nube5es41IsY\/Jbe+shE\nAMqiGHB8J\/fcQbBtCzglR8gilBcdsNz8z+lOjr31NKNQTn6rtrtRqLLeAwBlIZdU\n-----END RSA PRIVATE KEY-----",
+			"type": "SSHKEYS"
+    }
+  }
 }

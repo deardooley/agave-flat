@@ -151,9 +151,21 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	 */
 	@Override
 	public String resolveRuntimeNotificationMacros(String wrapperTemplate) {
+		
+		Pattern emptyCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\}");
+        Matcher callbackMatcher = emptyCallbackPattern.matcher(wrapperTemplate);
+        while (callbackMatcher.matches()) {
+        	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
+                    job, "JOB_RUNTIME_CALLBACK_EVENT", new String[]{});
+            
+            wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
+            
+            callbackMatcher = emptyCallbackPattern.matcher(wrapperTemplate);
+        }
+        
 	    // process the notification template first so there is no confusion or namespace conflict prior to resolution
         Pattern defaultCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|(?:([a-zA-Z0-9_,\\s]*))\\}");
-        Matcher callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
+        callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
         while (callbackMatcher.matches()) {
         	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
                     job, "JOB_RUNTIME_CALLBACK_EVENT", StringUtils.split(callbackMatcher.group(1), ","));
@@ -188,9 +200,9 @@ public abstract class AbstractJobLauncher implements JobLauncher
 		}
 		
 		for (WrapperTemplateStatusVariableType macro: WrapperTemplateStatusVariableType.values()) {
-			if (macro != WrapperTemplateStatusVariableType.AGAVE_JOB_CALLBACK_NOTIFICATION) {
+//			if (macro != WrapperTemplateStatusVariableType.AGAVE_JOB_CALLBACK_NOTIFICATION) {
 				wrapperTemplate = StringUtils.replace(wrapperTemplate, "${" + macro.name() + "}", macro.resolveForJob(job));
-			}
+//			}
 		}
 		
 		return wrapperTemplate;

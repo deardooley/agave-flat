@@ -77,7 +77,7 @@ public class SystemsModelTestCommon
 			exceptionFlag = true;
 			exceptionMsg = "Invalid iPlant JSON submitted, attribute " + name + " " + message + " \n\"" + name + "\" = \"" + changeValue + "\"\n" + se.getMessage();
 			if (!exceptionThrown) 
-				se.printStackTrace();
+				Assert.fail(exceptionMsg, se);
 		}
 
 		System.out.println(" exception thrown?  expected " + exceptionThrown + " actual " + exceptionFlag);
@@ -232,6 +232,12 @@ public class SystemsModelTestCommon
 		}
 		else if (newValue instanceof Float) {
 			jsonTree.put(attribute, ( (Float) newValue ).floatValue());
+		}
+		else if (newValue instanceof Double) {
+			jsonTree.put(attribute, ( (Double) newValue ).doubleValue());
+		}
+		else if (newValue instanceof Long) {
+			jsonTree.put(attribute, ( (Long) newValue ).longValue());
 		}
 		else if (newValue instanceof Object) {
 			jsonTree.put(attribute, new JSONObject(newValue));

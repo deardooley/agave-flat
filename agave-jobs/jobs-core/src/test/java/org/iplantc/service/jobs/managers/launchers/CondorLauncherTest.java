@@ -1,5 +1,6 @@
 package org.iplantc.service.jobs.managers.launchers;
 
+import static org.iplantc.service.jobs.model.enumerations.WrapperTemplateStatusVariableType.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
@@ -27,6 +28,7 @@ import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.systems.model.StorageSystem;
+import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,24 +52,23 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class CondorLauncherTest extends AbstractJobSubmissionTest
 {
-	private Job job;
-	private JSONTestDataUtil jtd;
-	private SystemManager systemManager = new SystemManager();
-	private StorageSystem storageSystem;
 	private String remoteFilePath;
 	
 	@BeforeClass
+	@Override
 	public void beforeClass() throws Exception 
 	{
-		clearSoftware();
-		clearSystems();
-		clearJobs();
+		super.beforeClass();
 		
-		jtd = JSONTestDataUtil.getInstance();
-		
-		initSystems();
-		
-		initSoftware();
+//		clearSoftware();
+//		clearSystems();
+//		clearJobs();
+//		
+//		jtd = JSONTestDataUtil.getInstance();
+//		
+//		initSystems();
+//		
+//		initSoftware();
 	}
 	
 	@AfterClass 
@@ -109,32 +110,58 @@ public class CondorLauncherTest extends AbstractJobSubmissionTest
 		clearSystems();
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.jobs.submission.AbstractJobSubmissionTest#initSystems()
+	 */
+	@Override
+	protected void initSystems() throws Exception {
+	    storageSystem = (StorageSystem) getNewInstanceOfRemoteSystem(RemoteSystemType.STORAGE, "storage");
+        storageSystem.setOwner(SYSTEM_OWNER);
+        storageSystem.setPubliclyAvailable(true);
+        storageSystem.setGlobalDefault(true);
+        storageSystem.getUsersUsingAsDefault().add(SYSTEM_OWNER);
+        systemDao.persist(storageSystem);
+        
+//        JSONObject json = jtd.getTestDataObject(EXECUTION_SYSTEM_TEMPLATE_DIR + 
+//                File.separator + "condor.opensciencegrid.org.json");
+//        executionSystem = (ExecutionSystem) systemManager.parseSystem(json, SYSTEM_OWNER, null);
+        executionSystem = 
+                (ExecutionSystem) getNewInstanceOfRemoteSystem(RemoteSystemType.EXECUTION, "condor");
+        executionSystem.setOwner(SYSTEM_OWNER);
+        executionSystem.setPubliclyAvailable(true);
+        executionSystem.setType(RemoteSystemType.EXECUTION);
+        systemDao.persist(executionSystem);
+    }
+	
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.jobs.submission.AbstractJobSubmissionTest#initSoftware()
+	 */
+	@Override
 	protected void initSoftware() throws Exception {
-		File softwareDir = new File(SOFTWARE_SYSTEM_TEMPLATE_DIR, "/wc-condor.example.com.json");
-		JSONObject json = jtd.getTestDataObject(softwareDir.getPath());
+		JSONObject json = jtd.getTestDataObject(SOFTWARE_SYSTEM_TEMPLATE_DIR + File.separator + "wc-condor.example.com.json");
 		Software software = Software.fromJSON(json, SYSTEM_OWNER);
 		software.setOwner(SYSTEM_OWNER);
 		
 		SoftwareDao.persist(software);
 	}
 	
-	protected void stageInputData() throws Exception 
-	{
-		remoteFilePath = job.getWorkPath() + "/" + FilenameUtils.getName(TEST_INPUT_FILE);
-		
-		RemoteDataClient remoteDataClient = null;
-		try {
-			remoteDataClient = new SystemDao().findBySystemId(job.getSystem()).getRemoteDataClient(job.getInternalUsername());
-			remoteDataClient.authenticate();
-			remoteDataClient.mkdirs(job.getWorkPath());
-			remoteDataClient.put(TEST_INPUT_FILE, job.getWorkPath());
-			Assert.assertTrue(remoteDataClient.doesExist(remoteFilePath), "Failed to copy input file to remote system");
-		} catch (Exception e) {
-			Assert.fail("Failed to copy input file to remote system");
-		} finally {
-			try {remoteDataClient.disconnect();} catch (Exception e){}
-		}
-	}
+//	protected void stageInputData() throws Exception 
+//	{
+//		remoteFilePath = job.getWorkPath() + "/" + FilenameUtils.getName(TEST_INPUT_FILE);
+//		
+//		RemoteDataClient remoteDataClient = null;
+//		try {
+//			remoteDataClient = new SystemDao().findBySystemId(job.getSystem()).getRemoteDataClient(job.getInternalUsername());
+//			remoteDataClient.authenticate();
+//			remoteDataClient.mkdirs(job.getWorkPath());
+//			remoteDataClient.put(TEST_INPUT_FILE, job.getWorkPath());
+//			Assert.assertTrue(remoteDataClient.doesExist(remoteFilePath), "Failed to copy input file to remote system");
+//		} catch (Exception e) {
+//			Assert.fail("Failed to copy input file to remote system");
+//		} finally {
+//			try {remoteDataClient.disconnect();} catch (Exception e){}
+//		}
+//	}
 	
 	protected void stageSoftwareDeploymentDirectory(Software software) throws Exception
 	{
@@ -150,27 +177,29 @@ public class CondorLauncherTest extends AbstractJobSubmissionTest
 			Assert.assertTrue(remoteDataClient.doesExist(remoteTemplatePath), 
 					"Failed to copy software assets to deployment system " 
 			+ software.getStorageSystem().getSystemId());
-		} catch (Exception e) {
-			Assert.fail("Failed to copy input file to remote system");
-		} finally {
+		} 
+		catch (Exception e) {
+			Assert.fail("Failed to copy input file to remote system", e);
+		} 
+		finally {
 			try {remoteDataClient.disconnect();} catch (Exception e){}
 		}
 	}
 	
-	protected void initSystems() throws JSONException, IOException, SystemException, PermissionException {
-		JSONObject json = jtd.getTestDataObject(STORAGE_SYSTEM_TEMPLATE_DIR + 
-				File.separator + "storage.example.com.json");
-		storageSystem = (StorageSystem) systemManager.parseSystem(json, SYSTEM_OWNER, null);
-		storageSystem.setOwner(SYSTEM_OWNER);
-		storageSystem.getUsersUsingAsDefault().add(SYSTEM_OWNER);
-		systemDao.persist(storageSystem);
-		
-		File executionDir = new File(EXECUTION_SYSTEM_TEMPLATE_DIR, "condor.example.com.json");;
-		json = jtd.getTestDataObject(executionDir.getPath());
-		ExecutionSystem system = (ExecutionSystem) systemManager.parseSystem(json, SYSTEM_OWNER, null);
-		system.setOwner(SYSTEM_OWNER);
-		systemDao.persist(system);
-	}
+//	protected void initSystems() throws JSONException, IOException, SystemException, PermissionException {
+//		JSONObject json = jtd.getTestDataObject(STORAGE_SYSTEM_TEMPLATE_DIR + 
+//				File.separator + "storage.example.com.json");
+//		storageSystem = (StorageSystem) systemManager.parseSystem(json, SYSTEM_OWNER, null);
+//		storageSystem.setOwner(SYSTEM_OWNER);
+//		storageSystem.getUsersUsingAsDefault().add(SYSTEM_OWNER);
+//		systemDao.persist(storageSystem);
+//		
+//		File executionDir = new File(EXECUTION_SYSTEM_TEMPLATE_DIR, "condor.example.com.json");;
+//		json = jtd.getTestDataObject(executionDir.getPath());
+//		ExecutionSystem system = (ExecutionSystem) systemManager.parseSystem(json, SYSTEM_OWNER, null);
+//		system.setOwner(SYSTEM_OWNER);
+//		systemDao.persist(system);
+//	}
 	
 	@DataProvider(name="submitJobProvider")
 	public Object[][] submitJobProvider() throws Exception
@@ -213,19 +242,19 @@ public class CondorLauncherTest extends AbstractJobSubmissionTest
 		job.setProcessorsPerNode((long)1);
 		job.setMaxRunTime("1:00:00");
 		job.setSoftwareName(software.getUniqueName());
-		job.setStatus(JobStatusType.PENDING, "Job accepted and queued for submission.");
+		job.setStatus(JobStatusType.PENDING, job.getErrorMessage());
 		job.setSystem(software.getExecutionSystem().getSystemId());
 		job.setBatchQueue(software.getExecutionSystem().getDefaultQueue().getName());
 		
 		ObjectNode jobInputs = mapper.createObjectNode();
 		for(SoftwareInput input: software.getInputs()) {
-			jobInputs.put(input.getKey(), remoteFilePath);
+			jobInputs.put(input.getKey(), "agave://" + storageSystem.getSystemId() + "//etc/hosts");
 		}
 		job.setInputsAsJsonObject(jobInputs);
 		
 		ObjectNode jobParameters = mapper.createObjectNode();
 		for (SoftwareParameter parameter: software.getParameters()) {
-			jobParameters.put(parameter.getKey(), parameter.getDefaultValueAsJsonArray());
+			jobParameters.set(parameter.getKey(), parameter.getDefaultValueAsJsonArray());
 		}
 		job.setParametersAsJsonObject(jobParameters);
 		
@@ -268,14 +297,50 @@ public class CondorLauncherTest extends AbstractJobSubmissionTest
 		
 		testData[i++] = new Object[] { job, WrapperTemplateAttributeVariableType.AGAVE_JOB_ARCHIVE_URL.name(), "", false  };
 		
+//		return new Object[][] { 
+//			{job, WrapperTemplateStatusVariableType.AGAVE_JOB_CALLBACK_NOTIFICATION.name(), WrapperTemplateStatusVariableType.AGAVE_JOB_CALLBACK_NOTIFICATION.resolveForJob(job), false  }
+//		};
 		return testData;
 	}
 	
-	
-	@Test (groups={"submission"}, dataProvider="resolveMacrosProvider")
+	@Test (groups={"submission"}, dataProvider="resolveMacrosProvider", enabled=true)
 	public void resolveMacros(Job job, String macro, String expectedValue, boolean archive) throws JobException {
 		JobLauncher launcher = new CondorLauncher(job);
 		Assert.assertEquals(launcher.resolveMacros("${" + macro + "}"), expectedValue, "Launcher did not resolve wrapper template macro " + macro + " properly.");
+	}
+	
+	@DataProvider
+	private Object[][] resolveNotificationsMacrosProvider() throws Exception {
+		List<Software> testApps = SoftwareDao.getUserApps(SYSTEM_OWNER, false);
+		
+		job = createAndPersistJob(testApps.get(0));
+		
+		return new Object[][] { 
+			{job, "", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, null), 
+				false  },
+			{job, "HOME", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, new String[]{"HOME"}), 
+				false  },
+			{job, "HOME,HOSTNAME,SHELL", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, new String[]{"HOME","HOSTNAME","SHELL"}), 
+				false  },
+			{job, "MY_EVENT|", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, "MY_EVENT", new String[]{}), 
+				false  },
+			{job, "MY_EVENT|HOME", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, "MY_EVENT", new String[]{"HOME"}), 
+				false  },
+			{job, "MY_EVENT|HOME,HOSTNAME,SHELL", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, "MY_EVENT", new String[]{"HOME","HOSTNAME","SHELL"}), 
+				false  },
+		};
+	}
+	
+	@Test (groups={"submission"}, dataProvider="resolveNotificationsMacrosProvider", dependsOnMethods={"resolveMacros"}, enabled=true)
+	public void resolveNotificationMacros(Job job, String macroVars, String expectedValue, boolean archive) throws JobException {
+		JobLauncher launcher = new CondorLauncher(job);
+		Assert.assertEquals(launcher.resolveRuntimeNotificationMacros("${AGAVE_JOB_CALLBACK_NOTIFICATION|" + macroVars + "}"), expectedValue, "Launcher did not resolve wrapper template notification macro properly.");
 	}
 	
 //	@Test (groups={"submission"}, dataProvider="processApplicationTemplateProvider", dependsOnMethods={"resolveMacros"})
@@ -286,169 +351,19 @@ public class CondorLauncherTest extends AbstractJobSubmissionTest
 //		super.genericProcessApplicationTemplate(job, message, shouldThrowException);
 //	}
 	
-	@Test (groups={"submission"}, dataProvider="submitJobProvider", dependsOnMethods={"resolveMacros"})
+	@Test (groups={"submission"}, dataProvider="submitJobProvider", dependsOnMethods={"resolveMacros"}, enabled=true)
 	public void submitJob(Software software, String message, boolean shouldThrowException) throws Exception
 	{
 		job = createAndPersistJob(software);
 		
 		stageSoftwareDeploymentDirectory(software);
 		
-		stageInputData();
+//		stageSoftwareInputDefaultData(software);
+		
+		stageJobInputs(job);
 		
 		super.genericRemoteSubmissionTestCase(job, JobStatusType.QUEUED, "Condor job submission failed", false);
 	}
 	
 
-//    /**
-//     * reset flushes the directory and setsup the data in the database to run the test
-//     * @return Boolean value from the gsql calls to setup database
-//     */
-//    @Test(disabled="true")
-//    def reset(){
-//        root.mkdirs()
-//        def dirs = []
-//        root.eachFileRecurse { file ->
-//            if(file.isDirectory()){ dirs << file }
-//            else{ file.delete() }
-//        }
-//        dirs.each { file ->
-//            file.deleteDir()
-//        }
-//        // reset the database with well known data
-//        GSqlData gsd = new GSqlData();
-//        gsd.setupKnownJobAndSoftwareValues()
-//    }
-
-//    @BeforeClass
-//    void setup(){
-//        System.out.println("in setup");
-//        // assume Condor job and setup already exist
-///*
-//		CommonHibernateTest.initdb();
-//        dao = new SystemDao();
-//        SystemManager sysManager = new SystemManager();
-//        SystemDao systemDao = new SystemDao();
-//
-//        JobStoreSoftExecSystemSetup jobrecord = new JobStoreSoftExecSystemSetup();
-//        jobrecord.gSqlData.cleanAllTablesByRecord()
-//
-//        job = jobrecord.insertFullJobTestRecordObjectGraph();
-//*/
-//    }
-//	
-//    @Test
-//    void testLaunch() throws InterruptedException {
-//
-//        try
-//        {
-//            launcher = new CondorLauncher(job);
-//            launcher.launch();
-//        } 
-//		catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        JobStatusType actualStatus = job.getStatus();
-//        JobStatusType expectedStatus = JobStatusType.RUNNING;
-//
-//        boolean result = (actualStatus == expectedStatus ) ? true : false;
-//        sleep(10000);
-//        Assert.assertTrue(result,"The status is RUNNING");
-//        // expectedLocalJobId should not be NULL but can be any integer value
-//
-//    }
-//
-//    public static void main(String[] args) throws InterruptedException {
-//        System.out.println("this works ...");
-//        CondorLauncherTest gcl = new CondorLauncherTest();
-//        gcl.setup();
-//        gcl.testLaunch();
-//
-//
-//    }
-
-    /*@Test(dependsOnMethods=("testLaunch") )
-    void testReturnFromCondor(){
-        sleep(10000)   // wait on condor_submit to completely finish
-        boolean fileExists = new File(launcher.getTempAppDirPath()+"/wc_out.txt").exists()
-        Assert.assertTrue("Our wc output file exits", fileExists)
-    }
-*/
 }
-
-/*
-GCondorLaunchera gc = new GCondorLaunchera()
-gc.reset()
-*/
-
-//actual = new File(launcher.tempAppDirPath+"/wc_out.txt").text
-/*
-// we are looking for the wc_out.txt result file and it's contents
-String expected = "  400004  400004 14582797 wc-1.00/read1.fq\n";
-Assert.assertTrue("not implemented yet",false)
-*/
-
-/*
-		for(RemoteSystem s: dao.findByExample("available", true)) {
-			dao.remove(s);
-		}
-
-		for(Software software: SoftwareDao.getUserApps("sterry1", true)) {
-			SoftwareDao.delete(software);
-		}
-
-		for(Job job: JobDao.getJobs("sterry1")) {
-			JobDao.delete(job);
-		}
-
-
-
-		GSqlData gSqlData = new GSqlData("CondorLauncher")
-        gSqlData.cleanAllTablesByRecord()
-
-		// load up a storage system
-		String irodsString = FileUtils.readFileToString(new File("src/test/resources/systems/storage/data.iplantcollaborative.org.json"));
-		JSONObject irodsJson = new JSONObject(irodsString);
-		RemoteSystem irods = sysManager.parseSystem(irodsJson, "sterry1");
-		irods.setAvailable(true);
-		irods.setGlobalDefault(true);
-		irods.setPubliclyAvailable(true);
-		systemDao.persist(irods);
-
-		// load up a compute system
-		String condorString = FileUtils.readFileToString(new File("src/test/resources/systems/execution/condor.opensciencegrid.org.json"));
-		JSONObject condorJson = new JSONObject(condorString);
-		RemoteSystem condor = sysManager.parseSystem(condorJson, "sterry1");
-		condor.setAvailable(true);
-		condor.setGlobalDefault(true);
-		condor.setPubliclyAvailable(true);
-		systemDao.persist(condor);
-
-		String wcString = FileUtils.readFileToString(new File("src/test/resources/software/wc-iplant-condor.tacc.utexas.edu.json"));
-		JSONObject wcJson = new JSONObject(wcString);
-		Software software = Software.fromJSON(wcJson);
-		software.setOwner("sterry1");
-		SoftwareDao.persist(software);
-
-		Job job = new Job();
-		job.setName("SteveTest");
-		job.setOwner("sterry1");
-		job.setSystem(software.getSystem().getSystemId());
-		job.setSoftwareName(software.getUniqueName());
-		job.setProcessorCount(1);
-		job.setMemoryRequest(1);
-		job.setArchiveOutput(true);
-		job.setArchivePath("/sterry1/jobs/condor");
-		job.setStatus(JobStatusType.PENDING);
-		job.setUpdateToken("7d7e5472e5159d726d905b4c06009c2f");
-        JSONObject jsonobj = new JSONObject();
-        jsonobj.put("query1","sterry1/applications/wc-1.00/read1.fq");
-		job.setInputs(jsonobj.toString());
-        jsonobj = new JSONObject();
-        jsonobj.put("printLongestLine","1");
-		job.setParameters(jsonobj.toString());
-		job.setErrorMessage("Failed to submit job 68 Failed to put job in queue:");
-		job.setRequestedTime("02:00:00");
-
-		JobDao.persist(job);
-*/

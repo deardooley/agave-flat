@@ -24,6 +24,8 @@ import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.scripts.CommandStripper;
 import org.iplantc.service.jobs.model.scripts.CondorSubmitScript;
+import org.iplantc.service.jobs.model.scripts.SubmitScript;
+import org.iplantc.service.jobs.model.scripts.SubmitScriptFactory;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.remote.local.CmdLineProcessHandler;
 import org.iplantc.service.remote.local.CmdLineProcessOutput;
@@ -47,7 +49,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
     
 	private static final Logger log = Logger.getLogger(CondorLauncher.class);
     
-    private CondorSubmitScript submitFileObject;
+    private SubmitScript submitFileObject;
     private File condorSubmitFile;
     private String timeMark;
     private String tag;
@@ -60,7 +62,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
      */
     public CondorLauncher(Job job) {
         super(job);
-        this.submitFileObject = new CondorSubmitScript(job);
+        this.submitFileObject = SubmitScriptFactory.getScript(job);
     }
 
     /**
@@ -109,21 +111,24 @@ public class CondorLauncher  extends AbstractJobLauncher {
         log.debug(step);
 
         // todo need to add classAd info to submit file
-        submitFileObject = new CondorSubmitScript(job);
+        submitFileObject = SubmitScriptFactory.getScript(job);
         
         try 
         {
-	        // this should be sufficient information in order to create a Condor submission script
-	        String condorSubmitFileContents = submitFileObject.getScriptText();
+	        // generate a condor submit script. the user may have overridden certain 
+        	// directives or the system owner may have templatized their custom directives,
+        	// so we need to resolve the macros here.
+	        String condorSubmitFileContents = resolveTemplateMacros(submitFileObject.getScriptText());
+	        
 	        String submitFileName = "condorSubmit";   //createSubmitFileName(timeMark);
 	        condorSubmitFile = new File(tempAppDir, submitFileName);
         
             FileUtils.writeStringToFile(condorSubmitFile, condorSubmitFileContents);
-        } 
+        }
         catch (JobException e) {
         	throw e;
         } 
-        catch (IOException e) {
+        catch (IOException | URISyntaxException e) {
             throw new JobException("Failed to write condor submit file to local cache.", e);
         }
     }
@@ -250,7 +255,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
 //                    + job.getUpdateToken() + "/status/" + JobStatusType.RUNNING
 //                    + "\"\n";
             
-            CondorSubmitScript condorScript = new CondorSubmitScript(job);
+//            SubmitScript condorScript = SubmitScriptFactory.getScript(job);
             
 //            String callbackStart = "\ncurl -sSk \"" + Settings.IPLANT_JOB_SERVICE
 //					+ "trigger/job/" + job.getUuid() + "/token/"
@@ -267,78 +272,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
         	}
             
             // replace the parameters with their passed in values
-            // replace the parameters with their passed in values
- 			JsonNode jobParameters = job.getParametersAsJsonObject();
- 			
- 			for (SoftwareParameter param: software.getParameters())
- 			{
- 				if (jobParameters.has(param.getKey())) 
- 				{
- 					JsonNode jobJsonParam = jobParameters.get(param.getKey());
-
- 					// serialized the runtime parameters into a string of space-delimited 
- 					// values after enquoting and adding relevant argument(s)
- 					String templateVariableValue = parseSoftwareParameterValueIntoTemplateVariableValue(param, jobJsonParam);
- 					
- 					// now actually filter the template for this parameter
- 					appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + param.getKey() + "\\}", templateVariableValue);
- 				}
- 				else if (!param.isVisible())
- 				{
- 					// serialized the runtime parameters into a string of space-delimited 
- 					// values after enquoting and adding relevant argument(s)
- 					String templateVariableValue = parseSoftwareParameterValueIntoTemplateVariableValue(param, param.getDefaultValueAsJsonArray());
- 					
- 					// now actually filter the template for this parameter
- 					appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + param.getKey() + "\\}", templateVariableValue);
- 				}
- 				else 
- 				{
- 					appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + param.getKey() + "\\}", "");
- 				}
- 			}
- 			
- 			// replace the parameters with their passed in values
- 			JsonNode jobInputs = job.getInputsAsJsonObject();
- 			
- 			for (SoftwareInput input: software.getInputs())
- 			{
- 				if (jobInputs.has(input.getKey())) 
- 				{
- 					JsonNode jobJsonInput = jobInputs.get(input.getKey());
-
- 					// serialized the runtime parameters into a string of space-delimited 
- 					// values after enquoting and adding relevant argument(s)
- 					String templateVariableValue = parseSoftwareInputValueIntoTemplateVariableValue(input, jobJsonInput);
- 					
- 					// now actually filter the template for this parameter
- 					appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + input.getKey() + "\\}", templateVariableValue);
- 				}
- 				else if (!input.isVisible())
- 				{
- 					// serialized the runtime parameters into a string of space-delimited 
- 					// values after enquoting and adding relevant argument(s)
- 					String templateVariableValue = parseSoftwareInputValueIntoTemplateVariableValue(input, input.getDefaultValueAsJsonArray());
- 					
- 					// now actually filter the template for this parameter
- 					appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + input.getKey() + "\\}", templateVariableValue);
- 				}
- 				else 
- 				{
- 					appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + input.getKey() + "\\}", "");
- 				}
- 			}
-            
-            // strip out all references to icommands and it irods shadow files
-            if (executionSystem.isPubliclyAvailable()) {
-				appTemplate = CommandStripper.strip(appTemplate);
-            }
-            
-            // Replace all the runtime callback notifications
-         	appTemplate = resolveRuntimeNotificationMacros(appTemplate);
-         						
-         	// Replace all the iplant template tags
-            appTemplate = resolveMacros(appTemplate);
+            appTemplate = resolveTemplateMacros(appTemplate);
 
             // append the template with
             batchScript.append(appTemplate);
@@ -367,13 +301,100 @@ public class CondorLauncher  extends AbstractJobLauncher {
         }
 
     }
+
+	/**
+	 * Parses all the inputs, parameters, and macros for the given 
+	 * string. This is appropriate for both resolving wrapper templates 
+	 * and condor submit scripts.
+	 * 
+	 * @param appTemplate
+	 * @return
+	 * @throws JobException
+	 * @throws URISyntaxException
+	 */
+	protected String resolveTemplateMacros(String appTemplate)
+	throws JobException, URISyntaxException {
+		// replace the parameters with their passed in values
+		JsonNode jobParameters = job.getParametersAsJsonObject();
+		
+		for (SoftwareParameter param: software.getParameters())
+		{
+			if (jobParameters.has(param.getKey())) 
+			{
+				JsonNode jobJsonParam = jobParameters.get(param.getKey());
+
+				// serialized the runtime parameters into a string of space-delimited 
+				// values after enquoting and adding relevant argument(s)
+				String templateVariableValue = parseSoftwareParameterValueIntoTemplateVariableValue(param, jobJsonParam);
+				
+				// now actually filter the template for this parameter
+				appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + param.getKey() + "\\}", templateVariableValue);
+			}
+			else if (!param.isVisible())
+			{
+				// serialized the runtime parameters into a string of space-delimited 
+				// values after enquoting and adding relevant argument(s)
+				String templateVariableValue = parseSoftwareParameterValueIntoTemplateVariableValue(param, param.getDefaultValueAsJsonArray());
+				
+				// now actually filter the template for this parameter
+				appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + param.getKey() + "\\}", templateVariableValue);
+			}
+			else 
+			{
+				appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + param.getKey() + "\\}", "");
+			}
+		}
+		
+		// replace the parameters with their passed in values
+		JsonNode jobInputs = job.getInputsAsJsonObject();
+		
+		for (SoftwareInput input: software.getInputs())
+		{
+			if (jobInputs.has(input.getKey())) 
+			{
+				JsonNode jobJsonInput = jobInputs.get(input.getKey());
+
+				// serialized the runtime parameters into a string of space-delimited 
+				// values after enquoting and adding relevant argument(s)
+				String templateVariableValue = parseSoftwareInputValueIntoTemplateVariableValue(input, jobJsonInput);
+				
+				// now actually filter the template for this parameter
+				appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + input.getKey() + "\\}", templateVariableValue);
+			}
+			else if (!input.isVisible())
+			{
+				// serialized the runtime parameters into a string of space-delimited 
+				// values after enquoting and adding relevant argument(s)
+				String templateVariableValue = parseSoftwareInputValueIntoTemplateVariableValue(input, input.getDefaultValueAsJsonArray());
+				
+				// now actually filter the template for this parameter
+				appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + input.getKey() + "\\}", templateVariableValue);
+			}
+			else 
+			{
+				appTemplate = appTemplate.replaceAll("(?i)\\$\\{" + input.getKey() + "\\}", "");
+			}
+		}
+		
+		// strip out all references to icommands and it irods shadow files
+		if (executionSystem.isPubliclyAvailable()) {
+			appTemplate = CommandStripper.strip(appTemplate);
+		}
+		
+		// Replace all the runtime callback notifications
+		appTemplate = resolveRuntimeNotificationMacros(appTemplate);
+							
+		// Replace all the iplant template tags
+		appTemplate = resolveMacros(appTemplate);
+		return appTemplate;
+	}
     
     private void createRemoteTransferPackage() throws Exception {
         step = "Creating the " + job.getSoftwareName() + " transfer package for job " + job.getUuid();
         log.debug(step);
         
         String createTransferPackageCmd = new String("cd " + job.getWorkPath() + "; "
-                + "tar czvf ./transfer.tar.gz  --warning=no-file-changed .");
+                + "tar czvf ./transfer.tar.gz  --exclude condorSubmit --warning=no-file-changed .");
         ExecutionSystem system = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
         
     	RemoteSubmissionClient remoteSubmissionClient = system.getRemoteSubmissionClient(job.getInternalUsername());
