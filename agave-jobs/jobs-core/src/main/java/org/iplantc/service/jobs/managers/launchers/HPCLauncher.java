@@ -34,6 +34,7 @@ import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.enumerations.ExecutionType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.iplantc.service.transfer.RemoteDataClient;
+import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -106,8 +107,8 @@ public class HPCLauncher extends AbstractJobLauncher
             
 //            JobDao.refresh(job);
             
-            job.setSubmitTime(new Date()); // Date job submitted to queue
-            job.setLastUpdated(new Date());  // Date job started by queue
+            job.setSubmitTime(new DateTime().toDate()); // Date job submitted to queue
+            job.setLastUpdated(new DateTime().toDate());  // Date job started by queue
             job.setLocalJobId(remoteJobId);
             
             if (!job.getStatus().equals(JobStatusType.RUNNING)) {

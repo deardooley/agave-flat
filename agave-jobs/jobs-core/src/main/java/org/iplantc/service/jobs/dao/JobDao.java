@@ -4,6 +4,7 @@
 package org.iplantc.service.jobs.dao;
 
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -36,6 +37,7 @@ import org.iplantc.service.jobs.model.Job;
 //import org.iplantc.service.jobs.model.SummaryTenantUserJobActivity;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
+import org.joda.time.DateTime;
 
 /**
  * @author dooley
@@ -754,8 +756,16 @@ public class JobDao
 		try
 		{
 			session = getSession();
+			SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS-Z");
 			
-			if (forceTimestamp) job.setLastUpdated(new Date());
+			if (forceTimestamp) {
+				log.debug(String.format("Job.created(pre force timestamp)[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getCreated()), new DateTime().toString(), f.format(new Date())));
+				log.debug(String.format("Job.lastUpdated(pre force timestamp)[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getLastUpdated()), new DateTime().toString(), f.format(new Date())));
+				job.setLastUpdated(new DateTime().toDate());
+			}
+			
+			log.debug(String.format("Job.created[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getCreated()), new DateTime().toString(), f.format(new Date())));
+			log.debug(String.format("Job.lastUpdated(pre force timestamp)[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getLastUpdated()), new DateTime().toString(), f.format(new Date())));
 			
 			session.saveOrUpdate(job);
 //			session.flush();

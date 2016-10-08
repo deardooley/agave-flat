@@ -34,6 +34,7 @@ import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.iplantc.service.transfer.RemoteDataClient;
+import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -84,8 +85,8 @@ public class CondorLauncher  extends AbstractJobLauncher {
      * makes and sets new time marker for creation of job run directories
      */
     private void setTimeMarker() {
-        Date date = job.getCreated();
-        Long time = date.getTime();
+    	DateTime date = new DateTime(job.getCreated());
+        Long time = date.getMillis();
         timeMark = time.toString();
         tag = job.getName() + "-" + timeMark;
     }
@@ -416,7 +417,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
 //    private void updateJobStatus(JobStatusType status, String description) throws JobException {
 //        step = "Updating job status in data store for job " + job.getUuid();
 //        log.debug(step);
-//        Date date = new Date();
+//        Date date = new DateTime().toDate();
 //        job.setLastUpdated(date);
 //        job.setStatus(status, description);
 //
@@ -568,8 +569,8 @@ public class CondorLauncher  extends AbstractJobLauncher {
             // run condor_submit
             String condorJobId = submitJobToQueue();
             
-            job.setSubmitTime(new Date());   // Date job submitted to Condor
-            job.setLastUpdated(new Date());  // Date job started by Condor
+            job.setSubmitTime(new DateTime().toDate());   // Date job submitted to Condor
+            job.setLastUpdated(new DateTime().toDate());  // Date job started by Condor
             job.setLocalJobId(condorJobId);
             job.setStatus(JobStatusType.QUEUED, "Condor job successfully placed into queue");
             
@@ -656,7 +657,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
 
             Job job = JobDao.getById(9);
             // job.setStatus(JobStatusType.PENDING);
-            // job.setCreated(new Date());            // this should give us a new directory for storing output
+            // job.setCreated(new DateTime().toDate());            // this should give us a new directory for storing output
             launcher = new CondorLauncher(job);
             //JobManager.submit(job);
             launcher.launch();

@@ -37,6 +37,7 @@ import org.iplantc.service.systems.model.enumerations.LoginProtocolType;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.RemoteTransferListener;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.joda.time.DateTime;
 
 /**
  * @author dooley
@@ -79,7 +80,7 @@ public class CondorJobMonitor extends AbstractJobMonitor
 				else
 				{
 					// increment the number of checks and lastupdated timestamp
-				    this.job.setLastUpdated(new Date());
+				    this.job.setLastUpdated(new DateTime().toDate());
 				    this.job.setStatusChecks(this.job.getStatusChecks() + 1);
 		        	this.job = JobManager.updateStatus(this.job, this.job.getStatus(), this.job.getErrorMessage());
 		        	
@@ -242,7 +243,7 @@ public class CondorJobMonitor extends AbstractJobMonitor
                                     .createSQLQuery("update jobs j set j.status = :status, j.last_updated = :date where j.id = :id")
                                     .setLong("id", job.getId())
                                     .setString("status", JobStatusType.FAILED.name())
-                                    .setDate("date", new Date())
+                                    .setDate("date", new DateTime().toDate())
                                     .executeUpdate();
                         JobEvent evt = new JobEvent(JobStatusType.FAILED, message, job.getOwner());
                         evt.setJob(this.job);
@@ -409,7 +410,7 @@ public class CondorJobMonitor extends AbstractJobMonitor
                 this.job = JobManager.updateStatus(job, JobStatusType.STOPPED, "Job removed forcefully on the Condor system");
             }
             else if (StringUtils.equals("4", result)) {
-                job.setEndTime(new Date());
+                job.setEndTime(new DateTime().toDate());
                 this.job = JobManager.updateStatus(job, JobStatusType.CLEANING_UP, "Job completed, but no callback received");
                 log.debug("Job " + job.getUuid() + " was found in a state of CLEANING UP.");
                 if (!this.job.isArchiveOutput()) {

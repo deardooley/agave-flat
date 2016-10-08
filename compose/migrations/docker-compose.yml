@@ -22,36 +22,48 @@ services:
       file: ../common.yml
       service: migrations
     command: "flyway:migrate"
+    networks:
+      - thirdparty
   
   clean:
     extends:
       file: ../common.yml
       service: migrations
     command: "flyway:clean"
+    networks:
+      - thirdparty
     
   info:
     extends:
       file: ../common.yml
       service: migrations
     command: "flyway:info"
+    networks:
+      - thirdparty
   
   validate:
     extends:
       file: ../common.yml
       service: migrations
     command: "flyway:validate"
+    networks:
+      - thirdparty
     
   baseline:
     extends:
       file: ../common.yml
       service: migrations
     command: "flyway:baseline"
+    networks:
+      - thirdparty
     
   repair:
     extends:
       file: ../common.yml
       service: migrations
     command: "flyway:repair"
+    networks:
+      - thirdparty
     
 networks:
   thirdparty:

@@ -1,0 +1,46 @@
+{
+	"id": "condor.example.com",
+	"name": "Open Science Grid",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "Sample Condor system config",
+	"site": "example.com",
+	"executionType": "CONDOR",
+	"default": false,
+	"queues": [
+        {
+            "name": "condorqueue",
+            "maxJobs": 5,
+            "maxMemory": "1GB",
+            "customDirectives": "",
+            "defaut":true
+        }
+    ],
+	"login": {
+		"host": "docker.example.com",
+		"port": 10155,
+		"protocol": "SSH",
+		"auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+	},
+	"storage":{
+      "host":"storage.example.com",
+      "port":10155,
+      "protocol":"SFTP",
+      "rootDir":"/",
+      "homeDir":"/home/testuser",
+      "auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+    },
+    "scratchDir": "/tmp",
+	"workDir": "/tmp",
+	"scheduler": "CONDOR",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

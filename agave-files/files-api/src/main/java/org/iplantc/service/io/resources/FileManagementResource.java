@@ -69,6 +69,7 @@ import org.iplantc.service.transfer.RemoteDataClientFactory;
 import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.iplantc.service.transfer.exceptions.RemoteDataSyntaxException;
+import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
@@ -991,7 +992,7 @@ public class FileManagementResource extends AbstractFileResource
 								logicalFile.setInternalUsername(internalUsername);
 								logicalFile.setNativeFormat(format);
 								logicalFile.setSourceUri(uri.toString());
-								logicalFile.setLastUpdated(new Date());
+								logicalFile.setLastUpdated(new DateTime().toDate());
 								logicalFile.setStatus(StagingTaskStatus.STAGING_QUEUED);
 								LogicalFileDao.persist(logicalFile);
 							}
@@ -1101,7 +1102,7 @@ public class FileManagementResource extends AbstractFileResource
 										logicalFile.setInternalUsername(internalUsername);
 		    							logicalFile.setNativeFormat(format);
 		    							logicalFile.setSourceUri(tmpUrl);
-		    							logicalFile.setLastUpdated(new Date());
+		    							logicalFile.setLastUpdated(new DateTime().toDate());
 		    							logicalFile.setStatus(StagingTaskStatus.STAGING_QUEUED);
 		    							LogicalFileDao.persist(logicalFile);
 		    						}
@@ -1299,7 +1300,7 @@ public class FileManagementResource extends AbstractFileResource
 							logicalFile.setInternalUsername(internalUsername);
 							logicalFile.setNativeFormat(format);
 							logicalFile.setSourceUri(uri.toString());
-							logicalFile.setLastUpdated(new Date());
+							logicalFile.setLastUpdated(new DateTime().toDate());
 							logicalFile.setStatus(StagingTaskStatus.STAGING_QUEUED);
 							LogicalFileDao.persist(logicalFile);
 						}
@@ -1735,7 +1736,7 @@ public class FileManagementResource extends AbstractFileResource
 
 			for (LogicalFile child: renamedChildren) {
 				child.setPath(StringUtils.replaceOnce(child.getPath(), absolutePath, logicalFile.getPath()));
-				child.setLastUpdated(new Date());
+				child.setLastUpdated(new DateTime().toDate());
 				LogicalFileDao.persist(child);
 				child.addContentEvent(new FileEvent(FileEventType.MOVED, 
 						"File item moved from " + child.getPublicLink() +
@@ -1837,7 +1838,7 @@ public class FileManagementResource extends AbstractFileResource
 			destLogicalFile.setSystem(logicalFile.getSystem());
 			destLogicalFile.setOwner(username);
 			destLogicalFile.setInternalUsername(internalUsername);
-			destLogicalFile.setLastUpdated(new Date());
+			destLogicalFile.setLastUpdated(new DateTime().toDate());
 			
 			// set the resulting url of the destination for use in events
 			destUrl = destLogicalFile.getPublicLink();
@@ -1851,7 +1852,7 @@ public class FileManagementResource extends AbstractFileResource
 			// carry the history with it.
 			logicalFile.setPath(remoteDataClient.resolvePath(destPath));
 			logicalFile.setName(FilenameUtils.getName(logicalFile.getPath()));
-			logicalFile.setLastUpdated(new Date());
+			logicalFile.setLastUpdated(new DateTime().toDate());
 			
 			LogicalFileDao.persist(logicalFile);
 		}
@@ -1884,7 +1885,7 @@ public class FileManagementResource extends AbstractFileResource
 				
 				// update the path and timestamp
 				child.setPath(StringUtils.replaceOnce(child.getPath(), logicalFile.getPath(), destLogicalFile.getPath()));
-				child.setLastUpdated(new Date());
+				child.setLastUpdated(new DateTime().toDate());
 				
 				// add event
 				child.addContentEvent(new FileEvent(FileEventType.MOVED, 
@@ -1997,7 +1998,7 @@ public class FileManagementResource extends AbstractFileResource
 				logicalFile.setSystem(system);
 				logicalFile.setOwner(pemUser);
 				logicalFile.setInternalUsername(internalUsername);
-				logicalFile.setLastUpdated(new Date());
+				logicalFile.setLastUpdated(new DateTime().toDate());
 				LogicalFileDao.persist(logicalFile);
 				
 				logicalFile.addContentEvent(new FileEvent(FileEventType.CREATED, 
@@ -2007,7 +2008,7 @@ public class FileManagementResource extends AbstractFileResource
 			}
 			else
 			{
-				logicalFile.setLastUpdated(new Date());
+				logicalFile.setLastUpdated(new DateTime().toDate());
 				logicalFile.addContentEvent(new FileEvent(FileEventType.CREATED, 
 						"Directory recreated at " + logicalFile.getPublicLink(), 
 						getAuthenticatedUsername()));
@@ -2133,7 +2134,7 @@ public class FileManagementResource extends AbstractFileResource
 				copiedLogicalFile.setName(FilenameUtils.getName(copiedLogicalFile.getPath()));
 				copiedLogicalFile.setOwner(StringUtils.isEmpty(owner) ? username : owner);
 		        copiedLogicalFile.setInternalUsername(internalUsername);
-				copiedLogicalFile.setLastUpdated(new Date());
+				copiedLogicalFile.setLastUpdated(new DateTime().toDate());
 				LogicalFileDao.persist(copiedLogicalFile);
 				copiedLogicalFile.addContentEvent(new FileEvent(FileEventType.CREATED, 
 						"File item copied from " + logicalFile.getPublicLink(), 
@@ -2161,7 +2162,7 @@ public class FileManagementResource extends AbstractFileResource
 				copiedChild.setSystem(child.getSystem());
 				copiedChild.setOwner(child.getOwner());
 				copiedChild.setInternalUsername(internalUsername);
-				copiedChild.setLastUpdated(new Date());
+				copiedChild.setLastUpdated(new DateTime().toDate());
 				LogicalFileDao.persist(copiedChild);
 				copiedChild.addContentEvent(new FileEvent(FileEventType.CREATED, 
 						"File item copied from " + child.getPublicLink(), 

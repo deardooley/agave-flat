@@ -3,8 +3,11 @@
  */
 package org.iplantc.service.jobs.dao;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.iplantc.service.apps.util.ServiceUtils;
@@ -14,6 +17,7 @@ import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.joda.time.DateTime;
 
 /**
  * Model class for interacting with job events. JobEvents are
@@ -24,7 +28,9 @@ import org.iplantc.service.jobs.model.enumerations.JobStatusType;
  * 
  */
 public class JobEventDao {
-
+	
+	private static final Logger log = Logger.getLogger(JobEventDao.class);
+	
 	protected static Session getSession() {
 		Session session = HibernateUtil.getSession();
 		HibernateUtil.beginTransaction();
@@ -172,6 +178,8 @@ public class JobEventDao {
 
 		try
 		{
+			SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			log.debug(String.format("Job Event[%d] %s vs %s vs %s", event.getId(), f.format(event.getCreated()), new DateTime().toString(), f.format(new Date())));
 			Session session = getSession();
 			session.saveOrUpdate(event);
 			session.flush();

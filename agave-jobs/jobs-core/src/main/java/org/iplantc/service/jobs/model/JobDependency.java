@@ -27,6 +27,7 @@ import org.iplantc.service.jobs.model.enumerations.JobDependencyCondition;
 import org.iplantc.service.jobs.model.enumerations.JobDependencyOperator;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
 import org.iplantc.service.systems.Settings;
+import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONStringer;
 import org.json.JSONWriter;
@@ -50,9 +51,10 @@ public class JobDependency {
 	private JobDependencyOperator	operator;
 	private String				value;	
 	private String				tenantId;
-	private Date				lastUpdated = new Date();
+	private Date				lastUpdated;
 
 	public JobDependency() {
+		lastUpdated = new DateTime().toDate();
 		tenantId = TenancyHelper.getCurrentTenantId();
 	}
 

@@ -25,6 +25,7 @@ import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
 import org.iplantc.service.systems.Settings;
+import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONStringer;
 import org.json.JSONWriter;
@@ -47,9 +48,10 @@ public class JobPermission {
 	private String				username;
 	private PermissionType		permission;
 	private String				tenantId;
-	private Date				lastUpdated = new Date();
+	private Date				lastUpdated;
 
 	public JobPermission() {
+		lastUpdated = new DateTime().toDate();
 		tenantId = TenancyHelper.getCurrentTenantId();
 	}
 

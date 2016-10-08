@@ -71,6 +71,7 @@ import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.iplantc.service.transfer.exceptions.TransferException;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.TransferStatusType;
+import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -297,7 +298,7 @@ public class JobManager {
 //			JobDao.refresh(job);
 			job = JobManager.updateStatus(job, JobStatusType.STOPPED);
 //			job.setStatus(JobStatusType.STOPPED,  JobStatusType.STOPPED.getDescription());
-//			job.setLastUpdated(new Date());
+//			job.setLastUpdated(new DateTime().toDate());
 //			job.setEndTime(job.getLastUpdated());
 //			JobDao.persist(job);
 
@@ -370,7 +371,7 @@ public class JobManager {
 			finally {
 				job.setVisible(Boolean.FALSE);
 				job.setStatus(JobStatusType.STOPPED, "Job deleted by user.");
-				Date jobHiddenDate = new Date();
+				Date jobHiddenDate = new DateTime().toDate();
 				job.setLastUpdated(jobHiddenDate);
 				job.setEndTime(jobHiddenDate);
 				JobDao.persist(job);
@@ -409,18 +410,18 @@ public class JobManager {
 	{
 		job.setStatus(status, errorMessage);
 
-		Date date = new Date();
+		Date date = new DateTime().toDate();
 		job.setLastUpdated(date);
 		if (status.equals(JobStatusType.QUEUED))
 		{
 		    if (job.getSubmitTime() == null) {
-		        job.setSubmitTime(new Date());
+		        job.setSubmitTime(new DateTime().toDate());
 		    }
 		}
 		else if (status.equals(JobStatusType.RUNNING))
 		{
 			if (job.getStartTime() == null) {
-			    job.setStartTime(new Date());
+			    job.setStartTime(new DateTime().toDate());
 			}
 		}
 		else if (status.equals(JobStatusType.FINISHED)
@@ -429,7 +430,7 @@ public class JobManager {
 				|| status.equals(JobStatusType.FAILED))
 		{
 		    if (job.getEndTime() == null) {
-		        job.setEndTime(new Date());
+		        job.setEndTime(new DateTime().toDate());
 		    }
 		}
 		else if (status.equals(JobStatusType.STAGED)) {
@@ -662,7 +663,7 @@ public class JobManager {
 			        rootTask.setStatus(TransferStatusType.FAILED);
 			    }
 
-			    rootTask.setEndTime(new Date());
+			    rootTask.setEndTime(new DateTime().toDate());
 
 				TransferTaskDao.persist(rootTask);
 			}
@@ -1863,7 +1864,7 @@ public class JobManager {
 //            }
 //            job.setInputsAsJsonObject(jobInputs);
 //            job.setParametersAsJsonObject(jobParameters);
-//            job.setSubmitTime(new Date());
+//            job.setSubmitTime(new DateTime().toDate());
 //        }
 //        catch (JobException e) {
 //            throw new JobProcessingException(500, e.getMessage(), e);

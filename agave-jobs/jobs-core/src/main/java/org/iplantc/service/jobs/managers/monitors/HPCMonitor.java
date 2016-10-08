@@ -20,6 +20,7 @@ import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.enumerations.LoginProtocolType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
+import org.joda.time.DateTime;
 
 /**
  * Monitors a batch job by querying the remote scheduler for the local job id. 
@@ -64,10 +65,8 @@ public class HPCMonitor extends AbstractJobMonitor {
 				}
 				else // otherwise, throw it in remotely
 				{
-					// increment the number of checks and lastupdated timestamp
-				    
-					this.job.setLastUpdated(new Date());
-		        	this.job.setStatusChecks(job.getStatusChecks() + 1);
+					// increment the number of checks 
+				    this.job.setStatusChecks(job.getStatusChecks() + 1);
 		        	this.job = JobManager.updateStatus(job, job.getStatus(), job.getErrorMessage());
 //		        	
 //		        	try { 
@@ -102,7 +101,7 @@ public class HPCMonitor extends AbstractJobMonitor {
 							// job not found.
 						    log.debug("Job " + job.getUuid() + " no longer present on " + job.getSystem() + 
 						            " as local job id " + job.getLocalJobId() + ". Updating status to CLEANING_UP.");
-						    Date logDate = new Date();// fetchEndDateFromLogFiles();
+						    Date logDate = new DateTime().toDate();// fetchEndDateFromLogFiles();
                             job.setEndTime(logDate);
 							this.job = JobManager.updateStatus(job, JobStatusType.CLEANING_UP, 
 									"Job completion detected by batch scheduler monitor.");

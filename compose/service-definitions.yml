@@ -38,7 +38,7 @@ services:
       - 'GLOBUS_TCP_PORT_RANGE=50007,50017'
       - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms512m -Xmx2000m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
     volumes:
-      - '/var/log/splunk/jobs:/opt/tomcat/logs'
+      - './logs/jobs:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefix:/jobs
       - traefik.backend=jobs
@@ -58,7 +58,7 @@ services:
       - 'GLOBUS_TCP_PORT_RANGE=50301,50310'
       - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms512m -Xmx2000m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
     volumes:
-      - '/var/log/splunk/files:/opt/tomcat/logs'
+      - './logs/files:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefix:/files
       - traefik.backend=files
@@ -75,7 +75,7 @@ services:
       - 'GLOBUS_TCP_PORT_RANGE=50901,50910'
       - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms256m -Xmx1000m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
     volumes:
-      - '/var/log/splunk/apps:/opt/tomcat/logs'
+      - './logs/apps:/opt/tomcat/logs'
       - './ssl:/ssl:ro'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/apps
@@ -93,7 +93,7 @@ services:
     environment:
       - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms256m -Xmx512m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
     volumes:
-      - '/var/log/splunk/systems:/opt/tomcat/logs'
+      - './logs/systems:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/systems
       - traefik.backend=systems
@@ -109,7 +109,7 @@ services:
     mem_limit: 1024m
     restart: "always"
     volumes:
-      - '/var/log/splunk/monitors:/opt/tomcat/logs'
+      - './logs/monitors:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/monitors
       - traefik.backend=monitors
@@ -126,7 +126,7 @@ services:
     environment:
       - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms256m -Xmx512m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
     volumes:
-      - '/var/log/splunk/profiles:/opt/tomcat/logs'
+      - './logs/profiles:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/profiles
       - traefik.backend=profiles
@@ -140,7 +140,7 @@ services:
       service: java_api
     image: metadata-api:$AGAVE_VERSION
     volumes:
-      - '/var/log/splunk/metadata:/opt/tomcat/logs'
+      - './logs/metadata:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=PathPrefix:/meta/data,/meta/schema
       - traefik.backend=metadata
@@ -156,7 +156,7 @@ services:
     environment:
       - 'IPLANT_MAX_NOTIFICATION_TASKS=2'
     volumes:
-      - '/var/log/splunk/notifications:/opt/tomcat/logs'
+      - './logs/notifications:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/notfiications
       - traefik.backend=notifications
@@ -176,7 +176,7 @@ services:
       - 'IPLANT_MAX_TRANSFORM_TASKS=2'
       - 'GLOBUS_TCP_PORT_RANGE=50601,50610'
     volumes:
-      - '/var/log/splunk/transforms:/opt/tomcat/logs'
+      - './logs/transforms:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefix:/transforms
       - traefik.backend=transforms
@@ -190,7 +190,7 @@ services:
       service: java_api
     image: realtime-api:$AGAVE_VERSION
     volumes:
-      - '/var/log/splunk/realtime:/opt/tomcat/logs'
+      - './logs/realtime:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/realtime
       - traefik.backend=realtime
@@ -205,7 +205,7 @@ services:
       service: java_api
     image: tags-api:$AGAVE_VERSION
     volumes:
-      - '/var/log/splunk/tags:/opt/tomcat/logs'
+      - './logs/tags:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/tags
       - traefik.backend=tags
@@ -219,7 +219,7 @@ services:
       service: java_api
     image: uuid-api:$AGAVE_VERSION
     volumes:
-      - '/var/log/splunk/uuid:/opt/tomcat/logs'
+      - './logs/uuid:/opt/tomcat/logs'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/uuid
       - traefik.backend=uuid
@@ -239,7 +239,7 @@ services:
       - 'IPLANT_POSTIT_SERVICE=https://api.prod.agaveapi.co/postits/v2/'
       - 'IPLANT_DB_POSTITS_TABLE=postits'
     volumes:
-      - '/var/log/splunk/postits:/var/log/apache2'
+      - './logs/postits:/var/log/apache2'
       - '../agave-postits/postits-api/src/main/php:/var/www/html' 
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/postits
@@ -254,7 +254,7 @@ services:
       service: php_api
     image: usage-api:$AGAVE_VERSION
     volumes:
-      - '/var/log/splunk/usage:/var/log/apache2'
+      - './logs/usage:/var/log/apache2'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/usage
       - traefik.backend=usage
@@ -268,7 +268,7 @@ services:
       service: php_api
     image: logging-api:$AGAVE_VERSION
     volumes:
-      - '/var/log/splunk/logging:/var/log/apache2'
+      - './logs/logging:/var/log/apache2'
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/logging
       - traefik.backend=logging
@@ -282,7 +282,7 @@ services:
       service: php_api
     image: tenants-api:$AGAVE_VERSION
     volumes:
-      - '/var/log/splunk/tenants:/var/log/apache2'
+      - './logs/tenants:/var/log/apache2'
       - './ssl:/ssl:ro'
     labels:
       - 'traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/tenants'
@@ -297,7 +297,7 @@ services:
       service: php_api
     image: apidocs-api:$AGAVE_VERSION
     volumes:
-      - '/var/log/splunk/docs:/var/log/apache2'
+      - './logs/docs:/var/log/apache2'
     labels:
       - traefik.frontend.rule=Host:api.example.com;Path:/docs
       - traefik.backend=docs
@@ -326,7 +326,7 @@ services:
       - 'APIM_MYSQL_USERNAME=agaveuser'
       - 'APIM_MYSQL_PASSWORD=password'
     volumes:
-      - /var/log/splunk/stats:/var/www/html
+      - log/stats:/var/www/html
     labels:
       - traefik.frontend.rule=Host:api.example.com;Path:/stats
       - traefik.backend=stats

@@ -30,7 +30,7 @@
 			"fileTypes": [
 				"TEXT-0"
 			], 
-			"minCardinality": -1, 
+			"minCardinality": 0, 
 			"ontology": [
 				"0"
 			]

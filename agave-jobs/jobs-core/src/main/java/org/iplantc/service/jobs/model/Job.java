@@ -136,6 +136,8 @@ public class Job {
 	
 	public Job()
 	{
+		created = new DateTime().toDate();
+		lastUpdated = created;
 		updateToken = UUID.randomUUID().toString();
 		nodeCount = new Long(1);
 		processorsPerNode = new Long(1);
@@ -144,8 +146,7 @@ public class Job {
 		retries = 0;
 		archiveOutput = true;
 		visible = true;
-		created = new Date();
-		lastUpdated = created;
+		
 		tenantId = TenancyHelper.getCurrentTenantId();
 		uuid = new AgaveUUID(UUIDType.JOB).toString();
 	}
@@ -1104,7 +1105,7 @@ public class Job {
 	 * @return the created
 	 */
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "created", nullable = false, length = 19)
+	@Column(name = "created", nullable = false, length = 19, columnDefinition="DATETIME")
 	public Date getCreated()
 	{
 		return created;
@@ -1351,7 +1352,7 @@ public class Job {
 		job.setInputs(getInputs());
 		job.setParameters(getParameters());
 		job.setMaxRunTime(maxRunTime);
-		job.setSubmitTime(new Date());
+		job.setSubmitTime(new DateTime().toDate());
 		
 		job.setArchiveOutput(isArchiveOutput());
 		job.setArchiveSystem(getArchiveSystem());

@@ -53,6 +53,7 @@ import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.local.Local;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.util.MD5Checksum;
+import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.io.Files;
@@ -325,7 +326,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 //	    			transferTask.setBytesTransferred(0);
 //	    			transferTask.setAttempts(1);
 //	    			transferTask.setStatus(TransferStatusType.TRANSFERRING);
-//	    			transferTask.setStartTime(new Date());
+//	    			transferTask.setStartTime(new DateTime().toDate());
 //	    			TransferTaskDao.persist(transferTask);
 	    			
 	        		TransferTaskDao.persist(transferTask);
@@ -371,7 +372,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	    					}
 	    				} else {
 //	    					software.setAvailable(false);
-//	    					software.setLastUpdated(new Date());
+//	    					software.setLastUpdated(new DateTime().toDate());
 //	    					SoftwareDao.persist(software);
 	    					Tenant tenant = new TenantDao().findByTenantId(TenancyHelper.getCurrentTenantId());
 	    					String message ="While submitting a job, the Job Service noticed that the checksum " +
@@ -382,7 +383,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
                                     "Name: " + software.getUniqueName() + "\n" + 
                                     "User: " + job.getOwner() + "\n" +
                                     "Job: " + job.getUuid() + "\n" +
-                                    "Time: " + job.getCreated().toString();
+                                    "Time: " + new DateTime(job.getCreated()).toString();
 	    					EmailMessage.send(tenant.getContactName(), 
 	    							tenant.getContactEmail(), 
 	    							"Public app " + software.getUniqueName() + " has been corrupted.", 
@@ -476,7 +477,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 //			transferTask.setBytesTransferred(0);
 //			transferTask.setAttempts(1);
 //			transferTask.setStatus(TransferStatusType.TRANSFERRING);
-//			transferTask.setStartTime(new Date());
+//			transferTask.setStartTime(new DateTime().toDate());
 			
 			TransferTaskDao.persist(transferTask);
 			

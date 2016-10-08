@@ -25,6 +25,88 @@ function authenticate($username, $password)
 	}
 }
 
+///**
+// * Get an oauth bearer token for the user from the auth service
+// */
+//function get_auth_token($username, $tenant_id)
+//{
+//	global $config;
+//
+//	if ( empty($username) ) {
+//		format_error_response("Invalid impersonation username.", ERROR_400);
+//	}
+//
+//	if ( empty($tenant_id) )
+//	{
+//		format_error_response("Invalid tenant id.", ERROR_400);
+//	}
+//
+//	if ( empty($config['impersonation_accounts'][$tenant_id]['user']) ||
+//		empty($config['impersonation_accounts'][$tenant_id]['pass'])) {
+//		format_error_response("Invalid tenant id.", ERROR_400);
+//	}
+//
+//	if (empty($config['impersonation_accounts'][$tenant_id]['client_key']) ||
+//		empty($config['impersonation_accounts'][$tenant_id]['client_secret'])) {
+//
+//
+//		// generate client keys for use
+//		$response = authenticated_post(
+//			resolve_tenant_url($config['iplant.foundation.services']['client'], $tenant_id),
+//			$config['impersonation_accounts'][$tenant_id]['user'],
+//			$config['impersonation_accounts'][$tenant_id]['pass'],
+//			array('clientName' => 'postits_service_account',
+//				'tier' => 'Unlimited',
+//				'description' => 'Agave PostIts Service at ' . parse_url($config['IPLANT_PROXY_SERVICE'], PHP_URL_HOST),
+//				'callbackUrl' => '')
+//		);
+//	}
+//
+//
+//		if (!empty($response) && $response['status'] == 'success') {
+//			file_put_contents("/var/www/html/.".$tenant_id, $response['result'] );
+//
+//			$response = authenticated_post(
+//				resolve_tenant_url($config['iplant.foundation.services']['client'], $tenant_id),
+//				$config['impersonation_accounts'][$tenant_id]['user'],
+//				$config['impersonation_accounts'][$tenant_id]['pass'],
+//				array('clientName' => 'postits_service_account',
+//					'tier' => 'Unlimited',
+//					'description' => 'Agave PostIts Service at '. parse_url($config['IPLANT_PROXY_SERVICE'], PHP_URL_HOST),
+//					'callbackUrl' => '')
+//			);
+//
+//			$response['result']['client_key'], $response['result']['client_key'],
+//		}
+//	}
+//	else
+//	{
+//		$fields = array();
+//		$fields['lifetime'] = $lifetime;
+//		if ($internal_username) $fields['internalUsername'] = $internal_username;
+//		if ($max_uses != -1) $fields['maxUses'] = $max_uses;
+//
+//		if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+//			$auth_response = authenticated_get($config['iplant.foundation.services']['auth'], $username, $password);
+//		} else {
+//			$auth_response = authenticated_post($config['iplant.foundation.services']['auth'], $username, $password, $fields);
+//		}
+//
+//		if (empty($auth_response) or $auth_response->status == 'error')
+//		{
+//			format_error_response("Invalid username/password combination.", ERROR_401);
+//		}
+//		else if (empty($auth_response->result))
+//		{
+//			format_error_response("Error retrieving short term token.", ERROR_500);
+//		}
+//		else
+//		{
+//			return $auth_response->result->token;
+//		}
+//	}
+//}
+
 /**
  * Get an auth token for the user from the auth service
  */

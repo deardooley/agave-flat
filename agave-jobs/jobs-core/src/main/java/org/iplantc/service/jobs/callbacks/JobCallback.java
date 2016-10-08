@@ -31,7 +31,7 @@ public class JobCallback {
     {
         setJob(job);
         setStatus(status);
-        setCreated(new Date());
+        setCreated(new DateTime().toDate());
     }
     
     /**
@@ -48,7 +48,7 @@ public class JobCallback {
     {
         setJob(uuid, callbackToken);
         setStatus(status);
-        setCreated(new Date());
+        setCreated(new DateTime().toDate());
     }
     
     public JobCallback(String uuid, String status, String callbackToken, String localSchedulerJobId) 

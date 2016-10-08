@@ -46,6 +46,7 @@ import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.AuthenticationException;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.iplantc.service.transfer.model.TransferTask;
+import org.joda.time.DateTime;
 
 /**
  * @author dooley
@@ -302,7 +303,7 @@ public class StagingAction extends AbstractWorkerAction {
                             this.job.getOwner());
                     
                     this.job.setStatus(JobStatusType.STAGING_INPUTS, event);
-                    this.job.setLastUpdated(new Date());
+                    this.job.setLastUpdated(new DateTime().toDate());
                     JobDao.persist(this.job);
 
                     urlCopy = new URLCopy(remoteStorageDataClient, remoteExecutionDataClient);
