@@ -178,8 +178,8 @@ public class JobEventDao {
 
 		try
 		{
-			SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			log.debug(String.format("Job Event[%d] %s vs %s vs %s", event.getId(), f.format(event.getCreated()), new DateTime().toString(), f.format(new Date())));
+//			SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//			log.debug(String.format("Job Event[%d] %s vs %s vs %s", event.getId(), f.format(event.getCreated()), new DateTime().toString(), f.format(new Date())));
 			Session session = getSession();
 			session.saveOrUpdate(event);
 			session.flush();

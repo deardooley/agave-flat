@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## 2.1.8 - 2016-10-07
+## 2.1.8 - 2016-10-08
 
 ### Added
 - FILES: Adding url query based search by username, permission to file permissions collection
@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - JOBS: Added support for the `docker` Condor universe and dynamic argument building based on agave app parameters. order is preserved. full command line argument is built.
 - JOBS: Added `CUSTOM_CONDOR` scheduler for specifying everything but input log, error, and output files, executable. This gives better control over requirements, etc.
 - JOBS: Added support for filtering the `customDirectives` on condor systems for inclusion in the condorSubmit script used to kick off a condor job.
+- JOBS: AH-134 Switched to joda time for all date handling in the jobs api. There was an ongoing issue caused by dates being formatted from the db in the wrong time zone, then persisted with the new, incorrect time zone. We fixed this in two places. First, we ensured all dates were written with new DateTime().toDate() rather than new Date(). This kept timezones defined at runtime being honored. Second, we updated the container jdbc connection to use `useLegacyDatetimeCode=false`.
 
 ### Changed
 - ALL: Fixed bug in runtime configuration service preventing runtime settings from being formatted.
