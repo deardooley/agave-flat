@@ -50,6 +50,12 @@ public class ProfileResourceImpl extends AbstractAgaveResource implements Profil
 	public Response getProfiles(@QueryParam("username") String username,
 								@QueryParam("email") String email,
 								@QueryParam("name") String name,
+								@QueryParam("first_name") String firstname,
+								@QueryParam("firstName") String firstName,
+								@QueryParam("last_name") String lastname,
+								@QueryParam("lastName") String lastName,
+								@QueryParam("full_name") String fullname,
+								@QueryParam("fullName") String fullName,
 								@QueryParam("status") String status,
 								@QueryParam("pretty") boolean pretty)
 	{
@@ -85,6 +91,60 @@ public class ProfileResourceImpl extends AbstractAgaveResource implements Profil
 						Request.getCurrent().getClientInfo().getUpstreamAddress());
 				
 				profiles.addAll(dao.searchByFullName(name));
+			}
+			else if (!StringUtils.isEmpty(fullname)) 
+			{
+				AgaveLogServiceClient.log(PROFILES02.name(), 
+						ProfileSearchName.name(), 
+						getAuthenticatedUsername(), "", 
+						Request.getCurrent().getClientInfo().getUpstreamAddress());
+				
+				profiles.addAll(dao.searchByFullName(fullname));
+			}
+			else if (!StringUtils.isEmpty(fullName)) 
+			{
+				AgaveLogServiceClient.log(PROFILES02.name(), 
+						ProfileSearchName.name(), 
+						getAuthenticatedUsername(), "", 
+						Request.getCurrent().getClientInfo().getUpstreamAddress());
+				
+				profiles.addAll(dao.searchByFullName(fullName));
+			}
+			else if (!StringUtils.isEmpty(firstname)) 
+			{
+				AgaveLogServiceClient.log(PROFILES02.name(), 
+						ProfileSearchName.name(), 
+						getAuthenticatedUsername(), "", 
+						Request.getCurrent().getClientInfo().getUpstreamAddress());
+				
+				profiles.addAll(dao.searchByFullName(firstname));
+			}
+			else if (!StringUtils.isEmpty(firstName)) 
+			{
+				AgaveLogServiceClient.log(PROFILES02.name(), 
+						ProfileSearchName.name(), 
+						getAuthenticatedUsername(), "", 
+						Request.getCurrent().getClientInfo().getUpstreamAddress());
+				
+				profiles.addAll(dao.searchByFullName(firstName));
+			}
+			else if (!StringUtils.isEmpty(lastname)) 
+			{
+				AgaveLogServiceClient.log(PROFILES02.name(), 
+						ProfileSearchName.name(), 
+						getAuthenticatedUsername(), "", 
+						Request.getCurrent().getClientInfo().getUpstreamAddress());
+				
+				profiles.addAll(dao.searchByFullName(lastname));
+			}
+			else if (!StringUtils.isEmpty(firstName)) 
+			{
+				AgaveLogServiceClient.log(PROFILES02.name(), 
+						ProfileSearchName.name(), 
+						getAuthenticatedUsername(), "", 
+						Request.getCurrent().getClientInfo().getUpstreamAddress());
+				
+				profiles.addAll(dao.searchByFullName(firstName));
 			}
 			
 //			final ProfileList profileList = new ProfileList();

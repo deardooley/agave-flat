@@ -38,7 +38,7 @@ public class FileBean {
 		this.path = file.getPath();
 		this.owner = username;
 		this.length = file.length();
-		this.lastModified = new Date();
+		this.lastModified = new DateTime().toDate();
 		this.directory = file.isDirectory();
 		this.parent = file.getParentFile().toURI().toString();
 		this.readable = file.canRead();

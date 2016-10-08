@@ -65,6 +65,12 @@ public class SubmitScriptFactory {
 		else if (scheduler == SchedulerType.CUSTOM_SLURM) {
 			return new CustomSlurmSubmitScript(job);
 		}
+		else if (scheduler == SchedulerType.CONDOR) {
+			return new CondorSubmitScript(job);
+		}
+		else if (scheduler == SchedulerType.CUSTOM_CONDOR) {
+			return new CustomCondorSubmitScript(job);
+		}
 		else
 		{
 			return new ForkSubmitScript(job);

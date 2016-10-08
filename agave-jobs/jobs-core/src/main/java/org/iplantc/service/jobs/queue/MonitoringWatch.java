@@ -80,7 +80,7 @@ public class MonitoringWatch extends AbstractJobWatch
 							" due to previous completion. Setting job status to FINISHED due to previous completion event.");
 					return;
 				} 
-				else if (job.calculateExpirationDate().before(new Date())) 
+				else if (job.calculateExpirationDate().before(new DateTime().toDate())) 
 				{
 					log.debug("Terminating job " + job.getUuid() + 
 							" after for not completing prior to the expiration date " + 

@@ -62,7 +62,7 @@ public class JobEvent {
 	private JobEvent() {
 		this.tenantId = TenancyHelper.getCurrentTenantId();
 		this.uuid = new AgaveUUID(UUIDType.JOB_EVENT).toString();
-        this.created = new Date();
+        this.created = new DateTime().toDate();
 	}
 
 	public JobEvent(String status, String description, String createdBy) {

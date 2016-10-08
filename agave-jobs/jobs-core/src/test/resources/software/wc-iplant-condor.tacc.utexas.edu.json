@@ -19,9 +19,9 @@
     "ontology":[
         "http://sswapmeet.sswap.info/algorithms/wc"
     ],
-    "executionSystem":"condor.opensciencegrid.org",
+    "executionSystem":"condor.example.com",
     "executionType":"CONDOR",
-    "deploymentSystem":"data.iplantcollaborative.org",
+    "deploymentSystem":"storage.example.com",
     "deploymentPath":"/home/testuser/applications/private/wc-1.00",
     "templatePath":"/wrapper.sh",
     "testPath":"library/test.sh",

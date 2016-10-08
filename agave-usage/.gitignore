@@ -38,5 +38,4 @@ fabfile.pyc
 test-output
 
 # cache files
-*.dat
 rebel.xml

@@ -656,30 +656,29 @@ public class BatchQueue implements LastUpdatable, Comparable<BatchQueue> {
 				batchQueue.setMaxRequestedTime(jsonBatchQueue.getString("maxRequestedTime"));
 			}
 
-			if (jsonBatchQueue.has("maxMemoryPerNode"))
+			if (jsonBatchQueue.has("maxMemoryPerNode") && !jsonBatchQueue.isNull("maxMemoryPerNode"))
 			{
-				if (ServiceUtils.isNonEmptyString(jsonBatchQueue, "maxMemoryPerNode"))
-				{
-					try {
-						Double maxMemoryMb = parseMaxMemoryPerNode(jsonBatchQueue.getString("maxMemoryPerNode"));
-						if (maxMemoryMb > 0 || maxMemoryMb == -1) {
-							batchQueue.setMaxMemoryPerNode(maxMemoryMb);
-						} else {
-							throw new SystemArgumentException("Invalid 'queue.maxMemoryPerNode' value. If specified, " +
-									"maxMemoryPerNode should be a postive value specified in ###.#[EPTGM]B format or -1 for no limit.");
-						}
-					}
-					catch (NumberFormatException e) {
-						throw new SystemArgumentException("Invalid 'queue.maxMemoryPerNode' value. If specified, " +
-								"maxMemoryPerNode should be a postive value specified in ###.#[EPTGM]B format or -1 for no limit.");
-					} catch (JSONException e) {
+				try {
+					Double maxMemoryMb = parseMaxMemoryPerNode(jsonBatchQueue.getString("maxMemoryPerNode"));
+					if (maxMemoryMb > 0 || maxMemoryMb == -1) {
+						batchQueue.setMaxMemoryPerNode(maxMemoryMb);
+					} else {
 						throw new SystemArgumentException("Invalid 'queue.maxMemoryPerNode' value. If specified, " +
 								"maxMemoryPerNode should be a postive value specified in ###.#[EPTGM]B format or -1 for no limit.");
 					}
-				} else {
+				}
+				catch (NumberFormatException | JSONException e) {
 					throw new SystemArgumentException("Invalid 'queue.maxMemoryPerNode' value. If specified, " +
 							"maxMemoryPerNode should be a postive value specified in ###.#[EPTGM]B format or -1 for no limit.");
-				}
+				} 
+//				catch (JSONException e) {
+//					throw new SystemArgumentException("Invalid 'queue.maxMemoryPerNode' value. If specified, " +
+//							"maxMemoryPerNode should be a postive value specified in ###.#[EPTGM]B format or -1 for no limit.");
+//				}
+//				} else {
+//					throw new SystemArgumentException("Invalid 'queue.maxMemoryPerNode' value. If specified, " +
+//							"maxMemoryPerNode should be a postive value specified in ###.#[EPTGM]B format or -1 for no limit.");
+//				}
 			}
 			else
 			{
@@ -706,12 +705,17 @@ public class BatchQueue implements LastUpdatable, Comparable<BatchQueue> {
 
 	public static Double parseMaxMemoryPerNode(String memoryLimit) throws NumberFormatException
 	{
-		if (memoryLimit == null) {
-			throw new NumberFormatException("Cannot parse a null value.");
+		if (StringUtils.isEmpty(memoryLimit)) {
+			throw new NumberFormatException("Memory limit cannot be null or empty.");
 		}
 
 		Double returnValue = new Double(-1);
 
+		// default numeric values to GB
+		if (NumberUtils.isNumber(memoryLimit)) {
+			memoryLimit = memoryLimit + "GB";
+		}
+		
 		memoryLimit = memoryLimit.toUpperCase()
 				.replaceAll(",", "")
 				.replaceAll(" ", "");

@@ -1,35 +1,47 @@
 {
-	"id": "condor.opensciencegrid.org",
-	"name": "Open Science Grid",
-	"status": "UP",
-	"type": "EXECUTION",
-	"description": "The Open Science Grid (OSG) advances science through open distributed computing. The OSG is a multi-disciplinary partnership to federate local, regional, community and national cyberinfrastructures to meet the needs of research and academic communities at all scales.",
-	"site": "opensciencegrid.org",
-	"executionType": "CONDOR",
-	"default": false,
-	"queues": [
-        {
-            "name": "condorqueue",
-            "maxJobs": 5,
-            "maxMemory": "1GB",
-            "customDirectives": "",
-            "defaut":true
-        }
-    ],
-	"login": {
-		"host": "docker.example.com",
-		"port": 22,
-		"protocol": "LOCAL"
-	},
-	"storage": {
-		"host": "localhost",
-		"port": 22,
-		"protocol": "LOCAL",
-		"rootDir": "/tmp"
-	},
-	"scratchDir": "/tmp",
-	"workDir": "/tmp",
-	"scheduler": "CONDOR",
-	"environment": "",
-	"startupScript": "/home/testuser/.bashrc"
+  "id": "condor.example.com",
+  "name": "Open Science Grid",
+  "status": "UP",
+  "available": true,
+  "type": "EXECUTION",
+  "description": "The Open Science Grid (OSG) advances science through open distributed computing. The OSG is a multi-disciplinary partnership to federate local, regional, community and national cyberinfrastructures to meet the needs of research and academic communities at all scales.",
+  "site": "opensciencegrid.org",
+  "public": true,
+  "globalDefault": false,
+  "executionType": "CONDOR",
+  "scheduler": "CONDOR",
+  "environment": "/condor/scratch",
+  "startupScript": "./bashrc",
+  "maxSystemJobs": 100,
+  "maxSystemJobsPerUser": 10,
+  "workDir": "/condor/scratch/",
+  "scratchDir": "/condor/scratch/",
+  "owner": "dooley",
+  "queues": [
+    {
+      "name": "condorqueue",
+      "default": true,
+      "description": "",
+      "mappedName": null,
+      "maxJobs": 100,
+      "maxUserJobs": 10,
+      "maxNodes": 1,
+      "maxProcessorsPerNode": 1,
+      "maxRequestedTime": "48:00:00",
+      "maxMemoryPerNode": "2GB",
+      "customDirectives": "requirements = (TARGET.FileSystemDomain != \"iplant-condor.tacc.utexas.edu\") && (Arch == \"X86_64\") \n+ProjectName = \"iplant\"\n"
+    }
+  ],
+  "login": {
+    "host": "localhost",
+    "port": 22,
+    "protocol": "LOCAL"
+  },
+  "storage": {
+    "host": "localhost",
+    "port": 22,
+    "protocol": "LOCAL",
+    "rootDir": "/",
+    "homeDir": "/home/iplant"
+  }
 }

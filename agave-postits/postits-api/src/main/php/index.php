@@ -543,6 +543,9 @@ function forward_postit_request($url, $method = "GET", $username = '', $need_aut
         );
         $jwt_body = base64_encode(json_encode($jwt_claims));
 
+//        $bearer_token =
+//        $oauth_header = 'Authorization: Bearer ' . $bearer_token;
+        
         $header_field = 'x-jwt-assertion-' . str_replace('.', '-', $tenant_id);
         $header_value = sprintf("%s.%s.%s", $jwt_prefix, $jwt_body, $jwt_suffix);
         if ($config['debug']) error_log($header_field . ": " . $header_value);

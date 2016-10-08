@@ -150,8 +150,8 @@ public class BatchQueueTest extends SystemsModelTestCommon{
     			{ "maxMemoryPerNode", "2PB", "maxMemoryPerNode can specify PB", false },
     			{ "maxMemoryPerNode", "2pb", "maxMemoryPerNode can specify pb", false },
     			{ "maxMemoryPerNode", "2 GB", "maxMemoryPerNode ignores spaces", false },
-    			{ "maxMemoryPerNode", new Long(1024), "maxMemoryPerNode cannot be an integer", true },
-    			{ "maxMemoryPerNode", new Float(22), "maxMemoryPerNode cannot be a decimal", true },
+    			{ "maxMemoryPerNode", new Long(1024), "maxMemoryPerNode can be an integer", false },
+    			{ "maxMemoryPerNode", new Float(22.1), "maxMemoryPerNode can be a decimal", false },
     			
     			{ "maxNodes", "", "maxNodes cannot be empty string", true },
     			{ "maxNodes", "Harry", "maxNodes cannot be string", true },
@@ -266,8 +266,8 @@ public class BatchQueueTest extends SystemsModelTestCommon{
     public Object[][] batchQueueMaxMemoryParser() {
     	return new Object[][] {
     			{ "2.0GB", 2, "Decimal GB are converted to long values", false },
-    			{ "2.5GB", 2, "Decimal GB are rounded down to long values", false },
-    			{ "2.7GB", 2, "Decimal GB are rounded down to long values", false },
+    			{ "2.5GB", 2.5, "Decimal GB are rounded down to long values", false },
+    			{ "2.7GB", 2.7, "Decimal GB are rounded down to long values", false },
     			{ "2GB", 2, "GB are converted to long values", false },
     			{ "2gb", 2, "gb are converted to long values", false },
     			{ "2TB", 2048, "TB are converted to long values", false },
@@ -276,11 +276,15 @@ public class BatchQueueTest extends SystemsModelTestCommon{
     			{ "2pb", Long.parseLong("2097152"), "pb are converted to long values", false },
     			{ "2EB", Long.parseLong("2147483648"), "EB are converted to long values", false },
     			{ "2eb", Long.parseLong("2147483648"), "eb are converted to long values", false },
+    			{ "2", 2, "integers are treated as gb", false },
+    			{ "2.5", 2.5, "decimals greater than 1 are treated as gb", false },
+    			{ "2048", 2048, "integers are treated as gb", false },
+    			{ "0.5", .5, "decimals less than 1 are treated as partial gb", false },
     	};
     }
     
     @Test (groups={"model","system", "broken"}, dataProvider="batchQueueMaxMemoryParser")
-    public void batchQueueMaxMemoryParserTest(String value, long expectedValue, String message, boolean exceptionThrown) 
+    public void batchQueueMaxMemoryParserTest(String value, double expectedValue, String message, boolean exceptionThrown) 
     throws Exception 
     {
     	boolean exceptionFlag = false;
@@ -290,13 +294,13 @@ public class BatchQueueTest extends SystemsModelTestCommon{
     	try 
 		{
     		bq.setMaxMemoryPerNode(value);
-			Assert.assertTrue(bq.getMaxMemoryPerNode().longValue() == expectedValue, message);
+			Assert.assertEquals(bq.getMaxMemoryPerNode().doubleValue(), expectedValue, message);
 		}
 		catch(Exception se){
 			exceptionFlag = true;
-			exceptionMsg = "Invalid iPlant JSON submitted, attribute maxMemory " + message + " \n\"maxMemory\" = \"" + value + "\"\n" + se.getMessage();
+			exceptionMsg = "Invalid JSON submitted, attribute maxMemory " + message + " \n\"maxMemory\" = \"" + value + "\"\n" + se.getMessage();
 			if (!exceptionThrown) 
-				se.printStackTrace();
+				Assert.fail(exceptionMsg, se);
 		}
 
 		System.out.println(" exception thrown?  expected " + exceptionThrown + " actual " + exceptionFlag);

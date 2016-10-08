@@ -43,11 +43,16 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
 		 */
 		@Override
 		public String resolveForJob(Job job) {
-			return String.format("curl -sSk \"%strigger/job/%s/token/%s/status/%s?pretty=true\" 1>&2 \n\n",
-					TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, job.getTenantId()),
-					job.getUuid(),
-					job.getUpdateToken(),
-					status.name());
+			if (this == AGAVE_JOB_CALLBACK_NOTIFICATION) {
+				return WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, null);
+			}
+			else {
+				return String.format("curl -sSk \"%strigger/job/%s/token/%s/status/%s?pretty=true\" 1>&2 \n\n",
+						TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, job.getTenantId()),
+						job.getUuid(),
+						job.getUpdateToken(),
+						status.name());
+			}
 		}
 		
 		/**
@@ -59,6 +64,10 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
 		 */
 		public static String resolveNotificationEventMacro(Job job, String eventName, String[] callbackVariableNames) {
 		    
+			if (callbackVariableNames == null) {
+				callbackVariableNames = new String[]{};
+			}
+			
 			eventName = StringUtils.trimToNull(eventName);
 			
             StringBuilder sb = new StringBuilder();

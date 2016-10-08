@@ -53,6 +53,7 @@ import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.local.Local;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.util.MD5Checksum;
+import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.io.Files;
@@ -151,9 +152,21 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	 */
 	@Override
 	public String resolveRuntimeNotificationMacros(String wrapperTemplate) {
+		
+		Pattern emptyCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\}");
+        Matcher callbackMatcher = emptyCallbackPattern.matcher(wrapperTemplate);
+        while (callbackMatcher.matches()) {
+        	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
+                    job, "JOB_RUNTIME_CALLBACK_EVENT", new String[]{});
+            
+            wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
+            
+            callbackMatcher = emptyCallbackPattern.matcher(wrapperTemplate);
+        }
+        
 	    // process the notification template first so there is no confusion or namespace conflict prior to resolution
         Pattern defaultCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|(?:([a-zA-Z0-9_,\\s]*))\\}");
-        Matcher callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
+        callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
         while (callbackMatcher.matches()) {
         	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
                     job, "JOB_RUNTIME_CALLBACK_EVENT", StringUtils.split(callbackMatcher.group(1), ","));
@@ -188,9 +201,9 @@ public abstract class AbstractJobLauncher implements JobLauncher
 		}
 		
 		for (WrapperTemplateStatusVariableType macro: WrapperTemplateStatusVariableType.values()) {
-			if (macro != WrapperTemplateStatusVariableType.AGAVE_JOB_CALLBACK_NOTIFICATION) {
+//			if (macro != WrapperTemplateStatusVariableType.AGAVE_JOB_CALLBACK_NOTIFICATION) {
 				wrapperTemplate = StringUtils.replace(wrapperTemplate, "${" + macro.name() + "}", macro.resolveForJob(job));
-			}
+//			}
 		}
 		
 		return wrapperTemplate;
@@ -313,7 +326,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 //	    			transferTask.setBytesTransferred(0);
 //	    			transferTask.setAttempts(1);
 //	    			transferTask.setStatus(TransferStatusType.TRANSFERRING);
-//	    			transferTask.setStartTime(new Date());
+//	    			transferTask.setStartTime(new DateTime().toDate());
 //	    			TransferTaskDao.persist(transferTask);
 	    			
 	        		TransferTaskDao.persist(transferTask);
@@ -359,7 +372,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	    					}
 	    				} else {
 //	    					software.setAvailable(false);
-//	    					software.setLastUpdated(new Date());
+//	    					software.setLastUpdated(new DateTime().toDate());
 //	    					SoftwareDao.persist(software);
 	    					Tenant tenant = new TenantDao().findByTenantId(TenancyHelper.getCurrentTenantId());
 	    					String message ="While submitting a job, the Job Service noticed that the checksum " +
@@ -370,7 +383,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
                                     "Name: " + software.getUniqueName() + "\n" + 
                                     "User: " + job.getOwner() + "\n" +
                                     "Job: " + job.getUuid() + "\n" +
-                                    "Time: " + job.getCreated().toString();
+                                    "Time: " + new DateTime(job.getCreated()).toString();
 	    					EmailMessage.send(tenant.getContactName(), 
 	    							tenant.getContactEmail(), 
 	    							"Public app " + software.getUniqueName() + " has been corrupted.", 
@@ -464,7 +477,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 //			transferTask.setBytesTransferred(0);
 //			transferTask.setAttempts(1);
 //			transferTask.setStatus(TransferStatusType.TRANSFERRING);
-//			transferTask.setStartTime(new Date());
+//			transferTask.setStartTime(new DateTime().toDate());
 			
 			TransferTaskDao.persist(transferTask);
 			

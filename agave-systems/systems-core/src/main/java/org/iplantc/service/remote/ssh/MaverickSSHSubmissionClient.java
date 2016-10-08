@@ -330,7 +330,7 @@ public class MaverickSSHSubmissionClient implements RemoteSubmissionClient
 					session.startShell();
 
 					/**
-					 * Start local forwardings after starting the users session.
+					 * Start local forwarding after starting the users session.
 					 */
 					fwd.startLocalForwarding("127.0.0.1", resp, hostname, port);
 					
@@ -366,6 +366,7 @@ public class MaverickSSHSubmissionClient implements RemoteSubmissionClient
 					
 					shell = new Shell(ssh2);
 					
+					// fork the command on the remote system.
 					ShellProcess process = shell.executeCommand(command, true, "UTF-8");
 					InputStream in = null;
 					try 

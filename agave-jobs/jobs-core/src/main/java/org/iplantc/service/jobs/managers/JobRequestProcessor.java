@@ -42,6 +42,7 @@ import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -658,7 +659,7 @@ public class JobRequestProcessor {
             job.setMaxRunTime(requestedTime);
             job.setInputsAsJsonObject(jobInputs);
             job.setParametersAsJsonObject(jobParameters);
-            job.setSubmitTime(new Date());
+            job.setSubmitTime(new DateTime().toDate());
         }
         catch (JobException e) {
             throw new JobProcessingException(500, e.getMessage(), e);
@@ -697,7 +698,10 @@ public class JobRequestProcessor {
 
             // persisting the job makes it available to the job queue
             // for submission
+		    DateTime created = new DateTime();
+		    job.setCreated(created.toDate());
             JobDao.persist(job);
+            job.setCreated(created.toDate());
             job.setStatus(JobStatusType.PENDING, JobStatusType.PENDING.getDescription());
             JobDao.persist(job);
 

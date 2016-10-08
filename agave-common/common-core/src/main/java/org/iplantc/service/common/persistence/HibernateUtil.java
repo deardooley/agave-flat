@@ -64,8 +64,8 @@ public class HibernateUtil {
 			}
 			configuration.setNamingStrategy(new ImprovedNamingStrategy());
 			
-			// adding to properly handle conversion of dates to/from the db in UTC
-			configuration.registerTypeOverride(new CdtTimestampType());
+			// adding to properly handle conversion of dates to/from the db in CDT
+//			configuration.registerTypeOverride(new CdtTimestampType());
 			
 			// uncomment to see hql of all schema export statments.
 //			new SchemaExport(configuration).create(true, false);

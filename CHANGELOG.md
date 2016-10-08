@@ -1,6 +1,199 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.1.8 - 2016-10-07
+
+### Added
+- FILES: Adding url query based search by username, permission to file permissions collection
+- FILES: Added support for recursive permission revocation by specifying a username of `*` in the POST operation.
+- FILES: Added support for recursive permission deletion by adding `recursive=true` to a DELETE request
+- JOBS: Added configurable retries on the condor side when jobs are preempted.
+- JOBS: Added support for the `docker` Condor universe and dynamic argument building based on agave app parameters. order is preserved. full command line argument is built.
+- JOBS: Added `CUSTOM_CONDOR` scheduler for specifying everything but input log, error, and output files, executable. This gives better control over requirements, etc.
+- JOBS: Added support for filtering the `customDirectives` on condor systems for inclusion in the condorSubmit script used to kick off a condor job.
+
+### Changed
+- ALL: Fixed bug in runtime configuration service preventing runtime settings from being formatted.
+- FILES: AH-127 Fixed a bug preventing files from being copied unless the requestor has WRITE permissions.
+- FILES: Fixed bug where unknown folders were assigned a type of "raw" rather than "dir".
+- PROFILES: Fixed inconsistency between java and python profiles apis so that they both support underscore field names in the search query.
+- JOBS: Fixing `_links.self.href` hypermedia URL in all job permissions objects to include the username in the URL query for direct reference.
+- JOBS: Set default requirements to `( OpSys == "LINUX" )`
+- JOBS: Updated condor support to allow for overriding the default universe and adding custom directives.
+- SYSTEMS: Updating IRODS4 IRODSAccount and IRODSAccessObjectFactory attributes to threadlocal singleton objects. This prevents a NPE from being thrown when reusing the object after a disconnect() has been called.
+- SYSTEMS: Reverting to use of IRODS4.stat(String) to check for existence over IRODS4.getFile(String) to avoid ambiguous socket failures.
+
+### Removed
+- nothing
+
+
+
+## 2.1.8 - 2016-09-22
+
+### Added
+- COMMON: Added explicit date handling in the hibernate mapping and JNDI connection to force `America/Chicago` timezone.
+
+### Changed
+- APIDOCS: Updating the container init script to update the service url to the point to the public tenant.  
+- SYSTEMS: Relaxed StorageConfig and LoginConfig validation to allow systems to be updated without having to provide the credentials again. This addresses a large usability issue centered around effectively delegating system maintenance to another person without having to give them the system credentials.  
+- FILES: Fixing typo in deletion history event on a copy operation.  
+- JOBS: Pushed a fix for parsing of condor job ids after submission.  
+
+### Removed
+- nothing
+
+
+
+## 2.1.8 - 2016-09-15
+
+### Added
+- SYSTEMS: Adding code to handle MFA prompts for warnings and requirements for MFA tokens when using SSH/SFTP. This patch will respond to non-password challenges with a carriage return for each subsequent prompt. In the case of TACC's pseudo MFA, this will accept the countdown prompt and allow auth to complete. In the case of actual MFA prompts from TACC MFA or other MFA solutions, a black list of known prompts from Yubikey, Google Authenticator, Duo, RSA, and TACC Auth is consulted. If found, the auth attempt is terminated with responding to the MFA prompt so user's don't get their accounts locked for excessive failures. This works for password and ssh key access alike.
+- SYSTEMS: Added same MFA changes into the MaverickSSHSubmissionClient for all remote access.
+
+### Changed
+- METADATA: AH-123 Adding `privileged` query parameter to metadata listings and searches. When `privileged=false`, the search will be performed as the requesting user without any implied permissions imposed on the results. 
+- STATS: Adding check for chicken and egg function definition when looking for environment variables.
+
+### Removed
+- nothing
+
+
+
+## 2.1.8 - 2016-10-14
+
+### Added
+- SYSTEMS: Adding code to handle MFA prompts for warnings and requirements for MFA tokens when using SSH/SFTP. This patch will respond to non-password challenges with a carriage return for each subsequent prompt. In the case of TACC's pseudo MFA, this will accept the countdown prompt and allow auth to complete. In the case of actual MFA prompts from TACC MFA or other MFA solutions, a black list of known prompts from Yubikey, Google Authenticator, Duo, RSA, and TACC Auth is consulted. If found, the auth attempt is terminated with responding to the MFA prompt so user's don't get their accounts locked for excessive failures. This works for password and ssh key access alike.
+- SYSTEMS: Added same MFA changes into the MaverickSSHSubmissionClient for all remote access.
+
+### Changed
+- nothing
+
+### Removed
+- nothing
+
+
+
+## 2.1.8 - 2016-09-06
+
+### Added
+- nothing
+
+### Changed
+- NOTIFICATIONS: Fixing bug in notifications query where deleted and expired notifications are returned by default. Now expired notifications are only returned if the `visible` value is included in the query.
+- JOBS: AH-120 Added better exception handling for `InvalidUserException` on permission assignments.
+- JOBS: AH-121 Fixed bug in cli submission script caused by using `[[` with the `sh` command. On other linux distributions, `sh` maps to `bash`. On Ubuntu systems, `sh` maps to `dash` which does not support the `[[` syntax. By switching the use of `[[` to `[`, the problem is solved. 
+
+### Removed
+- nothing
+
+
+
+## 2.1.8 - 2016-08-30
+
+### Added
+- nothing
+
+### Changed
+- SYSTEMS: Updated IRODS4 connection handling to properly pool and recover from connection failures.
+- SYSTEMS: Added IRODS4 connection logging
+
+### Removed
+- nothing
+
+
+
+## 2.1.8 - 2016-08-29
+
+### Added
+- COMMON: Added caching of tenant public signing key to JWT validation process if VERIFY_JWT_SIGNATURE is set to true in the container config.
+- COMMON: Adding setting for optional JWT validation based on public keys available from the tenants api.
+
+### Changed
+- SYSTEMS: Used new checked exception RemoteDataSyntaxException and return HTTP 400 instead of 409
+- FILES: More accurately report the cause of a files-move failure.
+- FILES: AH-104 Avoid adding preceding slash when one already exists.
+- NOTIFICATIONS: AD-686 Fixing broken notification search due to bad sql query
+- METADATA: AD-706 Updating hypermedia response from metadata API to include proper `associationIds` with resolvable types, `owner`, and `permissions` fields on metadata creation, update, and listing.
+
+### Removed
+- nothing
+
+
+
+## 2.1.8 - 2016-08-21
+
+### Added
+- MIGRATIONS: Added migrations to remove redundant unique index on primary key.
+- MIGRATIONS: Added migration to add usage keys for uuid service.
+
+### Changed
+- MIGRATIONS: Fixed NPE in the NewNotificationMessageQueueListenerTest class. The test still fails on exception checks, but those are valid bugs to fix in the logic, not test bugs.
+
+### Removed
+- nothing 
+
+
+## 2.1.8 - 2016-07-09
+
+### Added
+- UUID: Adding internal UUID API for resolving UUID and generating new ones on demand.
+- UUID: Adding swagger doc for UUID api in project base. Available online at [https://swaggerhub.com/api/deardooley/uuid/1.0](https://swaggerhub.com/api/deardooley/uuid/1.0)
+- UUID: Added migrations to support usage records on uuid api.
+
+### Changed
+- nothing
+
+### Removed
+- nothing
+
+
+## 2.1.8 - 2016-07-03
+
+### Added
+- JOBS: Added CUSTOM_PBS scheduler option.
+
+### Changed
+- JOBS: AH-103 Fixing a bug causing FORK jobs to hang in perpetual `SUBMITTING` status when the chmod command failed or the exec did not succeed. The issue was a weak one-liner to fork the job. I rewrote the command with checks for both pid and pid file (in case the job legitimately ran very fast), success of chmod, and better error output in both situations.
+- POSTITS: Fixed bug in posits causing listings without search options to fail.
+
+### Removed
+- Nothing change.
+
+
+## 2.1.8 - 2016-07-01
+
+### Added
+- ALL: Added a third `devproxy` config for interacting with services running in debug mode from your IDE within a single tomcat instance.
+- JOBS: Added CUSTOM_PBS scheduler option.
+
+### Changed
+- ALL: AH-97 Refactored the compose scripts in the main checkout to make working in a dev and lb environment a bit easier. Two proxies are available for use. `traefik` provides load balancing and auth-registration of services. `proxy` is the current apache proxy solution using static ports. The primary difference, aside from scaling and downtime, is that the `static/docker-compose.yml` config will startup with support for jmx and remote tomcat debugging allowing you to interact with the container directly, or via a proxy. 
+- POSTITS: Fixed bug relaying file content when requested from firefox. This had to do with the nature of the way we're proxying content back through the client. We had been forwarding headers from the client request through to the backend API untouched, then injecting any additional headers as needed when the response came back. This was performant, but caused an issue when compression was used because both the web server running the posits api and the web server fronting the files api were compressing the response, thus double-compression occurred and corrupted the response. Fixed this by stripping the `Accept-Encoding` header from the client request and letting the postit web server handle it appropriately.
+- POSTITS: Fixed a double slash bug building the proxy URL for the request.  
+- POSTITS: Added rudimentary search support.  
+- JOBS: AH-100 Fixed a bug that caused an extra batch scheduler directive to be written into all PBS, TORQUE, and CUSTOM_TORQUE batch job scripts.  
+- JOBS: AH-101 Fixed a bug causing all jobs submitted with scheduler type CUSTOM_TORQUE, CUSTOM_GRIDENGINE, CUSTOM_SLURM, and CUSTOM_PBS to fail due to the wrong parser being used to identify the job id after submission. All custom scheduler types have added to the `RemoteJobIdParserFactory` class used to assign a job id parser.  
+
+### Removed
+- Nothing change.
+
+
+## 2.1.8 - 2016-06-30
+
+### Added
+- NOTIFICATIONS: Adding notification id to the realtime channel messages sent to web socket subscribers.
+- SYSTEMS: Added `CUSTOM_PBS` as an alias for `CUSTOM_TORQUE` scheduler type.
+
+### Changed
+- ALL: Flattened submodules into a single code base from which all services can be built.
+- ALL: Updated compose definition to use a [traefik|http://traefik.io] proxy to front APIs.
+- ALL: Moved to Compose API v2 and Docker Engine 1.12 networking.
+- SYSTEMS: Fixed bug in the PBS batch script generator causing `#PBS -q normal` to be included in every set of directives regardless of the actual queue specified. Deleting this.
+
+### Removed
+- Nothing change.
+
+
 ## 2.1.8 - 2016-06-19
 
 ### Added
@@ -14,7 +207,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Nothing change.
-
 
 
 ## 2.1.8 - 2016-06-15 

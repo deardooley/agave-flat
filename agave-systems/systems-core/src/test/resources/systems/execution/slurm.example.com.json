@@ -1,0 +1,45 @@
+{
+	"id": "slurm.example.com",
+	"name": "Exection system with slurm scheduler",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "My example system used for testing",
+	"site": "my.site",
+	"executionType": "HPC",
+	"default": true,
+	"queues": [
+		{
+			"name": "debug",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": ""
+		}
+	],
+	"login": {
+		"host": "docker.example.com",
+		"port": 10133,
+		"protocol": "SSH",
+		"auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+	},
+	"storage":{
+      "host":"docker.example.com",
+      "port":10133,
+      "protocol":"SFTP",
+      "rootDir":"/",
+      "homeDir":"/home/testuser",
+      "auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+    },
+    "scratchDir": "scratch",
+	"workDir": "scratch",
+	"scheduler": "SLURM",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

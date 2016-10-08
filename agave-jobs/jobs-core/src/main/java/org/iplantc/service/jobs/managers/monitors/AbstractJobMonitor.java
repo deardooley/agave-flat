@@ -22,6 +22,7 @@ import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.exceptions.AuthenticationException;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.joda.time.DateTime;
 
 /**
  * Abstract class to structure individual job monitoring.
@@ -113,7 +114,7 @@ public abstract class AbstractJobMonitor implements JobMonitor {
         RemoteFileInfo stdErrFileInfo;
         Date errDate = null;
         Date outDate = null;
-        Date logDate = new Date();
+        Date logDate = new DateTime().toDate();
         try 
         {   log.debug("Attempting to fetch completion time for job " + job.getUuid() + " from logfile timestamps");
             remoteDataClient = getAuthenticatedRemoteDataClient();
@@ -157,7 +158,7 @@ public abstract class AbstractJobMonitor implements JobMonitor {
         if (job.getStartTime() != null && logDate.after(job.getStartTime())) {
             return logDate;
         } else {
-            return new Date();
+            return new DateTime().toDate();
         }
     }
 	

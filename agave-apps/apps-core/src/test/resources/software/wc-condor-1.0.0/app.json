@@ -21,13 +21,13 @@
     "deploymentPath":"testuser/agave/apps/wc-condor-1.0.0",
     "templatePath":"/wrapper.sh",
     "testPath":"test/test.sh",
-    "checkpointable":"false",
+    "checkpointable": false,
     "modules":[],
     "inputs":[
         {
             "id":"query1",
             "value":{
-                "default":"agave://irods-password.example.com/testuser/science-api-samples/README.md",
+                "default":"agave://irods4-password.example.com/testuser/science-api-samples/README.md",
                 "validator":"",
                 "required":true
             },

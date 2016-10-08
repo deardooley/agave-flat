@@ -33,6 +33,7 @@ import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.TransferException;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.TransferStatusType;
+import org.joda.time.DateTime;
 
 import com.google.common.io.Files;
 
@@ -246,7 +247,7 @@ public class ArchiveAction extends AbstractWorkerAction {
                     rootTask.setStatus(TransferStatusType.FAILED);
                 }
                 
-                rootTask.setEndTime(new Date());
+                rootTask.setEndTime(new DateTime().toDate());
                 
                 TransferTaskDao.persist(rootTask);
             }

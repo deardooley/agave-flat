@@ -162,10 +162,11 @@ services:
   migrations:
     image: agave-migrations:$AGAVE_VERSION
     extra_hosts:
-      - 'mysql:192.168.99.100'
+      - 'mysql:192.168.99.100' 
+      - 'mysql.example.com:192.168.99.100'       
     environment:
-      - 'MYSQL_HOST=mysql'
-      - 'MYSQL_USERNAME=agaveuser'
+      - 'MYSQL_HOST=mysql:3306'
+      - 'MYSQL_USER=agaveuser'
       - 'MYSQL_PASSWORD=password'
       - 'MYSQL_DATABASE=agavecore'
     volumes:

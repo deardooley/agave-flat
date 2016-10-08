@@ -2,7 +2,7 @@
 	"available": true, 
 	"checkpointable": false, 
 	"deploymentPath": "testuser/agave/apps/head-hpc-1.0.0", 
-	"executionSystem": "storage.example.com", 
+	"executionSystem": "slurm.example.com", 
 	"executionType": "HPC", 
 	"helpURI": "http://www.gnu.org/software/coreutils/manual/html_node/head-invocation.html#head-invocation", 
 	"icon":"https://agaveapi.co/wp-content/uploads/2016/02/Agave-white-retina.png",
@@ -24,7 +24,7 @@
 				]
 			}, 
 			"value": {
-				"default": "agave://irods-password.example.com/testuser/science-api-samples/README.md", 
+				"default": "agave://irods4-password.example.com/testuser/science-api-samples/README.md", 
 				"required": false, 
 				"validator": "", 
 				"visible": true
@@ -45,9 +45,7 @@
 			}, 
 			"id": "outputtextfile", 
 			"semantics": {
-				"fileTypes": [
-					""
-				], 
+				"fileTypes": [], 
 				"maxCardinality": 1, 
 				"minCardinality": 1, 
 				"ontology": [
@@ -56,14 +54,13 @@
 			}, 
 			"value": {
 				"default": "null", 
-				"validator": "*.txt"
+				"validator": ".txt$"
 			}
 		}
 	], 
 	"parallelism": "SERIAL", 
 	"parameters": [
 		{
-			"defaultValue": "10", 
 			"details": {
 				"description": "Equivalent to -n command flag", 
 				"label": "Extract the first k lines"
@@ -75,15 +72,15 @@
 				]
 			}, 
 			"value": {
-				"default": "10", 
+				"default": 10, 
 				"required": true, 
 				"type": "number", 
-				"validator": "[0-9]+", 
+				"validator": "([0-9]+)", 
 				"visible": true
 			}
 		}
 	], 
-	"public": true, 
+	"public": false, 
 	"revision": 1, 
 	"shortDescription": "Extract first lines or bytes from a file", 
 	"tags": [
@@ -93,5 +90,5 @@
 	], 
 	"templatePath": "wrapper.sh", 
 	"testPath": "test/test.sh", 
-	"version": "5.97"
+	"version": "1.0.0"
 }

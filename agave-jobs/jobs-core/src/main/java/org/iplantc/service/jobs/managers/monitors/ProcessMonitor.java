@@ -21,6 +21,7 @@ import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.enumerations.LoginProtocolType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
+import org.joda.time.DateTime;
 
 /**
  * Monitors a cli job by checking for the process id. This is nearly exactly the
@@ -64,7 +65,7 @@ public class ProcessMonitor extends AbstractJobMonitor
 				else // otherwise, throw it in remotely
 				{
 					// increment the number of checks and lastupdated timestamp
-				    this.job.setLastUpdated(new Date());
+				    this.job.setLastUpdated(new DateTime().toDate());
 					this.job.setStatusChecks(this.job.getStatusChecks() + 1);
 		        	this.job = JobManager.updateStatus(this.job, this.job.getStatus(), this.job.getErrorMessage());
 		        	
@@ -94,9 +95,9 @@ public class ProcessMonitor extends AbstractJobMonitor
 					{
 					    if (StringUtils.isEmpty(result) || result.toLowerCase().contains("unknown") 
 								|| result.toLowerCase().contains("error") || result.toLowerCase().contains("not ")) {
-							// we can acutally check the error log file for the timestamp to get 
-						    // the endTime in leu of a callback
-						    Date logDate = fetchEndDateFromLogFiles();
+							// don't check the remote time. the time zone isn't known
+//						    Date logDate = fetchEndDateFromLogFiles();
+					    	Date logDate = new DateTime().toDate();
 						    this.job.setEndTime(logDate);
 							this.job = JobManager.updateStatus(this.job, JobStatusType.CLEANING_UP, "Job completion detected by process monitor.");
 
