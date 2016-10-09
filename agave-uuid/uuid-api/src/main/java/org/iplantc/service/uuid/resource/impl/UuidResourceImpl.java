@@ -9,6 +9,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
+import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.uuid.resource.UuidResource;
@@ -25,7 +26,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * @author dooley
  *
  */
-@Path("{entityId}")
+@Path("{uuid}")
 public class UuidResourceImpl extends AbstractUuidResource implements
 		UuidResource {
 
@@ -51,12 +52,14 @@ public class UuidResourceImpl extends AbstractUuidResource implements
 			ObjectMapper mapper = new ObjectMapper();
 			ObjectNode json = mapper.createObjectNode();
 				json.put("uuid", uuid);
-				json.put("type", agaveUuid.getResourceType().name());
+				json.put("type", agaveUuid.getResourceType().name().toLowerCase());
 
 			ObjectNode linksObject = mapper.createObjectNode();
       		linksObject.set("self", (ObjectNode)mapper.createObjectNode()
-      							.put("href", agaveUuid.getObjectReference()));
+      							.put("href", TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference())));
 
+      		json.set("_links", linksObject);
+      		
 			return Response.ok(new AgaveSuccessRepresentation(json.toString())).build();
 		}
 		catch (ResourceException e) {
