@@ -3,50 +3,32 @@
  */
 package org.iplantc.service.uuid.resource.impl;
 
-import java.io.InputStream;
-import java.net.URI;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
-import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.StatusLine;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.log4j.Logger;
-import org.iplantc.service.common.auth.JWTClient;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.exceptions.UUIDException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
-import org.iplantc.service.uuid.exceptions.UUIDResolutionException;
 import org.iplantc.service.uuid.resource.UuidCollection;
-import org.restlet.Request;
-import org.restlet.data.Header;
 import org.restlet.data.Status;
 import org.restlet.representation.Representation;
 import org.restlet.resource.ResourceException;
-import org.restlet.util.Series;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -111,7 +93,9 @@ public class UuidCollectionImpl extends AbstractUuidCollection implements UuidCo
 		}
 	}
 	
-	@GET
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.uuid.resource.UuidCollection#searchUuid(java.lang.String, java.lang.String, java.lang.String)
+	 */
 	@Override
 	public Response searchUuid(@QueryParam("uuids") String uuids, 
 								@QueryParam("expand") String expand, 
@@ -123,54 +107,124 @@ public class UuidCollectionImpl extends AbstractUuidCollection implements UuidCo
     		return Response.ok().entity(new AgaveSuccessRepresentation("[]")).build();
     	}
     	else {
-    		ObjectMapper mapper = new ObjectMapper();
-			
-    		ArrayNode jsonArray = mapper.createArrayNode();
-    		String message = null;
-    		Boolean expandResources = BooleanUtils.toBoolean(expand);
+    		ArrayNode jsonArray = null;
+    		String[] uuidArray = StringUtils.split(uuids, ",");
     		
-    		for (String uuid: StringUtils.split(uuids, ",")) {
-	    		try {
-			    	AgaveUUID agaveUuid = getAgaveUUIDInPath(uuid);
-			    	
-			    	if (expandResources) {
-			    		
-			    		JsonNode response = fetchResource(TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference()), filter);
-			    		jsonArray.add(response);
-			    	}
-			    	else {
-			
-						ObjectNode json = mapper.createObjectNode();
-							json.put("uuid", uuid);
-							json.put("type", agaveUuid.getResourceType().name().toLowerCase());
-			
-						ObjectNode linksObject = mapper.createObjectNode();
-			      		linksObject.set("self", (ObjectNode)mapper.createObjectNode()
-			      							.put("href", TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference())));
-			
-			      		json.set("_links", linksObject);
-			      		
-			      		jsonArray.add(json);
-			    	}
-			    }
-			    catch (UUIDException e) {
-			    	jsonArray.add(mapper.createObjectNode());
-			    	message = "Failed to resolve " + uuid + ". " + e.getMessage();
-//				    	throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, e.getMessage(), e);
-				}
-	    		catch (UUIDResolutionException e) {
-	    			log.error(e);
-	    		}
-			    catch (Throwable e) {
-	    			log.error("Failed to resolve resource for uuid " + uuid, e);
-	    			message = "Failed to resolve resource for uuid " + uuid + ". " + e.getMessage();
-	    			jsonArray.add(mapper.createObjectNode());
-//		    			throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-//		                      "Failed to resolve resource for uuid " + uuid, e);
-	    		}
+    		if (BooleanUtils.toBoolean(expand)) {
+    			jsonArray = resolveAndExpandUuids(uuidArray, filter);
+    		}
+    		else {
+    			jsonArray = resolveUuids(uuidArray);
     		}
     		
-    		return Response.ok().entity(new AgaveSuccessRepresentation(message, jsonArray.toString())).build();
+    		return Response.ok().entity(new AgaveSuccessRepresentation(jsonArray.toString())).build();
     	}
+	}
+
+	/**
+	 * Looks up metadata for an array of uuid. 
+	 * @param uuids
+	 * @return ArrayNode of uuid metadata objects.
+	 */
+	protected ArrayNode resolveUuids(String[] uuids) {
+		
+		ObjectMapper mapper = new ObjectMapper();
+		ArrayNode jsonArray = mapper.createArrayNode();
+		
+		for (String uuid: uuids) {
+			try {
+		    	AgaveUUID agaveUuid = getAgaveUUIDInPath(uuid);
+		    	
+				ObjectNode json = mapper.createObjectNode();
+					json.put("uuid", uuid);
+					json.put("type", agaveUuid.getResourceType().name().toLowerCase());
+
+				ObjectNode linksObject = mapper.createObjectNode();
+		  		linksObject.set("self", (ObjectNode)mapper.createObjectNode()
+		  							.put("href", TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference())));
+
+		  		json.set("_links", linksObject);
+		  		
+		  		jsonArray.add(json);
+		    }
+		    catch (UUIDException e) {
+		    	jsonArray.add(mapper.createObjectNode()
+		    			.put("status", "error")
+		    			.put("message", "Failed to resolve uuid " + uuid + ". " + e.getMessage()));
+			}
+			catch (Throwable e) {
+				log.error("Failed to resolve resource for uuid " + uuid, e);
+				jsonArray.add(mapper.createObjectNode()
+		    			.put("status", "error")
+		    			.put("message", "Failed to resolve resource for uuid " + uuid + ". " + e.getMessage()));
+			}
+		}
+		return jsonArray;
+	}
+    	
+    /**
+     * Fetches the resource representation of one or more uuid in parallel
+     * using an executor service. 
+     * @param uuids array of uuid to resolve and expand
+     * @param filter the filter to use in the response objects
+     * @return
+     */
+    protected ArrayNode resolveAndExpandUuids(String[] uuids, String filter) {
+    	
+    	List<Object> urls = new ArrayList<Object>();
+    	ObjectMapper mapper = new ObjectMapper();
+		
+    	for (String uuid: uuids) {
+    		try {
+		    	AgaveUUID agaveUuid = getAgaveUUIDInPath(uuid);
+		    	urls.add(TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference()));
+		    	
+    		}
+    		catch (UUIDException e) {
+    			urls.add(mapper.createObjectNode()
+		    			.put("status", "error")
+		    			.put("message", "Failed to resolve " + uuid + ". " + e.getMessage()));
+			}
+    	}
+    	
+    	try {
+    		return batchResolveResourceUrls(urls, filter);
+    	}
+    	catch (Throwable e) {
+    		log.error("Failed to resolve resource representations for " + StringUtils.join(uuids, ","), e);
+    	
+    		throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
+    				"Unable to resolve resource representations for uuids", e);
+    	}
+    }
+	
+	/**
+	 * Check N sites, in parallel, using up to 4 threads. Report the results
+	 * only when all have completed.
+	 */
+	protected ArrayNode batchResolveResourceUrls(List<Object> urls, String filter) 
+	throws InterruptedException, ExecutionException 
+	{
+		ArrayNode jsonArray = new ObjectMapper().createArrayNode();
+		
+		Collection<Callable<JsonNode>> tasks = new ArrayList<>();
+		for (Object url : urls) {
+			if (url instanceof JsonNode) {
+				tasks.add(new ResourceResolutionTask((JsonNode)url, filter));
+			}
+			else {
+				tasks.add(new ResourceResolutionTask((String)url, filter));
+			}
+		}
+		int numThreads = urls.size() > 4 ? 4 : urls.size(); // max 4 threads
+		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+		List<Future<JsonNode>> results = executor.invokeAll(tasks);
+		for (Future<JsonNode> result : results) {
+			JsonNode resourceRepresentation = result.get();
+			jsonArray.add(resourceRepresentation);
+		}
+		executor.shutdown(); // always reclaim resources
+		
+		return jsonArray;
 	}
 }

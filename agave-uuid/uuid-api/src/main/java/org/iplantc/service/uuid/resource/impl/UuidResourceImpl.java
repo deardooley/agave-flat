@@ -14,6 +14,7 @@ import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
 import org.iplantc.service.common.uuid.AgaveUUID;
+import org.iplantc.service.uuid.exceptions.UUIDResolutionException;
 import org.iplantc.service.uuid.resource.UuidResource;
 import org.restlet.data.Status;
 import org.restlet.resource.Get;
@@ -84,6 +85,11 @@ public class UuidResourceImpl extends AbstractUuidResource implements
 		}
 		catch (ResourceException e) {
 			throw e;
+		}
+		catch (UUIDResolutionException e) {
+			log.error(e);
+			throw new ResourceException(Status.SERVER_ERROR_BAD_GATEWAY,
+                  e.getMessage(), e);
 		}
 		catch (Throwable e) {
 			log.error("Failed to resolve resource for uuid " + uuid, e);

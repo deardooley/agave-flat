@@ -7,6 +7,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -98,6 +99,62 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 
 	protected ServiceKeys getServiceKey() {
 		return AgaveLogServiceClient.ServiceKeys.UUID02;
+	}
+	
+	
+	
+	/** Try to ping a URL. Return true only if successful. */
+	final class ResourceResolutionTask implements Callable<JsonNode> {
+		private final JsonNode json;
+		private final String url;
+		private final String filter;
+		
+		ResourceResolutionTask(String url, String filter) {
+			this.url = url;
+			this.json = null;
+			this.filter = filter;
+		}
+		
+		ResourceResolutionTask(JsonNode json, String filter) {
+			this.url = null;
+			this.json = json;
+			this.filter = filter;
+		}
+
+		/** Access a URL, and see if you get a healthy response. */
+		@Override
+		public JsonNode call() throws Exception {
+			if (json == null) {
+				try {
+					return fetchResource(this.url, this.filter);
+				}
+				catch (UUIDResolutionException e) {
+					return new ObjectMapper().createObjectNode()
+							.put("status", "error")
+							.put("message", e.getMessage());
+				}
+			}
+			else {
+				return json;
+			}
+		}		
+	}
+	
+	/**
+	 * 
+	 * @author dooley
+	 *
+	 */
+	private static final class ApiResponse {
+		String url;
+		Boolean success;
+		Long timing;
+		JsonNode response;
+
+		@Override
+		public String toString() {
+			return response == null ? "{}" : response.toString();
+		}
 	}
 	
 	/**
