@@ -1220,7 +1220,7 @@ public class SystemDao extends AbstractDao {
                 }
             }
 
-            log.debug(q);
+            //log.debug(q);
 
             List<SystemSearchResult> transferTasks = query.setFirstResult(offset).setMaxResults(limit).list();
 
