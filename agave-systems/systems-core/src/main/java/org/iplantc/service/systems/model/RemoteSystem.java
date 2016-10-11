@@ -95,7 +95,7 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 
 	public RemoteSystem() {
 		this.tenantId = TenancyHelper.getCurrentTenantId();
-		this.uuid = new AgaveUUID(UUIDType.SYSTEM).getUniqueId();
+		this.uuid = new AgaveUUID(UUIDType.SYSTEM).toString();
 	}
 
 	/**

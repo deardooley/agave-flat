@@ -4,6 +4,8 @@
 package org.iplantc.service.jobs.managers.killers;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
+import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.exceptions.JobTerminationException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.remote.RemoteSubmissionClient;
@@ -18,7 +20,8 @@ import org.iplantc.service.systems.model.ExecutionSystem;
  *
  */
 public abstract class AbstractJobKiller implements JobKiller {
-
+	
+	private static final Logger log = Logger.getLogger(AbstractJobKiller.class);
     private Job	job;
 	private ExecutionSystem executionSystem;
 
@@ -40,14 +43,31 @@ public abstract class AbstractJobKiller implements JobKiller {
 		{
 			remoteSubmissionClient = getExecutionSystem().getRemoteSubmissionClient(getJob().getInternalUsername());
 			
-			String result = remoteSubmissionClient.runCommand(getCommand());
+			String cmd = getCommand();
+			String result = remoteSubmissionClient.runCommand(cmd);
 			
-			if (StringUtils.isEmpty(result)) 
-			{ 
+			// if the response was empty, the job could be done, but the scheduler could only 
+			// recognize numeric job ids. Let's try again with just the numeric part
+			if (StringUtils.isEmpty(result)) {
+				String altCommand = getAltCommand();
+				if (StringUtils.isEmpty(altCommand)) {
+					log.debug("Empty response found when checking remote execution system of agave job " 
+							+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
+							+ ". No numeric job id found in the batch job id for remtoe system. "
+							+ "No further attempt will be made.");
+				}
+				else {
+					log.debug("Empty response found when checking remote execution system of agave job " 
+							+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
+							+ ". Attempting to recheck with just the numeric job id " + job.getNumericLocalJobId());
+					result = remoteSubmissionClient.runCommand(altCommand);
+				}
+			}
+			
+			if (StringUtils.isEmpty(result)) {
 				throw new RemoteExecutionException(result); 
 			}
-			else
-			{
+			else {
 			    String[] notFoundTerms = new String[] {"does not exist", "has deleted job", "couldn't find"};
 			    for (String notfoundTerm: notFoundTerms) 
 			    {
@@ -77,6 +97,14 @@ public abstract class AbstractJobKiller implements JobKiller {
      * @return 
      */
     protected abstract String getCommand();
+    
+    /**
+     * Provides the actual command that should be invoked on the remote
+     * system to kill the job using the shortened numeric remote local job id.
+     * 
+     * @return the same as {@link #getCommand()}, but with the {@link Job#getNumericLocalJobId()}, null if they are the same
+     */
+    protected abstract String getAltCommand();
 
     /**
      * @return the job

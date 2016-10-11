@@ -3,6 +3,7 @@ package org.iplantc.service.jobs.managers.monitors;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.Date;
 
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.StaleObjectStateException;
@@ -87,6 +88,27 @@ public class HPCMonitor extends AbstractJobMonitor {
 					try
 					{
 						result = remoteSubmissionClient.runCommand(queryCommand);
+						
+						// if the response was empty, the job could be done, but the scheduler could only 
+						// recognize numeric job ids. Let's try again with just the numeric part
+						if (StringUtils.isEmpty(result)) {
+							String numericJobId = job.getNumericLocalJobId();
+							
+							if (StringUtils.isNotEmpty(numericJobId)) {
+								log.debug("Empty response found when checking remote execution system of agave job " 
+										+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
+										+ ". Attempting to recheck with just the numeric job id " + numericJobId);
+								queryCommand = system.getScheduler().getBatchQueryCommand() + " " + numericJobId;
+								
+								result = remoteSubmissionClient.runCommand(queryCommand);
+							}
+							else {
+								log.debug("Empty response found when checking remote execution system of agave job " 
+										+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
+										+ ". No numeric job id found in the batch job id for remtoe system. "
+										+ "No further attempt will be made.");
+							}
+						}
 					}
 					catch (Throwable e) {
 					    this.job = JobManager.updateStatus(job, job.getStatus());

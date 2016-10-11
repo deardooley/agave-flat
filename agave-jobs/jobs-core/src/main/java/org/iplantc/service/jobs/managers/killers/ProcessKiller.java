@@ -14,4 +14,13 @@ public class ProcessKiller extends AbstractJobKiller {
     protected String getCommand() {
         return "kill -9 " + getJob().getLocalJobId();
     }
+
+	/** 
+	 * Will always return null as process id are numeric
+	 * @see org.iplantc.service.jobs.managers.killers.AbstractJobKiller#getAltCommand()
+	 */
+	@Override
+	protected String getAltCommand() {
+		return null;
+	}
 }
