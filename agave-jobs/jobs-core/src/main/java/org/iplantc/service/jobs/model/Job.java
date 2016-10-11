@@ -920,6 +920,22 @@ public class Job {
 	{
 		return localJobId;
 	}
+	
+	@Transient
+	public String getNumericLocalJobId() {
+		String numericLocalJobId = null;
+		String[] tokens = StringUtils.split(getLocalJobId(), ".");
+		if (tokens != null && tokens.length > 0) {
+			for (String token: tokens) {
+				if (NumberUtils.isDigits(token)) {
+					numericLocalJobId = token; 
+					break;
+				}
+			}
+		}
+		
+		return numericLocalJobId;
+	}
 
 	/**
 	 * @param localJobId
