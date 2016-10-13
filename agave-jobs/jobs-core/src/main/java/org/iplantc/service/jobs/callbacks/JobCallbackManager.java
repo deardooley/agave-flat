@@ -176,9 +176,9 @@ public class JobCallbackManager {
             throw new JobCallbackException("Failed to process callback. Job has already been deleted.");
         }
         // runtime callbacks are only valid on running jobs
-        else if (!job.isRunning()) {
-            throw new JobCallbackException("Job " + job.getUuid() + " is not running.");
-        }
+//        else if (!job.isRunning()) {
+//            throw new JobCallbackException("Job " + job.getUuid() + " is not running.");
+//        }
         // job is running and valid
         else {
             TenancyHelper.setCurrentEndUser(job.getOwner());
@@ -260,29 +260,29 @@ public class JobCallbackManager {
 		// check this isn't an existing event
 	   	try {
 	   		if (JobStatusType.valueOf(StringUtils.upperCase(customEventName)) != null) {
-	   			return false;
+	   			return true;
 	   		}
 	   	} catch (Exception e) {}
 	   	
 	   	try {
        		if (JobEventType.valueOf(StringUtils.upperCase(customEventName)) != null) {
-       			return false;
+       			return true;
        		}
        	} catch (Exception e) {}
 	   	
 	   	try {
        		if (SystemEventType.valueOf(StringUtils.upperCase(customEventName)) != null) {
-       			return false;
+       			return true;
        		}
        	} catch (Exception e) {}
 	   	
 	   	try {
        		if (SoftwareEventType.valueOf(StringUtils.upperCase(customEventName)) != null) {
-       			return false;
+       			return true;
        		}
        	} catch (Exception e) {}
 	   	
-	   	return true;
+	   	return false;
 	}
 
 /**

@@ -153,7 +153,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	@Override
 	public String resolveRuntimeNotificationMacros(String wrapperTemplate) {
 		
-		Pattern emptyCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\}");
+		Pattern emptyCallbackPattern = Pattern.compile("(?s).*\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\}.*");
         Matcher callbackMatcher = emptyCallbackPattern.matcher(wrapperTemplate);
         while (callbackMatcher.matches()) {
         	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
@@ -165,24 +165,24 @@ public abstract class AbstractJobLauncher implements JobLauncher
         }
         
 	    // process the notification template first so there is no confusion or namespace conflict prior to resolution
-        Pattern defaultCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|(?:([a-zA-Z0-9_,\\s]*))\\}");
+        Pattern defaultCallbackPattern = Pattern.compile("(?s)(?:.*)?(?:(\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|(?:([a-zA-Z0-9_,\\s]*))\\}))(?:.*)?");
         callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
         while (callbackMatcher.matches()) {
         	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
-                    job, "JOB_RUNTIME_CALLBACK_EVENT", StringUtils.split(callbackMatcher.group(1), ","));
+                    job, "JOB_RUNTIME_CALLBACK_EVENT", StringUtils.split(callbackMatcher.group(2), ","));
             
-            wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
+            wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(1), callbackSnippet);
             
             callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
         }
         
-        Pattern customCallbackPattern = Pattern.compile("\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|([a-zA-Z0-9_\\s]*)\\|(?:([a-zA-Z0-9_,\\s]*))\\}");
+        Pattern customCallbackPattern = Pattern.compile("(?s)(?:.*)?(?:(\\$\\{AGAVE_JOB_CALLBACK_NOTIFICATION\\|(?:(\\s*[a-zA-Z0-9_]*\\s*))\\|(?:([a-zA-Z0-9_,\\s]*))\\}))(?:.*)?");
         callbackMatcher = customCallbackPattern.matcher(wrapperTemplate);
         while (callbackMatcher.matches()) {
             String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
-                    job, callbackMatcher.group(1), StringUtils.split(callbackMatcher.group(2), ","));
+                    job, callbackMatcher.group(2), StringUtils.split(callbackMatcher.group(3), ","));
             
-            wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
+            wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(1), callbackSnippet);
             
             callbackMatcher = customCallbackPattern.matcher(wrapperTemplate);
         }

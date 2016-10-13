@@ -6,7 +6,7 @@
 
 	<groupId>org.iplantc</groupId>
 	<artifactId>agave</artifactId>
-	<version>2.1.8</version>
+	<version>2.1.9</version>
 	<name>Agave Core Science API Parent POM</name>
 	<description>Super pom for all Agave services</description>
 	<packaging>pom</packaging>
@@ -19,7 +19,7 @@
 			<id>deardooley</id>
 			<name>Rion Dooley</name>
 			<email>dooley@tacc.utexas.edu</email>
-			<url>http://agaveapi.org</url>
+			<url>https://agaveapi.org</url>
 			<organization>TACC</organization>
 			<organizationUrl>http://www.tacc.utexas.edu</organizationUrl>
 			<roles>
@@ -30,7 +30,7 @@
 			<id>sterry1</id>
 			<name>Steve Terry</name>
 			<email>sterry1@tacc.utexas.edu</email>
-			<url>http://agaveapi.org</url>
+			<url>https://agaveapi.org</url>
 			<organization>TACC</organization>
 			<organizationUrl>http://www.tacc.utexas.edu</organizationUrl>
 			<roles>
@@ -42,6 +42,17 @@
 			<name>Joe Stubbs</name>
 			<email>jstubbs@tacc.utexas.edu</email>
 			<url>http://agaveapi.org</url>
+			<organization>TACC</organization>
+			<organizationUrl>http://www.tacc.utexas.edu</organizationUrl>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>rcardone</id>
+			<name>Robert Cardone</name>
+			<email>rcardone@tacc.utexas.edu</email>
+			<url>https://agaveapi.org</url>
 			<organization>TACC</organization>
 			<organizationUrl>http://www.tacc.utexas.edu</organizationUrl>
 			<roles>

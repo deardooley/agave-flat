@@ -36,12 +36,15 @@ import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.Filters;
 import org.hibernate.annotations.ParamDef;
 import org.iplantc.service.common.exceptions.AgaveNamespaceException;
+import org.iplantc.service.common.exceptions.EntityEventPersistenceException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.uri.AgaveUriUtil;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.notification.managers.NotificationManager;
 import org.iplantc.service.transfer.Settings;
+import org.iplantc.service.transfer.dao.TransferTaskEventDao;
+import org.iplantc.service.transfer.events.TransferTaskEventProcessor;
 import org.iplantc.service.transfer.model.enumerations.TransferStatusType;
 import org.joda.time.DateTime;
 
@@ -88,7 +91,6 @@ public class TransferTask {
 	private Date created = new Date();
 	private Date lastUpdated = new Date();
 	private String uuid;
-	private List<TransferEvent> events = new ArrayList<TransferEvent>();
 	private Integer version = 0;
 	
 	public TransferTask() {
@@ -509,22 +511,33 @@ public class TransferTask {
 	    return FileUtils.byteCountToDisplaySize(memoryLimit);
 	}
 	
-	/**
-     * Returns a list of TransferEvent in the history of this transfer task.
-     * 
-     * @return
-     */
-    @OneToMany(cascade = {CascadeType.ALL}, mappedBy = "transferTask", fetch=FetchType.LAZY, orphanRemoval=true)
-    public List<TransferEvent> getEvents() {
-        return events;
-    }
-    
-    /**
-     * @param events
-     */
-    public void setEvents(List<TransferEvent> events) {
-        this.events = events;
-    }
+//	/**
+//     * Returns a list of TransferEvent in the history of this transfer task.
+//     * 
+//     * @return
+//     */
+//    @OneToMany(cascade = {CascadeType.ALL}, mappedBy = "transferTask", fetch=FetchType.LAZY, orphanRemoval=true)
+//    public List<TransferEvent> getEvents() {
+//        return events;
+//    }
+//    
+//    /**
+//     * @param events
+//     */
+//    public void setEvents(List<TransferEvent> events) {
+//        this.events = events;
+//    }
+//    
+//    /**
+//     * Adds an event to the history of this transfer task. This will automatically
+//     * be saved with the transfer task when the transfer task is persisted.
+//     * 
+//     * @param event
+//     */
+//    public void addEvent(TransferStatusType status, String message)
+//    {
+//        addEvent(new TransferEvent(this, status, message, owner));
+//    }   
     
     /**
      * Adds an event to the history of this transfer task. This will automatically
@@ -532,21 +545,22 @@ public class TransferTask {
      * 
      * @param event
      */
-    public void addEvent(TransferStatusType status, String message)
-    {
-        addEvent(new TransferEvent(this, status, message, owner));
-    }   
-    
-    /**
-     * Adds an event to the history of this transfer task. This will automatically
-     * be saved with the transfer task when the transfer task is persisted.
-     * 
-     * @param event
-     */
-    public void addEvent(TransferEvent event) {
-        event.setTransferTask(this);
-        this.events.add(event);
-        NotificationManager.process(getUuid(), event.getStatus(), event.getOwner());     
+    @Transient
+    public void addEvent(TransferTaskEvent event) {
+        event.setEntity(getUuid());
+        TransferTaskEventProcessor eventProcessor = 
+    			new TransferTaskEventProcessor();
+    	eventProcessor.processTransferTaskEvent(this, event);
+    	
+//        try {
+//        	
+//			
+//		} catch (EntityEventPersistenceException e) {
+//			log.error("Failed to save " + event.getStatus() 
+//					+ " event for transfer " + event.getEntity(), e);
+//		}
+//        
+//        NotificationManager.process(getUuid(), event.getStatus(), event.getCreatedBy());     
     }
     
     public String toJSON() {

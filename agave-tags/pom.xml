@@ -6,11 +6,11 @@
 	<parent>
 		<groupId>org.iplantc</groupId>
 		<artifactId>agave</artifactId>
-		<version>2.1.8</version>
+		<version>2.1.9</version>
 	</parent>
 	<groupId>org.iplantc.agave</groupId>
 	<artifactId>tags</artifactId>
-	<name>Agave Core Science API Tags Service Parent POM</name>
+	<name>Agave Platform Science API Tags Service Parent POM</name>
 	<description>This is the parent project for the tags service.</description>
 	<packaging>pom</packaging>
 

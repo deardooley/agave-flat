@@ -45,6 +45,7 @@ public abstract class AbstractSystemListResource extends AgaveResource
 {
 	private static final Logger	log	= Logger.getLogger(AbstractSystemListResource.class);
 
+	@SuppressWarnings("rawtypes")
 	protected List systems = new ArrayList();
 	
 	protected String username;
