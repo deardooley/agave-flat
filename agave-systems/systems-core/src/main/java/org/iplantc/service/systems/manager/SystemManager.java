@@ -570,7 +570,7 @@ public class SystemManager {
 //			NotificationManager.process(currentDefaultSystem.getUuid(), "UNSET_DEFAULT_SYSTEM", apiUsername);
 			getDao().merge(currentDefaultSystem);
 			newDefaultSystem.getUsersUsingAsDefault().add(apiUsername);
-			getEventProcessor().processSystemUpdateEvent(currentDefaultSystem, SystemEventType.SET_USER_DEFAULT, apiUsername);
+			getEventProcessor().processSystemUpdateEvent(newDefaultSystem, SystemEventType.SET_USER_DEFAULT, apiUsername);
 //			NotificationManager.process(newDefaultSystem.getUuid(), "SET_DEFAULT_SYSTEM", apiUsername);
 			getDao().merge(newDefaultSystem);
 		}

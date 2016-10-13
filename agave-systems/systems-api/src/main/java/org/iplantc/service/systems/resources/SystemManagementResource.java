@@ -560,7 +560,7 @@ public class SystemManagementResource extends AbstractSystemListResource
 					
 					// determine at run time if this is the user's default system of this type
 					JSONObject jSystem = new JSONObject(updatedSystem.toJSON());
-					jSystem.put("default", updatedSystem.equals(systemManager.getUserDefaultStorageSystem(username)));
+					jSystem.put("default", true);
 					
 					getResponse().setEntity(new IplantSuccessRepresentation(jSystem.toString()));
 					getResponse().setStatus(Status.SUCCESS_OK);
@@ -575,7 +575,7 @@ public class SystemManagementResource extends AbstractSystemListResource
 					
 					// determine at run time if this is the user's default system of this type
 					JSONObject jSystem = new JSONObject(updatedSystem.toJSON());
-					jSystem.put("default", updatedSystem.equals(systemManager.getUserDefaultStorageSystem(username)));
+					jSystem.put("default", false);
 					
 					getResponse().setEntity(new IplantSuccessRepresentation(jSystem.toString()));
 					getResponse().setStatus(Status.SUCCESS_OK);
