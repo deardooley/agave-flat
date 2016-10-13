@@ -176,9 +176,9 @@ public class JobCallbackManager {
             throw new JobCallbackException("Failed to process callback. Job has already been deleted.");
         }
         // runtime callbacks are only valid on running jobs
-//        else if (!job.isRunning()) {
-//            throw new JobCallbackException("Job " + job.getUuid() + " is not running.");
-//        }
+        else if (!job.isRunning()) {
+            throw new JobCallbackException("Job " + job.getUuid() + " is not running.");
+        }
         // job is running and valid
         else {
             TenancyHelper.setCurrentEndUser(job.getOwner());
