@@ -8,8 +8,10 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - SYSTEMS: AH-137 Updating response on system setDefault and unsetDefault responses to reflect the current system settings rather than the stale previous system settings. This prevents stale responses even when `HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE` is set to `true` in the container.
+- SYSTEMS: AD-858 Fixed a bug causing the wrong status to be written to the history log on role change.
 - JOBS: AH-74 Updated parsing of `AGAVE_JOB_CALLBACK_NOTIFICATION` template macro and the regex used to parse the various options out of a job template script.
 - JOBS: AH-73 `JOB_RUNTIME_CALLBACK_EVENT` event was not being sent for jobs.
+- 
 
 ### Removed
 - nothing

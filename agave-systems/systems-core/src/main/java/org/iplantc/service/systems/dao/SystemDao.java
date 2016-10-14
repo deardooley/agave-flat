@@ -238,6 +238,8 @@ public class SystemDao extends AbstractDao {
             RemoteSystem system = (RemoteSystem) session.createQuery(hql)
                     .setString("systemId", systemId)
                     .setString("tenantId", TenancyHelper.getCurrentTenantId())
+                    .setCacheable(false)
+                    .setCacheMode(CacheMode.IGNORE)
                     .setMaxResults(1).uniqueResult();
 
             session.flush();

@@ -6,7 +6,6 @@ package org.iplantc.service.systems.model;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -89,8 +88,8 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 	protected boolean 				available = true;
 	protected String				uuid;
 	protected String				tenantId;
-//	private Set<SystemRole> 	    permissions = new HashSet<SystemRole>();
-	private List<SystemRole> 		roles = new ArrayList<SystemRole>();
+	private Set<SystemRole> 	    roles = new HashSet<SystemRole>();
+//	private List<SystemRole> 		roles = new ArrayList<SystemRole>();
 	private Set<String>				usersUsingAsDefault = new HashSet<String>();
 
 	public RemoteSystem() {
@@ -374,7 +373,7 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 		joinColumns={ @JoinColumn(name="systems", referencedColumnName="id") },
 		inverseJoinColumns={ @JoinColumn(name="roles", referencedColumnName="id", unique=true) }
 	)
-	public List<SystemRole> getRoles()
+	public Set<SystemRole> getRoles()
 	{
 		return roles;
 	}
@@ -456,7 +455,7 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 	/**
 	 * @param roles the roles to set
 	 */
-	public void setRoles(List<SystemRole> roles)
+	public void setRoles(Set<SystemRole> roles)
 	{
 		this.roles = roles;
 	}
