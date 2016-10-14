@@ -16,7 +16,10 @@ public enum TransferTaskEventType {
     STARTED("This transfer task started transferring data"),
     RESTARTED("This transfer task was restarted"),
     CANCELLED("This transfer task was cancelled"),
+    COMPLETED("This transfer task completed successfully"),
+    FAILED("This transfer task failed"),
     
+    RETRY("This transfer task is being retried"),
     PAUSED("This transfer task was paused"),
     RESUME("This transfer task was resumed"),
     RESET("This transfer task was reset to the beginning"),

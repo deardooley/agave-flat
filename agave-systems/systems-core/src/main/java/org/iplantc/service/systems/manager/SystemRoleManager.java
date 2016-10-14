@@ -2,6 +2,7 @@ package org.iplantc.service.systems.manager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -165,7 +166,7 @@ public class SystemRoleManager {
 	 */
 	public void clearRoles(String createdBy) throws SystemException
 	{   
-	    List<SystemRole> currentRoles = system.getRoles();
+	    Set<SystemRole> currentRoles = system.getRoles();
 		SystemRole[] deletedRoles = currentRoles.toArray(new SystemRole[] {});
 		
 		system.getRoles().clear();

@@ -423,7 +423,7 @@ public class SystemsDaoTest extends SystemsModelTestCommon {
 			
 			system = dao.findById(system.getId());
 			Assert.assertTrue(system.getRoles().size() == 1, "update did not created a new entry.");
-			Assert.assertEquals(system.getRoles().get(0).getRole(), updateType, "updated role was not saved.");
+			Assert.assertEquals(system.getRoles().iterator().next().getRole(), updateType, "updated role was not saved.");
 			
 		} 
 		catch(Exception e) 

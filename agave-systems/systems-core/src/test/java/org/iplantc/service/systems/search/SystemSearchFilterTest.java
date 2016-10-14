@@ -67,6 +67,7 @@ public class SystemSearchFilterTest extends SystemsModelTestCommon
 		_filterInvalidSearchCriteria(criteria, shouldExistAfterFiltering, message); 
 	}
 	
+	@SuppressWarnings("rawtypes")
 	@DataProvider(name="filterInvalidSearchCriteriaWithOperatorsProvider", parallel=true)
 	public Object[][] filterInvalidSearchCriteriaWithOperatorsProvider() throws Exception
 	{
@@ -106,6 +107,7 @@ public class SystemSearchFilterTest extends SystemsModelTestCommon
 		_filterInvalidSearchCriteria(criteria, shouldExistAfterFiltering, message); 
 	}
 	
+	@SuppressWarnings("rawtypes")
 	@DataProvider(name="filterCommaSeparatedSetSearchCriteriaIntoListProvider", parallel=true)
 	public Object[][] filterCommaSeparatedSetSearchCriteriaIntoListProvider()
 	{
@@ -161,6 +163,7 @@ public class SystemSearchFilterTest extends SystemsModelTestCommon
 		return testData.toArray(new Object[][] {});
 	}
 	
+	@SuppressWarnings("rawtypes")
 	@Test(dataProvider="filterCommaSeparatedSetSearchCriteriaIntoListProvider")
 	public void filterCommaSeparatedSetSearchCriteriaIntoList(String field, String value, Class clazz, String message) throws Exception
 	{
@@ -191,6 +194,7 @@ public class SystemSearchFilterTest extends SystemsModelTestCommon
 		}
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public void _filterInvalidSearchCriteria(String testField, boolean shouldExistAfterFiltering, String message) throws Exception
 	{
 		SystemSearchFilter systemSearchFilter = new SystemSearchFilter();

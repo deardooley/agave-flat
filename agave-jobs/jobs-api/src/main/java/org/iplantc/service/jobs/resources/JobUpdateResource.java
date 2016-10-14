@@ -178,7 +178,7 @@ public class JobUpdateResource extends AbstractJobResource
 	@Override
 	public boolean allowPost()
 	{
-		return false;
+		return true;
 	}
 
 	/*
