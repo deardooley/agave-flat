@@ -840,7 +840,7 @@ public class Software {
 	@Transient
 	public List<String> getModulesAsList()
 	{
-		if (StringUtils.isNotEmpty(getTags()))
+		if (StringUtils.isNotEmpty(getModules()))
 		{
 			List<String> filteredModules = new ArrayList<String>();
 			String[] modules = StringUtils.split(getModules(), ",");

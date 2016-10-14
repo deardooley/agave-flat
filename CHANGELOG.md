@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 - nothing
 
 
+## 2.1.8 - 2016-10-08
+
 ### Added
 - FILES: Adding url query based search by username, permission to file permissions collection
 - FILES: Added support for recursive permission revocation by specifying a username of `*` in the POST operation.
