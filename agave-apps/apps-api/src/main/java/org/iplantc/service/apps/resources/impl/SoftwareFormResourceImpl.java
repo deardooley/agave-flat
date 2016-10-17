@@ -72,8 +72,8 @@ public class SoftwareFormResourceImpl extends AbstractSoftwareResource implement
             
             String submitForm = "<table align=\"center\" id=\"contactArea\">\n";
             submitForm += "<tr><td style=\"text-align:center;\" colspan=\"2\">Base Parameters</td></tr>\n";
-            submitForm += "<tr><td>Job Name:</td><td><input type=\"text\" name=\"jobName\" value=\"\"></td></tr>\n";
-            submitForm += "<tr><td>Software Name:</td><td><input type=\"text\" name=\"softwareName\" value=\"" + software.getUniqueName() + "\"></td></tr>\n";
+            submitForm += "<tr><td>Job Name:</td><td><input type=\"text\" name=\"name\" value=\"\"></td></tr>\n";
+            submitForm += "<tr><td>Software Name:</td><td><input type=\"text\" name=\"appId\" value=\"" + software.getUniqueName() + "\"></td></tr>\n";
             if (software.getExecutionSystem().getExecutionType().equals(ExecutionType.HPC) ||
                     software.getExecutionSystem().getExecutionType().equals(ExecutionType.CONDOR)) {
                 submitForm += "<tr><td>Batch Queue:</td><td><select name=\"batchQueue\" >";
@@ -111,7 +111,7 @@ public class SoftwareFormResourceImpl extends AbstractSoftwareResource implement
             if (!StringUtils.isEmpty(software.getDefaultMaxRunTime())) {
                 maxRunTime = software.getDefaultMaxRunTime();
             }
-            submitForm += "<tr><td>Requested Time:</td><td><input type=\"text\" name=\"requestedTime\" value=\"" + maxRunTime + "\" title=\"Enter in hh:mm:ss format\"></td></tr>\n";
+            submitForm += "<tr><td>Requested Time:</td><td><input type=\"text\" name=\"maxRunTime\" value=\"" + maxRunTime + "\" title=\"Enter in hh:mm:ss format\"></td></tr>\n";
             
             submitForm += "<tr><td>Notification Url:</td><td><input type=\"text\" name=\"notifications\" value=\"\"></td></tr>\n";
             submitForm += "<tr><td>Archive:</td><td><input type=\"checkbox\" value=\"1\" name=\"archive\" checked></td></tr>\n";
