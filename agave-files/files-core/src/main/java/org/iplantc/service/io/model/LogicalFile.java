@@ -625,7 +625,7 @@ public class LogicalFile {
 		}
 			
 		ObjectNode hypermedia = getHypermedia();
-		hypermedia.put("notification", notifArray);
+		hypermedia.set("notification", notifArray);
 		
 		ObjectNode json = (ObjectNode)mapper.createObjectNode()
 			.put("name", getName())

@@ -296,13 +296,13 @@ public class SystemManagerTest extends SystemsModelTestCommon
 	@Test(dataProvider = "isManageableBySharedUserProvider", dependsOnMethods={"isManageableByUser"})
 	public void isManageableBySharedUserTest(RemoteSystem system, RoleType testType, String message, boolean userCanManager)
 	{
-		RoleType previousType = system.getRoles().get(0).getRole();
-		system.getRoles().get(0).setRole(testType);
+		RoleType previousType = system.getRoles().iterator().next().getRole();
+		system.getRoles().iterator().next().setRole(testType);
 		
 		Assert.assertEquals(manager.isManageableByUser(system, SYSTEM_SHARE_USER), userCanManager, message);
 
 		// restore type
-		system.getRoles().get(0).setRole(previousType);
+		system.getRoles().iterator().next().setRole(previousType);
 	}
 	
 	@DataProvider(name="makePublicProvider")

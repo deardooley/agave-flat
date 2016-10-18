@@ -4,8 +4,11 @@
 package org.iplantc.service.systems.resources;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
@@ -116,7 +119,9 @@ public class SystemRoleResource extends AgaveResource
 					// add the owner 
 					jsonPermissions = new SystemRole(system.getOwner(), RoleType.OWNER).toJSON(system);
 						
-					List<SystemRole> roles = system.getRoles();
+					List<SystemRole> roles = new ArrayList<SystemRole>(system.getRoles());
+					
+					Collections.sort(roles);
 					
 					for (int i=offset; i< Math.min((limit+offset), roles.size()); i++)
 					{

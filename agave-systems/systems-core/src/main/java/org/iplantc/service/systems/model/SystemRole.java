@@ -37,7 +37,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 @Entity
 @Table(name = "systemroles")
-public class SystemRole implements LastUpdatable {
+public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 
 	private Long				id;
 	private String				username;
@@ -210,6 +210,12 @@ public class SystemRole implements LastUpdatable {
 	public String toString()
 	{
 		return username + " " + role;
+	}
+
+
+	@Override
+	public int compareTo(SystemRole o) {
+		return this.username.compareTo(o.username);
 	}
 	
 	
