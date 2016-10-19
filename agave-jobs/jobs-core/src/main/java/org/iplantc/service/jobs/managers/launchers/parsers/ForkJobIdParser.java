@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.managers.parsers;
+package org.iplantc.service.jobs.managers.launchers.parsers;
 
 import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.jobs.exceptions.RemoteJobIDParsingException;
@@ -23,5 +23,4 @@ public class ForkJobIdParser implements RemoteJobIdParser {
 		}
 		throw new RemoteJobIDParsingException("No response from server upon job launch");
 	}
-
 }

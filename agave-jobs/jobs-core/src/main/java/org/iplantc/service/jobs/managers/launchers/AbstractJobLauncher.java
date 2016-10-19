@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.exceptions.SoftwareException;
@@ -146,6 +147,23 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	 */
 	@Override
 	public abstract void launch() throws JobException, ClosedByInterruptException, SchedulerException, IOException, SystemUnavailableException;
+	
+	/**
+	 * Removes all the user-provided job status macros that agave inserts into the wrapper template
+	 * that would otherwise screw things up. 
+	 * @param wrapperTemplate
+	 * @return
+	 */
+	public String filterRuntimeStatusMacros(String wrapperTemplate) {
+		WrapperTemplateStatusVariableType[] userAccessibleStatuCallbacks = WrapperTemplateStatusVariableType.getUserAccessibleStatusCallbacks();
+		for (WrapperTemplateStatusVariableType macro: WrapperTemplateStatusVariableType.values()) {
+			if (!ArrayUtils.contains(userAccessibleStatuCallbacks, macro)) {
+				wrapperTemplate = StringUtils.replace(wrapperTemplate, "${" + macro.name() + "}", "");
+			}
+		}
+		
+		return wrapperTemplate;
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.jobs.managers.launchers.JobLauncher#resolveRuntimeNotificationMacros(java.lang.String)
