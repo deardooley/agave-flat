@@ -384,10 +384,16 @@ public abstract class AbstractJobLauncher implements JobLauncher
                                     "User: " + job.getOwner() + "\n" +
                                     "Job: " + job.getUuid() + "\n" +
                                     "Time: " + new DateTime(job.getCreated()).toString();
-	    					EmailMessage.send(tenant.getContactName(), 
-	    							tenant.getContactEmail(), 
-	    							"Public app " + software.getUniqueName() + " has been corrupted.", 
-	    							message, HTMLizer.htmlize(message));
+	    					try {
+	    						EmailMessage.send(tenant.getContactName(), 
+					    							tenant.getContactEmail(), 
+					    							"Public app " + software.getUniqueName() + " has been corrupted.", 
+					    							message, HTMLizer.htmlize(message));
+	    					}
+	    					catch (Throwable e) {
+	    						log.error("Failed to notify admin that " + message, e);
+	    					}
+	    					
 	    					throw new SoftwareException("Public app bundle for " + software.getUniqueName() + 
 	    					        " has changed. Please verify this app and try again.");
 	    				}
