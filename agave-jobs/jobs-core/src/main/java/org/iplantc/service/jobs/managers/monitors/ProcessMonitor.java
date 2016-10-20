@@ -11,8 +11,11 @@ import org.apache.log4j.Logger;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.jobs.Settings;
+import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
 import org.iplantc.service.jobs.managers.JobManager;
+import org.iplantc.service.jobs.managers.monitors.parsers.ForkJobMonitorResponseParser;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.remote.RemoteSubmissionClient;
@@ -97,20 +100,27 @@ public class ProcessMonitor extends AbstractJobMonitor
 								|| result.toLowerCase().contains("error") || result.toLowerCase().contains("not ")) {
 							// don't check the remote time. the time zone isn't known
 //						    Date logDate = fetchEndDateFromLogFiles();
-					    	Date logDate = new DateTime().toDate();
-						    this.job.setEndTime(logDate);
-							this.job = JobManager.updateStatus(this.job, JobStatusType.CLEANING_UP, "Job completion detected by process monitor.");
-
-				            if (!this.job.isArchiveOutput()) {
-				                log.debug("Job " + this.job.getUuid() + " will skip archiving at user request.");
-				                this.job = JobManager.updateStatus(this.job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
-				                log.debug("Job " + this.job.getUuid() + " finished.");
-				            }
+					    	updateStatusOfFinishedJob();
 						} else {
-						    if (!StringUtils.isBlank(result)) {
-						        log.debug("Unrecognized response from status check for job " + this.job.getUuid() + ": " + result);
+							ForkJobMonitorResponseParser parser = new ForkJobMonitorResponseParser();
+							try {
+								boolean running = parser.isJobRunning(result);
+							
+								if (!running) {
+									updateStatusOfFinishedJob();
+								}
+								else {
+									log.debug("Job " + job.getUuid() + " is still " + job.getStatus().name() + 
+		                                    " as local job id " + job.getLocalJobId() + " on " + job.getSystem());
+									this.job = JobManager.updateStatus(this.job, job.getStatus(), this.job.getErrorMessage());
+								}
 						    }
-	                        this.job = JobManager.updateStatus(this.job, job.getStatus(), this.job.getErrorMessage());
+							catch (RemoteJobMonitorResponseParsingException e) {
+								log.debug("Unrecognized response from status check for job " + this.job.getUuid() + ": " + result, e);
+								this.job = JobManager.updateStatus(this.job, job.getStatus(), this.job.getErrorMessage());
+							}
+							
+							
 						}
 					}
 					catch (Exception e) {
@@ -136,6 +146,21 @@ public class ProcessMonitor extends AbstractJobMonitor
 		}
 		finally {
 			try { remoteSubmissionClient.close(); } catch (Exception e) {}
+		}
+	}
+
+	/**
+	 * @throws JobException
+	 */
+	protected void updateStatusOfFinishedJob() throws JobException {
+		Date logDate = new DateTime().toDate();
+		this.job.setEndTime(logDate);
+		this.job = JobManager.updateStatus(this.job, JobStatusType.CLEANING_UP, "Job completion detected by process monitor.");
+
+		if (!this.job.isArchiveOutput()) {
+		    log.debug("Job " + this.job.getUuid() + " will skip archiving at user request.");
+		    this.job = JobManager.updateStatus(this.job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
+		    log.debug("Job " + this.job.getUuid() + " finished.");
 		}
 	}
 

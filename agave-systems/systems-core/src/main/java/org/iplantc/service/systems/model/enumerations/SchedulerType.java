@@ -103,7 +103,7 @@ public enum SchedulerType
 				return "condor_q -format '%d'  JobStatus";
 			case UNKNOWN:
 			case FORK:
-				return "ps -o comm= -p ";
+				return "ps -o pid= -o comm= -p ";
 			case SLURM:
 			case CUSTOM_SLURM:
 				return "showq -u | grep";

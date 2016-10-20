@@ -1,14 +1,15 @@
-package org.iplantc.service.jobs.managers.parsers;
+package org.iplantc.service.jobs.managers.launchers.parsers;
 
 import org.apache.commons.lang3.StringUtils;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.RemoteJobIDParsingException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
+import org.iplantc.service.jobs.managers.launchers.parsers.SlurmJobIdParser;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-public class PBSJobIdParserTest {
+public class SlurmJobIdParserTest {
 
 	@DataProvider
 	protected Object[][] getJobIdProvider() {
@@ -25,10 +26,9 @@ public class PBSJobIdParserTest {
 	public void getJobId(String schedulerOutput, String expectedJobId) 
 	throws RemoteJobIDParsingException, JobException, SchedulerException 
 	{
-		PBSJobIdParser parser = new PBSJobIdParser();
+		SlurmJobIdParser parser = new SlurmJobIdParser();
 		String foundJobId = parser.getJobId(schedulerOutput);
 		Assert.assertTrue(StringUtils.isNotEmpty(foundJobId), "PBS job id should not be null");
 		Assert.assertEquals(foundJobId, expectedJobId, "PBS job id found did not match the expected job id");
 	}
-
 }

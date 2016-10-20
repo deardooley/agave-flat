@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.managers.parsers;
+package org.iplantc.service.jobs.managers.launchers.parsers;
 
 import org.iplantc.service.systems.model.enumerations.SchedulerType;
 

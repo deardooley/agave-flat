@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.managers.parsers;
+package org.iplantc.service.jobs.managers.launchers.parsers;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,31 +15,28 @@ import org.iplantc.service.jobs.exceptions.SchedulerException;
  * @author dooley
  *
  */
-public class TorqueJobIdParser implements RemoteJobIdParser {
+public class PBSJobIdParser implements RemoteJobIdParser {
 
 	@Override
 	public String getJobId(String output) throws RemoteJobIDParsingException, JobException, SchedulerException
 	{
 		String jobID = null;
-		Pattern pattern = Pattern.compile("([0-9]+).*");
+		Pattern pattern = Pattern.compile("([0-9]+\\.[^\\s]*)");
 		
 		String lines[] = output.replaceAll("\r", "\\n").split("\n");
 		for (int idx=0; idx<lines.length; idx++) {
-			String line = lines[idx].trim();
-			Matcher matcher = pattern.matcher(line);
+			Matcher matcher = pattern.matcher(lines[idx]);
 			if (matcher.matches()) {
-				jobID = line.split(" ")[0];
+				jobID = matcher.group(1);
 				break;
 			}
 		}
 		
 		if (StringUtils.isEmpty(jobID)) {
-			if (output.contains("qsub") || output.contains("submit error"))
-			{
+			if (output.contains("qsub") || output.contains("submit error")) {
 				throw new SchedulerException(output); 
 			}
-			else
-			{
+			else {
 				throw new RemoteJobIDParsingException(output);
 			}
 		} else {

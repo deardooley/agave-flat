@@ -47,7 +47,7 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
 				return WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, null);
 			}
 			else {
-				return String.format("curl -sSk \"%strigger/job/%s/token/%s/status/%s?pretty=true\" 1>&2 \n\n",
+				return String.format("curl -sSk \"%strigger/job/%s/token/%s/status/%s?pretty=true&filter=id,status\" 1>&2 \n\n",
 						TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, job.getTenantId()),
 						job.getUuid(),
 						job.getUpdateToken(),
