@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS `job_queues` (
   PRIMARY KEY (`id`),
   UNIQUE INDEX (`name`),
   UNIQUE INDEX (`uuid`),
-  UNIQUE INDEX (`tenant_id`,`phase`,`priority` DESC)
-#  FOREIGN KEY `fk_tenants_tenant_id` (`tenant_id`)
-#    REFERENCES tenants(`tenant_id`)
-#    ON UPDATE CASCADE ON DELETE CASCADE
+  UNIQUE INDEX (`tenant_id`,`phase`,`priority` DESC),
+  FOREIGN KEY `fk_tenants_tenant_id` (`tenant_id`)
+    REFERENCES tenants(`tenant_id`)
+    ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
