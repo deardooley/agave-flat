@@ -307,6 +307,7 @@ public class JobQueueDao {
                          "from job_queues " +
                          "where tenant_id = :tenant_id";
             if (phase != null) sql += " and phase = :phase";
+            sql += " order by phase, priority desc";
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
