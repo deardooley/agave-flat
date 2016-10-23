@@ -382,6 +382,26 @@ public class JobQueueDaoTest {
             Assert.fail("Unable to revert max_messages on " + queueName + " with value " + oldMaxMessages, e);
         }        
         Assert.assertEquals(rows, 1, "max_messages not reverted!");
+        
+        // ----------------- Update Filter
+        rows = 0;
+        String newFilter = "num > 66 AND (s1 like 'dd%' OR s1 = 'banana')"; 
+        try {rows = dao.updateFilter(jobQueue.getName(), newFilter, "iplantc.org");}
+        catch (Exception e) {
+            Assert.assertEquals((e instanceof JobQueueException), true,
+                    "1 - Unable to update filter: " + newFilter);
+        }        
+        Assert.assertEquals(rows, 1, "Filter not changed!");
+        
+        // ----------------- Update Filter
+        rows = 0;
+        newFilter = "num > 66 AND (s1 BETWEEN 5 AND 10)"; 
+        try {rows = dao.updateFilter(jobQueue.getName(), newFilter, "iplantc.org");}
+        catch (Exception e) {
+            Assert.assertEquals((e instanceof JobQueueException), true,
+                    "2 - Unable to update filter: " + newFilter);
+        }        
+        Assert.assertEquals(rows, 1, "Filter not changed!");
     }
     
     /* ---------------------------------------------------------------------- */
@@ -440,6 +460,56 @@ public class JobQueueDaoTest {
                     "4 - Unexpected exception thrown.");
         }        
         Assert.assertEquals(rows, 0, "max_messages changed!");
+        
+        // ----------------- Update Filter
+        rows = 0;
+        String newFilter = null;
+        try {rows = dao.updateFilter(jobQueue.getName(), newFilter, "iplantc.org");}
+        catch (Exception e) {
+            Assert.assertEquals((e instanceof JobQueueException), true,
+                    "5 - Unexpected exception thrown.");
+        }        
+        Assert.assertEquals(rows, 0, "Filter changed!");
+        
+        // ----------------- Update Filter
+        rows = 0;
+        newFilter = "";
+        try {rows = dao.updateFilter(jobQueue.getName(), newFilter, "iplantc.org");}
+        catch (Exception e) {
+            Assert.assertEquals((e instanceof JobQueueException), true,
+                    "6 - Unexpected exception thrown.");
+        }        
+        Assert.assertEquals(rows, 0, "Filter changed!");
+        
+        // ----------------- Update Filter
+        rows = 0;
+        newFilter = "  ";
+        try {rows = dao.updateFilter(jobQueue.getName(), newFilter, "iplantc.org");}
+        catch (Exception e) {
+            Assert.assertEquals((e instanceof JobQueueException), true,
+                    "7 - Unexpected exception thrown.");
+        }        
+        Assert.assertEquals(rows, 0, "Filter changed!");
+        
+        // ----------------- Update Filter
+        rows = 0;
+        newFilter = "num > 66 AND (s1 like 'dd%' OR s1 = 'banana'"; // missing closing parenthesis
+        try {rows = dao.updateFilter(jobQueue.getName(), newFilter, "iplantc.org");}
+        catch (Exception e) {
+            Assert.assertEquals((e instanceof JobQueueException), true,
+                    "8 - Unexpected exception thrown.");
+        }        
+        Assert.assertEquals(rows, 0, "Filter changed!");
+        
+        // ----------------- Update Filter
+        rows = 0;
+        newFilter = "num > 66 AND (s1 BETWEEN 5 AND 'x')"; // BETWEEN type problem 
+        try {rows = dao.updateFilter(jobQueue.getName(), newFilter, "iplantc.org");}
+        catch (Exception e) {
+            Assert.assertEquals((e instanceof JobQueueException), true,
+                    "9 - Unexpected exception thrown.");
+        }        
+        Assert.assertEquals(rows, 0, "Filter changed!");
     }
 
     /* ********************************************************************** */

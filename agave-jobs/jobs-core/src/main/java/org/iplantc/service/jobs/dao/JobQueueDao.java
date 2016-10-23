@@ -16,9 +16,11 @@ import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.jobs.exceptions.JobQueueException;
+import org.iplantc.service.jobs.exceptions.JobQueueFilterException;
 import org.iplantc.service.jobs.exceptions.JobQueuePriorityException;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
+import org.iplantc.service.jobs.queue.SelectorFilter;
 
 
 /** Data access object for the job_queues table.
@@ -70,7 +72,8 @@ public class JobQueueDao {
      * 
      * @throws JobQueueException input or operational error
      */
-    public int createQueue(JobQueue jobQueue) throws JobQueueException
+    public int createQueue(JobQueue jobQueue) 
+     throws JobQueueException, JobQueueFilterException
     {
         // ------------------------- Check Input -------------------------
         // Null/empty checks.
@@ -79,12 +82,12 @@ public class JobQueueDao {
             _log.error(msg);
             throw new JobQueueException(msg);
         }
-        if (StringUtils.isEmpty(jobQueue.getName())) {
+        if (StringUtils.isBlank(jobQueue.getName())) {
             String msg = "No job queue name specified in job queue definition.";
             _log.error(msg);
             throw new JobQueueException(msg);
         }
-        if (StringUtils.isEmpty(jobQueue.getTenantId())) {
+        if (StringUtils.isBlank(jobQueue.getTenantId())) {
             String msg = "No tenant id specified in job queue definition.";
             _log.error(msg);
             throw new JobQueueException(msg);
@@ -103,11 +106,14 @@ public class JobQueueDao {
             throw new JobQueueException(msg);
         }
         
-        // TODO: Validate that filter specifies phase and tenantId
-        //          maybe insert those values if not present
-        if (StringUtils.isEmpty(jobQueue.getFilter())) {
-            jobQueue.setFilter("phase = \"STAGING\" AND tenant_id = \"iplant.org\"");
+        // As a convenience on queue creation only, set the 
+        // filter to a default value if its empty. 
+        if (StringUtils.isBlank(jobQueue.getFilter())) {
+            jobQueue.setFilter("phase = '" + jobQueue.getPhase().name() + 
+                               "' AND tenant_id = '" + jobQueue.getTenantId().trim() + "'");
         }
+        // Validate the filter.
+        validateFilter(jobQueue.getFilter());
         
         // Numeric checks.
         if (jobQueue.getPriority() < 1) {
@@ -129,7 +135,7 @@ public class JobQueueDao {
         // ------------------------- Permission Checks -------------------
         // We only allow users to create queues under their own tenant. 
         String currentTenantId = TenancyHelper.getCurrentTenantId();
-        if (StringUtils.isEmpty(currentTenantId)) {
+        if (StringUtils.isBlank(currentTenantId)) {
             String msg = "Unable to retrieve current tenant id.";
             _log.error(msg);
             throw new JobQueueException(msg);
@@ -168,14 +174,14 @@ public class JobQueueDao {
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
-            qry.setString("uuid", jobQueue.getUuid());
-            qry.setString("name", jobQueue.getName());
-            qry.setString("tenant_id", jobQueue.getTenantId());
+            qry.setString("uuid", jobQueue.getUuid().trim());
+            qry.setString("name", jobQueue.getName().trim());
+            qry.setString("tenant_id", jobQueue.getTenantId().trim());
             qry.setString("phase", jobQueue.getPhase().name());
             qry.setInteger("priority", jobQueue.getPriority());
             qry.setInteger("num_workers", jobQueue.getNumWorkers());
             qry.setInteger("max_messages", jobQueue.getMaxMessages());
-            qry.setString("filter", jobQueue.getFilter());
+            qry.setString("filter", jobQueue.getFilter().trim());
             qry.setTimestamp("created", jobQueue.getCreated());
             qry.setTimestamp("last_updated", jobQueue.getLastUpdated());
             
@@ -247,7 +253,7 @@ public class JobQueueDao {
     public int deleteQueueByName(String name, String tenantId) 
      throws JobQueueException
     {
-        return DeleteQueue(Selector.NAME, name, tenantId);
+        return deleteQueue(Selector.NAME, name, tenantId);
     }
     
     /* ---------------------------------------------------------------------- */
@@ -263,7 +269,7 @@ public class JobQueueDao {
     public int deleteQueueByUUID(String uuid, String tenantId) 
      throws JobQueueException
     {
-        return DeleteQueue(Selector.UUID, uuid, tenantId);
+        return deleteQueue(Selector.UUID, uuid, tenantId);
     }
     
     /* ---------------------------------------------------------------------- */
@@ -285,7 +291,7 @@ public class JobQueueDao {
     {
         // ------------------------- Check Input -------------------------
         // The phase parameter can be null.
-        if (StringUtils.isEmpty(tenantId)) {
+        if (StringUtils.isBlank(tenantId)) {
             String msg = "Invalid job queue tenant ID received.";
             _log.error(msg);
             throw new JobQueueException(msg);
@@ -311,7 +317,7 @@ public class JobQueueDao {
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
-            qry.setString("tenant_id", tenantId);
+            qry.setString("tenant_id", tenantId.trim());
             if (phase != null) qry.setString("phase", phase.name());
             
             // Issue the call and populate the model object.
@@ -444,18 +450,19 @@ public class JobQueueDao {
     {
         // ------------------------- Check Input -------------------------
         // Null/empty checks.
-        if (StringUtils.isEmpty(name)) {
+        if (StringUtils.isBlank(name)) {
             String msg = "Invalid job queue name received.";
             _log.error(msg);
             throw new JobQueueException(msg);
         }
-        if (StringUtils.isEmpty(tenantId)) {
+        if (StringUtils.isBlank(tenantId)) {
             String msg = "Invalid job queue tenant ID received.";
             _log.error(msg);
             throw new JobQueueException(msg);
         }
         
-        // TODO: Check filter syntax
+        // Validate the filter.
+        validateFilter(filter);
         
         // ------------------------- Call SQL ----------------------------
         int rows = 0;
@@ -472,9 +479,9 @@ public class JobQueueDao {
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
-            qry.setString("name", name);
-            qry.setString("tenant_id", tenantId);
-            qry.setString("filter", filter);
+            qry.setString("name", name.trim());
+            qry.setString("tenant_id", tenantId.trim());
+            qry.setString("filter", filter.trim());
             
             // Issue the call.
             rows = qry.executeUpdate();
@@ -522,12 +529,12 @@ public class JobQueueDao {
     {
         // ------------------------- Check Input -------------------------
         // Null/empty checks.
-        if (StringUtils.isEmpty(selectorValue)) {
+        if (StringUtils.isBlank(selectorValue)) {
             String msg = "Invalid job queue " + selector.toString() + " received.";
             _log.error(msg);
             throw new JobQueueException(msg);
         }
-        if (StringUtils.isEmpty(tenantId)) {
+        if (StringUtils.isBlank(tenantId)) {
             String msg = "Invalid job queue tenant ID received.";
             _log.error(msg);
             throw new JobQueueException(msg);
@@ -552,8 +559,8 @@ public class JobQueueDao {
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
-            qry.setString("selectorValue", selectorValue);
-            qry.setString("tenant_id", tenantId);
+            qry.setString("selectorValue", selectorValue.trim());
+            qry.setString("tenant_id", tenantId.trim());
             
             // Issue the call and populate the model object.
             // (Yes, this is the tax for not using hibernate...)
@@ -595,17 +602,17 @@ public class JobQueueDao {
      * @return the number of table rows affected (0 or 1)
      * @throws JobQueueException input or operational error
      */
-    private int DeleteQueue(Selector selector, String selectorValue, String tenantId) 
+    private int deleteQueue(Selector selector, String selectorValue, String tenantId) 
      throws JobQueueException
     {
         // ------------------------- Check Input -------------------------
         // Null/empty checks.
-        if (StringUtils.isEmpty(selectorValue)) {
+        if (StringUtils.isBlank(selectorValue)) {
             String msg = "Invalid job queue " + selector.toString() + " received.";
             _log.error(msg);
             throw new JobQueueException(msg);
         }
-        if (StringUtils.isEmpty(tenantId)) {
+        if (StringUtils.isBlank(tenantId)) {
             String msg = "Invalid job queue tenant ID received.";
             _log.error(msg);
             throw new JobQueueException(msg);
@@ -626,8 +633,8 @@ public class JobQueueDao {
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
-            qry.setString("selectorValue", selectorValue);
-            qry.setString("tenant_id", tenantId);
+            qry.setString("selectorValue", selectorValue.trim());
+            qry.setString("tenant_id", tenantId.trim());
             
             // Issue the call.
             rows = qry.executeUpdate();
@@ -674,12 +681,12 @@ public class JobQueueDao {
     {
         // ------------------------- Check Input -------------------------
         // Null/empty checks.
-        if (StringUtils.isEmpty(name)) {
+        if (StringUtils.isBlank(name)) {
             String msg = "Invalid job queue name received.";
             _log.error(msg);
             throw new JobQueueException(msg);
         }
-        if (StringUtils.isEmpty(tenantId)) {
+        if (StringUtils.isBlank(tenantId)) {
             String msg = "Invalid job queue tenant ID received.";
             _log.error(msg);
             throw new JobQueueException(msg);
@@ -709,8 +716,8 @@ public class JobQueueDao {
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
-            qry.setString("name", name);
-            qry.setString("tenant_id", tenantId);
+            qry.setString("name", name.trim());
+            qry.setString("tenant_id", tenantId.trim());
             qry.setInteger("value", value);
             
             // Issue the call.
@@ -791,5 +798,27 @@ public class JobQueueDao {
         jobQueue.setLastUpdated(new Date(updatedTS.getTime()));
         
         return jobQueue;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* validateFilter:                                                        */
+    /* ---------------------------------------------------------------------- */
+    /** Attempt to parse the (non-empty) filter.  Parser errors are contained
+     * in the thrown exception if things go wrong.
+     * 
+     * @param filter the text of a SQL92-like filter.
+     */
+    private void validateFilter(String filter)
+     throws JobQueueFilterException
+    {
+        // Make sure 
+        if (StringUtils.isBlank(filter)) {
+            String msg = "Empty job queue filter received.";
+            _log.error(msg);
+            throw new JobQueueFilterException(msg);
+        }
+        
+        // Try to parse the filter.
+        SelectorFilter.parse(filter);
     }
 }
