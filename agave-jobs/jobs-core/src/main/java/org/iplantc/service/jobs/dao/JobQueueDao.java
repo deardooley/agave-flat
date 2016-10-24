@@ -190,6 +190,10 @@ public class JobQueueDao {
         }
         catch (Exception e)
         {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
             String msg = "Unable to create new job queue: \n" + jobQueue.toString();
             _log.error(msg);
             throw new JobQueueException(msg, e);
@@ -328,6 +332,10 @@ public class JobQueueDao {
         }
         catch (Exception e)
         {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
             String msg = "Unable to query job queues in tenant " + tenantId + ".";
             _log.error(msg);
             throw new JobQueueException(msg, e);
@@ -488,6 +496,10 @@ public class JobQueueDao {
         }
         catch (Exception e)
         {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
             String msg = "Unable to update " + name + ".filter" +
                           " in tenant " + tenantId + ".";
             _log.error(msg);
@@ -569,6 +581,10 @@ public class JobQueueDao {
         }
         catch (Exception e)
         {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
             String msg = "Unable to query job queue with " + selector.toString() +
                           " " + selectorValue + " in tenant " + tenantId + ".";
             _log.error(msg);
@@ -641,6 +657,10 @@ public class JobQueueDao {
         }
         catch (Exception e)
         {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
             String msg = "Unable to delete job queue with " + selector.toString() +
                           " " + selectorValue + " in tenant " + tenantId + ".";
             _log.error(msg);
@@ -725,6 +745,10 @@ public class JobQueueDao {
         }
         catch (Exception e)
         {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
             // Detect duplicate priority error.
             if ((field == UpdateField.PRIORITY) && (e instanceof ConstraintViolationException))
             {
