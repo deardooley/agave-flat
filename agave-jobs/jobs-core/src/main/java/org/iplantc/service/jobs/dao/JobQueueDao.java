@@ -162,6 +162,7 @@ public class JobQueueDao {
         try
         {
             Session session = HibernateUtil.getSession();
+            session.clear();
             HibernateUtil.beginTransaction();
 
             // Create the insert command.
@@ -307,6 +308,7 @@ public class JobQueueDao {
         {
             // Begin new transaction.
             Session session = HibernateUtil.getSession();
+            session.clear();
             HibernateUtil.beginTransaction();
 
             // Create the insert command using table definition field order.
@@ -478,6 +480,7 @@ public class JobQueueDao {
         {
             // Begin new transaction.
             Session session = HibernateUtil.getSession();
+            session.clear();
             HibernateUtil.beginTransaction();
 
             // Create the delete command.
@@ -558,6 +561,7 @@ public class JobQueueDao {
         {
             // Begin new transaction.
             Session session = HibernateUtil.getSession();
+            session.clear();
             HibernateUtil.beginTransaction();
 
             // Create the insert command using table definition field order.
@@ -640,6 +644,7 @@ public class JobQueueDao {
         {
             // Begin new transaction.
             Session session = HibernateUtil.getSession();
+            session.clear();
             HibernateUtil.beginTransaction();
 
             // Create the delete command.
@@ -727,6 +732,7 @@ public class JobQueueDao {
         {
             // Begin new transaction.
             Session session = HibernateUtil.getSession();
+            session.clear();
             HibernateUtil.beginTransaction();
 
             // Create the delete command.
