@@ -22,7 +22,7 @@ public class JobQueueDaoTest {
     // Special purpose queue names used in multiple places.
     private static final String MONITORING_QUEUENAME = "MONITORING.iplantc.org.Joan";
     
-    // Maping of queue names to priorities.
+    // Mapping of queue names to priorities.
     private static LinkedHashMap<String,Integer> _queueMap;
     
     /* ********************************************************************** */
