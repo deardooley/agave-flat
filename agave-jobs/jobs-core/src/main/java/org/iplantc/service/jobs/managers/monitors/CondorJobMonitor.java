@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
-import java.util.Date;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -24,10 +23,10 @@ import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.killers.JobKiller;
 import org.iplantc.service.jobs.managers.killers.JobKillerFactory;
+import org.iplantc.service.jobs.managers.monitors.parsers.CondorJobMonitorResponseParser;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.util.CondorJobLogParser;
 import org.iplantc.service.notification.managers.NotificationManager;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.remote.exceptions.RemoteExecutionException;
@@ -317,11 +316,11 @@ public class CondorJobMonitor extends AbstractJobMonitor
      */
     protected void parseLogFile(File retrievedCondorLogFile) throws IOException, JobException, JobTerminationException 
     {
-        CondorJobLogParser condorJobLogParser = new CondorJobLogParser(retrievedCondorLogFile);
+    	CondorJobMonitorResponseParser condorJobLogParser = new CondorJobMonitorResponseParser(retrievedCondorLogFile);
                 
         // here we know the job is done, so we can update the status.
         // once we do that, the ArchiveWatch will kick in and handle things.
-        if (condorJobLogParser.isFinished())
+        if (condorJobLogParser.isJobFinished())
         {
             log.debug("Job " + job.getUuid() + " was found in a CLEANING_UP state on " + job.getSystem() + 
                     " based on its runtime log file. Updating status to CLEANING_UP.");
@@ -338,7 +337,7 @@ public class CondorJobMonitor extends AbstractJobMonitor
         // if the runtime log says it failed, we need to kill the job. we leave the assets
         // in place...
         // TODO: How to feed back the assets afterwards. may or may not reliably be there
-        else if (condorJobLogParser.isFailed())
+        else if (condorJobLogParser.isJobFailed())
         {
             log.debug("Job " + job.getUuid() + " was found in a FAILED state on " + job.getSystem() + 
                     " as local job id " + job.getLocalJobId() 

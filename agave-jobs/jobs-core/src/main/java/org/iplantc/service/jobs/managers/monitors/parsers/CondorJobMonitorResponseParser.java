@@ -1,12 +1,14 @@
-package org.iplantc.service.jobs.util;
+package org.iplantc.service.jobs.managers.monitors.parsers;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,7 +17,7 @@ import org.apache.commons.io.FileUtils;
  * Time: 12:21 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CondorJobLogParser {
+public class CondorJobMonitorResponseParser implements JobMonitorResponseParser {
     File logFile;                     // the runtime log from condor
     List<String> logLines;            // lines of the job log from condor
     Map<String,String> logSections;   // map with condor code as key for log message
@@ -38,13 +40,13 @@ public class CondorJobLogParser {
     /**
      * Default constructor
      */
-    public CondorJobLogParser(){}
+    public CondorJobMonitorResponseParser(){}
 
     /**
      * Constructor with logFile input to fully parse file for processing
      * @param logFile File to be parsed
      */
-    public CondorJobLogParser(File logFile) throws IOException {
+    public CondorJobMonitorResponseParser(File logFile) throws IOException {
         this.logFile = logFile;
         if(logFile != null){
             logLines = FileUtils.readLines(logFile);
@@ -56,7 +58,7 @@ public class CondorJobLogParser {
      * Condition to test if Job failed or succeeded
      * @return boolean value to indicated if the job failed
      */
-    public boolean isFailed() {
+    public boolean isJobFailed() {
         boolean status = logSections.containsKey(FAILED) || logSections.containsKey(ABORTED) || 
         		logSections.containsKey(MISSING_INPUT) || logSections.containsKey(MISSING_OUTPUT) ;
         if(status){
@@ -69,23 +71,33 @@ public class CondorJobLogParser {
      * Checks to see if job is finished for our purposes ie job is terminated and output is available.
      * @return
      */
-    public boolean isFinished() {
+    public boolean isJobFinished() {
         if(logSections.containsKey(TERMINATED)){
             return this.isFinished = true;
         }
         return isFinished = false;
     }
-
+    
     /**
      * Checks to see if job is running for our purposes ie job is executing on Condor and shows up in queue.
      * @return
      */
-    public boolean isRunning() {
+    public boolean isJobRunning(String response) {
+    	logLines = Arrays.asList(StringUtils.stripToEmpty(response).split("[\\r\\n]+"));
+        init();
+        return isRunning;
+    }
+    
+    /**
+     * Checks to see if job is running for our purposes ie job is executing on Condor and shows up in queue.
+     * @return
+     */
+    public boolean isJobRunning() {
         return isRunning;
     }
 
-    public boolean isSubmitted() {
-        isSubmitted = logSections.containsKey(CondorJobLogParser.SUBMITTED);
+    public boolean isJobSubmitted() {
+        isSubmitted = logSections.containsKey(CondorJobMonitorResponseParser.SUBMITTED);
         return isSubmitted;
     }
 
@@ -146,11 +158,11 @@ public class CondorJobLogParser {
 
     public static void main(String[] args) throws IOException {
         File log = new File("src/test/resources/condor_jobs/sterry1-1-1369597889740/runtime.log");
-        CondorJobLogParser pcjl = new CondorJobLogParser(log);
-        System.out.println("is failed "+pcjl.isFailed());
-        System.out.println("is submitted "+pcjl.isSubmitted());
-        System.out.println("is running "+pcjl.isRunning());
-        System.out.println("is finished "+pcjl.isFinished());
+        CondorJobMonitorResponseParser pcjl = new CondorJobMonitorResponseParser(log);
+        System.out.println("is failed "+pcjl.isJobFailed());
+        System.out.println("is submitted "+pcjl.isJobSubmitted());
+        System.out.println("is running "+pcjl.isJobRunning());
+        System.out.println("is finished "+pcjl.isJobFinished());
     }
 
 }

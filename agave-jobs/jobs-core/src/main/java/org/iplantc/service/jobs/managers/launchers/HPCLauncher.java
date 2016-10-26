@@ -193,6 +193,8 @@ public class HPCLauncher extends AbstractJobLauncher
 			
 			batchWriter.write("\ncd " + absWorkDir + "\n");
 			
+			batchWriter.write("AGAVE_LOG_FILE=" + absWorkDir + "/.agave.log\n");
+			
 			// write the callback to trigger status update at start
 			batchWriter.write(resolveMacros("\n${AGAVE_JOB_CALLBACK_RUNNING} \n\n"));
 //					"\ncurl -sSk \"" + Settings.IPLANT_JOB_SERVICE
