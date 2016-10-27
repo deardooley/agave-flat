@@ -92,8 +92,10 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
             sb.append("echo '  \"CUSTOM_USER_JOB_EVENT_NAME\": \""+eventName+"\"' >> \"$AGAVE_CALLBACK_FILE\"\n");
             
             sb.append("echo -e \"}\" >> \"$AGAVE_CALLBACK_FILE\"\n\n");
-            sb.append(String.format("cat \"$AGAVE_CALLBACK_FILE\" | sed  -e \"s#: \\\"''\\\"#: \\\"\\\"#g\" | curl -sSk -H \"Content-Type: application/json\" -X POST --data-binary @- \"%strigger/job/%s/token/%s/status/HEARTBEAT?pretty=true\" >> \"$AGAVE_LOG_FILE\" 2>&1 \n\n\n",
-                    TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, job.getTenantId()),
+            String callbackUrl = TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, job.getTenantId());
+            sb.append(String.format("cat \"$AGAVE_CALLBACK_FILE\" | sed  -e \"s#: \\\"''\\\"#: \\\"\\\"#g\" | curl -sS%s -H \"Content-Type: application/json\" -X POST --data-binary @- \"%strigger/job/%s/token/%s/status/HEARTBEAT?pretty=true\" >> \"$AGAVE_LOG_FILE\" 2>&1 \n\n\n",
+            		callbackUrl.startsWith("https") ? "k" : "",
+            		callbackUrl,
                     job.getUuid(),
                     job.getUpdateToken()));
             

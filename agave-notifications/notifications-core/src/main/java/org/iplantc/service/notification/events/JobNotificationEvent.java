@@ -39,7 +39,15 @@ public class JobNotificationEvent extends AbstractEventFilter {
 	@Override
 	public String getEmailBody()
 	{
-		String body = "The status of job ${JOB_ID}, \"${JOB_NAME},\" " +
+		String body = null;
+		if (StringUtils.contains(getCustomNotificationMessageContextData(), "CUSTOM_USER_JOB_EVENT_NAME")) {
+			body = "Job ${UUID} published a ${EVENT} event with "
+					+ "the following content:\n"
+					+ "\n"
+					+ "${RAW_JSON}";
+		}
+		else {
+			body = "The status of job ${JOB_ID}, \"${JOB_NAME},\" " +
 				"has changed to ${EVENT}.\n" +
 				"\n" +
 				"Name: ${JOB_NAME}\n" +
@@ -52,7 +60,8 @@ public class JobNotificationEvent extends AbstractEventFilter {
 				"End Time: ${JOB_END_TIME}\n" +
 				"Output Path: ${JOB_ARCHIVE_PATH}\n" + 
 				"Output URL: ${JOB_ARCHIVE_URL}\n"; 
-//		if (StringUtils.equalsIgnoreCase(event, "AGAVE_JOB_CALLBACK_NOTIFICATION"))
+		}
+		
 		return resolveMacros(body, false);
 	}
 	
@@ -62,8 +71,16 @@ public class JobNotificationEvent extends AbstractEventFilter {
     @Override
     public String getHtmlEmailBody()
     {
-        String body = "<p>The status of job ${JOB_ID}, \"${JOB_NAME},\" " +
-                "has changed to ${EVENT}.</p>" +
+    	String body = null;
+		if (StringUtils.contains(getCustomNotificationMessageContextData(), "CUSTOM_USER_JOB_EVENT_NAME")) {
+			body = "<p>Job ${UUID} published a ${EVENT} event with "
+					+ "the following content:</p>"
+					+ "<br>"
+					+ "<pre>${RAW_JSON}</pre>";
+		}
+		else {
+			body = "<p>The status of job ${JOB_ID}, \"${JOB_NAME},\" " +
+		        "has changed to ${EVENT}.</p>" +
                 "<br>" +
                 "<p><strong>Name:</strong> ${JOB_NAME}<br>" +
                 "<strong>ID:</strong> ${JOB_ID}<br>" +
@@ -75,7 +92,8 @@ public class JobNotificationEvent extends AbstractEventFilter {
                 "<strong>End Time:</strong> ${JOB_END_TIME}<br>" +
                 "<strong>Output Path:</strong> ${JOB_ARCHIVE_PATH}<br>" + 
                 "<strong>Output URL:</strong> ${JOB_ARCHIVE_URL}</p>"; 
-        
+		}
+		
         return resolveMacros(body, false);
     }
 	
@@ -85,8 +103,14 @@ public class JobNotificationEvent extends AbstractEventFilter {
 	@Override
 	public String getEmailSubject()
 	{
-		return resolveMacros("Job " + associatedUuid.toString() + 
-				" received a ${EVENT} event", false);
+		if (StringUtils.contains(getCustomNotificationMessageContextData(), "CUSTOM_USER_JOB_EVENT_NAME")) {
+			return "Job " + associatedUuid.toString() + " published a " + 
+					event + " event.";
+		} 
+		else {
+			return "Job " + associatedUuid.toString() + 
+				" received a " + event + " event";
+		}
 	}
 
 	/* (non-Javadoc)
@@ -107,6 +131,7 @@ public class JobNotificationEvent extends AbstractEventFilter {
 			        JsonNode json = mapper.readTree(getCustomNotificationMessageContextData());
     			    if (json.isObject()) {
     			    	
+    			    	// if this is a runtime notification callback, push the raw data back out 
     			    	if (json.hasNonNull("job") || json.hasNonNull("id") ) {
     			    		JsonNode jsonJob = null;
     			    		if (json.hasNonNull("job")) {
