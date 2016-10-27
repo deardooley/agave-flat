@@ -11,8 +11,12 @@ import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.jobs.Settings;
+import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
+import org.iplantc.service.jobs.exceptions.RemoteJobUnrecoverableStateException;
 import org.iplantc.service.jobs.managers.JobManager;
+import org.iplantc.service.jobs.managers.monitors.parsers.JobMonitorResponseParser;
+import org.iplantc.service.jobs.managers.monitors.parsers.JobMonitorResponseParserFactory;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.remote.RemoteSubmissionClient;
@@ -115,11 +119,11 @@ public class HPCMonitor extends AbstractJobMonitor {
 						throw new RemoteJobMonitoringException("Failed to run job status query on " + system.getSystemId(), e);
 					}
 					
-					try
-					{
-						if (StringUtils.isEmpty(result) || result.toLowerCase().contains("unknown") 
-								|| result.toLowerCase().contains("error") || result.toLowerCase().contains("not ")) 
-						{
+					JobMonitorResponseParser responseParser = JobMonitorResponseParserFactory.getInstance(job);
+					// TODO: we need to actively pull the job state on teh remote machine and sync up here. 
+					try {
+						// this isn't really a check for running, but rather not failed.
+						if (!responseParser.isJobRunning(result)) {
 							// job not found.
 						    log.debug("Job " + job.getUuid() + " no longer present on " + job.getSystem() + 
 						            " as local job id " + job.getLocalJobId() + ". Updating status to CLEANING_UP.");
@@ -134,16 +138,10 @@ public class HPCMonitor extends AbstractJobMonitor {
 				                log.debug("Job " + job.getUuid() + " finished.");
 				            }
 						}
-						else if (java.util.Arrays.asList(StringUtils.split(result)).contains("Eqw")) 
-						{
-							// job not found.
-						    log.debug("Job " + job.getUuid() + " was found in an unrecoverable state on " + job.getSystem() + 
-                                    " as local job id " + job.getLocalJobId() + ". Updating status to FAILED.");
-                            this.job = JobManager.updateStatus(job, JobStatusType.FAILED, 
-						            "Job failed to move out of system queue.");
-							
-//							JobDao.persist(job);
-						} 
+						// TODO: this will give a false status update if the job is just queued. we don't hit that
+						// situation because the previous {@link JobMonitorResponseParser#isJobRunning(String)} 
+						// method forces all non-failed states to return a true status, which is also not as 
+						// accurate as it could be.
 						else if (!job.isRunning())
 						{	
 						    log.debug("Job " + job.getUuid() + " was found in a RUNNING state on " + job.getSystem() + 
@@ -152,6 +150,9 @@ public class HPCMonitor extends AbstractJobMonitor {
 						    this.job = JobManager.updateStatus(job, JobStatusType.RUNNING, 
 									"Job status change to running detected by batch scheduler monitor.");
 						}
+						// TODO: For the above reasons, this isn't accurate either. A job could move from running to 
+						// suspended and this wouldn't reflect the change. We need the actual remote job status
+						// for accuracy.
 						else
 						{
 						    log.debug("Job " + job.getUuid() + " is still " + job.getStatus().name() + 
@@ -160,9 +161,68 @@ public class HPCMonitor extends AbstractJobMonitor {
 						    this.job = JobManager.updateStatus(job, job.getStatus(), job.getErrorMessage());
 						}
 					}
+					catch (RemoteJobUnrecoverableStateException e) {
+						log.debug("Job " + job.getUuid() + " was found in an unrecoverable state on " + job.getSystem() + 
+                                " as local job id " + job.getLocalJobId() + ". Updating status to FAILED.");
+                        this.job = JobManager.updateStatus(job, JobStatusType.FAILED, 
+					            "Job failed to move out of system queue.");
+					}
+					catch (RemoteJobMonitorResponseParsingException e) {
+						log.debug("Unrecognized response from status check for job " + this.job.getUuid() + ": " + result, e);
+						this.job = JobManager.updateStatus(this.job, job.getStatus(), this.job.getErrorMessage());
+					}
 					catch (Exception e) {
 						log.error("Failed to updated job " + job.getUuid() + " status to " + job.getStatus(), e);
 					}
+					
+//					try
+//					{	
+//						if (StringUtils.isEmpty(result) || result.toLowerCase().contains("unknown") 
+//								|| result.toLowerCase().contains("error") || result.toLowerCase().contains("not ")) 
+//						{
+//							// job not found.
+//						    log.debug("Job " + job.getUuid() + " no longer present on " + job.getSystem() + 
+//						            " as local job id " + job.getLocalJobId() + ". Updating status to CLEANING_UP.");
+//						    Date logDate = new DateTime().toDate();// fetchEndDateFromLogFiles();
+//                            job.setEndTime(logDate);
+//							this.job = JobManager.updateStatus(job, JobStatusType.CLEANING_UP, 
+//									"Job completion detected by batch scheduler monitor.");
+//							
+//				            if (!job.isArchiveOutput()) {
+//				                log.debug("Job " + job.getUuid() + " will skip archiving at user request.");
+//				                this.job = JobManager.updateStatus(job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
+//				                log.debug("Job " + job.getUuid() + " finished.");
+//				            }
+//						}
+//						else if (java.util.Arrays.asList(StringUtils.split(result)).contains("Eqw")) 
+//						{
+//							// job not found.
+//						    log.debug("Job " + job.getUuid() + " was found in an unrecoverable state on " + job.getSystem() + 
+//                                    " as local job id " + job.getLocalJobId() + ". Updating status to FAILED.");
+//                            this.job = JobManager.updateStatus(job, JobStatusType.FAILED, 
+//						            "Job failed to move out of system queue.");
+//							
+////							JobDao.persist(job);
+//						} 
+//						else if (!job.isRunning())
+//						{	
+//						    log.debug("Job " + job.getUuid() + " was found in a RUNNING state on " + job.getSystem() + 
+//                                    " as local job id " + job.getLocalJobId() + ". Updating status to RUNNING.");
+//                            
+//						    this.job = JobManager.updateStatus(job, JobStatusType.RUNNING, 
+//									"Job status change to running detected by batch scheduler monitor.");
+//						}
+//						else
+//						{
+//						    log.debug("Job " + job.getUuid() + " is still " + job.getStatus().name() + 
+//                                    " as local job id " + job.getLocalJobId() + " on " + job.getSystem());
+//                            
+//						    this.job = JobManager.updateStatus(job, job.getStatus(), job.getErrorMessage());
+//						}
+//					}
+//					catch (Exception e) {
+//						log.error("Failed to updated job " + job.getUuid() + " status to " + job.getStatus(), e);
+//					}
 				}
 			}
 			return this.job;
