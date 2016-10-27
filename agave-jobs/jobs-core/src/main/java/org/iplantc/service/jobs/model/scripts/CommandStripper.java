@@ -9,7 +9,7 @@ public class CommandStripper {
 	public static String strip(String text) {
 
 		for (String command: Settings.BLACKLIST_COMMANDS) {
-			text = StringUtils.replace(text, command, "echo 'Invalid Command " + command + "'");
+			text = StringUtils.replace(text, command + " ", "echo 'Invalid Command " + command + "'");
 		}
 
 		// remove all callback status macros except JobStatusType.FAILED

@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.managers.parsers;
+package org.iplantc.service.jobs.managers.launchers.parsers;
 
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.RemoteJobIDParsingException;

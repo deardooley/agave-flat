@@ -19,7 +19,7 @@ import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.managers.JobManager;
-import org.iplantc.service.jobs.managers.parsers.CondorJobIdParser;
+import org.iplantc.service.jobs.managers.launchers.parsers.CondorJobIdParser;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.scripts.CommandStripper;
@@ -251,18 +251,6 @@ public class CondorLauncher  extends AbstractJobLauncher {
             appTemplate = FileUtils.readFileToString(appTemplateFile);
 
             batchScript = new StringBuilder();
-//            String callbackStart = "\ncurl -sk \"" + Settings.IPLANT_JOB_SERVICE
-//                    + "trigger/job/" + job.getUuid() + "/token/"
-//                    + job.getUpdateToken() + "/status/" + JobStatusType.RUNNING
-//                    + "\"\n";
-            
-//            SubmitScript condorScript = SubmitScriptFactory.getScript(job);
-            
-//            String callbackStart = "\ncurl -sSk \"" + Settings.IPLANT_JOB_SERVICE
-//					+ "trigger/job/" + job.getUuid() + "/token/"
-//					+ job.getUpdateToken() + "/status/" + JobStatusType.RUNNING
-//					+ "?pretty=true\" 2>&1 >> " + condorScript.getStandardErrorFile() 
-//					+ " ; echo '' >> " + condorScript.getStandardErrorFile() + " \n\n";
             
             String callbackStart = resolveMacros("\n${AGAVE_JOB_CALLBACK_RUNNING} \n\n");
             batchScript.append(callbackStart);
@@ -381,6 +369,10 @@ public class CondorLauncher  extends AbstractJobLauncher {
 		if (executionSystem.isPubliclyAvailable()) {
 			appTemplate = CommandStripper.strip(appTemplate);
 		}
+		
+		// strip out premature completion callbacks that might result in archiving starting before
+		// the script exists.
+		appTemplate = filterRuntimeStatusMacros(appTemplate);
 		
 		// Replace all the runtime callback notifications
 		appTemplate = resolveRuntimeNotificationMacros(appTemplate);

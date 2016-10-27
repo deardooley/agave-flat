@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.managers.parsers;
+package org.iplantc.service.jobs.managers.launchers.parsers;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -9,13 +9,13 @@ import org.iplantc.service.jobs.exceptions.RemoteJobIDParsingException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
 
 /**
- * Parses the output from a msub command into a local job id 
+ * Parses the output from a qsub command into a local job id 
  * that can be used for querying later on.
  * 
  * @author dooley
  *
  */
-public class MoabJobIdParser implements RemoteJobIdParser {
+public class TorqueJobIdParser implements RemoteJobIdParser {
 
 	@Override
 	public String getJobId(String output) throws RemoteJobIDParsingException, JobException, SchedulerException
@@ -46,25 +46,5 @@ public class MoabJobIdParser implements RemoteJobIdParser {
 			return jobID;
 		}
 	}
-	
-	public static void main(String[] args) {
-		String[] outputs = new String[]{
-				"2059.sang-hn-01.cm.cluster",
-				"Failed to submit job",
-				"Success",
-				"  2059.sang-hn-01.cm.cluster ",
-				"2059.sang-hn-01.cm.cluster   submitted to cluster",
-				"2059.sang-hn-01.cm.cluster submitted to cluster",
-				
-		};
-		MoabJobIdParser parser = new MoabJobIdParser();
-		for (String output: outputs) {
-			try {
-				System.out.println("Success: " + parser.getJobId(output));
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println("Error: " + output);
-			}
-		}
-	}
+
 }

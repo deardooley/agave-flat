@@ -47,7 +47,7 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
 				return WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, null);
 			}
 			else {
-				return String.format("curl -sSk \"%strigger/job/%s/token/%s/status/%s?pretty=true\" 1>&2 \n\n",
+				return String.format("curl -sSk \"%strigger/job/%s/token/%s/status/%s?pretty=true&filter=id,status\" >> \"$AGAVE_LOG_FILE\"  2>&1 \n\n\n",
 						TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, job.getTenantId()),
 						job.getUuid(),
 						job.getUpdateToken(),
@@ -92,7 +92,7 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
             sb.append("echo '  \"CUSTOM_USER_JOB_EVENT_NAME\": \""+eventName+"\"' >> \"$AGAVE_CALLBACK_FILE\"\n");
             
             sb.append("echo -e \"}\" >> \"$AGAVE_CALLBACK_FILE\"\n\n");
-            sb.append(String.format("cat \"$AGAVE_CALLBACK_FILE\" | sed  -e \"s#: \\\"''\\\"#: \\\"\\\"#g\" | curl -sSk -H \"Content-Type: application/json\" -X POST --data-binary @- \"%strigger/job/%s/token/%s/status/HEARTBEAT?pretty=true\" 1>&2 \n\n",
+            sb.append(String.format("cat \"$AGAVE_CALLBACK_FILE\" | sed  -e \"s#: \\\"''\\\"#: \\\"\\\"#g\" | curl -sSk -H \"Content-Type: application/json\" -X POST --data-binary @- \"%strigger/job/%s/token/%s/status/HEARTBEAT?pretty=true\" >> \"$AGAVE_LOG_FILE\" 2>&1 \n\n\n",
                     TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, job.getTenantId()),
                     job.getUuid(),
                     job.getUpdateToken()));

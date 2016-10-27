@@ -110,7 +110,7 @@ else if (isset($_GET['postit_key'])) // redeeming a postit
         else {
             $db_results = get_active_postits($username, $limit, $offset);
         }
-        
+
         while ($postit = mysql_fetch_array($db_results)) {
             $postits[] = array(
                 'created' => date('c', strtotime($postit['created_at'])),
@@ -397,32 +397,54 @@ function forward_postit_request($url, $method = "GET", $username = '', $need_aut
 
 
     //error_log("set common ops");
+    $req_headers = getallheaders();
+    error_log(print_r($req_headers,1));
     if ($method == 'POST') {
         //error_log("post");
         curl_setopt($ch, CURLOPT_POST, TRUE);
 
         // forward the file in a multipart form upload if necessary
-        if (!empty($_FILES['fileToUpload'])) {
-            // check that they didn't try to push too much data through the service.
-            if (empty($_POST) && $_SERVER['CONTENT_LENGTH'] > 0) {
-                format_error_response('The server was unable to handle that much POST data (' . $_SERVER['CONTENT_LENGTH'] . ' bytes) due to its current configuration', ERROR_500);
-            } else {
-                //curl_setopt( $ch, CURLOPT_UPLOAD, 1);
-                //curl_setopt( $ch, CURLOPT_INFILESIZE, filesize($_FILES['fileToUpload']['tmp_name']));
-                error_log("post -> $url -> file ->" . $_FILES['fileToUpload']['tmp_name']);
 
-                $fileinfo = pathinfo($_FILES['fileToUpload']['tmp_name']);
+				if (!empty($_FILES['fileToUpload'])) {
 
-                $_POST["fileToUpload"] = "@" . $fileinfo['basename'];
-                // change directory to the temp path so the filename won't
-                chdir($fileinfo['dirname']);
-            }
-        }
-        $post_data = serialize_form_data($_POST);
-        if ($config['debug']) error_log("post -> $url -> $post_data");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $_POST);
+						// check that they didn't try to push too much data through the service.
+						if (empty($_POST) && $_SERVER['CONTENT_LENGTH'] > 0) {
+								format_error_response('The server was unable to handle that much POST data (' . $_SERVER['CONTENT_LENGTH'] . ' bytes) due to its current configuration', ERROR_500);
+						} else {
+								//curl_setopt( $ch, CURLOPT_UPLOAD, 1);
+								//curl_setopt( $ch, CURLOPT_INFILESIZE, filesize($_FILES['fileToUpload']['tmp_name']));
+								error_log("post -> $url -> file ->" . $_FILES['fileToUpload']['tmp_name']);
+
+								$fileinfo = pathinfo($_FILES['fileToUpload']['tmp_name']);
+
+								$_POST["fileToUpload"] = "@" . $fileinfo['basename'];
+								// change directory to the temp path so the filename won't
+								chdir($fileinfo['dirname']);
+						}
+						curl_setopt($ch, CURLOPT_POSTFIELDS, $_POST);
+				}
+				else {
+
+						$headers[] = 'Content-Type: '.$req_headers['Content-Type'];
+						if (strpos($req_headers['Content-Type'], 'application/json') !== FALSE ||
+								strpos($req_headers['Content-Type'], 'application/x-www-form-urlencoded') !== FALSE) {
+								$post_data = file_get_contents('php://input');
+								curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+						}
+						else {
+								$post_data = serialize_form_data($_POST);
+								curl_setopt($ch, CURLOPT_POSTFIELDS, $_POST);
+						}
+						if ($config['debug']) error_log("post -> $url -> $post_data");
+				}
     } else if ($method == 'PUT') {
-        $post_data = serialize_form_data($_POST);
+        $headers[] = 'Content-Type: '.$req_headers['Content-Type'];
+				if (strpos($req_headers['Content-Type'], 'application/json') !== FALSE ||
+							strpos($req_headers['Content-Type'], 'application/x-www-form-urlencoded') !== FALSE) {
+        		$post_data = file_get_contents('php://input');
+        } else {
+            $post_data = serialize_form_data($_POST);
+        }
         if ($config['debug']) error_log("put -> $url -> $post_data");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
         curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
@@ -435,6 +457,7 @@ function forward_postit_request($url, $method = "GET", $username = '', $need_aut
        $url_path = parse_url($url, PHP_URL_PATH);
        $path_parts = pathinfo($url_path);
        $urlquery = parse_url($url, PHP_URL_QUERY);
+
        parse_str($urlquery, $query_vars);
 //        if ($config['debug']) error_log("target url query parameters: \n" . print_r($query_vars, 1));
 
@@ -545,7 +568,7 @@ function forward_postit_request($url, $method = "GET", $username = '', $need_aut
 
 //        $bearer_token =
 //        $oauth_header = 'Authorization: Bearer ' . $bearer_token;
-        
+
         $header_field = 'x-jwt-assertion-' . str_replace('.', '-', $tenant_id);
         $header_value = sprintf("%s.%s.%s", $jwt_prefix, $jwt_body, $jwt_suffix);
         if ($config['debug']) error_log($header_field . ": " . $header_value);
@@ -571,16 +594,16 @@ function forward_postit_request($url, $method = "GET", $username = '', $need_aut
 //    }
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-//    if ($config['debug']) error_log(json_encode($headers, JSON_PRETTY_PRINT));
+    if ($config['debug']) error_log(json_encode($headers, JSON_PRETTY_PRINT));
 
     //execute post
     curl_exec($ch);
 
-//    if ($config['debug']) error_log("Error output: " .curl_error($ch));
+    if ($config['debug']) error_log("Error output: " .curl_error($ch));
 
-//    if ($config['debug']) error_log(json_encode(curl_getinfo($ch), JSON_PRETTY_PRINT));
+   if ($config['debug']) error_log(json_encode(curl_getinfo($ch), JSON_PRETTY_PRINT));
     //close connection
-//    curl_close($ch);
+    curl_close($ch);
 
 }
 
@@ -762,5 +785,19 @@ function get_integer_request_value($query_key, $default=0) {
 		}
 	}
 }
-
+if (!function_exists('getallheaders'))
+{
+    function getallheaders()
+    {
+           $headers = '';
+       foreach ($_SERVER as $name => $value)
+       {
+           if (substr($name, 0, 5) == 'HTTP_')
+           {
+               $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+           }
+       }
+       return $headers;
+    }
+}
 ?>

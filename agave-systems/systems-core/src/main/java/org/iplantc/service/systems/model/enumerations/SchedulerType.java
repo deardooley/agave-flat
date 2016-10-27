@@ -90,23 +90,24 @@ public enum SchedulerType
 				return "bhist";
 			case LOADLEVELER:
 				return "llq";
+			case PBS:
+			case CUSTOM_PBS:
 			case TORQUE:
 			case CUSTOM_TORQUE:
-			case CUSTOM_PBS:
 			case MOAB:
-			case PBS:
 			case SGE:
 			case CUSTOM_GRIDENGINE:
-				return "qstat | grep";
+				return "qstat -w | grep ";
 			case CUSTOM_CONDOR:
 			case CONDOR:
 				return "condor_q -format '%d'  JobStatus";
 			case UNKNOWN:
 			case FORK:
-				return "ps -o comm= -p ";
+				return "ps -o pid= -o comm= -p ";
 			case SLURM:
 			case CUSTOM_SLURM:
-				return "showq -u | grep";
+//				return "sacct -p -o 'JobIDRaw,State,ExitCode,Start,End,Elapsed,CPUTimeRaw,DerivedExitCode,NCPUS,NNodes' -j ";
+				return "sacct -p -o 'JOBIDRaw,State,ExitCode' -n -j ";
 			default:
 				return "qstat";
 		}

@@ -25,6 +25,7 @@ import org.iplantc.service.apps.model.enumerations.ParallelismType;
 import org.iplantc.service.apps.model.enumerations.SoftwareParameterType;
 import org.iplantc.service.apps.resources.SoftwareFormResource;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
+import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.model.BatchQueue;
@@ -66,13 +67,13 @@ public class SoftwareFormResourceImpl extends AbstractSoftwareResource implement
             
             String submitFormHeader = "<form name=\"" + software.getUniqueName() + "\" " +
                                 "method=\"POST\" " +
-                                "action=\"" + Settings.IPLANT_JOB_SERVICE + "\"" +
+                                "action=\"" + TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE) + "\"" +
                                 "class=\"job_submission_form\">";
             
             String submitForm = "<table align=\"center\" id=\"contactArea\">\n";
             submitForm += "<tr><td style=\"text-align:center;\" colspan=\"2\">Base Parameters</td></tr>\n";
-            submitForm += "<tr><td>Job Name:</td><td><input type=\"text\" name=\"jobName\" value=\"\"></td></tr>\n";
-            submitForm += "<tr><td>Software Name:</td><td><input type=\"text\" name=\"softwareName\" value=\"" + software.getUniqueName() + "\"></td></tr>\n";
+            submitForm += "<tr><td>Job Name:</td><td><input type=\"text\" name=\"name\" value=\"\"></td></tr>\n";
+            submitForm += "<tr><td>Software Name:</td><td><input type=\"text\" name=\"appId\" value=\"" + software.getUniqueName() + "\"></td></tr>\n";
             if (software.getExecutionSystem().getExecutionType().equals(ExecutionType.HPC) ||
                     software.getExecutionSystem().getExecutionType().equals(ExecutionType.CONDOR)) {
                 submitForm += "<tr><td>Batch Queue:</td><td><select name=\"batchQueue\" >";
@@ -110,7 +111,7 @@ public class SoftwareFormResourceImpl extends AbstractSoftwareResource implement
             if (!StringUtils.isEmpty(software.getDefaultMaxRunTime())) {
                 maxRunTime = software.getDefaultMaxRunTime();
             }
-            submitForm += "<tr><td>Requested Time:</td><td><input type=\"text\" name=\"requestedTime\" value=\"" + maxRunTime + "\" title=\"Enter in hh:mm:ss format\"></td></tr>\n";
+            submitForm += "<tr><td>Requested Time:</td><td><input type=\"text\" name=\"maxRunTime\" value=\"" + maxRunTime + "\" title=\"Enter in hh:mm:ss format\"></td></tr>\n";
             
             submitForm += "<tr><td>Notification Url:</td><td><input type=\"text\" name=\"notifications\" value=\"\"></td></tr>\n";
             submitForm += "<tr><td>Archive:</td><td><input type=\"checkbox\" value=\"1\" name=\"archive\" checked></td></tr>\n";

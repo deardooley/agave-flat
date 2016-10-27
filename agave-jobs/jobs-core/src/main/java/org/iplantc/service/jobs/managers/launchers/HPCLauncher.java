@@ -22,8 +22,8 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.RemoteJobIDParsingException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
 import org.iplantc.service.jobs.exceptions.SoftwareUnavailableException;
-import org.iplantc.service.jobs.managers.parsers.RemoteJobIdParser;
-import org.iplantc.service.jobs.managers.parsers.RemoteJobIdParserFactory;
+import org.iplantc.service.jobs.managers.launchers.parsers.RemoteJobIdParser;
+import org.iplantc.service.jobs.managers.launchers.parsers.RemoteJobIdParserFactory;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.scripts.CommandStripper;
@@ -191,7 +191,9 @@ public class HPCLauncher extends AbstractJobLauncher
 			
 			String absWorkDir = remoteExecutionDataClient.resolvePath(job.getWorkPath());
 			
-			batchWriter.write("\n\ncd " + absWorkDir + "\n");
+			batchWriter.write("\ncd " + absWorkDir + "\n");
+			
+			batchWriter.write("AGAVE_LOG_FILE=" + absWorkDir + "/.agave.log\n");
 			
 			// write the callback to trigger status update at start
 			batchWriter.write(resolveMacros("\n${AGAVE_JOB_CALLBACK_RUNNING} \n\n"));
@@ -297,9 +299,13 @@ public class HPCLauncher extends AbstractJobLauncher
 				appTemplate = CommandStripper.strip(appTemplate); 
 			}
 			
+			// strip out premature completion callbacks that might result in archiving starting before
+			// the script exists.
+			appTemplate = filterRuntimeStatusMacros(appTemplate);
+			
 			// add the success statement after the template by default. The user can add failure catches
 			// in their scripts that will trump a later success status.
-			appTemplate = appTemplate + "\n\n${IPLANT_CLEANING_UP}\n";
+			appTemplate = appTemplate + "\n\n${AGAVE_JOB_CALLBACK_CLEANING_UP}\n";
 			
 			// Replace all the runtime callback notifications
 			appTemplate = resolveRuntimeNotificationMacros(appTemplate);
