@@ -8,13 +8,14 @@ import static org.iplantc.service.notification.model.enumerations.NotificationCa
 import static org.iplantc.service.notification.model.enumerations.NotificationCallbackProviderType.SMS;
 import static org.iplantc.service.notification.model.enumerations.NotificationCallbackProviderType.WEBHOOK;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.sql.Timestamp;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.codehaus.plexus.util.StringUtils;
 import org.iplantc.service.common.exceptions.UUIDException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.uuid.AgaveUUID;
@@ -25,6 +26,7 @@ import org.iplantc.service.notification.model.NotificationAttempt;
 import org.iplantc.service.notification.model.NotificationPolicy;
 import org.iplantc.service.notification.model.enumerations.NotificationCallbackProviderType;
 
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -121,17 +123,48 @@ public class NotificationMessageProcessor
 		try {
 			NotificationCallbackProviderType provider = NotificationCallbackProviderType.getInstanceForUri(event.getNotification().getCallbackUrl());
 			
+			ObjectMapper mapper = new ObjectMapper();
 			if (provider == EMAIL) {
 				// build a json object with the subject, body, and html body for the content
-				ObjectNode json = new ObjectMapper().createObjectNode()
+				ObjectNode json = mapper.createObjectNode()
 						.put("subject", event.getEmailSubject())
 						.put("body", event.getEmailBody())
 						.put("htmlBody", event.getHtmlEmailBody());
 				attempt.setContent(json.toString());
 			} 
 			else if (provider == SLACK || provider == SMS) {
-				attempt.setContent(event.getEmailSubject());
+				ObjectNode json = mapper.createObjectNode()
+						.put("subject", event.getEmailSubject());
+				
+				// we'll create a formatted attachment if there is custom data to post to slack
+				if (StringUtils.contains(event.getCustomNotificationMessageContextData(), "CUSTOM_USER_JOB_EVENT_NAME")) {
+					try {
+						// add content as a json object so we don't double escape
+						json.put("body", mapper.writer(new DefaultPrettyPrinter()).writeValueAsString(mapper.readTree(event.getCustomNotificationMessageContextData())));
+					} catch (IOException e) {
+						json.put("body", event.getCustomNotificationMessageContextData());
+					}
+					// if the notification got here, it's all good.
+					json.put("color", "good");
+				}
+				else {
+					if (StringUtils.contains(event.getEvent(), "FAILED")) {
+						json.put("color", "danger");
+					}
+					else if (StringUtils.contains(event.getEvent(), "RETRY")) {
+						json.put("color", "warning");
+					}
+					else {
+						json.put("color", "good");
+					}
+					// otherwise we'll just post a standard message
+				}
+				
+				attempt.setContent(json.toString());
 			}
+//			else if (provider == RABBITMQ || provider == BEANSTALK || providprovider == JMS) {
+//				
+//			}
 			else if (provider == WEBHOOK || provider == AGAVE || provider == REALTIME) {
 				attempt.setContent(event.getCustomNotificationMessageContextData());
 				try {
