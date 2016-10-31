@@ -163,6 +163,7 @@ public class FilesApplication extends Application
     		// Define authenticated I/O routes
         if (!Settings.SLAVE_MODE) {
 	        router.attach("/download/{username}/system/{systemId}/", PublicFileDownloadResource.class);
+//	        router.attach("/download/{systemId}/", PublicFileDownloadResource.class);
         
     		secureEndpoint(router,"/media/system/{systemId}", FileManagementResource.class); // DONE upload(POST) a file, get upload form(GET)
             secureEndpoint(router,"/media/system/{systemId}/", FileManagementResource.class); // DONE upload(POST) a file, get upload form(GET)

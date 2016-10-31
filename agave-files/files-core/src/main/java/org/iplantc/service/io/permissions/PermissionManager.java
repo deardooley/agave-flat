@@ -3,6 +3,7 @@
  */
 package org.iplantc.service.io.permissions;
 
+import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import org.iplantc.service.io.model.LogicalFile;
 import org.iplantc.service.io.model.enumerations.FileEventType;
 import org.iplantc.service.io.util.PathResolver;
 import org.iplantc.service.systems.dao.SystemDao;
+import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemException;
 import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.RemoteSystem;
@@ -1835,5 +1837,79 @@ public class PermissionManager {
 		finally {
 			try { remoteDataClient.disconnect();} catch (Exception e) {}
 		}
+	}
+
+	/**
+	 * Resolves the owner of a file item on a remote system by inspecting the parent
+	 * tree for known {@link LogicalFile} entries and public home directories. If no 
+	 * parent is found, the system owner is granted ownership. If a parent is found, 
+	 * the parent owner is assigned unless the system is public and a user home directory
+	 * is an ancestor of the given {@code absolutePath}.
+	 * @param system
+	 * @param absolutePath
+	 * @return username of the file item owner
+	 * @throws PermissionException if the {@code absolutePath} falls outside the system home directory
+	 * @throws LogicalFileException if we cannot resolve 
+	 */
+	public String getImpliedOwnerForFileItemPath(RemoteSystem system, String absolutePath) 
+	throws PermissionException, LogicalFileException
+	{
+		RemoteDataClient rdc = null;
+		String absoluteHomeDir = null;
+		
+		try {
+			// the RemoteDataClient may not be initialized. We need it to resolve the system home directory
+			// for later use.
+			rdc = this.remoteDataClient == null ? system.getRemoteDataClient() : this.remoteDataClient;
+			absoluteHomeDir = rdc.resolvePath("");
+		}
+		catch (RemoteDataException | RemoteCredentialException e) {
+			throw new LogicalFileException("Unable to resolve ownership of unknown file item " + 
+					system.getSystemId() + "/" + absolutePath);
+		} catch (FileNotFoundException e) {
+			throw new PermissionException("File item agave://" + system.getSystemId() + "/" + absolutePath + 
+					" is outside of the system root directory " + system.getStorageConfig().getRootDir());
+		}
+			
+		LogicalFile parent = LogicalFileDao.findClosestParent(system, absolutePath);
+		String fileOwner = null;
+		if (parent != null) {
+			// this should not be able to happen. Permissions should have failed first.
+			if (!isUnderSystemRootDir(parent.getPath())) {
+				throw new PermissionException("File item agave://" + system.getSystemId() + "/" + absolutePath + 
+    					" is outside of the system root directory " + system.getStorageConfig().getRootDir());
+			}
+			// check whether the file item is under a user home directory on a public system. If so, it belongs to the 
+			// user since it had to have been put there outside of the api.
+			else if (system.isPubliclyAvailable()) {
+				// check whether the parent path has the system home directory as a descendent 
+				if (StringUtils.startsWith(parent.getPath(), absoluteHomeDir)) {
+					// if the parent path is the system home directory, use the existing owner
+					if (StringUtils.equals(parent.getPath() + "/", StringUtils.stripEnd(absoluteHomeDir, "/") + "/")) {
+						fileOwner = parent.getOwner();
+					}
+					//
+					else {
+						// on a public system, this will be the username
+						String pathRelativeToHome = StringUtils.replaceOnce(parent.getPath(), absoluteHomeDir, "");
+						fileOwner = StringUtils.substringBefore(pathRelativeToHome, "/");
+					}
+				}
+				// if not, assign to the existing parent directory owner
+				else {
+					fileOwner = parent.getOwner();
+				}
+			}
+			// otherwise we assign the file item to the parent directory owner
+			else {
+				fileOwner = parent.getOwner();
+			}
+		}
+		// otherwise we assign the file item to the system owner since no one else has claimed it.
+		else {
+			fileOwner = system.getOwner();
+		}
+		
+		return fileOwner;
 	}
 }

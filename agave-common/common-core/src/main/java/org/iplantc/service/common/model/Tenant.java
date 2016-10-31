@@ -224,7 +224,7 @@ public class Tenant {
 	
 	public String toString()
 	{
-		return getTenantCode() + " " + getBaseUrl() + getContactEmail();
+		return getTenantCode() + " " + getBaseUrl() + " " + getContactEmail();
 	}
 	
 	public String toJSON()

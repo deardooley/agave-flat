@@ -23,12 +23,16 @@ import org.iplantc.service.common.model.Tenant;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.io.Settings;
 import org.iplantc.service.io.dao.LogicalFileDao;
+import org.iplantc.service.io.exceptions.FileEventProcessingException;
+import org.iplantc.service.io.exceptions.LogicalFileException;
 import org.iplantc.service.io.manager.FileEventProcessor;
 import org.iplantc.service.io.model.FileEvent;
 import org.iplantc.service.io.model.LogicalFile;
 import org.iplantc.service.io.model.enumerations.FileEventType;
+import org.iplantc.service.io.model.enumerations.StagingTaskStatus;
 import org.iplantc.service.io.permissions.PermissionManager;
 import org.iplantc.service.io.util.PathResolver;
+import org.iplantc.service.io.util.ServiceUtils;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
@@ -36,12 +40,11 @@ import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.iplantc.service.transfer.RemoteDataClient;
-import org.iplantc.service.transfer.RemoteDataClientFactory;
 import org.iplantc.service.transfer.RemoteFileInfo;
-import org.iplantc.service.transfer.exceptions.AuthenticationException;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.restlet.Request;
 import org.restlet.data.Disposition;
+import org.restlet.data.Header;
 import org.restlet.data.MediaType;
 import org.restlet.data.Range;
 import org.restlet.data.Status;
@@ -50,6 +53,7 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.WriterRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
+import org.restlet.util.Series;
 
 /**
  * Class to handle get and post requests for jobs
@@ -86,11 +90,24 @@ public class PublicFileDownloadResource extends AbstractFileResource {
 
         try {
 	        // Instantiate remote data client to the correct system
-	        String requestHostname = Request.getCurrent().getOriginalRef().getHostDomain();
-	        Tenant tenant = new TenantDao().findByBaseUrl(requestHostname);
+        	Series<Header> headers = Request.getCurrent().getHeaders();
+        	Header xForwardHostHeader = headers.getFirst("x-forwarded-host", true);
+        	Tenant tenant = null;
+        	String xForwardHost = xForwardHostHeader.getValue();
+    		if (StringUtils.isEmpty(xForwardHost)) {
+    			log.error("No x-forward-host header found in the request for " + Request.getCurrent().getOriginalRef().toString());
+    		}
+    		else {
+    			tenant = new TenantDao().findByBaseUrl(xForwardHost);
+    		}
+        	
+//	        String requestHostname = Request.getCurrent().getOriginalRef().getHostDomain();
+        		
 	        
 	        if (tenant == null) {
-	        	throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "No system found with the given id.");
+	        	log.error("No tenant found matching the x-forward-host url of " + xForwardHost);
+	        	throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "No system found with the given id.", 
+	        			new SystemUnknownException("No tenant found matching the x-forward-host url of " + xForwardHost));
 	        } else {
 	        	TenancyHelper.setCurrentTenantId(tenant.getTenantCode());
 	        	TenancyHelper.setCurrentEndUser(Settings.PUBLIC_USER_USERNAME);
@@ -99,11 +116,13 @@ public class PublicFileDownloadResource extends AbstractFileResource {
             if (StringUtils.isNotEmpty(systemId)) {
             	this.system = sysDao.findBySystemId(systemId);
             } else {
-                throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "Not publicly shared resource found at the given path.");
+                throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, 
+                		"Not publicly shared resource found at the given path.", 
+                		new SystemUnknownException("No system found with id " + systemId));
             }
             
             if (system == null) {
-            	throw new SystemUnknownException("No system found for the published data, " + systemId);
+            	throw new SystemUnknownException("No system found for the published data matching " + systemId);
             }
             else if (!system.isAvailable()) {
             	throw new SystemUnavailableException("The system containing the published data is currently unavailable.");
@@ -176,7 +195,7 @@ public class PublicFileDownloadResource extends AbstractFileResource {
         	}
         }
         
-		try {
+        try {
 			try {
 				String originalPath = getRequest().getOriginalRef().toUri().getPath();
 				path = PathResolver.resolvePublic(getAuthenticatedUsername(), originalPath);
@@ -186,19 +205,22 @@ public class PublicFileDownloadResource extends AbstractFileResource {
 			
 			LogicalFile logicalFile = null;
 			RemoteFileInfo remoteFileInfo = null;
+			PermissionManager pm = null;
+			String absolutePath = null;
 			try 
 			{
 				remoteDataClient.authenticate();
                 
 				remoteFileInfo = remoteDataClient.getFileInfo(path);
+				absolutePath = remoteDataClient.resolvePath(path);
 				
-				logicalFile = LogicalFileDao.findBySystemAndPath(system, remoteDataClient.resolvePath(path));
+				logicalFile = LogicalFileDao.findBySystemAndPath(system, absolutePath);
                 
-				PermissionManager pm = new PermissionManager(
+				pm = new PermissionManager(
 						system, remoteDataClient, logicalFile, Settings.PUBLIC_USER_USERNAME);
 				
                 // check for file on disk
-                if (logicalFile == null) {
+//                if (logicalFile == null) {
                     // if it doesn't exist, it was deleted outside of the api,
                     // so clean up the file entry in the db and its permissions
 //                    if (logicalFile != null) {
@@ -207,54 +229,79 @@ public class PublicFileDownloadResource extends AbstractFileResource {
 //                        LogicalFileDao.removeSubtree(logicalFile);
 //                    }
 
-                    throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-    						"File/folder does not exist");
+//                    throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
+//    						"File/folder does not exist");
 
-                } else if (remoteDataClient.isDirectory(path)) { // return file listing
-
-                	throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-                			"Directory downloads not supported");
-                } else {
-                    // file exists on the file system, so make sure we have
-                    // a logical file for it if not, add one
-                    try {
-                        if (!pm.canRead(logicalFile.getPath())) {
-                        	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-                        			"User does not have access to view the requested resource");
-                        }
-                    } catch (PermissionException e) {
+//                } else 
+            	if (remoteDataClient.isDirectory(path)) { // return file listing
+            		
+            		if (remoteDataClient.doesExist(path + "/index.html")) {
+            			path = path + "/index.html";
+            			
+            			remoteFileInfo = remoteDataClient.getFileInfo(path);
+            			absolutePath = remoteDataClient.resolvePath(path);
+        				
+        				logicalFile = LogicalFileDao.findBySystemAndPath(system, absolutePath);
+                        
+        				pm = new PermissionManager(
+        						system, remoteDataClient, logicalFile, Settings.PUBLIC_USER_USERNAME);
+            		}
+            		else if (remoteDataClient.doesExist(path + "/index.htm")) {
+            			path = path + "/index.htm";
+            			
+            			remoteFileInfo = remoteDataClient.getFileInfo(path);
+            			absolutePath = remoteDataClient.resolvePath(path);
+        				
+        				logicalFile = LogicalFileDao.findBySystemAndPath(system, absolutePath);
+                        
+        				pm = new PermissionManager(
+        						system, remoteDataClient, logicalFile, Settings.PUBLIC_USER_USERNAME);
+            		}
+            		else {
+            			throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
+                    			"Directory downloads not supported");
+            		}
+                } 
+            	
+            	// file exists on the file system, so make sure we have
+                // a logical file for it if not, add one
+                try {
+                    if (!pm.canRead(absolutePath)) {
                     	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-                    			"Failed to retrieve permissions for " + path + ", " + e.getMessage());
+                    			"User does not have access to view the requested resource");
+                    }
+                } catch (PermissionException e) {
+                	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+                			"Failed to retrieve permissions for " + path + ", " + e.getMessage());
+                }
+
+                if (ranges.size() > 0) {
+                    Range range = ranges.get(0);
+
+                    if (range.getSize() < 0 && range.getSize() != -1) {
+                    	throw new ResourceException(
+                    			new Status(416, "Requested Range Not Satisfiable", 
+                    					"Upper bound less than lower bound", 
+                    					"http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html"),
+                    			"Specified Range upper bound less than lower bound");
                     }
 
-                    if (ranges.size() > 0) {
-                        Range range = ranges.get(0);
+                    if (range.getIndex() > remoteFileInfo.getSize()) {
+                    	throw new ResourceException(
+                        		new Status(416, "Requested Range Not Satisfiable", 
+                        				"Lower bound out of range of file", 
+                        				"http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html"),
+                    			"Specified Range lower bound outside bounds of file");
+                    }
 
-                        if (range.getSize() < 0 && range.getSize() != -1) {
-                        	throw new ResourceException(
-                        			new Status(416, "Requested Range Not Satisfiable", 
-                        					"Upper bound less than lower bound", 
-                        					"http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html"),
-                        			"Specified Range upper bound less than lower bound");
-                        }
-
-                        if (range.getIndex() > remoteFileInfo.getSize()) {
-                        	throw new ResourceException(
-                            		new Status(416, "Requested Range Not Satisfiable", 
-                            				"Lower bound out of range of file", 
-                            				"http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html"),
-                        			"Specified Range lower bound outside bounds of file");
-                        }
-
-                        if ((range.getIndex() + range.getSize()) > remoteFileInfo.getSize()) {
-                            getResponse().setStatus(
-                            		new Status(416, "Requested Range Not Satisfiable", 
-		                            		"Upper bound out of range of file", 
-		                            		"http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html"),
-                            		"Specified Range upper bound outside bounds of file");
-                        }
-                    }                    
-                }
+                    if ((range.getIndex() + range.getSize()) > remoteFileInfo.getSize()) {
+                        getResponse().setStatus(
+                        		new Status(416, "Requested Range Not Satisfiable", 
+	                            		"Upper bound out of range of file", 
+	                            		"http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html"),
+                        		"Specified Range upper bound outside bounds of file");
+                    }
+                } 
 			} catch (FileNotFoundException e) {
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
 						"File/folder does not exist");
@@ -263,22 +310,57 @@ public class PublicFileDownloadResource extends AbstractFileResource {
             } catch (Exception e) {
             	e.printStackTrace();
             	throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-            			"Failed to retrieve information for " + path);
+            			"Failed to retrieve information for " + path, e);
             }
 			
-			FileEventProcessor.processAndSaveContentEvent(logicalFile, new FileEvent(
-					FileEventType.DOWNLOAD,
-					FileEventType.DOWNLOAD.getDescription(),
-					Settings.PUBLIC_USER_USERNAME,
-					TenancyHelper.getCurrentTenantId()));
+			// we need to create a logical file here if it doesn't already exist so we can throw the
+			// download event on the file item.
+			
+			if (logicalFile == null) {
+				try {
+					String fileOwner = pm.getImpliedOwnerForFileItemPath(system, absolutePath);
+					
+					logicalFile = new LogicalFile();
+	                logicalFile.setSystem(system);
+	                logicalFile.setName(new File(path).getName());
+	                logicalFile.setNativeFormat(LogicalFile.RAW);
+	                logicalFile.setOwner(fileOwner);
+	                logicalFile.setPath(absolutePath);
+	                logicalFile.setSourceUri("agave://" + system.getSystemId() + "/" + logicalFile.getAgaveRelativePathFromAbsolutePath());
+	                logicalFile.setStatus(StagingTaskStatus.STAGING_COMPLETED);
+	                LogicalFileDao.persist(logicalFile);	
+				}
+				catch (PermissionException e) {
+					throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+	            			"Unable to fetch files outside of the system root.", e); 
+				}
+				catch (Throwable e) {
+					log.error("Unable to resolve ownership of unknown file agave://" 
+							+ system.getSystemId() + "/" + path 
+							+ " during public file download. No event will be thrown.", e ); 
+				}
+			}
+			
+			if (logicalFile != null) {
+				try {
+					FileEventProcessor.processAndSaveContentEvent(logicalFile, new FileEvent(
+							FileEventType.DOWNLOAD,
+							FileEventType.DOWNLOAD.getDescription(),
+							Settings.PUBLIC_USER_USERNAME,
+							TenancyHelper.getCurrentTenantId()));
+				}
+				catch (LogicalFileException| FileEventProcessingException e) {
+					log.error("Failed to send public DOWNLOAD event for agave://" 
+							+ system.getSystemId() + "/" + path, e ); 
+				}
+			}
 			
             // stream the file to them
 			File f = new File(new File(path).getName());
 			String mimetype = new MimetypesFileTypeMap().getContentType(f);
 			final String remotePath = path;
 			final long fileSize = remoteFileInfo.getSize();
-			final WriterRepresentation wrep = 
-					new WriterRepresentation(MediaType.valueOf(mimetype)) {
+			final WriterRepresentation wrep = new WriterRepresentation(MediaType.valueOf(mimetype)) {
 				
 				private InputStream in;
 				RemoteDataClient client = null;
