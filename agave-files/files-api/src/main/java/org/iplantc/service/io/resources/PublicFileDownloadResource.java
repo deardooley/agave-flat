@@ -526,8 +526,8 @@ public class PublicFileDownloadResource extends AbstractFileResource {
 			disposition.setType(Disposition.TYPE_INLINE);
 			if (isForceDownload()) { 
 				disposition.setType(Disposition.TYPE_ATTACHMENT);
+				wrep.setDisposition(disposition);
 			}
-			wrep.setDisposition(disposition);
 			
 			return wrep;
 	    } 
