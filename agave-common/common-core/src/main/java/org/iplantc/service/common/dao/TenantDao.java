@@ -176,8 +176,9 @@ public class TenantDao extends AbstractDao
 		{
 			Session session = getSession();
 			session.clear();
-			Tenant tenant = (Tenant) session.createQuery("from Tenant t where t.baseUrl like :baseUrl")
-					.setString("baseUrl",  "https://" + hostname + "%")
+			Tenant tenant = (Tenant) session.createQuery("from Tenant t where t.baseUrl like :httpUrl or t.baseUrl like :sslUrl")
+					.setString("httpUrl",  "http://" + hostname + "%")
+					.setString("sslUrl",  "https://" + hostname + "%")
 					.setMaxResults(1)
 					.uniqueResult();
 			
@@ -192,5 +193,5 @@ public class TenantDao extends AbstractDao
 		finally {
 			try { HibernateUtil.commitTransaction();} catch (Exception e) {}
 		}
-	}
+	}	
 }

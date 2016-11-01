@@ -11,13 +11,19 @@ import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.jobs.Settings;
+import org.iplantc.service.jobs.exceptions.RemoteJobFailureDetectedException;
+import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
+import org.iplantc.service.jobs.exceptions.RemoteJobUnknownStateException;
 import org.iplantc.service.jobs.exceptions.RemoteJobUnrecoverableStateException;
+import org.iplantc.service.jobs.managers.JobEventProcessor;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.monitors.parsers.JobMonitorResponseParser;
 import org.iplantc.service.jobs.managers.monitors.parsers.JobMonitorResponseParserFactory;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.systems.dao.SystemDao;
@@ -160,6 +166,28 @@ public class HPCMonitor extends AbstractJobMonitor {
                             
 						    this.job = JobManager.updateStatus(job, job.getStatus(), job.getErrorMessage());
 						}
+					}
+					// if the response was empty, raise an event so anyone who cares to investigate can do so
+					catch (RemoteJobMonitorEmptyResponseException e) {
+						JobEvent event = new JobEvent(JobEventType.EMPTY_STATUS_RESPONSE.name(), 
+								JobEventType.EMPTY_STATUS_RESPONSE.getDescription(), job.getOwner());
+						event.setJob(job);
+						JobEventProcessor eventProcessor = new JobEventProcessor(event);
+						eventProcessor.process();
+					}
+					catch (RemoteJobUnknownStateException e) {
+						this.job = JobManager.updateStatus(job, job.getStatus(), 
+                        		"Job " + job.getUuid() + " was found in an unknown state of " + e.getJobState() + 
+                        		" on " + job.getSystem() + " as local job id " + job.getLocalJobId() + 
+                        		". The job will remain active until a terminal state is detected.");
+					}
+					catch (RemoteJobFailureDetectedException e) {
+						log.debug("Job " + job.getUuid() + " was found in an failed state on " + job.getSystem() + 
+                                " as local job id " + job.getLocalJobId() + ". " + e.getMessage());
+						JobStatusType nextStatus = job.isArchiveOutput() ? JobStatusType.CLEANING_UP : JobStatusType.FAILED;
+						this.job = JobManager.updateStatus(job, nextStatus, 
+                        		"Job " + job.getUuid() + " was found in an failed state on " + job.getSystem() + 
+                                " as local job id " + job.getLocalJobId() + ". " + e.getMessage());
 					}
 					catch (RemoteJobUnrecoverableStateException e) {
 						log.debug("Job " + job.getUuid() + " was found in an unrecoverable state on " + job.getSystem() + 

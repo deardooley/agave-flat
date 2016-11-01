@@ -8,9 +8,18 @@
 #echo "Starting third-party containers"
 #cd config/testbed
 #docker-compose -p thirdparty -f compose/third-party.yml up -d pushpin beanstalkd redis mongodb mysql sftp
-docker-compose -p testbed -f config/testbed/data.yml up -d sftp irods4
-docker-compose -p testbed -f config/testbed/data.yml up -d ssh slurm htcondor  
+#docker-compose -p testbed -f config/testbed/data.yml up -d --force-recreate sftp irods4
+#docker-compose -p testbed -f config/testbed/compute.yml up -d --force-recreate ssh slurm htcondor  
 
+printf "Waiting for irods4 container to come online..."
+
+sleep 30
+
+until [[ -n "$(docker-compose -p testbed -f config/testbed/data.yml logs irods4 | grep "NOTICE: Agent process")" ]];
+do
+	printf '.'
+	sleep 2
+done
 
 ###########################################################
 ### Init cli tenant
@@ -60,8 +69,15 @@ systems-addupdate -d -F $SYSTEMS_FOLDER/execution/condor.example.com.json
 
 
 #################### Upload data to IRODS ########################
-git clone https://bitbucket.org/agaveapi/science-api-samples.git
+if [[ ! -e 'science-api-samples' ]]; then 
+	git clone https://bitbucket.org/agaveapi/science-api-samples.git
+fi
 
+# remove most of the data to speed things up.
+if [[ -e 'science-api-samples' ]]; then 
+	find science-api-samples/* -type d | xargs rm -rf
+fi
+ 
 files-mkdir -d -N testuser -S storage.example.com .
 files-mkdir -d -N testuser -S irods4-password.example.com .
 files-upload -d -v -F science-api-samples -S irods4-password.example.com testuser
@@ -273,7 +289,7 @@ for i in {1..10}; do
 	jobs_ids+=($JOB_ID_WC_CONDOR_1_0_0_ARCHIVE)
 done
 
-shuffle
+shuffle_jobs
 
 for i in "${jobs_ids[@]}"; do 
 	jobs-resubmit -d $i

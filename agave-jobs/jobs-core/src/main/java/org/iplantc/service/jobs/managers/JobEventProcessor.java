@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.jobs.exceptions.JobEventProcessingException;
 import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.notification.managers.NotificationManager;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
@@ -62,7 +63,7 @@ public class JobEventProcessor {
 
         // process job related events for systems and apps
         ObjectNode jsonContent = mapper.createObjectNode();
-        jsonContent.put("job", jsonJob);
+        jsonContent.set("job", jsonJob);
         
         if (getEvent().getStatus().equalsIgnoreCase(JobStatusType.PENDING.name()))
         {
@@ -82,7 +83,10 @@ public class JobEventProcessor {
         	
         	// NotificationManager.process(executionSystem.getQueue(getEvent().getJob().getBatchQueue()).getUuid(), "JOB_RUNNING", getEvent().getCreatedBy(), jsonJob);
         }
-        else if (getEvent().getStatus().equalsIgnoreCase(JobStatusType.FINISHED.name()) ||
+        else if (getEvent().getStatus().equalsIgnoreCase(JobEventType.EMPTY_STATUS_RESPONSE.name()) ||
+        		getEvent().getStatus().equalsIgnoreCase(JobEventType.UNKNOWN_TERMINATION.name()) ||
+        		getEvent().getStatus().equalsIgnoreCase(JobEventType.REMOTE_STATUS_CHANGE.name()) ||
+        		getEvent().getStatus().equalsIgnoreCase(JobStatusType.FINISHED.name()) ||
                 getEvent().getStatus().equalsIgnoreCase(JobStatusType.FAILED.name()) ||
                 getEvent().getStatus().equalsIgnoreCase(JobStatusType.STOPPED.name()) || 
                 getEvent().getStatus().equalsIgnoreCase(JobStatusType.PAUSED.name()))

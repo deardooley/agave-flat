@@ -1,5 +1,6 @@
 package org.iplantc.service.jobs.managers.monitors.parsers;
 
+import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 import org.iplantc.service.jobs.exceptions.RemoteJobUnrecoverableStateException;
 
@@ -12,8 +13,9 @@ public interface JobMonitorResponseParser {
 	 * @return
 	 * @throws RemoteJobMonitorResponseParsingException
 	 * @throws RemoteJobUnrecoverableStateException 
+	 * @throws RemoteJobMonitorEmptyResponseException 
 	 */
 	public boolean isJobRunning(String output)
-			throws RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException;
+			throws RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException, RemoteJobMonitorEmptyResponseException;
 
 }
