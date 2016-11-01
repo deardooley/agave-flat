@@ -98,7 +98,10 @@ public class PublicFileDownloadResource extends AbstractFileResource {
     			log.error("No x-forward-host header found in the request for " + Request.getCurrent().getOriginalRef().toString());
     		}
     		else {
-    			tenant = new TenantDao().findByBaseUrl(xForwardHost);
+    			for (String hostname: StringUtils.split(xForwardHost, ",")) {
+    				tenant = new TenantDao().findByBaseUrl(hostname);
+    				if (tenant != null) break;
+    			}
     		}
         	
 //	        String requestHostname = Request.getCurrent().getOriginalRef().getHostDomain();

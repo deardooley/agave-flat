@@ -77,9 +77,13 @@ public class PBSHPCMonitorResponseParser implements JobMonitorResponseParser {
 	@Override
 	public boolean isJobRunning(String result) throws RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException
 	{
-		if (StringUtils.isEmpty(result) || result.toLowerCase().contains("unknown") 
-				|| result.toLowerCase().contains("error") || result.toLowerCase().contains("not ")) 
-		{
+		if (StringUtils.isEmpty(result)) {
+			return false;
+//			throw new RemoteJobMonitorEmptyResponseException("Empty response received from job status check on the remote system");
+		} 
+		else if (result.toLowerCase().contains("unknown")
+				|| result.toLowerCase().contains("error") 
+				|| result.toLowerCase().contains("not ")) {
 			return false;
 		}
 		else {

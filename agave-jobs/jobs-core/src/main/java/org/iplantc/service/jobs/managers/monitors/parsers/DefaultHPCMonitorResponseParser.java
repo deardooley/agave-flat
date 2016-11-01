@@ -4,6 +4,7 @@ import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 import org.iplantc.service.jobs.exceptions.RemoteJobUnrecoverableStateException;
 import org.iplantc.service.jobs.managers.JobManager;
@@ -16,10 +17,15 @@ public class DefaultHPCMonitorResponseParser implements JobMonitorResponseParser
 			.getLogger(DefaultHPCMonitorResponseParser.class);
 	
 	@Override
-	public boolean isJobRunning(String result) throws RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException
+	public boolean isJobRunning(String result) throws RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException
 	{
-		if (StringUtils.isEmpty(result) || result.toLowerCase().contains("unknown") 
-				|| result.toLowerCase().contains("error") || result.toLowerCase().contains("not ")) 
+		if (StringUtils.isEmpty(result)) {
+			return false;
+			//throw new RemoteJobMonitorEmptyResponseException("Empty response received from job status check on the remote system");
+		}
+		else if (result.toLowerCase().contains("unknown")
+				|| result.toLowerCase().contains("error") 
+				|| result.toLowerCase().contains("not ")) 
 		{
 			return false;
 		}

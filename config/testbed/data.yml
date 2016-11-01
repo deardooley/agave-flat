@@ -50,6 +50,7 @@ irods4:
    - 'IRODS_ZONE=iplant'
  ports:
    - '1257:1247'
+   - '5432:5432'
 
 http:
   image: agaveapi/apache-dev
