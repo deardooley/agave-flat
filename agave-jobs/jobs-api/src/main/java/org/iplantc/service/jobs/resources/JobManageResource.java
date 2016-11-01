@@ -3,15 +3,11 @@
  */
 package org.iplantc.service.jobs.resources;
 
-import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Map;
 
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.iplantc.service.apps.dao.SoftwareDao;
-import org.iplantc.service.apps.managers.ApplicationManager;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.auth.AuthorizationHelper;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
@@ -25,11 +21,6 @@ import org.iplantc.service.jobs.exceptions.JobTerminationException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.JobPermissionManager;
 import org.iplantc.service.jobs.model.Job;
-import org.iplantc.service.jobs.util.DataLocator;
-import org.iplantc.service.systems.dao.SystemDao;
-import org.iplantc.service.systems.model.RemoteSystem;
-import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
-import org.iplantc.service.transfer.RemoteDataClient;
 import org.restlet.Context;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
@@ -40,10 +31,6 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * The JobManageResource is the job management interface for users. Through the

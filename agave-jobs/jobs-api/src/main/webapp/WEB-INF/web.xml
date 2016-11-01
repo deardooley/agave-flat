@@ -6,12 +6,6 @@ id="WebApp_ID" version="2.5" metadata-complete="true">
 
   <display-name>Agave Jobs API</display-name>
 
-  <!-- Application class name -->
-  <context-param>
-    <param-name>org.restlet.application</param-name>
-    <param-value>org.iplantc.service.jobs.JobsApplication</param-value>
-  </context-param>
-
   <filter>
     <filter-name>UniqueIdFilter</filter-name>
     <filter-class>org.iplantc.service.common.restlet.UniqueIdFilter</filter-class>
@@ -22,55 +16,27 @@ id="WebApp_ID" version="2.5" metadata-complete="true">
     <url-pattern>/*</url-pattern>
   </filter-mapping>
 
-  <!--  Quartz initialization servlet -->
-  <servlet>
-    <servlet-name>JobsProducerInitializer</servlet-name>
-    <servlet-class>org.quartz.ee.servlet.QuartzInitializerServlet</servlet-class>
-    <init-param>
-      <param-name>config-file</param-name>
-      <param-value>quartz-producer.properties</param-value>
-    </init-param>
-    <init-param>
-      <param-name>shutdown-on-unload</param-name>
-      <param-value>true</param-value>
-    </init-param>
-    <init-param>
-      <param-name>wait-on-shutdown</param-name>
-      <param-value>true</param-value>
-    </init-param>
-    <init-param>
-      <param-name>start-scheduler-on-load</param-name>
-      <param-value>true</param-value>
-    </init-param>
-    <load-on-startup>1</load-on-startup>
-  </servlet>
-
-  <servlet>
-    <servlet-name>JobsConsumerInitializer</servlet-name>
-    <servlet-class>org.quartz.ee.servlet.QuartzInitializerServlet</servlet-class>
-    <init-param>
-      <param-name>config-file</param-name>
-      <param-value>quartz-consumer.properties</param-value>
-    </init-param>
-    <init-param>
-      <param-name>shutdown-on-unload</param-name>
-      <param-value>true</param-value>
-    </init-param>
-    <init-param>
-      <param-name>wait-on-shutdown</param-name>
-      <param-value>true</param-value>
-    </init-param>
-    <init-param>
-      <param-name>start-scheduler-on-load</param-name>
-      <param-value>true</param-value>
-    </init-param>
-    <load-on-startup>1</load-on-startup>
-  </servlet>
-
   <!-- Restlet adapter -->
   <servlet>
     <servlet-name>Agave Jobs API</servlet-name>
     <servlet-class>org.restlet.ext.servlet.ServerServlet</servlet-class>
+    <init-param>
+        <param-name>org.restlet.application</param-name>
+        <param-value>org.iplantc.service.jobs.JobsApplication</param-value>
+    </init-param>
+    <init-param>
+      <param-name>shutdown-on-unload</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>wait-on-shutdown</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>start-scheduler-on-load</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
   </servlet>
 
   <!-- Catch all requests -->

@@ -4,8 +4,9 @@
 package org.iplantc.service.jobs;
 
 import org.iplantc.service.common.persistence.JndiSetup;
-import org.iplantc.service.common.representation.QuartzUtilityResource;
 import org.iplantc.service.common.restlet.AgaveApplication;
+import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.phases.schedulers.StagingScheduler;
 import org.iplantc.service.jobs.resources.JobDocumentationResource;
 import org.iplantc.service.jobs.resources.JobHistoryResource;
 import org.iplantc.service.jobs.resources.JobListAttributeResource;
@@ -17,9 +18,9 @@ import org.iplantc.service.jobs.resources.JobUpdateResource;
 import org.iplantc.service.jobs.resources.JobsResource;
 import org.iplantc.service.jobs.resources.OutputFileDownloadResource;
 import org.iplantc.service.jobs.resources.OutputFileListingResource;
-import org.iplantc.service.jobs.resources.QuartzResource;
 import org.restlet.Component;
 import org.restlet.Router;
+import org.restlet.service.TaskService;
 
 /**
  * @author dooley
@@ -30,12 +31,14 @@ public class JobsApplication extends AgaveApplication
 	@Override
 	protected void mapServiceEndpoints(Router router)
 	{
+System.out.println("******************************* In JobsApplication mapServiceEndpoints()");
+
 		// Define the resource for the static usage page
         router.attach(getStandalonePrefix() + "/usage", JobDocumentationResource.class);
         router.attach(getStandalonePrefix() + "/usage/", JobDocumentationResource.class);
-        router.attach(getStandalonePrefix() + "/workers/{quartzaction}", QuartzUtilityResource.class);
-        secureEndpoint(router, "/quartz", QuartzResource.class);
-        secureEndpoint(router, "/quartz/", QuartzResource.class);
+//        router.attach(getStandalonePrefix() + "/workers/{quartzaction}", QuartzUtilityResource.class);
+//        secureEndpoint(router, "/quartz", QuartzResource.class);
+//        secureEndpoint(router, "/quartz/", QuartzResource.class);
         
         if (!Settings.SLAVE_MODE)
 		{
@@ -108,6 +111,34 @@ public class JobsApplication extends AgaveApplication
 		return !isStandaloneMode() ? "" : "/jobs";
 	}
     
+    @Override
+    public synchronized void start() throws Exception {
+        if (isStopped()) {
+            super.start();
+            
+            TaskService taskService = getTaskService();
+            taskService.execute(new Runnable() {
+
+                @Override
+                public void run() {
+                    System.out.println("********************* I'm executed by taskService!");
+                    
+                }
+            });
+            
+            // Spawn the staging scheduler.
+            StagingScheduler sched = null;
+            try {sched = new StagingScheduler();}
+            catch (JobException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                return;
+            }
+            taskService.execute(sched);
+
+        }
+    }
+
     public static void main(String[] args) throws Exception 
 	{	
 		JndiSetup.init();

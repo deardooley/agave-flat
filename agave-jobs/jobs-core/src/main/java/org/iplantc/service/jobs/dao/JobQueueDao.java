@@ -280,6 +280,101 @@ public class JobQueueDao {
     /* ---------------------------------------------------------------------- */
     /* getQueues:                                                             */
     /* ---------------------------------------------------------------------- */
+    /** Get all queues for all tenants defined for the specified phase, which
+     * cannot be null.
+     * 
+     * @param phase the job processing phase whose queues are to be returned or
+     *              null for all phases
+     * @return the list of queues for the specified phase in tenant ascending,
+     *         priority descending order.  For example, the first queue listed 
+     *         for each tenant has the highest priority.  The list will never 
+     *         be null, but can be empty.
+     * @throws JobQueueException input or operational error
+     */
+    public List<JobQueue> getQueues(JobPhaseType phase) 
+     throws JobQueueException
+    {
+        // ------------------------- Check Input -------------------------
+        // The phase parameter can be null.
+        if (phase == null) {
+            String msg = "Null job queue phase received.";
+            _log.error(msg);
+            throw new JobQueueException(msg);
+        }
+        
+        // ------------------------- Call SQL ----------------------------
+        ArrayList<JobQueue> list = new ArrayList<>();
+        try
+        {
+            // Begin new transaction.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Create the insert command using table definition field order.
+            // NOTE: Any changes to the job_queues table requires maintenance
+            //       here and in the populate routine below.
+            String sql = "select id, uuid, name, tenant_id, phase, priority, " +
+                            "num_workers, max_messages, filter, created, last_updated " +
+                         "from job_queues " +
+                         "where phase = :phase " +
+                         "order by tenant_id, phase, priority desc";
+            
+            // Fill in the placeholders.           
+            Query qry = session.createSQLQuery(sql);
+            qry.setString("phase", phase.name());
+            
+            // Issue the call and populate the model object.
+            // (Yes, this is the tax for not using hibernate...)
+            @SuppressWarnings("unchecked")
+            List<Object> objList = qry.list();
+            for (Object obj : objList) list.add(populateJobQueue(obj));
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to query job queues for phase " + phase.name() + ".";
+            _log.error(msg);
+            throw new JobQueueException(msg, e);
+        }
+        finally {
+            try {HibernateUtil.commitTransaction();} 
+            catch (Exception e) 
+            {
+                String msg = "Unable to commit query transaction " +
+                             "for job queues in phase " + phase.name() + ".";
+                _log.error(msg);
+                throw new JobQueueException(msg, e);
+            }
+        }
+        
+        return list;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getQueues:                                                             */
+    /* ---------------------------------------------------------------------- */
+    /** Get all queues for the current tenant defined for any phase.
+     * 
+     * @param tenantId the queue's tenantId
+     * @return the list of queues in (phase ASC, priority DESC) order.  The phases 
+     *         appear in alphabetic order, the priorities appear in highest to lowest
+     *         priority order.  For example, within each phase grouping, the first  
+     *         queue listed has the highest priority.
+     * @throws JobQueueException operational error
+     */
+    public List<JobQueue> getQueues(String tenantId) 
+     throws JobQueueException
+    {
+        return getQueues(null, tenantId);
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getQueues:                                                             */
+    /* ---------------------------------------------------------------------- */
     /** Get all queues for the current tenant defined for the specified phase.
      * If the phase is null, then queues defined for all phases are returned.
      * 
@@ -288,7 +383,7 @@ public class JobQueueDao {
      * @param tenantId the queue's tenantId
      * @return the list of queues for the specified phase in highest to lowest
      *         priority order.  For example, the first queue listed has the 
-     *         highest priority).  The list will never be null, but can be empty.
+     *         highest priority.  The list will never be null, but can be empty.
      * @throws JobQueueException input or operational error
      */
     public List<JobQueue> getQueues(JobPhaseType phase, String tenantId) 
@@ -319,7 +414,7 @@ public class JobQueueDao {
                          "from job_queues " +
                          "where tenant_id = :tenant_id";
             if (phase != null) sql += " and phase = :phase";
-            sql += " order by phase, priority desc";
+            sql += " order by tenant_id, phase, priority desc";
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
@@ -354,24 +449,6 @@ public class JobQueueDao {
         }
         
         return list;
-    }
-    
-    /* ---------------------------------------------------------------------- */
-    /* getQueues:                                                             */
-    /* ---------------------------------------------------------------------- */
-    /** Get all queues for the current tenant defined for any phase.
-     * 
-     * @param tenantId the queue's tenantId
-     * @return the list of queues in (phase ASC, priority DESC) order.  The phases 
-     *         appear in alphabetic order, the priorities appear in highest to lowest
-     *         priority order.  For example, within each phase grouping, the first  
-     *         queue listed has the highest priority.
-     * @throws JobQueueException operational error
-     */
-    public List<JobQueue> getQueues(String tenantId) 
-     throws JobQueueException
-    {
-        return getQueues(null, tenantId);
     }
     
     /* ---------------------------------------------------------------------- */

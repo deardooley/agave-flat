@@ -20,7 +20,6 @@ import org.iplantc.service.jobs.exceptions.JobProcessingException;
 import org.iplantc.service.jobs.managers.JobRequestProcessor;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.search.JobSearchFilter;
-import org.iplantc.service.notification.util.EntityWithNotificationReferenceSerializer;
 import org.joda.time.DateTime;
 import org.json.JSONStringer;
 import org.json.JSONWriter;
@@ -36,7 +35,6 @@ import org.restlet.resource.Variant;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 /**
@@ -52,14 +50,6 @@ public class JobsResource extends AbstractJobResource {
 
 	private String internalUsername;
 
-//	private List<String> jobAttributes = new ArrayList<String>();
-//
-//	static {
-//		for(Field field : Job.class.getFields()) {
-//			jobAttributes.add(field.getName());
-//		}
-//	}
-//
 	/**
 	 * @param context
 	 * @param request
@@ -118,7 +108,6 @@ public class JobsResource extends AbstractJobResource {
 	
 				for(Job job: jobs)
 				{
-	//				Job job = jobs.get(i);
 					writer.object()
 						.key("id").value(job.getUuid())
 						.key("name").value(job.getName())
