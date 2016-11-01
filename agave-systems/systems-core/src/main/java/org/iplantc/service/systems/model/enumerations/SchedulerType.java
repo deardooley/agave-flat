@@ -107,7 +107,7 @@ public enum SchedulerType
 			case SLURM:
 			case CUSTOM_SLURM:
 //				return "sacct -p -o 'JobIDRaw,State,ExitCode,Start,End,Elapsed,CPUTimeRaw,DerivedExitCode,NCPUS,NNodes' -j ";
-				return "sacct -p -o 'JOBIDRaw,State,ExitCode' -n -j ";
+				return "sacct -p -o 'JOBID,State,ExitCode' -n -j ";
 			default:
 				return "qstat";
 		}
