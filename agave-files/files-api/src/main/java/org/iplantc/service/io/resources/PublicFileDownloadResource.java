@@ -360,7 +360,20 @@ public class PublicFileDownloadResource extends AbstractFileResource {
 			
             // stream the file to them
 			File f = new File(new File(path).getName());
-			String mimetype = new MimetypesFileTypeMap().getContentType(f);
+			MimetypesFileTypeMap mftm = null;
+			InputStream is = null;
+			try {
+				is = this.getClass().getClassLoader().getResourceAsStream("mime.types");
+				mftm = new MimetypesFileTypeMap(is);
+			}
+			catch (Throwable e) {
+				mftm = new MimetypesFileTypeMap();
+			}
+			finally {
+				try { is.close(); } catch (Exception e) {}
+			}
+			
+			String mimetype = mftm.getContentType(f);
 			final String remotePath = path;
 			final long fileSize = remoteFileInfo.getSize();
 			final WriterRepresentation wrep = new WriterRepresentation(MediaType.valueOf(mimetype)) {
@@ -526,8 +539,9 @@ public class PublicFileDownloadResource extends AbstractFileResource {
 			disposition.setType(Disposition.TYPE_INLINE);
 			if (isForceDownload()) { 
 				disposition.setType(Disposition.TYPE_ATTACHMENT);
-				wrep.setDisposition(disposition);
 			}
+			
+			wrep.setDisposition(disposition);
 			
 			return wrep;
 	    } 
