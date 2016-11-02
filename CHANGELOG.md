@@ -1,6 +1,18 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.1.9 - 2016-11-02
+
+### Added
+- nothing
+
+### Changed
+- FILES: Fixed bad mime-type resolution on public file downloads
+
+### Removed
+- nothing
+
+
 ## 2.1.9 - 2016-10-30
 
 ### Added
@@ -18,7 +30,6 @@ All notable changes to this project will be documented in this file.
 - JOBS: Fixed a bug in the job submission process where public apps could have overly aggressive command stripping enforced by agave.
 - JOBS: Updating slum job behavior to ignore empty responses from the `sacct` command.  
 - JOBS: Updating field names used when querying slurm job statuses. Was JobIDRaw. Now JobID.  
-
 
 ### Removed
 - nothing
