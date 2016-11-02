@@ -360,20 +360,7 @@ public class PublicFileDownloadResource extends AbstractFileResource {
 			
             // stream the file to them
 			File f = new File(new File(path).getName());
-			MimetypesFileTypeMap mftm = null;
-			InputStream is = null;
-			try {
-				is = this.getClass().getClassLoader().getResourceAsStream("mime.types");
-				mftm = new MimetypesFileTypeMap(is);
-			}
-			catch (Throwable e) {
-				mftm = new MimetypesFileTypeMap();
-			}
-			finally {
-				try { is.close(); } catch (Exception e) {}
-			}
-			
-			String mimetype = mftm.getContentType(f);
+			String mimetype = resolveMimeTime(f.getName());
 			final String remotePath = path;
 			final long fileSize = remoteFileInfo.getSize();
 			final WriterRepresentation wrep = new WriterRepresentation(MediaType.valueOf(mimetype)) {
