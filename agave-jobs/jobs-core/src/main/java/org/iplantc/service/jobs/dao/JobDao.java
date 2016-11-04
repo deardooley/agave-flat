@@ -363,7 +363,83 @@ public class JobDao
 //			try { HibernateUtil.commitTransaction();} catch (Exception e) {}
 		}
 	}
+
+    /** 
+     * Convenience method that returns a {@link List} of {@link Job}s belonging 
+     * with the given status.
+     * 
+     * @param status a job status
+     * @return the job list
+     * @throws JobException
+     */
+    public static List<Job> getByStatus(JobStatusType status) 
+    throws JobException
+    {
+        // Package parameter and call real method.
+        ArrayList<JobStatusType> list = new ArrayList<>(1);
+        list.add(status);
+        return getByStatus(list);
+    }
     
+    /**
+     * Returns a {@link List} of {@link Job}s belonging with the given statuses.
+     * 
+     * @param statuses the non-empty list of status filters
+     * @return the job list
+     * @throws JobException
+     */
+    @SuppressWarnings("unchecked")
+    public static List<Job> getByStatus(List<JobStatusType> statuses) 
+    throws JobException
+    {
+        // At least one status must be specified.
+        if (statuses == null || statuses.isEmpty())
+        {
+            String msg = "At least one status must be specified for job search.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Create the where clause.
+        String statusClause = " status in (";
+        for (int i = 0; i < statuses.size(); i++)
+        {
+            // Single quote each status and add comma where needed.
+            statusClause += "'" + statuses.get(i).name() + "'";
+            if (i < statuses.size() - 1)
+                statusClause += ", ";
+        }
+        statusClause += ") ";
+        
+        // Make the database call for all visible 
+        // jobs with the required statuses.
+        try
+        {
+            Session session = getSession();
+            session.clear();
+            String sql = "select * from jobs where " + statusClause +
+                         " and visible = :visible";
+            List<Job> jobs = session.createSQLQuery(sql).addEntity(Job.class)
+                    .setBoolean("visible", true)
+                    .list();
+
+            session.flush();
+            
+            return jobs;
+
+        }
+        catch (ObjectNotFoundException e) {
+            return new ArrayList<Job>();
+        }
+        catch (HibernateException ex)
+        {
+            throw new JobException(ex);
+        }
+        finally {
+            try { HibernateUtil.commitTransaction();} catch (Exception e) {}
+        }
+    }
+
 	/**
 	 * Returns a {@link List} of {@link Job}s belonging to the given user with the given status.
 	 * Permissions are observed in this query.

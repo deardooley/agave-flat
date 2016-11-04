@@ -9,11 +9,14 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
+import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobQueueDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
+import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
+import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.PhaseWorker;
 import org.iplantc.service.jobs.phases.PhaseWorkerParms;
 
@@ -40,12 +43,16 @@ public abstract class AbstractPhaseScheduler
     
     // Queuing information.
     public static final String TOPIC_EXCHANGE_NAME = "JobTopicExchange";
-    public static final String TOPIC_QUEUE_NAME = "JobSchedulerTopic";
+    public static final String TOPIC_QUEUE_PREFIX = "JobSchedulerTopic";
     public static final String ALL_TOPIC_BINDING_KEY = "JobScheduler.All.#";
     
     // Suffixes used in naming.
     private static final String THREADGROUP_SUFFIX = "-ThreadGroup";
     private static final String THREAD_SUFFIX = "-Thread";
+    
+    // Number of milliseconds to wait in various polling situations.
+    private static final int POLLING_NORMAL_DELAY  = 10000;
+    private static final int POLLING_FAILURE_DELAY = 15000;
     
     /* ********************************************************************** */
     /*                                Fields                                  */
@@ -98,6 +105,19 @@ public abstract class AbstractPhaseScheduler
         // Create parent thread group.
         _phaseThreadGroup = new ThreadGroup(phaseType.name() + THREADGROUP_SUFFIX);
     }
+    
+    /* ********************************************************************** */
+    /*                            Abstract Methods                            */
+    /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* getPhaseTriggerStatus:                                                 */
+    /* ---------------------------------------------------------------------- */
+    /** Define the status that causes this phase scheduler to begin processing
+     * a job.  The returned status is how the scheduler identifies new work. 
+     * 
+     * @return the trigger status for new work in this phase.
+     */
+    protected abstract JobStatusType getPhaseTriggerStatus();
     
     /* ********************************************************************** */
     /*                             Public Methods                             */
@@ -193,6 +213,14 @@ public abstract class AbstractPhaseScheduler
     protected ThreadGroup getPhaseThreadGroup(){return _phaseThreadGroup;}
     
     /* ---------------------------------------------------------------------- */
+    /* getTopicQueueName:                                                    */
+    /* ---------------------------------------------------------------------- */
+    protected String getTopicQueueName()
+    {
+        return TOPIC_QUEUE_PREFIX + "-" + _phaseType.name();
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* getPhaseBindingKey:                                                    */
     /* ---------------------------------------------------------------------- */
     protected String getPhaseBindingKey()
@@ -253,6 +281,11 @@ public abstract class AbstractPhaseScheduler
             // Set the factory parameters.
             // TODO: generalize w/auth & network info & heartbeat
             _factory.setHost("localhost");
+            
+            // Set automatic recover on.
+            // TODO: Consider adding shutdown, cancel, recovery, etc. listeners.
+            // TODO: Also consider how to handle unroutable messages
+            _factory.setAutomaticRecoveryEnabled(true);
         }
         
         return _factory;
@@ -384,9 +417,9 @@ public abstract class AbstractPhaseScheduler
         durable = true;
         boolean exclusive = false;
         boolean autoDelete = false;
-        try {topicChannel.queueDeclare(TOPIC_QUEUE_NAME, durable, exclusive, autoDelete, null);}
+        try {topicChannel.queueDeclare(getTopicQueueName(), durable, exclusive, autoDelete, null);}
             catch (IOException e) {
-                String msg = "Unable to declare topic queue " + TOPIC_QUEUE_NAME +
+                String msg = "Unable to declare topic queue " + getTopicQueueName() +
                              " on " + getPhaseConnectionName() + "/" + 
                              topicChannel.getChannelNumber() + ": " + e.getMessage();
                 _log.error(msg, e);
@@ -394,9 +427,9 @@ public abstract class AbstractPhaseScheduler
             }
         
         // Bind the topic queue to the topic exchange.
-        try {topicChannel.queueBind(TOPIC_QUEUE_NAME, TOPIC_EXCHANGE_NAME, ALL_TOPIC_BINDING_KEY);}
+        try {topicChannel.queueBind(getTopicQueueName(), TOPIC_EXCHANGE_NAME, ALL_TOPIC_BINDING_KEY);}
             catch (IOException e) {
-                String msg = "Unable to bind topic queue " + TOPIC_QUEUE_NAME +
+                String msg = "Unable to bind topic queue " + getTopicQueueName() +
                          " with binding key " + ALL_TOPIC_BINDING_KEY +
                          " on " + getPhaseConnectionName() + "/" + 
                          topicChannel.getChannelNumber() + ": " + e.getMessage();
@@ -405,9 +438,9 @@ public abstract class AbstractPhaseScheduler
             }
         
         // Bind the topic queue to the topic exchange.
-        try {topicChannel.queueBind(TOPIC_QUEUE_NAME, TOPIC_EXCHANGE_NAME, getPhaseBindingKey());}
+        try {topicChannel.queueBind(getTopicQueueName(), TOPIC_EXCHANGE_NAME, getPhaseBindingKey());}
             catch (IOException e) {
-                String msg = "Unable to bind topic queue " + TOPIC_QUEUE_NAME +
+                String msg = "Unable to bind topic queue " + getTopicQueueName() +
                         " with binding key " + getPhaseBindingKey() +
                          " on " + getPhaseConnectionName() + "/" + 
                          topicChannel.getChannelNumber() + ": " + e.getMessage();
@@ -476,6 +509,10 @@ public abstract class AbstractPhaseScheduler
                                      AMQP.BasicProperties properties, byte[] body) 
             throws IOException 
           {
+              // Tracing.
+              if (_log.isDebugEnabled()) 
+                  dumpMessageInfo(consumerTag, envelope, properties, body);
+              
             // Process messages read from topic.
             String message = null;
             try {message = new String(body);}
@@ -483,7 +520,7 @@ public abstract class AbstractPhaseScheduler
             {
                 String msg = _phaseType.name() + 
                              " scheduler cannot decode data from " + 
-                             TOPIC_QUEUE_NAME + " topic: " + e.getMessage();
+                             getTopicQueueName() + " topic: " + e.getMessage();
                 _log.error(msg, e);
             }
             
@@ -491,8 +528,8 @@ public abstract class AbstractPhaseScheduler
             // TODO: create command processor 
             if (message != null)
                System.out.println(_phaseType.name() + 
-                                  " scheduler received message:\n" +
-                                  message);
+                                  " scheduler received topic message:\n > " +
+                                  message + "\n");
             
             // Don't forget to send the ack!
             boolean multipleAck = false;
@@ -502,15 +539,15 @@ public abstract class AbstractPhaseScheduler
         
         // Tracing.
         if (_log.isDebugEnabled())
-            _log.debug("[*] " + _phaseType.name() + " scheduler waiting on " + 
-                        TOPIC_QUEUE_NAME + " topic.");
+            _log.debug("[*] " + _phaseType.name() + " scheduler consuming " + 
+                    getTopicQueueName() + " topic.");
 
         // We auto-acknowledge topic broadcasts.
         boolean autoack = false;
-        try {_topicChannel.basicConsume(TOPIC_QUEUE_NAME, autoack, consumer);}
+        try {_topicChannel.basicConsume(getTopicQueueName(), autoack, consumer);}
         catch (IOException e) {
             String msg = _phaseType.name() + " scheduler is unable consume messages from " + 
-                         TOPIC_QUEUE_NAME + " topic.";
+                    getTopicQueueName() + " topic.";
             _log.error(msg, e);
             throw new JobSchedulerException(msg, e);
         }
@@ -529,6 +566,11 @@ public abstract class AbstractPhaseScheduler
            new Thread(_phaseThreadGroup, getTopicThreadName()) {
             @Override
             public void run() {
+                
+                // This thread is starting.
+                if (_log.isDebugEnabled())
+                    _log.debug("-> Starting topic thread " + getName() + ".");
+                
                 try {subscribeToJobTopic();}
                 catch (JobSchedulerException e) {
                     String msg = getTopicThreadName() + " aborting! "  +
@@ -537,6 +579,10 @@ public abstract class AbstractPhaseScheduler
                     _log.error(msg);
                     throw new RuntimeException(msg);
                 }
+                
+                // This thread is terminating.
+                if (_log.isDebugEnabled())
+                    _log.debug("<- Exiting topic thread " + getName() + ".");
             }
         };
         
@@ -622,11 +668,35 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* schedule:                                                              */
     /* ---------------------------------------------------------------------- */
+    /** Main loop that polls database for new work for this phase.
+     * 
+     */
     private void schedule()
     {
+        // Tracing.
+        if (_log.isDebugEnabled())
+            _log.debug(_phaseType.name() + " scheduler entering polling loop on thread " + 
+                       Thread.currentThread().getName() + ".");
+        
         // Enter infinite scheduling loop.
         for (;;) {
             // Query the database for all candidate jobs for this phase.
+            List<Job> jobs = null;
+            try {jobs = getJobsReadyForPhase();}
+                catch (Exception e) 
+                {
+                    String msg = _phaseType.name() + " scheduler database polling " +
+                                 "failure. Retrying after a short delay.";
+                    _log.info(msg);
+                    try {Thread.sleep(POLLING_FAILURE_DELAY);}
+                        catch (InterruptedException e1){}
+                    continue;
+                }
+            
+            if (_log.isDebugEnabled())
+               _log.debug(_phaseType.name() + " scheduler retrieved " +
+                          jobs.size() + " jobs in " + 
+                          getPhaseTriggerStatus().name() + " status.");
             
             // Select a tenant to process.
             
@@ -637,7 +707,74 @@ public abstract class AbstractPhaseScheduler
             // Process the job.
             
             // Wait for more jobs to accumulate.
+            try {Thread.sleep(POLLING_NORMAL_DELAY);}
+                catch (InterruptedException e1){}
         }
-            
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* getJobsReadyForPhase:                                                  */
+    /* ---------------------------------------------------------------------- */
+    private List<Job> getJobsReadyForPhase()
+      throws JobSchedulerException
+    {
+        // Query all jobs that are ready for this state.
+        List<Job> jobs = null;
+        try {jobs = JobDao.getByStatus(getPhaseTriggerStatus());}
+            catch (Exception e)
+            {
+                String msg = _phaseType.name() + " scheduler unable to retrieve " +
+                             "jobs with status " + getPhaseTriggerStatus() + ".";
+                _log.error(msg, e);
+                throw new JobSchedulerException(msg, e);
+            }
+        
+        return jobs;
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* dumpMessageInfo:                                                       */
+    /* ---------------------------------------------------------------------- */
+    /** Write debug message and threading information.  This methods should
+     * only be called after checking that debugging is enabled.
+     * 
+     * @param consumerTag the tag associated with the receiving consumer
+     * @param envelope the message envelope
+     * @param properties the message properties
+     * @param body the message
+     */
+    private void dumpMessageInfo(String consumerTag, Envelope envelope, 
+                                 AMQP.BasicProperties properties, byte[] body)
+    {
+        // We assume all input parameters are non-null.
+        Thread curthd = Thread.currentThread();
+        ThreadGroup curgrp = curthd.getThreadGroup();
+        String msg = "\n------------------- Topic Bytes Received: " + body.length + "\n";
+        msg += "Consumer tag: " + consumerTag + "\n";
+        msg += "Thread(name=" +curthd.getName() + ", isDaemon=" + curthd.isDaemon() + ")\n";
+        msg += "ThreadGroup(name=" + curgrp.getName() + ", parentGroup=" + curgrp.getParent().getName() +
+                    ", activeGroupCount=" + curgrp.activeGroupCount() + ", activeThreadCount=" + 
+                    curgrp.activeCount() + ", isDaemon=" + curgrp.isDaemon() + ")\n";
+        
+        // Output is truncated at array size.
+        Thread[] thdArray = new Thread[200];
+        int thdArrayLen = curgrp.enumerate(thdArray, false); // non-recursive 
+        msg += "ThreadArray(length=" + thdArrayLen + ", names=";
+        for (int i = 0; i < thdArrayLen; i++) msg += thdArray[i].getName() + ", ";
+        msg += "\n";
+        
+        // Output is truncated at array size.
+        ThreadGroup[] grpArray = new ThreadGroup[200];
+        int grpArrayLen = curgrp.enumerate(grpArray, false); // non-recursive 
+        msg += "ThreadGroupArray(length=" + grpArrayLen + ", names=";
+        for (int i = 0; i < grpArrayLen; i++) msg += grpArray[i].getName() + ", ";
+        msg += "\n";
+        
+        msg += envelope.toString() + "\n"; 
+        StringBuilder buf = new StringBuilder(512);
+        properties.appendPropertyDebugStringTo(buf);
+        msg += "Properties" + buf.toString() + "\n";
+        msg += "-------------------------------------------------\n";
+        _log.debug(msg);
     }
 }

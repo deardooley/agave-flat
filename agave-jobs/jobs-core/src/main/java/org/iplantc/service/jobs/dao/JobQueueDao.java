@@ -5,6 +5,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -38,6 +40,10 @@ public class JobQueueDao {
     /* ********************************************************************** */
     // Tracing.
     private static final Logger _log = Logger.getLogger(JobQueueDao.class);
+    
+    // From the amqp-0-9-1 reference:  The queue name can be empty, or a sequence of 
+    // these characters: letters, digits, hyphen, underscore, period, or colon.
+    private static Pattern _queueNamePattern = Pattern.compile("(\\w|\\.|-|_|:)+");
     
     /* ********************************************************************** */
     /*                                 Enums                                  */
@@ -94,6 +100,22 @@ public class JobQueueDao {
         }
         if (jobQueue.getPhase() == null) {
             String msg = "No phase specified in job queue definition.";
+            _log.error(msg);
+            throw new JobQueueException(msg);
+        }
+        
+        // Check queue name for invalid length.
+        if (jobQueue.getName().length() > 255) {
+            String msg = "The the maximum queue name length of 255 was exceeded: " + jobQueue.getName();
+            _log.error(msg);
+            throw new JobQueueException(msg);
+        }
+            
+        // Check queue name for invalid characters.
+        Matcher m = _queueNamePattern.matcher(jobQueue.getName());
+        if (!m.matches()) {
+            String msg = "Queue name can only contain letters, digits, hyphen, underscore, period, or colon: " +
+                         jobQueue.getName();
             _log.error(msg);
             throw new JobQueueException(msg);
         }

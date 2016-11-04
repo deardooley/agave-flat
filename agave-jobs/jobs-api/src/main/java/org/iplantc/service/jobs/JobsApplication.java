@@ -3,10 +3,13 @@
  */
 package org.iplantc.service.jobs;
 
+import org.apache.log4j.Logger;
 import org.iplantc.service.common.persistence.JndiSetup;
 import org.iplantc.service.common.restlet.AgaveApplication;
-import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.phases.schedulers.ArchivingScheduler;
+import org.iplantc.service.jobs.phases.schedulers.MonitoringScheduler;
 import org.iplantc.service.jobs.phases.schedulers.StagingScheduler;
+import org.iplantc.service.jobs.phases.schedulers.SubmittingScheduler;
 import org.iplantc.service.jobs.resources.JobDocumentationResource;
 import org.iplantc.service.jobs.resources.JobHistoryResource;
 import org.iplantc.service.jobs.resources.JobListAttributeResource;
@@ -28,6 +31,9 @@ import org.restlet.service.TaskService;
  */
 public class JobsApplication extends AgaveApplication 
 {
+    // Tracing.
+    private static final Logger _log = Logger.getLogger(JobsApplication.class);
+    
 	@Override
 	protected void mapServiceEndpoints(Router router)
 	{
@@ -116,26 +122,38 @@ System.out.println("******************************* In JobsApplication mapServic
         if (isStopped()) {
             super.start();
             
+            // Use the restlet taskservice to spawn the job schedulers.
             TaskService taskService = getTaskService();
-            taskService.execute(new Runnable() {
-
-                @Override
-                public void run() {
-                    System.out.println("********************* I'm executed by taskService!");
-                    
-                }
-            });
             
-            // Spawn the staging scheduler.
-            StagingScheduler sched = null;
-            try {sched = new StagingScheduler();}
-            catch (JobException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                return;
+            // Spawn each scheduler.
+            try {taskService.execute(new StagingScheduler());}
+                catch (Exception e)
+                {
+                    String msg = "Unable to start StagingScheduler.";
+                    _log.error(msg, e);
+                    throw e;
+                }
+            try {taskService.execute(new SubmittingScheduler());}
+            catch (Exception e)
+            {
+                String msg = "Unable to start SubmittingScheduler.";
+                _log.error(msg, e);
+                throw e;
             }
-            taskService.execute(sched);
-
+            try {taskService.execute(new MonitoringScheduler());}
+            catch (Exception e)
+            {
+                String msg = "Unable to start MonitoringScheduler.";
+                _log.error(msg, e);
+                throw e;
+            }
+            try {taskService.execute(new ArchivingScheduler());}
+            catch (Exception e)
+            {
+                String msg = "Unable to start ArchivingScheduler.";
+                _log.error(msg, e);
+                throw e;
+            }
         }
     }
 

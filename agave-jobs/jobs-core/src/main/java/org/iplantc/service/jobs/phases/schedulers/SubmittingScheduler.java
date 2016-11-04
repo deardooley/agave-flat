@@ -5,18 +5,18 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 
-/** Concrete job phase scheduler
+/** Concrete job phase scheduler.
  * 
  * @author rcardone
  */
-public final class StagingScheduler 
+public final class SubmittingScheduler 
  extends AbstractPhaseScheduler
 {
     /* ********************************************************************** */
     /*                               Constants                                */
     /* ********************************************************************** */
     // Tracing.
-    private static final Logger _log = Logger.getLogger(StagingScheduler.class);
+    private static final Logger _log = Logger.getLogger(SubmittingScheduler.class);
 
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -24,9 +24,9 @@ public final class StagingScheduler
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
-    public StagingScheduler() throws JobException
+    public SubmittingScheduler() throws JobException
     {
-        super(JobPhaseType.STAGING);
+        super(JobPhaseType.SUBMITTING);
     }
 
     /* ********************************************************************** */
@@ -36,6 +36,6 @@ public final class StagingScheduler
     /* getPhaseTriggerStatus:                                                 */
     /* ---------------------------------------------------------------------- */
     @Override
-    protected JobStatusType getPhaseTriggerStatus(){return JobStatusType.PENDING;}
+    protected JobStatusType getPhaseTriggerStatus(){return JobStatusType.SUBMITTING;}
 
 }

@@ -9,14 +9,14 @@ import org.iplantc.service.jobs.model.enumerations.JobStatusType;
  * 
  * @author rcardone
  */
-public final class StagingScheduler 
+public final class MonitoringScheduler 
  extends AbstractPhaseScheduler
 {
     /* ********************************************************************** */
     /*                               Constants                                */
     /* ********************************************************************** */
     // Tracing.
-    private static final Logger _log = Logger.getLogger(StagingScheduler.class);
+    private static final Logger _log = Logger.getLogger(MonitoringScheduler.class);
 
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -24,9 +24,9 @@ public final class StagingScheduler
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
-    public StagingScheduler() throws JobException
+    public MonitoringScheduler() throws JobException
     {
-        super(JobPhaseType.STAGING);
+        super(JobPhaseType.MONITORING);
     }
 
     /* ********************************************************************** */
@@ -36,6 +36,6 @@ public final class StagingScheduler
     /* getPhaseTriggerStatus:                                                 */
     /* ---------------------------------------------------------------------- */
     @Override
-    protected JobStatusType getPhaseTriggerStatus(){return JobStatusType.PENDING;}
+    protected JobStatusType getPhaseTriggerStatus(){return JobStatusType.RUNNING;}
 
 }

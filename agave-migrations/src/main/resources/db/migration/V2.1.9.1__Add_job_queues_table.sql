@@ -23,6 +23,10 @@
 CREATE UNIQUE INDEX `tenants_tenant_id`
 ON `tenants` (`tenant_id`);
 
+# Create a non-unique index on the status field of a job
+# to avoid full table scans on scheduler queuries.
+CREATE INDEX `jobs_status` ON `jobs` (`status`);
+
 # All queue names begin with phase.tenant_id and must be unique
 # The phases are listed in alphabetic order so that enum sorting
 # matches alphabetic sorting.
