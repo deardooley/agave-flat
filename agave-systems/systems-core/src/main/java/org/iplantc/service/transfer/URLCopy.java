@@ -177,11 +177,14 @@ public class URLCopy
 					TransferTaskDao.persist(transferTask);
 				}
 				
+				// if this is a server-side transfer
 				if (sourceClient.equals(destClient))
                 {   
 				    RemoteTransferListener listener = null;
 	                listener = new RemoteTransferListener(transferTask);
 	                
+	                // we can potentially make a server-side copy here. attempt that first 
+	                // before making an unnecessary round-trip
                     sourceClient.copy(srcPath + "/", destPath, listener);
                     
                     // everything was copied over server side, so delete whatever was in the 

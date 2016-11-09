@@ -1381,6 +1381,7 @@ public class Software {
 			.key("isPublic").value(isPubliclyAvailable())
 			.key("helpURI").value(helpURI)
 			.key("label").value(label)
+			.key("owner").value(owner)
 			.key("shortDescription").value(shortDescription)
 			.key("longDescription").value(longDescription)
 			.key("tags").array();
