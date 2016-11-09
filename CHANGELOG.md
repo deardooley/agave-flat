@@ -1,6 +1,19 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.1.9 - 2016-11-08
+
+### Added
+- nothing
+
+### Changed
+- FILES: AH-147 Fixed a bug copying files with readonly permissions to the same directory.
+- FILES: AD-934 Fixed a bug rendering the `_links.self.href` value returned on file indexing results.
+
+### Removed
+- nothing
+
+
 ## 2.1.9 - 2016-11-02
 
 ### Added
