@@ -325,14 +325,13 @@ public class FileIndexingResource extends AbstractFileResource {
 		            		} catch(Exception e) {}
 	
 			              	String childFileName = FilenameUtils.getName(childFileInfo.getName());
-			                String childRelativePath = absPath+ fileName;
-	
+			                
 		                	if (child == null) {
 		              			PermissionManager childPm = new PermissionManager(remoteSystem, remoteDataClient, null, username);
 		
 			              		child = new LogicalFile();
 			              		child.setNativeFormat(remoteFileInfo.isFile() ? LogicalFile.RAW : LogicalFile.DIRECTORY);
-			              		child.setPath(logicalFile.getPath() + "/" + childFileName);
+			              		child.setPath(absPath + childFileName);
 		                		child.setName(childFileName);
 		                		child.setSystem(remoteSystem);
 		                		child.setStatus(StagingTaskStatus.STAGING_COMPLETED);
@@ -383,7 +382,7 @@ public class FileIndexingResource extends AbstractFileResource {
 			              			.key("system").value(remoteSystem.getSystemId())
 									.key("_links").object()
 			                        	.key("self").object()
-			                        		.key("href").value(getPublicLink(remoteSystem, childRelativePath))
+			                        		.key("href").value(child.getPublicLink())
 			                        	.endObject()
 			                        	.key("system").object()
 			                        		.key("href").value(remoteSystem.getPublicLink())
