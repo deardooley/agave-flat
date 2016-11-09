@@ -1,10 +1,13 @@
 package org.iplantc.service.jobs.phases.schedulers;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -12,14 +15,23 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobQueueDao;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobQueueFilterException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.PhaseWorker;
 import org.iplantc.service.jobs.phases.PhaseWorkerParms;
+import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
+import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
+import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
+import org.iplantc.service.jobs.phases.workers.StagingWorker;
+import org.iplantc.service.jobs.phases.workers.SubmittingWorker;
+import org.iplantc.service.jobs.queue.SelectorFilter;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -30,6 +42,50 @@ import com.rabbitmq.client.Envelope;
 
 /** Main job scheduler implementation class.
  * 
+ * Asynchronous Interrupts
+ * -----------------------
+ * TODO: The design described here still needs to be implemented.
+ * 
+ * Jobs need to be interrupted during any processing phase.  When worker threads
+ * are blocked on certain IO calls or wait(), a signal can be sent that wakes up 
+ * the thread.  When a thread is active, however, a cooperative approach is needed
+ * in which the thread checks some condition variable to determine if a signal has 
+ * been sent.  Below is an outline of the scheduler's cooperative interrupt 
+ * mechanism.
+ * 
+ * The main components of the interrupt mechanism are:
+ * 
+ *  1. Each scheduler's topic and scheduler threads
+ *  2. Worker threads
+ *  3. The jobs table
+ *  4. Shared condition variables
+ *  
+ * Interrupts are posted to scheduler topic using the phase-specific or "all" routing
+ * key.  The topic thread(s) receive the interrupt and set the appropriate condition
+ * variable.  These variables are usually implemented in this base class so they can 
+ * be accessed from all concrete schedulers.  
+ * 
+ * Depending on the interrupt the topic thread may also update a job's status in the 
+ * database.  This database update is performed according to a state machine and forces
+ * all subsequent attempts to update the job's status to conform to the same state 
+ * machine.  
+ * 
+ * Worker threads are expected to frequently check the condition variables pertinent
+ * to their phase and take action if necessary.  Checking a condition variable 
+ * should be a fast operation that does not include a database or network call.
+ * For example, workers could check a ConcurrentHashMap in this base scheduler class 
+ * to detect if their job has been stopped.  If so, the worker would discontinue 
+ * processing the job and perform any job-related clean up, including removing the 
+ * job entry from the ConcurrentHashMap.
+ * 
+ * When state changes are delivered first through the database and then via the
+ * topic thread, there's a chance that the job completed on its own so that no
+ * worker is responsible for it any longer.  When something like a ConcurrentHashMap
+ * is used, the result can be orphaned entries.  The address leaks such as that,
+ * the scheduler thread can periodically clean up any orphaned entries.  For 
+ * example, once a day when the scheduler thread wakes up it can run an orphan
+ * clean up routine.   
+ *  
  * @author rcardone
  */
 public abstract class AbstractPhaseScheduler 
@@ -73,10 +129,18 @@ public abstract class AbstractPhaseScheduler
     // Monotonically increasing sequence number generator used as part of thread names.
     private static final AtomicInteger _threadSeqno = new AtomicInteger(0);
     
+    // The single mapping of stopped job uuids to stop messages with initial 
+    // capacity specified.  The uuids are jobs that need to be stopped;
+    // the message is intending to be any string appropriate for logging.
+    // TODO: This field is part of the not-yet-implemented interrupt mechanism.
+    private static final ConcurrentHashMap<String,String> _stoppedJobs = new ConcurrentHashMap<>(23);
+    
     // This phase's queuing artifacts.
     private ConnectionFactory    _factory;
-    private Connection           _connection;
+    private Connection           _inConnection;
+    private Connection           _outConnection;
     private Channel              _topicChannel;
+    private Channel              _schedulerChannel;
     
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -154,6 +218,9 @@ public abstract class AbstractPhaseScheduler
             // Subscribe to job topic and continuously monitor it.
             startTopicThread();
             
+            // Initialize scheduler communication.
+            initScheduler();
+            
             // Begin scheduling read loop.
             schedule();
         }
@@ -183,14 +250,14 @@ public abstract class AbstractPhaseScheduler
         e.printStackTrace(); // stderr
         
         // Restart worker threads only.
-        if (!(t instanceof PhaseWorker)) return;
+        if (!(t instanceof AbstractPhaseWorker)) return;
         
         // Get the next available recovery thread number.
-        PhaseWorker oldWorker = (PhaseWorker) t;
+        AbstractPhaseWorker oldWorker = (AbstractPhaseWorker) t;
         int newThreadNum = _threadSeqno.incrementAndGet();
         
         // Create the new thread object.
-        PhaseWorker newWorker = createWorkerThread(oldWorker.getThreadGroup(), 
+        AbstractPhaseWorker newWorker = createWorkerThread(oldWorker.getThreadGroup(), 
                                                    oldWorker.getTenantId(), 
                                                    oldWorker.getQueueName(), 
                                                    newThreadNum);
@@ -229,11 +296,19 @@ public abstract class AbstractPhaseScheduler
     }
     
     /* ---------------------------------------------------------------------- */
-    /* getPhaseConnectionName:                                                */
+    /* getPhaseInConnectionName:                                              */
     /* ---------------------------------------------------------------------- */
-    protected String getPhaseConnectionName()
+    protected String getPhaseInConnectionName()
     {
-        return _phaseType.name() + "-Connection";
+        return _phaseType.name() + "-InConnection";
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getPhaseOutConnectionName:                                             */
+    /* ---------------------------------------------------------------------- */
+    protected String getPhaseOutConnectionName()
+    {
+        return _phaseType.name() + "-OutConnection";
     }
     
     /* ---------------------------------------------------------------------- */
@@ -261,6 +336,40 @@ public abstract class AbstractPhaseScheduler
     {
         // Topic thread processing spans all tenants and queues.
         return _phaseType.name() + "_topic" + THREAD_SUFFIX;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getDefaultQueue:                                                       */
+    /* ---------------------------------------------------------------------- */
+    protected String getDefaultQueue(String tenantId)
+    {
+        return _phaseType.name() + "." + tenantId;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* toQueuableJSON:                                                        */
+    /* ---------------------------------------------------------------------- */
+    /** Create the json representation of a job on a worker queue.
+     * 
+     * @param job the job to be queued
+     * @return json reference to the job
+     * @throws IOException 
+     * @throws JsonMappingException 
+     * @throws JsonGenerationException 
+     */
+    protected String toQueuableJSON(Job job) 
+      throws IOException
+    {
+        // Initialize the queueable object.
+        QueueableJob qjob = new QueueableJob();
+        qjob.name = job.getName();
+        qjob.uuid = job.getUuid();
+        
+        // Write the object as a JSON string.
+        ObjectMapper m = new ObjectMapper();
+        StringWriter writer = new StringWriter(150);
+        m.writeValue(writer, qjob);
+        return writer.toString();
     }
     
     /* ---------------------------------------------------------------------- */
@@ -292,60 +401,60 @@ public abstract class AbstractPhaseScheduler
     }
     
     /* ---------------------------------------------------------------------- */
-    /* getConnection:                                                         */
+    /* getInConnection:                                                       */
     /* ---------------------------------------------------------------------- */
-    /** Return a connection to the queuing subsystem, creating the connection
-     * if necessary.
+    /** Return a inbound connection to the queuing subsystem, creating the 
+     * connection if necessary.
      * 
      * @return this scheduler's connection
      * @throws JobSchedulerException on error.
      */
-    protected Connection getConnection()
+    protected Connection getInConnection()
      throws JobSchedulerException
     {
         // Create the connection if necessary.
-        if (_connection == null)
+        if (_inConnection == null)
         {
-            try {_connection = getConnectionFactory().newConnection(getPhaseConnectionName());}
+            try {_inConnection = getConnectionFactory().newConnection(getPhaseInConnectionName());}
             catch (IOException e) {
-                String msg = "Unable to create new connection to queuing subsystem: " +
+                String msg = "Unable to create new inbound connection to queuing subsystem: " +
                              e.getMessage();
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
             } catch (TimeoutException e) {
-                String msg = "Timeout while creating new connection to queuing subsystem: " + 
+                String msg = "Timeout while creating new inbound connection to queuing subsystem: " + 
                              e.getMessage();
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
             }
         }
         
-        return _connection;
+        return _inConnection;
     }
     
     /* ---------------------------------------------------------------------- */
-    /* getNewChannel:                                                         */
+    /* getNewInChannel:                                                       */
     /* ---------------------------------------------------------------------- */
-    /** Return a new channel on the existing queuing system connection.
+    /** Return a new inbound channel on the existing queuing system connection.
      * 
      * @return the new channel
      * @throws JobSchedulerException on error
      */
-    protected Channel getNewChannel()
+    protected Channel getNewInChannel()
       throws JobSchedulerException
     {
         // Create a new channel in this phase's connection.
         Channel channel = null;
-        try {channel = getConnection().createChannel();} 
+        try {channel = getInConnection().createChannel();} 
          catch (IOException e) {
-             String msg = "Unable to create channel on " + getPhaseConnectionName() + 
+             String msg = "Unable to create channel on " + getPhaseInConnectionName() + 
                           ": " + e.getMessage();
              _log.error(msg, e);
              throw new JobSchedulerException(msg, e);
          }
          if (_log.isInfoEnabled()) 
              _log.info("Created channel number " + channel.getChannelNumber() + 
-                       " on " + getPhaseConnectionName() + ".");
+                       " on " + getPhaseInConnectionName() + ".");
          
          return channel;
     }
@@ -369,14 +478,14 @@ public abstract class AbstractPhaseScheduler
         if (_topicChannel == null)
         {
             // Create the channel.
-            _topicChannel = getNewChannel();
+            _topicChannel = getNewInChannel();
             
             // Set prefetch.
             int prefetchCount = 1;
             try {_topicChannel.basicQos(prefetchCount);}
                 catch (IOException e) {
                     String msg = "Unable to set prefech on channel on " + 
-                                 getPhaseConnectionName() + 
+                                 getPhaseInConnectionName() + 
                                  ": " + e.getMessage();
                     _log.error(msg, e);
                     throw new JobSchedulerException(msg, e);
@@ -384,6 +493,65 @@ public abstract class AbstractPhaseScheduler
         }
         
         return _topicChannel;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getOutConnection:                                                      */
+    /* ---------------------------------------------------------------------- */
+    /** Return a outbound connection to the queuing subsystem, creating the 
+     * connection if necessary.
+     * 
+     * @return this scheduler's connection
+     * @throws JobSchedulerException on error.
+     */
+    protected Connection getOutConnection()
+     throws JobSchedulerException
+    {
+        // Create the connection if necessary.
+        if (_outConnection == null)
+        {
+            try {_outConnection = getConnectionFactory().newConnection(getPhaseOutConnectionName());}
+            catch (IOException e) {
+                String msg = "Unable to create new outbound connection to queuing subsystem: " +
+                             e.getMessage();
+                _log.error(msg, e);
+                throw new JobSchedulerException(msg, e);
+            } catch (TimeoutException e) {
+                String msg = "Timeout while creating new outbound connection to queuing subsystem: " + 
+                             e.getMessage();
+                _log.error(msg, e);
+                throw new JobSchedulerException(msg, e);
+            }
+        }
+        
+        return _outConnection;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getNewOutChannel:                                                      */
+    /* ---------------------------------------------------------------------- */
+    /** Return a new outbound channel on the existing queuing system connection.
+     * 
+     * @return the new channel
+     * @throws JobSchedulerException on error
+     */
+    protected Channel getNewOutChannel()
+      throws JobSchedulerException
+    {
+        // Create a new channel in this phase's connection.
+        Channel channel = null;
+        try {channel = getOutConnection().createChannel();} 
+         catch (IOException e) {
+             String msg = "Unable to create channel on " + getPhaseOutConnectionName() + 
+                          ": " + e.getMessage();
+             _log.error(msg, e);
+             throw new JobSchedulerException(msg, e);
+         }
+         if (_log.isInfoEnabled()) 
+             _log.info("Created channel number " + channel.getChannelNumber() + 
+                       " on " + getPhaseOutConnectionName() + ".");
+         
+         return channel;
     }
     
     /* ********************************************************************** */
@@ -407,7 +575,7 @@ public abstract class AbstractPhaseScheduler
         boolean durable = true;
         try {topicChannel.exchangeDeclare(TOPIC_EXCHANGE_NAME, "topic", durable);}
             catch (IOException e) {
-                String msg = "Unable to create exchange on " + getPhaseConnectionName() + 
+                String msg = "Unable to create exchange on " + getPhaseInConnectionName() + 
                         "/" + topicChannel.getChannelNumber() + ": " + e.getMessage();
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
@@ -420,7 +588,7 @@ public abstract class AbstractPhaseScheduler
         try {topicChannel.queueDeclare(getTopicQueueName(), durable, exclusive, autoDelete, null);}
             catch (IOException e) {
                 String msg = "Unable to declare topic queue " + getTopicQueueName() +
-                             " on " + getPhaseConnectionName() + "/" + 
+                             " on " + getPhaseInConnectionName() + "/" + 
                              topicChannel.getChannelNumber() + ": " + e.getMessage();
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
@@ -431,7 +599,7 @@ public abstract class AbstractPhaseScheduler
             catch (IOException e) {
                 String msg = "Unable to bind topic queue " + getTopicQueueName() +
                          " with binding key " + ALL_TOPIC_BINDING_KEY +
-                         " on " + getPhaseConnectionName() + "/" + 
+                         " on " + getPhaseInConnectionName() + "/" + 
                          topicChannel.getChannelNumber() + ": " + e.getMessage();
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
@@ -442,7 +610,7 @@ public abstract class AbstractPhaseScheduler
             catch (IOException e) {
                 String msg = "Unable to bind topic queue " + getTopicQueueName() +
                         " with binding key " + getPhaseBindingKey() +
-                         " on " + getPhaseConnectionName() + "/" + 
+                         " on " + getPhaseInConnectionName() + "/" + 
                          topicChannel.getChannelNumber() + ": " + e.getMessage();
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
@@ -619,7 +787,7 @@ public abstract class AbstractPhaseScheduler
                 for (int i = 0; i < jobQueue.getNumWorkers(); i++)
                 {
                     // Create a new worker daemon thread in the queue-specific group.
-                    PhaseWorker worker = 
+                    AbstractPhaseWorker worker = 
                       createWorkerThread(queueThreadGroup, 
                                          tenantId, 
                                          jobQueue.getName(), 
@@ -645,24 +813,51 @@ public abstract class AbstractPhaseScheduler
      * @param threadNum the thread sequence number
      * @return
      */
-    private PhaseWorker createWorkerThread(ThreadGroup threadGroup, String tenantId,
+    private AbstractPhaseWorker createWorkerThread(ThreadGroup threadGroup, String tenantId,
                                            String queueName, int threadNum)
     {
         // Initialize parameter passing object.
         PhaseWorkerParms parms = new PhaseWorkerParms();
         parms.threadGroup = threadGroup;
         parms.threadName = getWorkerThreadName(tenantId, queueName, threadNum);
-        parms.connection = _connection;
+        parms.connection = _inConnection;
         parms.scheduler = this;
         parms.tenantId = tenantId;
         parms.queueName = queueName;
         parms.threadNum = threadNum;
         
-        // Create worker and set attributes.
-        PhaseWorker worker = new PhaseWorker(parms);
+        // Create a worker any phase type.
+        AbstractPhaseWorker worker = null;
+        if (_phaseType == JobPhaseType.STAGING) worker = new StagingWorker(parms);
+        else if (_phaseType == JobPhaseType.SUBMITTING) worker = new SubmittingWorker(parms);
+        else if (_phaseType == JobPhaseType.MONITORING) worker = new MonitoringWorker(parms);
+        else if (_phaseType == JobPhaseType.ARCHIVING) worker = new ArchivingWorker(parms);
+        else throw new RuntimeException("Unknown JobPhaseType: " + _phaseType);
+        
+        // Set attributes.
         worker.setDaemon(true);
         worker.setUncaughtExceptionHandler(this);
         return worker;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* initScheduler:                                                         */
+    /* ---------------------------------------------------------------------- */
+    private void initScheduler() throws JobSchedulerException
+    {
+        // Get the channel the schedule thread uses to write to queues.
+        _schedulerChannel = getNewOutChannel();
+        
+        // Create the exchange to publish to.
+        boolean durable = true;
+        try {_schedulerChannel.exchangeDeclare(AbstractPhaseWorker.WORKER_EXCHANGE_NAME, 
+                                               "direct", durable);}
+        catch (IOException e) {
+            String msg = "Unable to create exchange on " + getPhaseOutConnectionName() + 
+                    "/" + _schedulerChannel.getChannelNumber() + ": " + e.getMessage();
+            _log.error(msg, e);
+            throw new JobSchedulerException(msg, e);
+        }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -704,12 +899,42 @@ public abstract class AbstractPhaseScheduler
             
             // Select a job to process.
             
-            // Process the job.
+            // Process the selected job.
+            // TODO: Replace scaffolding code with real job selection code.
+            if (!jobs.isEmpty()) {
+                Job job = jobs.get(0); // temp code
+                
+                // Select a target queue name for this job.
+                // The name is used as the routing key to a 
+                // direct exchange.
+                String routingKey = selectQueueName(job);
+                try {
+                    // Write the job to the selected worker queue.
+                    _schedulerChannel.basicPublish(AbstractPhaseWorker.WORKER_EXCHANGE_NAME, 
+                            routingKey, null, toQueuableJSON(job).getBytes("UTF-8"));
+                    
+                    // Tracing.
+                    if (_log.isDebugEnabled()) {
+                        String msg = _phaseType.name() + " scheduler failed to publish " +
+                                job.getName() + " (" + job.getUuid() + ") to queue " + 
+                                routingKey + ".";
+                        _log.debug(msg);
+                    }
+                }
+                catch (IOException e) {
+                    // TODO: Probably need better failure remedy when publish fails.
+                    String msg = _phaseType.name() + " scheduler failed to publish " +
+                            job.getName() + " (" + job.getUuid() + ") to queue " + 
+                            routingKey + ".  Retrying later.";
+                    _log.info(msg, e);
+                }
+            }
             
             // Wait for more jobs to accumulate.
+            // TODO: handle interrupts
             try {Thread.sleep(POLLING_NORMAL_DELAY);}
                 catch (InterruptedException e1){}
-        }
+        } // End polling loop.
     }
 
     /* ---------------------------------------------------------------------- */
@@ -718,8 +943,16 @@ public abstract class AbstractPhaseScheduler
     private List<Job> getJobsReadyForPhase()
       throws JobSchedulerException
     {
-        // Query all jobs that are ready for this state.
+        // Initialize result list.
         List<Job> jobs = null;
+        
+        // Is new work being accepted?
+        if (org.iplantc.service.common.Settings.isDrainingQueuesEnabled()) {
+            _log.debug("Queue draining is enabled. Skipping " + _phaseType + " tasks." );
+            return jobs;
+        }
+        
+        // Query all jobs that are ready for this state.
         try {jobs = JobDao.getByStatus(getPhaseTriggerStatus());}
             catch (Exception e)
             {
@@ -732,6 +965,73 @@ public abstract class AbstractPhaseScheduler
         return jobs;
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* selectQueueName:                                                       */
+    /* ---------------------------------------------------------------------- */
+    /** Given a job, select the highest priority queue on which to place the 
+     * job.  Queue selection is based on the value of the queue's filter when
+     * values from the job's runtime context are used.
+     * 
+     * Each phase has a default queue for each tenant named <phase>.<tenantId>.
+     * If no queue filter evaluates to true, the default queue is chosen.
+     * 
+     * @param job the job to be executed.
+     * @return
+     */
+    private String selectQueueName(Job job)
+    {
+        // Populate substitution values.
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("phase", _phaseType);
+        properties.put("tenant_id", job.getTenantId());
+        
+        // Evaluate each of this tenant's queues in priority order.
+        String selectedQueueName = null;
+        List<JobQueue> queues = _tenantQueues.get(job.getTenantId());
+        for (JobQueue queue : queues) {
+            if (runFilter(queue, properties)) {
+                selectedQueueName = queue.getName();
+                break;
+            }
+        }
+          
+        // Make sure we select some queue.
+        if (selectedQueueName == null) {
+            _log.warn("No " + _phaseType.name() + 
+                      " queue filter evaluated to true for tenant " + 
+                      job.getTenantId() + ".");
+            
+            // Select the default queue.
+            selectedQueueName = getDefaultQueue(job.getTenantId());
+        }
+        
+        return selectedQueueName;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* runFilter:                                                             */
+    /* ---------------------------------------------------------------------- */
+    /** Given a job queue and a map of key/value pair, substitute the values
+     * in for their keys in the queue's filter and evaluate the filter.  True
+     * is only returned if the filter's boolean expression evaluates to true.
+     * Evaluation exceptions cause false to be returned.
+     * 
+     * @param jobQueue the queue whose filter is being evaluated
+     * @param properties the substitution values used to evaluate the filter
+     * @return true if the filter evaluates to true, false otherwise
+     */
+    private boolean runFilter(JobQueue jobQueue, Map<String, Object> properties)
+    {
+        // Evaluate the filter field using the properties field values.
+        boolean matched = false;
+        try {matched = SelectorFilter.match(jobQueue.getFilter(), properties);}
+          catch (JobQueueFilterException e) {
+            String msg = "Error processing filter for " + jobQueue.getName() + "."; 
+            _log.error(msg, e);
+        }
+        return matched;
+    }
+    
     /* ---------------------------------------------------------------------- */
     /* dumpMessageInfo:                                                       */
     /* ---------------------------------------------------------------------- */
@@ -776,5 +1076,20 @@ public abstract class AbstractPhaseScheduler
         msg += "Properties" + buf.toString() + "\n";
         msg += "-------------------------------------------------\n";
         _log.debug(msg);
+    }
+    
+    /* ********************************************************************** */
+    /*                           QueueableJob Class                           */
+    /* ********************************************************************** */
+    /** Job information written to queues by the scheduler thread and read
+     * from queues by worker threads.
+     */
+    public static final class QueueableJob
+    {
+        // The test message field can be used for connectivity testing;
+        // when it is not null, it takes precedence over the other fields.
+        public String name;
+        public String uuid;
+        public String testMessage;
     }
 }
