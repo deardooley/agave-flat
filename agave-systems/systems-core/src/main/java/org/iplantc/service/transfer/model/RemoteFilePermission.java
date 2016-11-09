@@ -407,7 +407,7 @@ public class RemoteFilePermission implements Comparable<RemoteFilePermission>, L
 		{
 			RemoteFilePermission mergedPem = source.clone();
 			mergedPem.setLogicalFileId(source.getLogicalFileId());
-			mergedPem.getPermission().add(dest.getPermission());
+			mergedPem.setPermission(mergedPem.getPermission().add(dest.getPermission()));
 			mergedPem.setRecursive(mergedPem.isRecursive() || dest.isRecursive());
 			return mergedPem;
 		}

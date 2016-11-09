@@ -297,7 +297,7 @@ public class TransferTaskPermission implements Comparable<TransferTaskPermission
 		{
 			TransferTaskPermission mergedPem = source.clone();
 			mergedPem.setTransferTaskId(source.getTransferTaskId());
-			mergedPem.getPermission().add(dest.getPermission());
+			mergedPem.setPermission(mergedPem.getPermission().add(dest.getPermission()));
 			mergedPem.setRecursive(mergedPem.isRecursive() || dest.isRecursive());
 			return mergedPem;
 		}
