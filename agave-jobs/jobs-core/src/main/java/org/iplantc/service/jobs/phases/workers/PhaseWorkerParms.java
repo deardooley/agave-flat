@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.phases;
+package org.iplantc.service.jobs.phases.workers;
 
 import org.iplantc.service.jobs.phases.schedulers.AbstractPhaseScheduler;
 

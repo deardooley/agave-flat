@@ -12,9 +12,7 @@ import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.PhaseWorkerParms;
 import org.iplantc.service.jobs.queue.actions.SubmissionAction;
-import org.quartz.JobExecutionException;
 
 /**
  * @author rcardone
@@ -92,7 +90,7 @@ public final class SubmittingWorker
     /* ---------------------------------------------------------------------- */
     /* submit:                                                                */
     /* ---------------------------------------------------------------------- */
-    private void submit() throws JobExecutionException
+    private void submit() throws JobWorkerException
     {
         try {
             // mark the job as submitting so no other process claims it
@@ -132,27 +130,27 @@ public final class SubmittingWorker
             } catch (UnresolvableObjectException | JobException e1) {
                 _log.error("Failed to roll back job status when archive task was interrupted.", e1);
             }
-            throw new JobExecutionException("Submission task for job " + _job.getUuid() + 
+            throw new JobWorkerException("Submission task for job " + _job.getUuid() + 
                                             " aborted due to interrupt by worker process.", e);
         }
         catch (StaleObjectStateException | UnresolvableObjectException e) {
             String msg = "Job " + _job.getUuid() + " already being processed by another thread. Ignoring.";
             _log.error(msg, e);
-            throw new JobExecutionException(msg, e);
+            throw new JobWorkerException(msg, e);
         }
         catch (Throwable e)
         {
             if (e.getCause() instanceof StaleObjectStateException) {
                 if (_log.isDebugEnabled())
                     _log.debug("Just avoided a job submission staging race condition for job " + _job.getUuid());
-                throw new JobExecutionException("Job " + _job.getUuid() + 
+                throw new JobWorkerException("Job " + _job.getUuid() + 
                                                 " already being processed by another thread. Ignoring.", e.getCause());
             }
             else if (_job == null)
             {
                 String msg = "Failed to retrieve job information from db";
                 _log.error(msg, e);
-                throw new JobExecutionException(msg, e);
+                throw new JobWorkerException(msg, e);
             }
             else
             {
@@ -166,7 +164,7 @@ public final class SubmittingWorker
                 {
                     _log.error("Failed to update job " + _job.getUuid() + " status to failed", e1);
                 }
-                throw new JobExecutionException(e);
+                throw new JobWorkerException(e);
             }
         }
     }

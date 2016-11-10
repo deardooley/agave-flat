@@ -1,5 +1,8 @@
 package org.iplantc.service.jobs.phases.schedulers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
@@ -36,6 +39,10 @@ public final class MonitoringScheduler
     /* getPhaseTriggerStatus:                                                 */
     /* ---------------------------------------------------------------------- */
     @Override
-    protected JobStatusType getPhaseTriggerStatus(){return JobStatusType.RUNNING;}
-
+    protected List<JobStatusType> getPhaseTriggerStatuses()
+    {
+        ArrayList<JobStatusType> list = new ArrayList<>();
+        list.add(JobStatusType.RUNNING);
+        return list;
+    }
 }

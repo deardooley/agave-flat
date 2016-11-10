@@ -14,10 +14,8 @@ import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.PhaseWorkerParms;
 import org.iplantc.service.jobs.queue.actions.StagingAction;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
-import org.quartz.JobExecutionException;
 
 /**
  * @author rcardone
@@ -98,7 +96,7 @@ public final class StagingWorker
     /* ---------------------------------------------------------------------- */
     /* checkStagingInput:                                                     */
     /* ---------------------------------------------------------------------- */
-    private void checkStagingInput() throws JobException, JobExecutionException
+    private void checkStagingInput() throws JobException, JobWorkerException
     {
         // if the job doesn't need to be staged, just move on with things.
         if (JobManager.getJobInputMap(_job).isEmpty()) 
@@ -110,7 +108,7 @@ public final class StagingWorker
             // to signal that this phase's processing should end for this job.
             String msg = "Job " + _job.getName() + " (" + _job.getUuid() +
                          ") has no associated input data.";
-            throw new JobExecutionException(msg);
+            throw new JobWorkerException(msg);
         } 
     }
  
@@ -118,7 +116,7 @@ public final class StagingWorker
     /* stage:                                                                 */
     /* ---------------------------------------------------------------------- */
     private void stage() 
-     throws JobException, JobExecutionException, ClosedByInterruptException
+     throws JobException, JobWorkerException, ClosedByInterruptException
     {
         // Loop variables.
         int attempts = 0;
@@ -162,7 +160,7 @@ public final class StagingWorker
             catch (StaleObjectStateException | UnresolvableObjectException e) {
                 String msg = "Job " + _job.getUuid() + " already being processed by another thread. Ignoring.";
                 _log.error(msg, e);
-                throw new JobExecutionException(msg, e);
+                throw new JobWorkerException(msg, e);
             }
             catch (ClosedByInterruptException e) {
                 if (_log.isDebugEnabled())
@@ -186,7 +184,7 @@ public final class StagingWorker
                 catch (Throwable e1) {
                     _log.error("Failed to update job " + _job.getUuid() + " status to PENDING");
                 }   
-                throw new JobExecutionException(e);
+                throw new JobWorkerException(e);
             }
             catch (JobDependencyException e) 
             {
@@ -198,7 +196,7 @@ public final class StagingWorker
                 catch (Exception e1) {
                     _log.error("Failed to update job " + _job.getUuid() + " status to FAILED", e1);
                 }
-                throw new JobExecutionException(e);
+                throw new JobWorkerException(e);
             }
             catch (JobException e) 
             {
@@ -224,7 +222,7 @@ public final class StagingWorker
                     _log.error(msg);
                     _job = JobManager.updateStatus(_job, JobStatusType.FAILED, msg);
                     
-                    throw new JobExecutionException(e);
+                    throw new JobWorkerException(e);
                 } 
                 else {
                     // TODO: Do we need to put this in a try block?
@@ -243,7 +241,7 @@ public final class StagingWorker
                 catch (Exception e1) {
                     _log.error("Failed to update job " + _job.getUuid() + " status to FAILED");
                 }
-                throw new JobExecutionException(e);
+                throw new JobWorkerException(e);
             }
         }
     }

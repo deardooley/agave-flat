@@ -14,12 +14,10 @@ import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.PhaseWorkerParms;
 import org.iplantc.service.jobs.queue.actions.MonitoringAction;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
 import org.joda.time.DateTime;
-import org.quartz.JobExecutionException;
 
 /**
  * @author rcardone
@@ -91,7 +89,7 @@ public final class MonitoringWorker
     /* ---------------------------------------------------------------------- */
     /* checkExpiration:                                                       */
     /* ---------------------------------------------------------------------- */
-    private void checkExpiration() throws JobExecutionException, JobException
+    private void checkExpiration() throws JobWorkerException, JobException
     {
       // kill jobs past their max lifetime
       if (_job.getEndTime() != null) {
@@ -106,7 +104,7 @@ public final class MonitoringWorker
           if (_log.isDebugEnabled()) _log.debug(msg);
           
           // Signal to abort monitoring.
-          throw new JobExecutionException(msg);
+          throw new JobWorkerException(msg);
       } 
       else if (_job.calculateExpirationDate().before(new DateTime().toDate())) 
       {
@@ -123,7 +121,7 @@ public final class MonitoringWorker
                   ". Job cancelled.");
           
           // Signal to abort monitoring.
-          throw new JobExecutionException("Job expired");
+          throw new JobWorkerException("Job expired");
       } 
     }
     
@@ -131,7 +129,7 @@ public final class MonitoringWorker
     /* checkSoftwareLocalityUsingJobManager:                                  */
     /* ---------------------------------------------------------------------- */
     private void checkSoftwareLocalityUsingJobManager() 
-      throws SystemUnavailableException, JobExecutionException
+      throws SystemUnavailableException, JobWorkerException
     {
         // TODO: See if what the preferred version of this check is (do we need 2 versions?)
         // if the execution system for this job has a local storage config,
@@ -143,14 +141,14 @@ public final class MonitoringWorker
             // to signal that this phase's processing should end for this job.
             String msg = "Job " + _job.getName() + " (" + _job.getUuid() +
                          ") failed the software locality check.";
-            throw new JobExecutionException(msg);
+            throw new JobWorkerException(msg);
         }
     }
     
     /* ---------------------------------------------------------------------- */
     /* monitor:                                                               */
     /* ---------------------------------------------------------------------- */
-    private void monitor() throws JobExecutionException 
+    private void monitor() throws JobWorkerException 
     {
         try {
             _job = JobManager.updateStatus(_job,  _job.getStatus(), _job.getErrorMessage());
@@ -166,12 +164,12 @@ public final class MonitoringWorker
         catch (ClosedByInterruptException e) {
             String msg = "Monitoring task for job " + _job.getUuid() + " aborted due to interrupt by worker process.";
             _log.debug(msg);
-            throw new JobExecutionException(msg, e);
+            throw new JobWorkerException(msg, e);
         }
         catch (StaleObjectStateException | UnresolvableObjectException e) {
             String msg = "Job " + _job.getUuid() + " already being processed by another thread. Ignoring.";
             _log.error(msg, e);
-            throw new JobExecutionException(msg, e);
+            throw new JobWorkerException(msg, e);
         }
         catch (SystemUnavailableException e) {
             String msg = "Monitoring task for job " + _job.getUuid() 
@@ -181,17 +179,17 @@ public final class MonitoringWorker
             catch (JobException e1) {
                 _log.error("Monitoring task failed to update job " + _job.getUuid() + " timestamp", e1);
             }
-            throw new JobExecutionException(e);
+            throw new JobWorkerException(e);
         }
         catch (HibernateException e) {
             String msg = "Failed to retrieve job information from db";
             _log.error(msg, e);
-            throw new JobExecutionException(msg, e);
+            throw new JobWorkerException(msg, e);
         }
         catch (Throwable e) {
             String msg = "Monitoring task for job " + _job.getUuid() + " failed.";
             _log.error(msg, e);
-            throw new JobExecutionException(msg, e);
+            throw new JobWorkerException(msg, e);
         }
     }
 }

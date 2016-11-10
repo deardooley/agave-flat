@@ -415,13 +415,13 @@ public class JobManager {
 		if (status.equals(JobStatusType.QUEUED))
 		{
 		    if (job.getSubmitTime() == null) {
-		        job.setSubmitTime(new DateTime().toDate());
+		        job.setSubmitTime(date);
 		    }
 		}
 		else if (status.equals(JobStatusType.RUNNING))
 		{
 			if (job.getStartTime() == null) {
-			    job.setStartTime(new DateTime().toDate());
+			    job.setStartTime(date);
 			}
 		}
 		else if (status.equals(JobStatusType.FINISHED)
@@ -430,7 +430,7 @@ public class JobManager {
 				|| status.equals(JobStatusType.FAILED))
 		{
 		    if (job.getEndTime() == null) {
-		        job.setEndTime(new DateTime().toDate());
+		        job.setEndTime(date);
 		    }
 		}
 		else if (status.equals(JobStatusType.STAGED)) {

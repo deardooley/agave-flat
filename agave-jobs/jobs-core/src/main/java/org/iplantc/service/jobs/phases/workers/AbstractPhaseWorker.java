@@ -17,14 +17,12 @@ import org.iplantc.service.jobs.managers.JobQuotaCheck;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.PhaseWorkerParms;
 import org.iplantc.service.jobs.phases.schedulers.AbstractPhaseScheduler;
 import org.iplantc.service.jobs.phases.schedulers.AbstractPhaseScheduler.QueueableJob;
 import org.iplantc.service.jobs.queue.actions.WorkerAction;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
 import org.joda.time.DateTime;
-import org.quartz.JobExecutionException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
@@ -339,7 +337,7 @@ public abstract class AbstractPhaseWorker
     /* ---------------------------------------------------------------------- */
     /* checkJobQuota:                                                         */
     /* ---------------------------------------------------------------------- */
-    protected void checkJobQuota() throws JobExecutionException
+    protected void checkJobQuota() throws JobWorkerException
     {
         // verify the user is within quota to run the job before staging the data.
         // this should have been caught by the original job selection, but could change
@@ -363,7 +361,7 @@ public abstract class AbstractPhaseWorker
             catch (Throwable e1) {
                 _log.error("Failed to update job " + _job.getUuid() + " status to PENDING");
             }   
-            throw new JobExecutionException(e);
+            throw new JobWorkerException(e);
         }
         catch (SystemUnavailableException e) 
         {
@@ -381,7 +379,7 @@ public abstract class AbstractPhaseWorker
             catch (Throwable e1) {
                 _log.error("Failed to update job " + _job.getUuid() + " status to PENDING");
             }
-            throw new JobExecutionException(e);
+            throw new JobWorkerException(e);
         }
         catch (Throwable e) 
         {
@@ -393,14 +391,14 @@ public abstract class AbstractPhaseWorker
             catch (Throwable e1) {
                 _log.error("Failed to update job " + _job.getUuid() + " status to FAILED");
             }
-            throw new JobExecutionException(e);
+            throw new JobWorkerException(e);
         }
     }
         
     /* ---------------------------------------------------------------------- */
     /* checkSoftwareLocality:                                                 */
     /* ---------------------------------------------------------------------- */
-    protected void checkSoftwareLocality() throws JobExecutionException
+    protected void checkSoftwareLocality() throws JobWorkerException
     {
         // Get the software system.
         Software software = SoftwareDao.getSoftwareByUniqueName(_job.getSoftwareName());
@@ -414,16 +412,16 @@ public abstract class AbstractPhaseWorker
             // to signal that this phase's processing should end for this job.
             String msg = "Job " + _job.getName() + " (" + _job.getUuid() +
                          ") failed the software locality check.";
-            throw new JobExecutionException(msg);
+            throw new JobWorkerException(msg);
         }
     }
     
     /* ---------------------------------------------------------------------- */
     /* checkRetryPeriod:                                                      */
     /* ---------------------------------------------------------------------- */
-    protected void checkRetryPeriod(int days) throws JobExecutionException, JobException
+    protected void checkRetryPeriod(int days) throws JobWorkerException, JobException
     {
-        // we will only retry for 7 days
+        // We will only retry for the specified number of days
         if (new DateTime(_job.getCreated()).plusDays(days).isBeforeNow()) 
         {
             _job = JobManager.updateStatus(_job, JobStatusType.KILLED, 
@@ -435,7 +433,7 @@ public abstract class AbstractPhaseWorker
             // to signal that this phase's processing should end for this job.
             String msg = "Job " + _job.getName() + " (" + _job.getUuid() +
                          ") failed the software locality check.";
-            throw new JobExecutionException(msg);
+            throw new JobWorkerException(msg);
         } 
     }
     

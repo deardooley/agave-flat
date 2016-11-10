@@ -21,10 +21,10 @@ import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.PhaseWorkerParms;
 import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
+import org.iplantc.service.jobs.phases.workers.PhaseWorkerParms;
 import org.iplantc.service.jobs.phases.workers.StagingWorker;
 import org.iplantc.service.jobs.phases.workers.SubmittingWorker;
 import org.iplantc.service.jobs.queue.SelectorFilter;
@@ -181,7 +181,7 @@ public abstract class AbstractPhaseScheduler
      * 
      * @return the trigger status for new work in this phase.
      */
-    protected abstract JobStatusType getPhaseTriggerStatus();
+    protected abstract List<JobStatusType> getPhaseTriggerStatuses();
     
     /* ********************************************************************** */
     /*                             Public Methods                             */
@@ -890,8 +890,7 @@ public abstract class AbstractPhaseScheduler
             
             if (_log.isDebugEnabled())
                _log.debug(_phaseType.name() + " scheduler retrieved " +
-                          jobs.size() + " jobs in " + 
-                          getPhaseTriggerStatus().name() + " status.");
+                          jobs.size() + " jobs.");
             
             // Select a tenant to process.
             
@@ -953,11 +952,10 @@ public abstract class AbstractPhaseScheduler
         }
         
         // Query all jobs that are ready for this state.
-        try {jobs = JobDao.getByStatus(getPhaseTriggerStatus());}
+        try {jobs = JobDao.getByStatus(getPhaseTriggerStatuses());}
             catch (Exception e)
             {
-                String msg = _phaseType.name() + " scheduler unable to retrieve " +
-                             "jobs with status " + getPhaseTriggerStatus() + ".";
+                String msg = _phaseType.name() + " scheduler unable to retrieve jobs.";
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
             }
