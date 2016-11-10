@@ -45,7 +45,6 @@ public final class StagingScheduler
         list.add(JobStatusType.PENDING);
         list.add(JobStatusType.PROCESSING_INPUTS);
         list.add(JobStatusType.STAGING_INPUTS);
-        list.add(JobStatusType.STAGING_JOB);
         return list;
     }
 }
