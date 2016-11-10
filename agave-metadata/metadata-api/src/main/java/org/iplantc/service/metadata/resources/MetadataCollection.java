@@ -53,6 +53,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.github.fge.jsonschema.main.AgaveJsonSchemaFactory;
+import com.github.fge.jsonschema.main.AgaveJsonValidator;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.github.fge.jsonschema.main.JsonValidator;
 import com.github.fge.jsonschema.report.ProcessingMessage;
@@ -389,10 +391,15 @@ public class MetadataCollection extends AgaveResource
 	            String schema = schemaDBObj.getString("schema");
 	            try
 	            {
-	                JsonFactory factory = new ObjectMapper().getFactory();
-	                JsonNode jsonSchemaNode = factory.createJsonParser(schema).readValueAsTree();
-	                JsonNode jsonMetadataNode = factory.createJsonParser(value).readValueAsTree();
-	                JsonValidator validator = JsonSchemaFactory.byDefault().getValidator();
+	            	JsonFactory factory = new ObjectMapper().getFactory();
+	                JsonNode jsonSchemaNode = factory.createParser(schema).readValueAsTree();
+	                JsonNode jsonMetadataNode = factory.createParser(value).readValueAsTree();
+	                AgaveJsonValidator validator = AgaveJsonSchemaFactory.byDefault().getValidator();
+	                
+//	                JsonFactory factory = new ObjectMapper().getFactory();
+//	                JsonNode jsonSchemaNode = factory.createJsonParser(schema).readValueAsTree();
+//	                JsonNode jsonMetadataNode = factory.createJsonParser(value).readValueAsTree();
+//	                JsonValidator validator = JsonSchemaFactory.byDefault().getValidator();
 	                ProcessingReport report = validator.validate(jsonSchemaNode, jsonMetadataNode);
 	                if (!report.isSuccess())
 	                {
@@ -531,93 +538,92 @@ public class MetadataCollection extends AgaveResource
         }
         finally {
         	try { cursor.close(); } catch (Exception e1) {}
-//        	try { mongoClient.close(); } catch (Exception e1) {}
         }
     }
 
-    /**
-      * DELETE
-      **/
-    @Override
-    public void removeRepresentations()
-    {
-    	AgaveLogServiceClient.log(METADATA02.name(), MetaDelete.name(), username, "", getRequest().getClientInfo().getUpstreamAddress());
-
-    	DBCursor cursor = null;
-        try
-        {
-        	if (collection == null) {
-	    		throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-	    				"Unable to connect to metadata store. " +
-	        			"If this problem persists, please contact the system administrators.");
-	        }
-
-        	if (StringUtils.isEmpty(uuid)) {
-        		throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-        				"No object identifier provided.");
-            }
-
-	        BasicDBObject query = new BasicDBObject("uuid", uuid);
-        	query.append("tenantId", TenancyHelper.getCurrentTenantId());
-
-        	cursor = collection.find(query);
-
-	        if (!cursor.hasNext())
-	        {
-	        	throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-	        			"No object identifier found for the given uuid.");
-	        }
-	        else
-	        {
-		        while (cursor.hasNext()) {
-	                BasicDBObject doc = (BasicDBObject)cursor.next();
-	                MetadataPermissionManager pm = new MetadataPermissionManager(uuid, (String)doc.get("owner"));
-	                if (pm.canWrite(username))
-	                {
-		                collection.remove(doc);
-		                MetadataPermissionDao.deleteByUuid(uuid);
-		                eventProcessor.processContentEvent(uuid, MetadataEventType.DELETED, username, formatMetadataObject(doc).toString());
-		                
-//		                BasicDBList aids = (BasicDBList)metadata.get("associationIds");
-//		                for(Object aid: aids) {
-//		                	NotificationManager.process((String)aid, "METADATA_DELETED", username);
-//		                }
-	                }
-	                else
-	                {
-	                    getResponse().setStatus(Status.CLIENT_ERROR_UNAUTHORIZED);
-	                    getResponse().setEntity(new IplantErrorRepresentation(
-	                            "User does not have permission to update metadata"));
-	                    return;
-	                }
-		        }
-
-		        getResponse().setStatus(Status.SUCCESS_OK);
-	        	getResponse().setEntity(new IplantSuccessRepresentation());
-	        }
-	    }
-        catch (ResourceException e)
-        {
-        	log.error("Failed to delete metadata " + uuid, e);
-
-        	getResponse().setStatus(e.getStatus());
-        	getResponse().setEntity(new IplantErrorRepresentation(e.getMessage()));
-        }
-        catch (Throwable e)
-        {
-        	log.error("Failed to delete metadata " + uuid, e);
-
-	    	getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
-	    	getResponse().setEntity(new IplantErrorRepresentation(
-	    			"An error occurred while fetching the metadata item. " +
-	                        "If this problem persists, " +
-	                        "please contact the system administrators."));
-	    }
-	    finally {
-	    	try { cursor.close(); } catch (Exception e) {}
-//	       	try { mongoClient.close(); } catch (Exception e1) {}
-	    }
-    }
+//    /**
+//      * DELETE
+//      **/
+//    @Override
+//    public void removeRepresentations()
+//    {
+//    	AgaveLogServiceClient.log(METADATA02.name(), MetaDelete.name(), username, "", getRequest().getClientInfo().getUpstreamAddress());
+//
+//    	DBCursor cursor = null;
+//        try
+//        {
+//        	if (collection == null) {
+//	    		throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
+//	    				"Unable to connect to metadata store. " +
+//	        			"If this problem persists, please contact the system administrators.");
+//	        }
+//
+//        	if (StringUtils.isEmpty(uuid)) {
+//        		throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
+//        				"No object identifier provided.");
+//            }
+//
+//	        BasicDBObject query = new BasicDBObject("uuid", uuid);
+//        	query.append("tenantId", TenancyHelper.getCurrentTenantId());
+//
+//        	cursor = collection.find(query);
+//
+//	        if (!cursor.hasNext())
+//	        {
+//	        	throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
+//	        			"No object identifier found for the given uuid.");
+//	        }
+//	        else
+//	        {
+//		        while (cursor.hasNext()) {
+//	                BasicDBObject doc = (BasicDBObject)cursor.next();
+//	                MetadataPermissionManager pm = new MetadataPermissionManager(uuid, (String)doc.get("owner"));
+//	                if (pm.canWrite(username))
+//	                {
+//		                collection.remove(doc);
+//		                MetadataPermissionDao.deleteByUuid(uuid);
+//		                eventProcessor.processContentEvent(uuid, MetadataEventType.DELETED, username, formatMetadataObject(doc).toString());
+//		                
+////		                BasicDBList aids = (BasicDBList)metadata.get("associationIds");
+////		                for(Object aid: aids) {
+////		                	NotificationManager.process((String)aid, "METADATA_DELETED", username);
+////		                }
+//	                }
+//	                else
+//	                {
+//	                    getResponse().setStatus(Status.CLIENT_ERROR_UNAUTHORIZED);
+//	                    getResponse().setEntity(new IplantErrorRepresentation(
+//	                            "User does not have permission to update metadata"));
+//	                    return;
+//	                }
+//		        }
+//
+//		        getResponse().setStatus(Status.SUCCESS_OK);
+//	        	getResponse().setEntity(new IplantSuccessRepresentation());
+//	        }
+//	    }
+//        catch (ResourceException e)
+//        {
+//        	log.error("Failed to delete metadata " + uuid, e);
+//
+//        	getResponse().setStatus(e.getStatus());
+//        	getResponse().setEntity(new IplantErrorRepresentation(e.getMessage()));
+//        }
+//        catch (Throwable e)
+//        {
+//        	log.error("Failed to delete metadata " + uuid, e);
+//
+//	    	getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
+//	    	getResponse().setEntity(new IplantErrorRepresentation(
+//	    			"An error occurred while fetching the metadata item. " +
+//	                        "If this problem persists, " +
+//	                        "please contact the system administrators."));
+//	    }
+//	    finally {
+//	    	try { cursor.close(); } catch (Exception e) {}
+////	       	try { mongoClient.close(); } catch (Exception e1) {}
+//	    }
+//    }
 
     private DBObject formatMetadataObject(DBObject metadataObject) throws UUIDException
     {

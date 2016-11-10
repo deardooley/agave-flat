@@ -49,7 +49,18 @@ public enum AgaveUriRegex {
      * Represents a url to the Files API without the {@link RemoteSystem#systemId} 
      * included in the path. These links imply use of the user's default {@link StorageSystem}.
      */
-    FILES_URI_DEFAULT_SYSTEM("(?:media|listings|pems|index|history)/([^\\?]*)([\\?]+.*)?");
+    FILES_URI_DEFAULT_SYSTEM("(?:media|listings|pems|index|history)/([^\\?]*)([\\?]+.*)?"),
+    
+    /**
+     * Represents a url to the Metadata API
+     */
+    METADATA_URI("(?:data)/([0-9a-f]+-[0-9a-f]+-[0-9]+-007)"),
+    
+    /**
+     * Represents a url to the Metadata Schema API
+     */
+    METADATA_SCHEMA_URI("(?:schema)/([0-9a-f]+-[0-9a-f]+-[0-9]+-007)");
+    
     
     private String regexStub = null;
     

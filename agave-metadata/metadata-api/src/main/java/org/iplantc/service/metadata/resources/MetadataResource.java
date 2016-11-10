@@ -44,6 +44,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.github.fge.jsonschema.main.AgaveJsonSchemaFactory;
+import com.github.fge.jsonschema.main.AgaveJsonValidator;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.github.fge.jsonschema.main.JsonValidator;
 import com.github.fge.jsonschema.report.ProcessingMessage;
@@ -294,9 +296,9 @@ public class MetadataResource extends AgaveResource
 	            try
 	            {
 	                JsonFactory factory = new ObjectMapper().getFactory();
-	                JsonNode jsonSchemaNode = factory.createJsonParser(schema).readValueAsTree();
-	                JsonNode jsonMetadataNode = factory.createJsonParser(value).readValueAsTree();
-	                JsonValidator validator = JsonSchemaFactory.byDefault().getValidator();
+	                JsonNode jsonSchemaNode = factory.createParser(schema).readValueAsTree();
+	                JsonNode jsonMetadataNode = factory.createParser(value).readValueAsTree();
+	                AgaveJsonValidator validator = AgaveJsonSchemaFactory.byDefault().getValidator();
 	                ProcessingReport report = validator.validate(jsonSchemaNode, jsonMetadataNode);
 	                if (!report.isSuccess())
 	                {
