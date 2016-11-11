@@ -14,7 +14,7 @@
         "auth": {
             "type": "APIKEYS",
             "publicKey": "${aws.access.key}",
-			"privateKey": "${aws.secret.key}",
+			"privateKey": "${aws.secret.key}"
         },
         "protocol": "S3"
     },
