@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.channels.ClosedByInterruptException;
-import java.util.Date;
 import java.util.Map;
 import java.util.regex.Matcher;
 
@@ -380,7 +379,9 @@ public class StagingAction extends AbstractWorkerAction {
             if (this.job.getStatus() == JobStatusType.STAGING_INPUTS)
             {
                 JobManager.updateStatus(this.job, JobStatusType.STAGED);
-                log.debug("Completed staging inputs for job " + this.job.getUuid() + " " + this.job.getName());
+                if (log.isDebugEnabled())
+                    log.debug("Completed staging inputs for job " + this.job.getUuid() + 
+                              " " + this.job.getName());
             }
         }
         

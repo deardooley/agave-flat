@@ -9,7 +9,7 @@ import com.rabbitmq.client.Connection;
  * 
  * @author rcardone
  */
-public class PhaseWorkerParms 
+public final class PhaseWorkerParms 
 {
     public ThreadGroup threadGroup;
     public String threadName;

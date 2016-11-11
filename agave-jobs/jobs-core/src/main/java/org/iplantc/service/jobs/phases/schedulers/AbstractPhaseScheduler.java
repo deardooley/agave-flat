@@ -914,7 +914,7 @@ public abstract class AbstractPhaseScheduler
                     
                     // Tracing.
                     if (_log.isDebugEnabled()) {
-                        String msg = _phaseType.name() + " scheduler failed to publish " +
+                        String msg = _phaseType.name() + " scheduler published " +
                                 job.getName() + " (" + job.getUuid() + ") to queue " + 
                                 routingKey + ".";
                         _log.debug(msg);
@@ -978,9 +978,14 @@ public abstract class AbstractPhaseScheduler
      */
     private String selectQueueName(Job job)
     {
+        // TODO: Expand the sources in properties.
         // Populate substitution values.
+        //
+        // These values can only be class Boolean, Byte, Short, Integer, Long, 
+        // Float, Double, and String; any other values will cause an exception.
+        // Property names cannot be null or the empty string.
         Map<String, Object> properties = new HashMap<>();
-        properties.put("phase", _phaseType);
+        properties.put("phase", _phaseType.name());
         properties.put("tenant_id", job.getTenantId());
         
         // Evaluate each of this tenant's queues in priority order.

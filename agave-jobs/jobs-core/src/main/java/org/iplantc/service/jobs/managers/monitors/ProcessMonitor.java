@@ -158,9 +158,11 @@ public class ProcessMonitor extends AbstractJobMonitor
 		this.job = JobManager.updateStatus(this.job, JobStatusType.CLEANING_UP, "Job completion detected by process monitor.");
 
 		if (!this.job.isArchiveOutput()) {
-		    log.debug("Job " + this.job.getUuid() + " will skip archiving at user request.");
+		    if (log.isDebugEnabled()) 
+		        log.debug("Job " + this.job.getUuid() + " will skip archiving at user request.");
 		    this.job = JobManager.updateStatus(this.job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
-		    log.debug("Job " + this.job.getUuid() + " finished.");
+		    if (log.isDebugEnabled())
+		        log.debug("Job " + this.job.getUuid() + " finished.");
 		}
 	}
 

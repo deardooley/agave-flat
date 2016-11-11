@@ -10,7 +10,6 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
-import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.monitors.JobMonitor;
 import org.iplantc.service.jobs.managers.monitors.JobMonitorFactory;
 import org.iplantc.service.jobs.model.Job;
@@ -37,7 +36,7 @@ public class MonitoringAction extends AbstractWorkerAction {
     }
     
     /**
-     * This method attempts to archive a job's output by retirieving the
+     * This method attempts to archive a job's output by retrieving the
      * .agave.archive shadow file from the remote job directory and staging
      * everything not in there to the user-supplied Job.archivePath on the 
      * Job.archiveSystem
@@ -56,7 +55,7 @@ public class MonitoringAction extends AbstractWorkerAction {
         {
             setJobMonitor(JobMonitorFactory.getInstance(getJob()));
             
-            log.debug("Checking status of job " + job.getUuid());
+            if (log.isDebugEnabled()) log.debug("Checking status of job " + job.getUuid());
             
             this.job = getJobMonitor().monitor();
         } 
