@@ -3,6 +3,8 @@
  */
 package org.iplantc.service.apps.resources.impl;
 
+import java.net.URLDecoder;
+
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
@@ -32,8 +34,9 @@ public class AbstractSoftwareResource extends AbstractAgaveResource {
     protected Software getSoftwareFromPathValue(String softwareId)
     throws ResourceException
     {
-        Software existingSoftware = SoftwareDao.getSoftwareByUniqueName(softwareId);
+    	Software existingSoftware = SoftwareDao.getSoftwareByUniqueName(softwareId);
         
+        //
         // update if the existing software belongs to the user, otherwise throw an exception
         if (existingSoftware == null) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,

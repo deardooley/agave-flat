@@ -28,6 +28,7 @@ import org.iplantc.service.metadata.dao.MetadataPermissionDao;
 import org.iplantc.service.metadata.exceptions.MetadataException;
 import org.iplantc.service.metadata.managers.MetadataPermissionManager;
 import org.iplantc.service.metadata.managers.MetadataSchemaPermissionManager;
+import org.iplantc.service.metadata.util.ServiceUtils;
 import org.iplantc.service.notification.managers.NotificationManager;
 import org.joda.time.DateTime;
 import org.restlet.Context;
@@ -292,7 +293,7 @@ public class MetadataResource extends AgaveResource
 	            }
 
 	            // now validate the json against the schema
-	            String schema = schemaDBObj.getString("schema");
+	            String schema = ServiceUtils.unescapeSchemaRefFieldNames(schemaDBObj.getString("schema"));
 	            try
 	            {
 	                JsonFactory factory = new ObjectMapper().getFactory();
@@ -585,7 +586,7 @@ public class MetadataResource extends AgaveResource
     	if (metadataObject.get("schemaId") != null && !StringUtils.isEmpty(metadataObject.get("schemaId").toString()))
     	{
     		AgaveUUID agaveUUID = new AgaveUUID((String)metadataObject.get("schemaId"));
-    		hal.append(agaveUUID.getResourceType().name(), new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(agaveUUID.getObjectReference())));
+    		hal.append(agaveUUID.getResourceType().name().toLowerCase(), new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(agaveUUID.getObjectReference())));
     	}
     	metadataObject.put("_links", hal);
 

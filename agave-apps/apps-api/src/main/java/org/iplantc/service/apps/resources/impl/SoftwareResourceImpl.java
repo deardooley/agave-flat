@@ -36,7 +36,6 @@ import org.iplantc.service.common.exceptions.DependencyException;
 import org.iplantc.service.common.exceptions.DomainException;
 import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
-import org.iplantc.service.common.restlet.resource.AbstractAgaveResource;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.json.JSONException;
@@ -50,7 +49,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 @Path("/{softwareId}")
 @Produces("application/json")
-public class SoftwareResourceImpl extends AbstractAgaveResource implements SoftwareResource {
+public class SoftwareResourceImpl extends AbstractSoftwareResource implements SoftwareResource {
     
     private static final Logger log = Logger.getLogger(SoftwareResourceImpl.class);
     
@@ -63,9 +62,8 @@ public class SoftwareResourceImpl extends AbstractAgaveResource implements Softw
     @Override
     public Response getSoftware(@PathParam("softwareId") String softwareId) 
     {
-        AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.APPS02.name(), 
-                AgaveLogServiceClient.ActivityKeys.AppsGetByID.name(), 
-                getAuthenticatedUsername(), "", Request.getCurrent().getClientInfo().getUpstreamAddress());
+    	logUsage(AgaveLogServiceClient.ActivityKeys.AppsGetByID);
+    	
         try 
         {
             Software software = getSoftwareFromPathValue(softwareId);
@@ -108,9 +106,7 @@ public class SoftwareResourceImpl extends AbstractAgaveResource implements Softw
     public Response update(@PathParam("softwareId") String softwareId,
                                     Representation input) 
     {
-        AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.APPS02.name(), 
-                AgaveLogServiceClient.ActivityKeys.AppsAdd.name(), 
-                getAuthenticatedUsername(), "", Request.getCurrent().getClientInfo().getUpstreamAddress());
+    	logUsage(AgaveLogServiceClient.ActivityKeys.AppsAdd);
         
         Software existingSoftware = null;
         try 
@@ -177,26 +173,28 @@ public class SoftwareResourceImpl extends AbstractAgaveResource implements Softw
         } 
     }
     
-    /**
-     * Fetches the {@link Software} object for the id in the URL or throws 
-     * an exception that can be re-thrown from the route method.
-     * @param softwareId
-     * @return Software object referenced in the path
-     * @throws ResourceException
-     */
-    protected Software getSoftwareFromPathValue(String softwareId)
-    throws ResourceException
-    {
-        Software existingSoftware = SoftwareDao.getSoftwareByUniqueName(softwareId);
-        
-        // update if the existing software belongs to the user, otherwise throw an exception
-        if (existingSoftware == null) {
-            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-                    "No software found matching " + softwareId);
-        } 
-        
-        return existingSoftware;
-    }
+//    /**
+//     * Fetches the {@link Software} object for the id in the URL or throws 
+//     * an exception that can be re-thrown from the route method.
+//     * @param softwareId
+//     * @return Software object referenced in the path
+//     * @throws ResourceException
+//     */
+//    protected Software getSoftwareFromPathValue(String softwareId)
+//    throws ResourceException
+//    {
+//    	String decodedSoftwareId = URLDecoder.decode(softwareId);
+//        
+//    	Software existingSoftware = SoftwareDao.getSoftwareByUniqueName(decodedSoftwareId);
+//        
+//        // update if the existing software belongs to the user, otherwise throw an exception
+//        if (existingSoftware == null) {
+//            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
+//                    "No software found matching " + softwareId);
+//        } 
+//        
+//        return existingSoftware;
+//    }
 
     /* (non-Javadoc)
      * @see org.iplantc.service.apps.resources.SoftwareResource#manage(java.lang.String)
@@ -235,9 +233,7 @@ public class SoftwareResourceImpl extends AbstractAgaveResource implements Softw
                     
             if (action == PUBLISH) 
             {
-                AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.APPS02.name(), 
-                        AgaveLogServiceClient.ActivityKeys.AppsPublish.name(), 
-                        getAuthenticatedUsername(), "", Request.getCurrent().getClientInfo().getUpstreamAddress());
+            	logUsage(AgaveLogServiceClient.ActivityKeys.AppsPublish);
                 
                 String publicName = postContentData.has("name") ? postContentData.get("name").textValue() : null;
                 String publicVersion = postContentData.has("version") ? postContentData.get("version").textValue() : null;
@@ -255,9 +251,7 @@ public class SoftwareResourceImpl extends AbstractAgaveResource implements Softw
             } 
             else if (action == CLONE) 
             {
-                AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.APPS02.name(), 
-                        AgaveLogServiceClient.ActivityKeys.AppsClone.name(), 
-                        getAuthenticatedUsername(), "", Request.getCurrent().getClientInfo().getUpstreamAddress());
+            	logUsage(AgaveLogServiceClient.ActivityKeys.AppsClone);
                 
                 String clonedName = postContentData.has("name") ? postContentData.get("name").textValue() : null;
                 String clonedVersion = postContentData.has("version") ? postContentData.get("version").textValue() : null;
@@ -278,9 +272,7 @@ public class SoftwareResourceImpl extends AbstractAgaveResource implements Softw
             } 
             else if (action == ERASE) 
             {
-                AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.APPS02.name(), 
-                        AgaveLogServiceClient.ActivityKeys.AppsErase.name(), 
-                        getAuthenticatedUsername(), "", Request.getCurrent().getClientInfo().getUpstreamAddress());
+            	logUsage(AgaveLogServiceClient.ActivityKeys.AppsErase);
                 
                 if (ServiceUtils.isAdmin(getAuthenticatedUsername())) 
                 {
@@ -295,9 +287,7 @@ public class SoftwareResourceImpl extends AbstractAgaveResource implements Softw
             }
             else if (action == ENABLE) 
             {
-                AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.APPS02.name(), 
-                        AgaveLogServiceClient.ActivityKeys.AppsEnable.name(), 
-                        getAuthenticatedUsername(), "", Request.getCurrent().getClientInfo().getUpstreamAddress());
+            	logUsage(AgaveLogServiceClient.ActivityKeys.AppsEnable);
                 
                 if (ApplicationManager.isManageableByUser(software, getAuthenticatedUsername())) 
                 {
@@ -312,9 +302,7 @@ public class SoftwareResourceImpl extends AbstractAgaveResource implements Softw
             }
             else if (action == DISABLE) 
             {
-                AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.APPS02.name(), 
-                        AgaveLogServiceClient.ActivityKeys.AppsDisable.name(), 
-                        getAuthenticatedUsername(), "", Request.getCurrent().getClientInfo().getUpstreamAddress());
+            	logUsage(AgaveLogServiceClient.ActivityKeys.AppsDisable);
                 
                 if (ApplicationManager.isManageableByUser(software, getAuthenticatedUsername())) 
                 {

@@ -60,6 +60,7 @@ public class JWTClient
 	private static final Logger log = Logger.getLogger(JWTClient.class);
 	
 	private static final ThreadLocal<JSONObject> threadJWTPayload = new ThreadLocal<JSONObject>();
+	private static final ThreadLocal<String> threadRawJWT = new ThreadLocal<String>();
 	private static final ConcurrentHashMap<String, RSAPublicKey> tenantPublicKeys = new ConcurrentHashMap<String, RSAPublicKey>();
 	
 	private static String getTenantPublicKeyUrl(String tenantId) throws TenantException {
@@ -223,6 +224,8 @@ public class JWTClient
 //				log.debug(json.toJSONString());
 				setCurrentJWSObject(json);
 				
+				setCurrentRawJWT(serializedToken);
+				
 				Assert.assertNotNull(getCurrentEndUser(), 
 						"No end user specified in the JWT header. Authentication failed.");
 				
@@ -249,6 +252,11 @@ public class JWTClient
 		return false;
 	}
 	
+	public static String getCurrentSignedJWT() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 	public static JSONObject getCurrentJWSObject()
 	{
 		return threadJWTPayload.get();
@@ -257,6 +265,14 @@ public class JWTClient
 	public static void setCurrentJWSObject(JSONObject json)
 	{
 		threadJWTPayload.set(json);
+	}
+	
+	public static void setCurrentRawJWT(String serializedJWT) {
+		threadRawJWT.set(serializedJWT);
+	}
+	
+	public static String getCurrentRawJWT() {
+		return threadRawJWT.get();
 	}
 	
 	public static String getCurrentApplicationId()
@@ -424,6 +440,20 @@ public class JWTClient
 		}
 	}
 	
+	public static String getJwtHeaderKeyForCurrentTenant()
+	throws TenantException
+	{
+		String tenantId = getCurrentTenant();
+		
+		Tenant tenant = new TenantDao().findByTenantId(tenantId);
+		
+		if (tenant == null) {
+			throw new TenantException("Unknown tenant id");
+		} else {
+			return ("x-jwt-assertion-" + StringUtils.replace(tenantId, ".", "-")).toLowerCase();
+		}
+	}
+	
 	public static String createJwtForTenantUser(String username, String tenantId, boolean resolveUserDetails) 
 	throws TenantException
 	{
@@ -513,4 +543,6 @@ public class JWTClient
 		}
 				
 	}
+
+	
 }

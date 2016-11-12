@@ -36,6 +36,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
+import org.iplantc.service.common.Settings;
+import org.iplantc.service.common.auth.JWTClient;
 import org.iplantc.service.common.clients.HTTPSClient;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.uri.AgaveUriRegex;
@@ -110,8 +112,8 @@ public final class AgaveMetadataURIManager
 
         try {
         	
-        	String metadataSchemBaseUrl = TenancyHelper.resolveURLToCurrentTenant(target.toString());
-        	String schemaRegex = "(?:" + metadataSchemBaseUrl.replaceAll("\\:", "\\\\:") + ")" + AgaveUriRegex.METADATA_SCHEMA_URI;
+        	String metadataSchemBaseUrl = TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_METADATA_SERVICE);
+        	String schemaRegex = "(?:" + metadataSchemBaseUrl.replaceAll("\\:", "\\\\:") + ")" + AgaveUriRegex.METADATA_SCHEMA_URI.getRegexStub();
         	
         	Matcher matcher = Pattern.compile(schemaRegex, Pattern.CASE_INSENSITIVE).matcher(target.toString());
         	if (matcher.matches()) {
@@ -119,6 +121,8 @@ public final class AgaveMetadataURIManager
         		try {
 					Map<String, String> headers = new HashMap<String, String>();
 					headers.put("Authorization", "Bearer " + TenancyHelper.getCurrentBearerToken());
+					headers.put(JWTClient.getJwtHeaderKeyForCurrentTenant(), JWTClient.getCurrentRawJWT());
+					
 					HTTPSClient client = new HTTPSClient(target.toString(), headers);
 					String response = client.getText();
 					

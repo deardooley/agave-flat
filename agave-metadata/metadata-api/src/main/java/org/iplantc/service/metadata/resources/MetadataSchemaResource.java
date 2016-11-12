@@ -31,6 +31,7 @@ import org.iplantc.service.metadata.dao.MetadataSchemaPermissionDao;
 import org.iplantc.service.metadata.exceptions.MetadataException;
 import org.iplantc.service.metadata.exceptions.MetadataSchemaValidationException;
 import org.iplantc.service.metadata.managers.MetadataSchemaPermissionManager;
+import org.iplantc.service.metadata.util.ServiceUtils;
 import org.iplantc.service.notification.managers.NotificationManager;
 import org.joda.time.DateTime;
 import org.restlet.Context;
@@ -139,7 +140,6 @@ public class MetadataSchemaResource extends AgaveResource
     public Representation represent(Variant variant) throws ResourceException
     {
         DBCursor cursor = null;
-        List<DBObject> results = new ArrayList<DBObject>();
         MetadataSchemaPermissionManager pm = null;
 
         try 
@@ -178,7 +178,7 @@ public class MetadataSchemaResource extends AgaveResource
                 
         		if (pm.canRead(username)) {
                 	firstResult = formatMetadataSchemaObject(firstResult);
-	        	    return new IplantSuccessRepresentation(firstResult.toString());
+	        	    return new IplantSuccessRepresentation(ServiceUtils.unescapeSchemaRefFieldNames(firstResult.toString()));
                 }
                 else {
                 	throw new ResourceException(Status.CLIENT_ERROR_UNAUTHORIZED,
@@ -279,7 +279,7 @@ public class MetadataSchemaResource extends AgaveResource
 	            doc = new BasicDBObject("uuid", uuid)
 	                    .append("internalUsername", internalUsername)
 	                    .append("lastUpdated", timestamp)
-	                    .append("schema", JSON.parse(mapper.writeValueAsString(jsonSchema)));
+	                    .append("schema", JSON.parse(ServiceUtils.escapeSchemaRefFieldNames(mapper.writeValueAsString(jsonSchema))));
 	        } 
 	        catch (Exception e) {
 	            // If schema is not valid JSON, throw exception
@@ -293,7 +293,7 @@ public class MetadataSchemaResource extends AgaveResource
         	BasicDBObject query = new BasicDBObject("uuid", uuid);
     		query.append("tenantId", TenancyHelper.getCurrentTenantId());
     		cursor = collection.find(query);
-    		
+    		String sdoc = null;
     		if (cursor.hasNext()) {
     			
     			BasicDBObject currentMetadata = (BasicDBObject)cursor.next();
@@ -307,7 +307,9 @@ public class MetadataSchemaResource extends AgaveResource
                     doc.append("tenantId", currentMetadata.get("tenantId"));
                     collection.update(query, doc);
                     
-                    NotificationManager.process(uuid, "UPDATED", username, formatMetadataSchemaObject(doc).toString());
+                    sdoc = ServiceUtils.unescapeSchemaRefFieldNames(formatMetadataSchemaObject(doc).toString());
+                    
+                    NotificationManager.process(uuid, "UPDATED", username, sdoc);
                 } 
                 else {
                 	throw new ResourceException(Status.CLIENT_ERROR_UNAUTHORIZED,
@@ -319,7 +321,7 @@ public class MetadataSchemaResource extends AgaveResource
                         "No metadata schema found for user with id " + uuid);
             }
             
-            getResponse().setEntity(new IplantSuccessRepresentation(formatMetadataSchemaObject(doc).toString()));
+            getResponse().setEntity(new IplantSuccessRepresentation(sdoc));
         } 
         catch (ResourceException e) {
         	log.error("Failed to update metadata schema " + uuid, e);
@@ -383,7 +385,7 @@ public class MetadataSchemaResource extends AgaveResource
 	                    collection.remove(schema);
 	                    MetadataSchemaPermissionDao.deleteBySchemaId(uuid);
 		                
-	                    NotificationManager.process(uuid, "DELETED", username, formatMetadataSchemaObject(schema).toString());
+	                    NotificationManager.process(uuid, "DELETED", username, ServiceUtils.unescapeSchemaRefFieldNames(formatMetadataSchemaObject(schema).toString()));
 	                }
 	                else 
 	                {

@@ -34,8 +34,11 @@ import org.iplantc.service.metadata.dao.MetadataPermissionDao;
 import org.iplantc.service.metadata.dao.MetadataSchemaPermissionDao;
 import org.iplantc.service.metadata.exceptions.MetadataException;
 import org.iplantc.service.metadata.exceptions.MetadataSchemaValidationException;
+import org.iplantc.service.metadata.jackson.MongoDBJsonMapper;
+import org.iplantc.service.metadata.jackson.MongoDBSafeKey;
 import org.iplantc.service.metadata.managers.MetadataPermissionManager;
 import org.iplantc.service.metadata.managers.MetadataSchemaPermissionManager;
+import org.iplantc.service.metadata.util.ServiceUtils;
 import org.iplantc.service.notification.managers.NotificationManager;
 import org.joda.time.DateTime;
 import org.restlet.Context;
@@ -249,7 +252,7 @@ public class MetadataSchemaCollection extends AgaveResource
 				permittedResults.add(result);
 			}
 			
-			return new IplantSuccessRepresentation(permittedResults.toString());
+			return new IplantSuccessRepresentation(ServiceUtils.unescapeSchemaRefFieldNames(permittedResults.toString()));
         } 
         catch(JSONParseException e) {
             throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "Malformed JSON Query", e);
@@ -290,7 +293,7 @@ public class MetadataSchemaCollection extends AgaveResource
                         "If this problem persists, please contact the system administrators.");
             }
         	
-	        ObjectMapper mapper = new ObjectMapper();
+        	ObjectMapper mapper = MongoDBJsonMapper.JSON_MAPPER;
 	        JsonNode jsonSchema = null;
         	try 
         	{
@@ -337,7 +340,7 @@ public class MetadataSchemaCollection extends AgaveResource
 	        {
 	            doc = new BasicDBObject("internalUsername", internalUsername)
 	                    .append("lastUpdated", timestamp)
-	                    .append("schema", JSON.parse(mapper.writeValueAsString(jsonSchema)));
+	                    .append("schema", JSON.parse(ServiceUtils.escapeSchemaRefFieldNames(mapper.writeValueAsString(jsonSchema))));
 	        } 
 	        catch (JSONParseException e) {
 	            // If schema is not valid JSON, throw exception
@@ -363,7 +366,7 @@ public class MetadataSchemaCollection extends AgaveResource
 			pm = new MetadataSchemaPermissionManager(uuid, username);
 			pm.setPermission(username, "ALL");
 			
-			String sdoc = formatMetadataSchemaObject(doc).toString();
+			String sdoc = ServiceUtils.unescapeSchemaRefFieldNames(formatMetadataSchemaObject(doc).toString());
 			NotificationManager.process(uuid, "CREATED", username, sdoc);
 			
 			getResponse().setStatus(Status.SUCCESS_CREATED);
@@ -387,7 +390,12 @@ public class MetadataSchemaCollection extends AgaveResource
 
     }
 
-    
+    /**
+     * Adds hypermedia and strips MongoDB document into a valid Agave response object.
+     * @param metadataSchemaObject
+     * @return
+     * @throws UUIDException
+     */
     private DBObject formatMetadataSchemaObject(DBObject metadataSchemaObject) throws UUIDException 
     {
     	metadataSchemaObject.removeField("_id");

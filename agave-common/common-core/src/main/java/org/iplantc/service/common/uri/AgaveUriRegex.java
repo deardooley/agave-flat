@@ -54,18 +54,18 @@ public enum AgaveUriRegex {
     /**
      * Represents a url to the Metadata API
      */
-    METADATA_URI("(?:data)/([0-9a-f]+-[0-9a-f]+-[0-9]+-007)"),
+    METADATA_URI("(?:data)/([0-9a-f]+-[0-9a-f]+-[0-9]+-0122)"),
     
     /**
      * Represents a url to the Metadata Schema API
      */
-    METADATA_SCHEMA_URI("(?:schema)/([0-9a-f]+-[0-9a-f]+-[0-9]+-007)");
+    METADATA_SCHEMA_URI("(?:schemas)/([0-9a-f]+-[0-9a-f]+-[0-9]+-013)(?:#.*)?");
     
     
     private String regexStub = null;
     
     private AgaveUriRegex(String regexStub) {
-        this.regexStub = regexStub;
+        this.setRegexStub(regexStub);
     }
     
     /**
@@ -100,30 +100,30 @@ public enum AgaveUriRegex {
         String suri = uri.toString();
         if (this == AGAVE_URI) 
         {
-            return suri.matches(this.regexStub);
+            return suri.matches(this.getRegexStub());
         }
         // resolve job api
         else if (this == JOBS_URI) 
         {
             String baseUrl = TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, tenantId);
-            return (StringUtils.isNotEmpty(baseUrl) && suri.matches("(?:" + baseUrl.replaceAll("\\:", "\\\\:") + ")" + this.regexStub));
+            return (StringUtils.isNotEmpty(baseUrl) && suri.matches("(?:" + baseUrl.replaceAll("\\:", "\\\\:") + ")" + this.getRegexStub()));
         }
         // resolve files api and check for system info
         else if (this == FILES_URI_CUSTOM_SYSTEM) {
             String baseUrl = TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_FILE_SERVICE, tenantId);
             // should be a custom system url. check for valid system pattern
             return (StringUtils.isNotEmpty(baseUrl) && suri.matches("(?:" + baseUrl.replaceAll("\\:", "\\\\:") + ")media/system(.*)")
-                    && suri.matches(baseUrl + this.regexStub));
+                    && suri.matches(baseUrl + this.getRegexStub()));
         }
         // resolve files api against default system 
         else if (this == FILES_URI_DEFAULT_SYSTEM) {
             String baseUrl = TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_FILE_SERVICE, tenantId);
-            return (StringUtils.isNotEmpty(baseUrl) && suri.matches("(?:" + baseUrl.replaceAll("\\:", "\\\\:") + ")" + this.regexStub));
+            return (StringUtils.isNotEmpty(baseUrl) && suri.matches("(?:" + baseUrl.replaceAll("\\:", "\\\\:") + ")" + this.getRegexStub()));
         }
         // perhaps it is a file system path
         else if (StringUtils.isEmpty(uri.getScheme()) && StringUtils.isEmpty(uri.getHost())) 
         {
-            return suri.matches(RELATIVE_PATH.regexStub);
+            return suri.matches(RELATIVE_PATH.getRegexStub());
         }
         
         return false;
@@ -212,32 +212,32 @@ public enum AgaveUriRegex {
         
         // nothing to resolve here
         String suri = uri.toString();
-        if (suri.matches(AGAVE_URI.regexStub)) {
-            matcher = Pattern.compile(AGAVE_URI.regexStub, Pattern.CASE_INSENSITIVE).matcher(suri);
+        if (suri.matches(AGAVE_URI.getRegexStub())) {
+            matcher = Pattern.compile(AGAVE_URI.getRegexStub(), Pattern.CASE_INSENSITIVE).matcher(suri);
         } 
         // resolve job api
-        else if (StringUtils.isNotEmpty(baseJobUrl) && suri.matches(baseJobUrl + JOBS_URI.regexStub)) 
+        else if (StringUtils.isNotEmpty(baseJobUrl) && suri.matches(baseJobUrl + JOBS_URI.getRegexStub())) 
         {
-            matcher = Pattern.compile(baseJobUrl + JOBS_URI.regexStub, Pattern.CASE_INSENSITIVE).matcher(suri);
+            matcher = Pattern.compile(baseJobUrl + JOBS_URI.getRegexStub(), Pattern.CASE_INSENSITIVE).matcher(suri);
         }
         // resolve files api and check for system info
         else if (StringUtils.isNotEmpty(baseFileUrl) && suri.matches(baseFileUrl + "media/system/(.*)")) {
             
             // now run against this regex stub to validate teh lenght of the sytem id and trailing slash
-            if (suri.matches(baseFileUrl + FILES_URI_CUSTOM_SYSTEM.regexStub)) {
-                matcher = Pattern.compile(baseFileUrl + FILES_URI_CUSTOM_SYSTEM.regexStub, Pattern.CASE_INSENSITIVE).matcher(suri);
+            if (suri.matches(baseFileUrl + FILES_URI_CUSTOM_SYSTEM.getRegexStub())) {
+                matcher = Pattern.compile(baseFileUrl + FILES_URI_CUSTOM_SYSTEM.getRegexStub(), Pattern.CASE_INSENSITIVE).matcher(suri);
             }
             
         // resolve files api against default system 
         } 
-        else if (StringUtils.isNotEmpty(baseFileUrl) && suri.matches(baseFileUrl + FILES_URI_DEFAULT_SYSTEM.regexStub)) 
+        else if (StringUtils.isNotEmpty(baseFileUrl) && suri.matches(baseFileUrl + FILES_URI_DEFAULT_SYSTEM.getRegexStub())) 
         {
-            matcher = Pattern.compile(baseFileUrl + FILES_URI_DEFAULT_SYSTEM.regexStub, Pattern.CASE_INSENSITIVE).matcher(suri);
+            matcher = Pattern.compile(baseFileUrl + FILES_URI_DEFAULT_SYSTEM.getRegexStub(), Pattern.CASE_INSENSITIVE).matcher(suri);
         }
         // perhaps it is a file system path
         else if (StringUtils.isEmpty(uri.getScheme()) && StringUtils.isEmpty(uri.getHost())) 
         {
-            matcher = Pattern.compile(RELATIVE_PATH.regexStub, Pattern.CASE_INSENSITIVE).matcher(suri);
+            matcher = Pattern.compile(RELATIVE_PATH.getRegexStub(), Pattern.CASE_INSENSITIVE).matcher(suri);
         }
         
         // initialize the matcher if it was found
@@ -250,5 +250,19 @@ public enum AgaveUriRegex {
             return null;
         }
     }
+
+	/**
+	 * @return the regexStub
+	 */
+	public String getRegexStub() {
+		return regexStub;
+	}
+
+	/**
+	 * @param regexStub the regexStub to set
+	 */
+	private void setRegexStub(String regexStub) {
+		this.regexStub = regexStub;
+	}
     
 }
