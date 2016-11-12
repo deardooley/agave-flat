@@ -3,15 +3,22 @@
  */
 package org.iplantc.service.metadata.dao;
 
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
 import org.hibernate.HibernateException;
+import org.hibernate.Query;
 import org.hibernate.Session;
+import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.metadata.exceptions.MetadataException;
+import org.iplantc.service.metadata.model.MetadataItem;
+import org.iplantc.service.metadata.model.MetadataPermission;
+import org.iplantc.service.metadata.model.MetadataSchemaItem;
 import org.iplantc.service.metadata.model.MetadataSchemaPermission;
+import org.iplantc.service.metadata.model.enumerations.PermissionType;
 import org.iplantc.service.metadata.util.ServiceUtils;
-
-import java.util.List;
 
 /**
  * DAO class for metadata schemata
@@ -63,6 +70,78 @@ public class MetadataSchemaPermissionDao {
 			try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
 		}
 	}
+	
+	/**
+     * Returns the {@link MetadataSchemaPermission#getUuid()} of {@link MetadataSchemaItem} to which 
+     * the user has read permission. Delegates to {@link #getUuidOfAllSharedMetataSchemaItemReadableByUser(String, int, int)}
+     * 
+     * @param username the user for whom to look up permission grants
+     * @return list of uuid to which the user has been granted read access.
+     * @throws MetadataException
+     */
+    public static List<String> getUuidOfAllSharedMetataSchemaItemReadableByUser(String username)
+    throws MetadataException
+    {
+        return getUuidOfAllSharedMetataSchemaItemReadableByUser(username, 0, -1);
+    }
+	
+	/**
+	 * Returns the {@link MetadataSchemaPermission#getUuid()} of {@link MetadataSchemaItem} to which 
+     * the user has read permission.
+     * 
+	 * @param username the user for whom to look up permission grants
+	 * @param offset the number of results to skip before returning the response set
+	 * @param limit the maximum results to return
+	 * @return list of uuid to which the user has been granted read access.
+	 * @throws MetadataException
+	 */
+	@SuppressWarnings("unchecked")
+    public static List<String> getUuidOfAllSharedMetataSchemaItemReadableByUser(String username, int offset, int limit)
+    throws MetadataException
+    {
+
+	    if (StringUtils.isEmpty(username)) {
+            throw new MetadataException("Username cannot be null in permission lookup");
+        }
+	    
+        try
+        {
+            Session session = getSession();
+            
+            String sql = "select distinct uuid from metadata_schema_permissions "
+            		+ "where tenant_id = :tenantid "
+            		+ "		and (permission = :allpem or permission like '%READ%') "
+            		+ "		and username in (:owner, :world, :public) "
+            		+ "order by last_updated DESC";	
+            Query query = session.createSQLQuery(sql)
+                .setString("tenantid", TenancyHelper.getCurrentTenantId())
+                .setString("owner", username)
+                .setString("world", Settings.WORLD_USER_USERNAME)
+                .setString("public", Settings.PUBLIC_USER_USERNAME)
+            	.setString("allpem", PermissionType.ALL.name());
+            
+            if (offset > 0) {
+            	query.setFirstResult(offset);
+            }
+            
+            if (limit >= 0) {
+            	query.setMaxResults(limit);
+            }
+            
+            List<String> metadataSchemaUUIDGrantedToUser = query.list();
+            
+            session.flush();
+            
+            return metadataSchemaUUIDGrantedToUser;
+        }
+        catch (HibernateException ex)
+        {
+            throw new MetadataException(ex);
+        }
+        finally {
+            try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
+        }
+    }
 
 	/**
 	 * Gets the metadata permissions for the specified username and iod
