@@ -1,9 +1,6 @@
 package org.iplantc.service.metadata.resources;
 
 import static org.iplantc.service.common.clients.AgaveLogServiceClient.ActivityKeys.SchemaCreate;
-import static org.iplantc.service.common.clients.AgaveLogServiceClient.ActivityKeys.SchemaDelete;
-import static org.iplantc.service.common.clients.AgaveLogServiceClient.ActivityKeys.SchemaEdit;
-import static org.iplantc.service.common.clients.AgaveLogServiceClient.ActivityKeys.SchemaGetById;
 import static org.iplantc.service.common.clients.AgaveLogServiceClient.ActivityKeys.SchemaList;
 import static org.iplantc.service.common.clients.AgaveLogServiceClient.ActivityKeys.SchemaSearch;
 import static org.iplantc.service.common.clients.AgaveLogServiceClient.ServiceKeys.METADATA02;
@@ -32,11 +29,7 @@ import org.iplantc.service.metadata.MetadataApplication;
 import org.iplantc.service.metadata.Settings;
 import org.iplantc.service.metadata.dao.MetadataPermissionDao;
 import org.iplantc.service.metadata.dao.MetadataSchemaPermissionDao;
-import org.iplantc.service.metadata.exceptions.MetadataException;
 import org.iplantc.service.metadata.exceptions.MetadataSchemaValidationException;
-import org.iplantc.service.metadata.jackson.MongoDBJsonMapper;
-import org.iplantc.service.metadata.jackson.MongoDBSafeKey;
-import org.iplantc.service.metadata.managers.MetadataPermissionManager;
 import org.iplantc.service.metadata.managers.MetadataSchemaPermissionManager;
 import org.iplantc.service.metadata.util.ServiceUtils;
 import org.iplantc.service.notification.managers.NotificationManager;
@@ -293,7 +286,7 @@ public class MetadataSchemaCollection extends AgaveResource
                         "If this problem persists, please contact the system administrators.");
             }
         	
-        	ObjectMapper mapper = MongoDBJsonMapper.JSON_MAPPER;
+        	ObjectMapper mapper = new ObjectMapper();
 	        JsonNode jsonSchema = null;
         	try 
         	{
