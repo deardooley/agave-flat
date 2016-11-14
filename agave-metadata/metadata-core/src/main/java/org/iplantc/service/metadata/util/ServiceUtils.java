@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.metadata.jackson.MongoDBSafeKey;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -324,6 +325,30 @@ public class ServiceUtils {
 		}
 	}
 	
-    
+	/**
+	 * Unescapes persisted reference fields in serialized json schema 
+	 * objects from their unicode values for persisting in MongoDB.
+	 * 
+	 * @param json
+	 * @return
+	 */
+	public static String unescapeSchemaRefFieldNames(String json) {
+    	String escapedRef = MongoDBSafeKey.escapeFieldName("$ref");
+    	String escapedSchema = MongoDBSafeKey.escapeFieldName("$schema");
+    	return StringUtils.replace(StringUtils.replace(json, escapedRef, "$ref"), escapedSchema, "$schema");
+	}
+
+	/**
+	 * Escapes {@code $ref} fields in serialized json schema objects
+	 * with their unicode values for persisting in MongoDB.
+	 * 
+	 * @param json
+	 * @return
+	 */
+	public static String escapeSchemaRefFieldNames(String json) {
+		String escapedRef = MongoDBSafeKey.escapeFieldName("$ref");
+		String escapedSchema = MongoDBSafeKey.escapeFieldName("$schema");
+    	return StringUtils.replace(StringUtils.replace(json, "$ref", escapedRef), "$schema", escapedSchema);
+	}
 	
 }

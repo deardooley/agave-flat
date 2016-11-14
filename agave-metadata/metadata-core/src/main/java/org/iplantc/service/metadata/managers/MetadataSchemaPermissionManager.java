@@ -37,7 +37,8 @@ public class MetadataSchemaPermissionManager {
 		for (MetadataSchemaPermission pem : MetadataSchemaPermissionDao.getBySchemaId(schemaId))
 		{
 			if (pem.getUsername().equals(username) || 
-					pem.getUsername().equals(Settings.WORLD_USER_USERNAME)) { 
+					pem.getUsername().equals(Settings.WORLD_USER_USERNAME) ||
+					pem.getUsername().equals(Settings.PUBLIC_USER_USERNAME)) { 
 				return pem.getPermission().equals(jobPermissionType); 
 			}
 		}
@@ -56,7 +57,8 @@ public class MetadataSchemaPermissionManager {
 		for (MetadataSchemaPermission pem : MetadataSchemaPermissionDao.getBySchemaId(schemaId))
 		{
 			if (pem.getUsername().equals(username) || 
-					pem.getUsername().equals(Settings.WORLD_USER_USERNAME)) { 
+					pem.getUsername().equals(Settings.WORLD_USER_USERNAME) ||
+					pem.getUsername().equals(Settings.PUBLIC_USER_USERNAME)) { 
 				return pem.canRead(); 
 			}
 		}
@@ -75,7 +77,8 @@ public class MetadataSchemaPermissionManager {
 		for (MetadataSchemaPermission pem : MetadataSchemaPermissionDao.getBySchemaId(schemaId))
 		{
 			if (pem.getUsername().equals(username) || 
-					pem.getUsername().equals(Settings.WORLD_USER_USERNAME)) { 
+					pem.getUsername().equals(Settings.WORLD_USER_USERNAME) ||
+					pem.getUsername().equals(Settings.PUBLIC_USER_USERNAME)) { 
 				return pem.canWrite(); 
 			}
 		}

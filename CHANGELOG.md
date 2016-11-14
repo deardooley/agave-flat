@@ -1,14 +1,19 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## 2.1.9 - 2016-11-08
+## 2.1.9 - 2016-11-11
 
 ### Added
-- nothing
+- METADATA: AH-146 Adding support for json-schema v4 by default.  
+- METADATA: Adding update to support identical scope and publishing of metadata schema as metadata objects.  
+- METADATA: Adding support for using metadata schema URL in json schema references. Service will pre authenticate the call and honor any permissions that have been set.  
+- METADATA: Extending Jackson json schema support to handle internal agave URL.
+- METADATA: Added support for referencing other agave metadata schema URL as `$ref` values in json schema definitions. As long as the user has permission to view the referenced metadata schema resource, its `schema` value will be fetched and resolved for in the referring document. This allows you to include all partials in the API and build reusable json schema definitions for use validating other elements.
 
 ### Changed
 - FILES: AH-147 Fixed a bug copying files with readonly permissions to the same directory.
 - FILES: AD-934 Fixed a bug rendering the `_links.self.href` value returned on file indexing results.
+- APPS: AD-943 Fixed a bug allowing special characters in the file name.  
 
 ### Removed
 - nothing

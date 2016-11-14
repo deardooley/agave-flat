@@ -165,6 +165,8 @@ public class FilesApplication extends Application
 	        router.attach("/download/{username}/system/{systemId}/", PublicFileDownloadResource.class);
 //	        router.attach("/download/{systemId}/", PublicFileDownloadResource.class);
         
+	        secureEndpoint(router,"/index/system/{systemId}", FileIndexingResource.class); // DONE index(POST) a file, get index
+    		secureEndpoint(router,"/index/system/{systemId}/", FileIndexingResource.class); // DONE index(POST) a file, get index
     		secureEndpoint(router,"/media/system/{systemId}", FileManagementResource.class); // DONE upload(POST) a file, get upload form(GET)
             secureEndpoint(router,"/media/system/{systemId}/", FileManagementResource.class); // DONE upload(POST) a file, get upload form(GET)
             secureEndpoint(router,"/listings/system/{systemId}", FileListingResource.class); // DONE get(GET) to list upload files for user

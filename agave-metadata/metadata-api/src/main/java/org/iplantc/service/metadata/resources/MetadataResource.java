@@ -28,6 +28,7 @@ import org.iplantc.service.metadata.dao.MetadataPermissionDao;
 import org.iplantc.service.metadata.exceptions.MetadataException;
 import org.iplantc.service.metadata.managers.MetadataPermissionManager;
 import org.iplantc.service.metadata.managers.MetadataSchemaPermissionManager;
+import org.iplantc.service.metadata.util.ServiceUtils;
 import org.iplantc.service.notification.managers.NotificationManager;
 import org.joda.time.DateTime;
 import org.restlet.Context;
@@ -44,6 +45,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.github.fge.jsonschema.main.AgaveJsonSchemaFactory;
+import com.github.fge.jsonschema.main.AgaveJsonValidator;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.github.fge.jsonschema.main.JsonValidator;
 import com.github.fge.jsonschema.report.ProcessingMessage;
@@ -290,13 +293,13 @@ public class MetadataResource extends AgaveResource
 	            }
 
 	            // now validate the json against the schema
-	            String schema = schemaDBObj.getString("schema");
+	            String schema = ServiceUtils.unescapeSchemaRefFieldNames(schemaDBObj.getString("schema"));
 	            try
 	            {
 	                JsonFactory factory = new ObjectMapper().getFactory();
-	                JsonNode jsonSchemaNode = factory.createJsonParser(schema).readValueAsTree();
-	                JsonNode jsonMetadataNode = factory.createJsonParser(value).readValueAsTree();
-	                JsonValidator validator = JsonSchemaFactory.byDefault().getValidator();
+	                JsonNode jsonSchemaNode = factory.createParser(schema).readValueAsTree();
+	                JsonNode jsonMetadataNode = factory.createParser(value).readValueAsTree();
+	                AgaveJsonValidator validator = AgaveJsonSchemaFactory.byDefault().getValidator();
 	                ProcessingReport report = validator.validate(jsonSchemaNode, jsonMetadataNode);
 	                if (!report.isSuccess())
 	                {
@@ -583,7 +586,7 @@ public class MetadataResource extends AgaveResource
     	if (metadataObject.get("schemaId") != null && !StringUtils.isEmpty(metadataObject.get("schemaId").toString()))
     	{
     		AgaveUUID agaveUUID = new AgaveUUID((String)metadataObject.get("schemaId"));
-    		hal.append(agaveUUID.getResourceType().name(), new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(agaveUUID.getObjectReference())));
+    		hal.append(agaveUUID.getResourceType().name().toLowerCase(), new BasicDBObject("href", TenancyHelper.resolveURLToCurrentTenant(agaveUUID.getObjectReference())));
     	}
     	metadataObject.put("_links", hal);
 

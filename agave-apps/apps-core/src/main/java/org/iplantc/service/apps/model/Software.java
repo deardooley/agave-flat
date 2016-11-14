@@ -261,15 +261,13 @@ public class Software {
 	 */
 	public void setVersion(String version)
 	{
-		if (!ServiceUtils.isValid(version))
+		if (StringUtils.isEmpty(version))
 		{
 			throw new SoftwareException("No version specified");
 		}
 		else
 		{
-			Pattern pattern = Pattern.compile("[0-9\\.0-9[\\.0-9]+]");
-			Matcher matcher = pattern.matcher(version);
-			if (matcher.find())
+			if (version.matches("((?:0|[1-9]+[\\d]*)\\.[\\.\\d]+)"))
 			{
 				if (version.length() > 16) {
 					throw new SoftwareException("'software.version' must be less than 16 characters.");

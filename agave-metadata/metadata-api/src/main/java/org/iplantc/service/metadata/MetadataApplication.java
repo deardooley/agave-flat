@@ -9,6 +9,7 @@ import org.iplantc.service.common.restlet.AgaveApplication;
 import org.iplantc.service.metadata.resources.MetadataCollection;
 import org.iplantc.service.metadata.resources.MetadataDocumentationResource;
 import org.iplantc.service.metadata.resources.MetadataResource;
+import org.iplantc.service.metadata.resources.MetadataSchemaCollection;
 import org.iplantc.service.metadata.resources.MetadataSchemaResource;
 import org.iplantc.service.metadata.resources.MetadataSchemaShareResource;
 import org.iplantc.service.metadata.resources.MetadataShareResource;
@@ -52,8 +53,8 @@ public class MetadataApplication extends AgaveApplication
         
         if (!Settings.SLAVE_MODE) 
         {
-        	secureEndpoint(router, "/schemas", MetadataSchemaResource.class);
-            secureEndpoint(router, "/schemas/", MetadataSchemaResource.class);
+        	secureEndpoint(router, "/schemas", MetadataSchemaCollection.class);
+            secureEndpoint(router, "/schemas/", MetadataSchemaCollection.class);
             secureEndpoint(router, "/schemas/{schemaId}", MetadataSchemaResource.class);
             secureEndpoint(router, "/schemas/{schemaId}/", MetadataSchemaResource.class);
             secureEndpoint(router, "/schemas/{schemaId}/pems", MetadataSchemaShareResource.class);
