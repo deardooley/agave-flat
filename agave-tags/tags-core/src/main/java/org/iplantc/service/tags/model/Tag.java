@@ -10,6 +10,7 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
@@ -123,8 +124,8 @@ public class Tag  {
 	/**
 	 * The tags to which this uuid applies.
 	 */
-	@OneToMany(cascade = CascadeType.ALL)
-	@JsonProperty("associatedIds")
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "tag", fetch=FetchType.EAGER)
+	@JsonProperty("associationIds")
     private List<TaggedResource> taggedResources = new ArrayList<TaggedResource>();
     
 	/**
@@ -422,7 +423,7 @@ public class Tag  {
             }
         }
         
-        json.put("associatedIds", resourceArray);
+        json.set("associationIds", resourceArray);
         
         
         json.put("lastUpdated", new DateTime(getLastUpdated()).toString())
@@ -432,7 +433,7 @@ public class Tag  {
         linksObject.put("self", (ObjectNode)mapper.createObjectNode()
             .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getUuid()));
         linksObject.put("resources", (ObjectNode)mapper.createObjectNode()
-                .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getUuid() + "/associatedIds"));
+                .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getUuid() + "/associationIds"));
 //        linksObject.put("history", (ObjectNode)mapper.createObjectNode()
 //                .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getUuid() + "/history"));
         linksObject.put("permissions", (ObjectNode)mapper.createObjectNode()

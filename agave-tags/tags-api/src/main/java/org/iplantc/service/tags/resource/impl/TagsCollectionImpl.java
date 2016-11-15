@@ -6,6 +6,8 @@ package org.iplantc.service.tags.resource.impl;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -48,6 +50,7 @@ public class TagsCollectionImpl extends AbstractTagCollection implements TagsCol
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.tags.resource.TagsCollection#getTags()
 	 */
+	@GET
 	@Override
 	public Response getTags() throws Exception {
 		
@@ -81,6 +84,7 @@ public class TagsCollectionImpl extends AbstractTagCollection implements TagsCol
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.tags.resource.TagsCollection#addTagFromForm(java.lang.String, java.util.List)
 	 */
+	@POST
 	@Override
 	public Response addTag(Representation input) {
 		

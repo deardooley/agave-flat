@@ -38,7 +38,7 @@ public class TagDao extends AbstractDao
 	protected Session getSession() {
 		HibernateUtil.beginTransaction();
 		Session session = HibernateUtil.getSession();
-		session.clear();
+//		session.clear();
 		session.enableFilter("tagTenantFilter").setParameter("tenantId", TenancyHelper.getCurrentTenantId());
 		return session;
 	}
@@ -263,9 +263,7 @@ public class TagDao extends AbstractDao
 
 		try
 		{	
-			HibernateUtil.beginTransaction();
-			Session session = HibernateUtil.getSession();
-			session.clear();
+			Session session = getSession();
 			
 			session.saveOrUpdate(tag);
 			session.flush();
@@ -448,7 +446,7 @@ public class TagDao extends AbstractDao
 	{
 		try
 		{
-			Session session = getSession();
+			Session session = HibernateUtil.getSession();
 			
 			String sql = "select uuid from tags where name = :name and owner = :owner and tenant_id = :tenantId";
 			
@@ -459,23 +457,23 @@ public class TagDao extends AbstractDao
 					.setMaxResults(1)
 					.uniqueResult();
 			
-			session.flush();
+//			session.flush();
 			return match != null;
 		}
 		catch (HibernateException ex)
 		{
-			try
-			{
-				if (HibernateUtil.getSession().isOpen()) {
-					HibernateUtil.rollbackTransaction();
-				}
-			}
-			catch (Exception e) {}
+//			try
+//			{
+//				if (HibernateUtil.getSession().isOpen()) {
+//					HibernateUtil.rollbackTransaction();
+//				}
+//			}
+//			catch (Exception e) {}
 			
 			throw new TagException(ex);
 		}
 		finally {
-			try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
+//			try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
 		}
 	}	
 

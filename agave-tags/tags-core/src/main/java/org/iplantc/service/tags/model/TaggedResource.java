@@ -7,6 +7,7 @@ import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -56,9 +57,11 @@ public class TaggedResource {
     @JsonIgnore
 	private Date created = new Date();
 
-    @ManyToOne
-    @JoinColumn(name = "tag_id")
-    @JsonIgnore
+//    @ManyToOne
+//    @JoinColumn(name = "tag_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "tag_id")
+	@JsonIgnore
     private Tag tag;
 
     public TaggedResource() {}

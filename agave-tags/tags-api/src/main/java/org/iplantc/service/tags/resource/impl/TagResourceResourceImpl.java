@@ -39,7 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
-@Path("{entityId}/associatedIds/{uuid}")
+@Path("{entityId}/associationIds/{uuid}")
 public class TagResourceResourceImpl extends AbstractTagResource implements
 		TagResourceResource {
 

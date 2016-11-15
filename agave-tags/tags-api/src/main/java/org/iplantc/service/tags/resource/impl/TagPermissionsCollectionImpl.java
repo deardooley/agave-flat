@@ -64,7 +64,7 @@ public class TagPermissionsCollectionImpl extends AbstractTagCollection implemen
                 
                 // serialize to json array
                 ObjectMapper mapper = new ObjectMapper();
-                String json = mapper.writerWithType(new TypeReference<List<TagPermission>>() {})
+                String json = mapper.writerFor(new TypeReference<List<TagPermission>>() {})
                 					.writeValueAsString(pems.subList(offset, limit));
                 
                 return Response.ok(new AgaveSuccessRepresentation(json)).build();

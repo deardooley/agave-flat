@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
-@Path("{entityId}/associatedIds")
+@Path("{entityId}/associationIds")
 public class TagResourcesCollectionImpl extends AbstractTagCollection implements TagResourcesCollection {
     
 	private static final Logger log = Logger.getLogger(TagResourcesCollectionImpl.class);
