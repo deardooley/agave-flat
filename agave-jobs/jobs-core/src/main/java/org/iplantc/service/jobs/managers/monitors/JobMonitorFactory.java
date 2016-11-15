@@ -40,14 +40,16 @@ public class JobMonitorFactory {
         }
 		else
 		{
-		    Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
-		    ExecutionType executionType = null;
-		    if (software == null) {
-		        executionType = executionSystem.getExecutionType();
-		    } else {
-		        executionType = software.getExecutionType();
-		    }
-		    
+//		    Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
+//		    ExecutionType executionType = null;
+//		    if (software == null) {
+//		        executionType = executionSystem.getExecutionType();
+//		    } else {
+//		        executionType = software.getExecutionType();
+//		    }
+//		    
+	        ExecutionType executionType = executionSystem.getExecutionType();
+	        
 			if (executionType == ExecutionType.CONDOR) {
 				return new CondorJobMonitor(job);
 			} else if (executionType == ExecutionType.HPC) {

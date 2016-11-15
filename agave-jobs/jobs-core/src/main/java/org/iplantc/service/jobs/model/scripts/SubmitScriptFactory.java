@@ -65,6 +65,12 @@ public class SubmitScriptFactory {
 		else if (scheduler == SchedulerType.CUSTOM_SLURM) {
 			return new CustomSlurmSubmitScript(job);
 		}
+		else if (scheduler == SchedulerType.CUSTOM_LOADLEVELER) {
+			return new CustomLoadLevelerSubmitScript(job);
+		}
+		else if (scheduler == SchedulerType.CUSTOM_LSF) {
+			return new CustomLsfSubmitScript(job);
+		}
 		else if (scheduler == SchedulerType.CONDOR) {
 			return new CondorSubmitScript(job);
 		}

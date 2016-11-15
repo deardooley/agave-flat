@@ -39,33 +39,23 @@ public class LsfSubmitScript extends AbstractSubmitScript {
 		if (parallelismType.equals(ParallelismType.PTHREAD))
 		{
 			result += prefix + "-n " + nodes + "\n";
-			result += prefix + "-R 'span[ptile=1]\n";
+			result += prefix + "-R 'span[ptile=1]'\n";
 		}
 		else if (parallelismType.equals(ParallelismType.SERIAL))
 		{
 			result += prefix + "-n 1\n";
-			result += prefix + "-R 'span[ptile=1]\n";
+			result += prefix + "-R 'span[ptile=1]'\n";
 		}
 		else
 		{
 			// assume parallel
 			result += prefix + "-n " + (nodes * processors) + "\n";
-			result += prefix + "-R 'span[ptile=" + processors + "]\n";
+			result += prefix + "-R 'span[ptile=" + processors + "]'\n";
 		}
 		
 		if (!StringUtils.isEmpty(queue.getCustomDirectives())) {
 			result += prefix + queue.getCustomDirectives() + "\n";
 		}
-		
-//		if (!StringUtils.isEmpty(system.getDefaultQueue().getCustomDirectives())) {
-//			result += system.getDefaultQueue().getCustomDirectives() + "\n";
-//		}
-//		
-////		for (String directive : system.getCustomDirectives()) {
-////			if (!StringUtils.isEmpty(directive)) {
-////				result += prefix + directive + "\n";
-////			}
-////		}
 		
 		return result;
 	}

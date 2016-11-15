@@ -11,16 +11,18 @@ package org.iplantc.service.systems.model.enumerations;
  */
 public enum SchedulerType
 {
-	LSF, LOADLEVELER, PBS, CUSTOM_PBS, SGE, CUSTOM_GRIDENGINE, CONDOR, CUSTOM_CONDOR, FORK, COBALT, TORQUE, CUSTOM_TORQUE, MOAB, SLURM, CUSTOM_SLURM, UNKNOWN;
+	LSF, CUSTOM_LSF, LOADLEVELER, CUSTOM_LOADLEVELER, PBS, CUSTOM_PBS, SGE, CUSTOM_GRIDENGINE, CONDOR, CUSTOM_CONDOR, FORK, COBALT, TORQUE, CUSTOM_TORQUE, MOAB, SLURM, CUSTOM_SLURM, UNKNOWN;
 
 	public String getBatchSubmitCommand() 
 	{
 		switch (this) 
 		{
 			case LSF:
+			case CUSTOM_LSF:
 			case COBALT:
 				return "bsub";
 			case LOADLEVELER:
+			case CUSTOM_LOADLEVELER:
 				return "llsub";
 			case TORQUE:
 			case CUSTOM_TORQUE:
@@ -50,9 +52,11 @@ public enum SchedulerType
 		switch (this) 
 		{
 			case LSF:
+			case CUSTOM_LSF:
 			case COBALT:
 				return "bkill ";
 			case LOADLEVELER:
+			case CUSTOM_LOADLEVELER:
 				return "llcancel ";
 			case TORQUE:
 			case CUSTOM_TORQUE:
@@ -86,9 +90,11 @@ public enum SchedulerType
 		switch (this) 
 		{
 			case LSF:
+			case CUSTOM_LSF:
 			case COBALT:
 				return "bhist";
 			case LOADLEVELER:
+			case CUSTOM_LOADLEVELER:
 				return "llq";
 			case PBS:
 			case CUSTOM_PBS:

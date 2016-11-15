@@ -3,6 +3,9 @@ package org.iplantc.service.jobs.model.enumerations;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.cfg.NotYetImplementedException;
+import org.iplantc.service.common.dao.TenantDao;
+import org.iplantc.service.common.exceptions.TenantException;
+import org.iplantc.service.common.model.Tenant;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.jobs.Settings;
@@ -17,10 +20,11 @@ import org.joda.time.DateTime;
 
 public enum WrapperTemplateAttributeVariableType implements WrapperTemplateVariableType
 {
-	
+
 	// job value macros
 	IPLANT_JOB_NAME,
 	AGAVE_JOB_NAME,
+	AGAVE_JOB_NAME_RAW,
 	AGAVE_JOB_ID,
 	AGAVE_JOB_APP_ID,
 	AGAVE_JOB_EXECUTION_SYSTEM,
@@ -34,20 +38,26 @@ public enum WrapperTemplateAttributeVariableType implements WrapperTemplateVaria
 	AGAVE_JOB_MEMORY_PER_NODE,
 	AGAVE_JOB_MAX_RUNTIME,
 	AGAVE_JOB_MAX_RUNTIME_MILLISECONDS,
+	AGAVE_JOB_MAX_RUNTIME_SECONDS,
 	AGAVE_JOB_ARCHIVE_URL,
 
 	AGAVE_JOB_OWNER,
 	AGAVE_JOB_TENANT,
+	AGAVE_BASE_URL,
 	AGAVE_JOB_ARCHIVE;
 
 	private static final Logger log = Logger.getLogger(WrapperTemplateAttributeVariableType.class);
-	
+
 	@Override
 	public String resolveForJob(Job job)
 	{
 		if (this == IPLANT_JOB_NAME || this == AGAVE_JOB_NAME)
 		{
 			return Slug.toSlug(job.getName());
+		}
+		else if (this == AGAVE_JOB_NAME_RAW)
+		{
+			return job.getName();
 		}
 		else if (this == AGAVE_JOB_ID)
 		{
@@ -71,12 +81,12 @@ public enum WrapperTemplateAttributeVariableType implements WrapperTemplateVaria
 					if (queue != null) {
 						queueName = queue.getEffectiveMappedName();
 					}
-				}	
+				}
 			}
 			catch (Throwable e) {
 				log.error("Failed to resolve job queue name to effective queue name in job " + job.getUuid());
 			}
-			
+
 			return queueName;
 		}
 		else if (this == AGAVE_JOB_SUBMIT_TIME)
@@ -119,6 +129,19 @@ public enum WrapperTemplateAttributeVariableType implements WrapperTemplateVaria
 			catch (Exception e) {
 				return "0";
 			}
+		}
+		else if (this == AGAVE_JOB_MAX_RUNTIME_SECONDS)
+		{
+			try {
+				return String.valueOf(Math.floor(TimeUtils.getMillisecondsForMaxTimeValue(job.getMaxRunTime())/1000));
+			}
+			catch (Exception e) {
+				return "0";
+			}
+		}
+		else if (this == AGAVE_BASE_URL)
+		{
+			return TenancyHelper.resolveURLToCurrentTenant("https://example.com/", job.getTenantId());
 		}
 		else if (this == AGAVE_JOB_OWNER)
 		{
