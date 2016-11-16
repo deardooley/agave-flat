@@ -37,8 +37,6 @@ public class JobsApplication extends AgaveApplication
 	@Override
 	protected void mapServiceEndpoints(Router router)
 	{
-System.out.println("******************************* In JobsApplication mapServiceEndpoints()");
-
 		// Define the resource for the static usage page
         router.attach(getStandalonePrefix() + "/usage", JobDocumentationResource.class);
         router.attach(getStandalonePrefix() + "/usage/", JobDocumentationResource.class);

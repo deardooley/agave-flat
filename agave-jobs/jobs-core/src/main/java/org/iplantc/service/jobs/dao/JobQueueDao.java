@@ -33,7 +33,7 @@ import org.iplantc.service.jobs.queue.SelectorFilter;
  * 
  * @author rcardone
  */
-public class JobQueueDao {
+public final class JobQueueDao {
     
     /* ********************************************************************** */
     /*                               Constants                                */

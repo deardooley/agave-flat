@@ -7,12 +7,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.dao.JobDao;
+import org.iplantc.service.jobs.dao.JobLeaseDao;
 import org.iplantc.service.jobs.dao.JobQueueDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobQueueFilterException;
@@ -109,12 +111,16 @@ public abstract class AbstractPhaseScheduler
     // Number of milliseconds to wait in various polling situations.
     private static final int POLLING_NORMAL_DELAY  = 10000;
     private static final int POLLING_FAILURE_DELAY = 15000;
+    private static final int LEASE_RENEWAL_DELAY = (JobLeaseDao.LEASE_SECONDS / 4) * 1000;
     
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
     // The only job phase that this instance services.
     protected final JobPhaseType _phaseType;
+    
+    // A unique name for this scheduler.
+    private final String _name;
     
     // The parent thread group of all thread groups created by this scheduler.
     // By default, this thread group is not a daemon, so it will not be destroyed
@@ -165,6 +171,9 @@ public abstract class AbstractPhaseScheduler
         
         // Assign our phase identity.
         _phaseType = phaseType;
+        
+        // Assign our unique name.
+        _name = phaseType.name() + "-" + UUID.randomUUID();
         
         // Create parent thread group.
         _phaseThreadGroup = new ThreadGroup(phaseType.name() + THREADGROUP_SUFFIX);
@@ -274,6 +283,11 @@ public abstract class AbstractPhaseScheduler
     /* ********************************************************************** */
     /*                           Protected Methods                            */
     /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* getSchedulerName:                                                      */
+    /* ---------------------------------------------------------------------- */
+    protected String getSchedulerName(){return _name;}
+    
     /* ---------------------------------------------------------------------- */
     /* getPhaseThreadGroup:                                                   */
     /* ---------------------------------------------------------------------- */
@@ -873,69 +887,193 @@ public abstract class AbstractPhaseScheduler
             _log.debug(_phaseType.name() + " scheduler entering polling loop on thread " + 
                        Thread.currentThread().getName() + ".");
         
+        // Create the lease access object.
+        JobLeaseDao jobLeaseDao = new JobLeaseDao(_phaseType, _name);
+        
         // Enter infinite scheduling loop.
-        for (;;) {
-            // Query the database for all candidate jobs for this phase.
-            List<Job> jobs = null;
-            try {jobs = getJobsReadyForPhase();}
-                catch (Exception e) 
-                {
-                    String msg = _phaseType.name() + " scheduler database polling " +
-                                 "failure. Retrying after a short delay.";
-                    _log.info(msg);
-                    try {Thread.sleep(POLLING_FAILURE_DELAY);}
-                        catch (InterruptedException e1){}
-                    continue;
-                }
-            
-            if (_log.isDebugEnabled())
-               _log.debug(_phaseType.name() + " scheduler retrieved " +
-                          jobs.size() + " jobs.");
-            
-            // Select a tenant to process.
-            
-            // Select a user to process.
-            
-            // Select a job to process.
-            
-            // Process the selected job.
-            // TODO: Replace scaffolding code with real job selection code.
-            if (!jobs.isEmpty()) {
-                Job job = jobs.get(0); // temp code
+        try {
+            for (;;) {
                 
-                // Select a target queue name for this job.
-                // The name is used as the routing key to a 
-                // direct exchange.
-                String routingKey = selectQueueName(job);
-                try {
-                    // Write the job to the selected worker queue.
-                    _schedulerChannel.basicPublish(AbstractPhaseWorker.WORKER_EXCHANGE_NAME, 
+                // Acquire or reacquire the lease that grants this scheduler
+                // instance the permission to query the jobs table.  If we don't
+                // get the lease, we keep retrying until we do or are interrupted.
+                if (!jobLeaseDao.acquireLease()) waitToAcquireLease(jobLeaseDao);
+                
+                // Query the database for all candidate jobs for this phase.
+                List<Job> jobs = null;
+                try {jobs = getJobsReadyForPhase();}
+                    catch (Exception e) 
+                    {
+                        String msg = _phaseType.name() + " scheduler database polling " +
+                                     "failure. Retrying after a short delay.";
+                        _log.info(msg, e);
+                        
+                        // Wait for some period of time before trying again.
+                        waitForWork(jobLeaseDao, POLLING_FAILURE_DELAY);
+                        continue;
+                    }
+            
+                if (_log.isDebugEnabled())
+                    _log.debug(_phaseType.name() + " scheduler retrieved " +
+                               jobs.size() + " jobs.");
+            
+                // See if this thread was interrupted before doing a lot of processing.
+                if (Thread.currentThread().isInterrupted()) {
+                    String msg = "Scheduler thread " + Thread.currentThread().getName() +
+                                 " for phase " + _phaseType.name() + 
+                                 " interrupted while processing new work.";
+                    throw new InterruptedException(msg);
+                }
+                
+                // Select a tenant to process.
+            
+                // Select a user to process.
+            
+                // Select a job to process.
+            
+                // Process the selected job.
+                // TODO: Replace scaffolding code with real job selection code.
+                if (!jobs.isEmpty()) {
+                    Job job = jobs.get(0); // temp code
+                
+                    // Select a target queue name for this job.
+                    // The name is used as the routing key to a 
+                    // direct exchange.
+                    String routingKey = selectQueueName(job);
+                    try {
+                        // Write the job to the selected worker queue.
+                        _schedulerChannel.basicPublish(AbstractPhaseWorker.WORKER_EXCHANGE_NAME, 
                             routingKey, null, toQueuableJSON(job).getBytes("UTF-8"));
                     
-                    // Tracing.
-                    if (_log.isDebugEnabled()) {
-                        String msg = _phaseType.name() + " scheduler published " +
+                        // Tracing.
+                        if (_log.isDebugEnabled()) {
+                            String msg = _phaseType.name() + " scheduler published " +
                                 job.getName() + " (" + job.getUuid() + ") to queue " + 
                                 routingKey + ".";
-                        _log.debug(msg);
+                            _log.debug(msg);
+                        }
                     }
-                }
-                catch (IOException e) {
-                    // TODO: Probably need better failure remedy when publish fails.
-                    String msg = _phaseType.name() + " scheduler failed to publish " +
+                    catch (IOException e) {
+                        // TODO: Probably need better failure remedy when publish fails.
+                        String msg = _phaseType.name() + " scheduler failed to publish " +
                             job.getName() + " (" + job.getUuid() + ") to queue " + 
                             routingKey + ".  Retrying later.";
-                    _log.info(msg, e);
+                        _log.info(msg, e);
+                    }
                 }
-            }
             
-            // Wait for more jobs to accumulate.
-            // TODO: handle interrupts
-            try {Thread.sleep(POLLING_NORMAL_DELAY);}
-                catch (InterruptedException e1){}
-        } // End polling loop.
+                // Wait for more jobs to accumulate
+                // while maintaining our job lease.
+                waitForWork(jobLeaseDao, POLLING_NORMAL_DELAY);
+                
+            } // End polling loop.
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        finally {
+            // Always try to release the lease since we might be holding it.
+            jobLeaseDao.releaseLease();
+            
+            // Announce our termination.
+            if (_log.isInfoEnabled()) {
+                String msg = "Scheduler thread " + Thread.currentThread().getName() +
+                    " for phase " + _phaseType.name() + 
+                    " is terminating.";
+                _log.info(msg);
+            }
+        }
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* waitToAcquireLease:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Wait for period of time between lease acquisition retries. The wait
+     * time is the average time left on an existing time.  The period is short 
+     * enough to provide responsiveness if the lease holder abruptly terminates or
+     * becomes inaccessible. This method checks the thread's interrupted flag 
+     * before sleeping. The method only terminates if the lease is acquired or
+     * on interrupt.   
+     * 
+     * @param jobLeaseDao access object for lease renewal
+     * @return true if the job lease is acquired.
+     * @throws InterruptedException when the thread detects an interrupt
+     */
+    private boolean waitToAcquireLease(JobLeaseDao jobLeaseDao) 
+     throws InterruptedException
+    {
+        // Calculate retry interval to be the average time a lease might
+        // be held by a defunct scheduler.
+        final int millis = (JobLeaseDao.LEASE_SECONDS / 2) * 1000;
+        
+        // Keep trying to acquire lease.
+        while (true) {
+            
+            // See if this thread was interrupted before sleeping.
+            if (Thread.currentThread().isInterrupted()) {
+                String msg = "Scheduler thread " + Thread.currentThread().getName() +
+                             " for phase " + _phaseType.name() + 
+                             " interrupted while waiting to acquire lease.";
+                throw new InterruptedException(msg);
+            }
+            
+            // Wait before retrying to acquire the job lease.
+            // We rethrow any interruption exceptions.
+            try {Thread.sleep(millis);}
+            catch (InterruptedException e) {
+                String msg = "Scheduler thread " + Thread.currentThread().getName() +
+                             " interrupted while waiting to acquire job lease.";
+                _log.info(msg);
+                throw e;
+            }
+            
+            // We're done if we get the lease.
+            if (jobLeaseDao.acquireLease()) break;
+        }
+        
+        // We got the lease if we're here.
+        return true;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* waitForWork:                                                           */
+    /* ---------------------------------------------------------------------- */
+    /** Sleep for the configured period of time to allow new work to accumulate 
+     * in the job table.  Sleep may be interrupted to renew our job lease. This
+     * method checks the thread's interrupted flag before sleeping.
+     * 
+     * @param jobLeaseDao access object for lease renewal
+     * @param sleepMillis the total time in milliseconds to sleep
+     * @throws InterruptedException when the thread detects an interrupt
+     */
+    private void waitForWork(JobLeaseDao jobLeaseDao, int sleepMillis) 
+     throws InterruptedException
+    {
+        // Set up the overall sleep interval not counting lease renewal.
+        int windDown = sleepMillis;
+        while (windDown > 0) {
+            
+            // See if this thread was interrupted before sleeping.
+            if (Thread.currentThread().isInterrupted()) {
+                String msg = "Scheduler thread " + Thread.currentThread().getName() +
+                             " for phase " + _phaseType.name() + 
+                             " interrupted while waiting for new work.";
+                throw new InterruptedException(msg);
+            }
+            
+            // Calculate the wake up time to allow for lease renewal.
+            int delay = Math.min(windDown, LEASE_RENEWAL_DELAY);
+            Thread.sleep(delay);
+            windDown -= delay;
+            
+            // Determine if this is a lease renewal wake up.
+            if (windDown > 0) jobLeaseDao.acquireLease();
+        }
+    }
+    
     /* ---------------------------------------------------------------------- */
     /* getJobsReadyForPhase:                                                  */
     /* ---------------------------------------------------------------------- */

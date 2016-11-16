@@ -50,3 +50,21 @@ CREATE TABLE IF NOT EXISTS `job_queues` (
     REFERENCES tenants(`tenant_id`)
     ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+# Create the scheduler lease table that is used to limit
+# the number of active schedulers for each phase to 1.
+CREATE TABLE `job_leases` (
+    `lease` varchar(32) NOT NULL,
+    `last_updated` datetime NOT NULL,
+    `expires_at` datetime,
+    `lessee` varchar(128),
+    PRIMARY KEY (`lease`),
+    UNIQUE INDEX (`lease`,`last_updated`,`expires_at`,`lessee`)
+) ENGINE=InnoDB;
+
+# Populate the lease table with the names of each phase. 
+INSERT IGNORE INTO `job_leases` (lease, last_updated, expires_at, lessee) VALUES ('STAGING', now(), NULL, NULL);
+INSERT IGNORE INTO `job_leases` (lease, last_updated, expires_at, lessee) VALUES ('SUBMITTING', now(), NULL, NULL);
+INSERT IGNORE INTO `job_leases` (lease, last_updated, expires_at, lessee) VALUES ('MONITORING', now(), NULL, NULL);
+INSERT IGNORE INTO `job_leases` (lease, last_updated, expires_at, lessee) VALUES ('ARCHIVING', now(), NULL, NULL);
+
