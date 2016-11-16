@@ -79,7 +79,19 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
                 for (String varName: new HashSet<String>(Arrays.asList(callbackVariableNames))) {
                 	varName = StringUtils.trimToNull(varName);
                 	if (varName != null) {
-                		sb.append(String.format("echo '  \"%s\": \"'$(printf %%q \"$%s\")'\",' >> \"$AGAVE_CALLBACK_FILE\"\n", varName, varName));
+                		String key = varName;
+                		String value = varName;
+                		// if there is a colon in the value, it's a custom name for the variable
+                		// such as name:JOB_NAME
+                		if (varName.contains(":")) {
+                			String[] kv = StringUtils.split(varName, ":");
+                			if (kv.length >= 2) {
+                				key = kv[0];
+                				value = kv[1];
+                			} 
+                		} 
+                		
+                		sb.append(String.format("echo '  \"%s\": \"'$(printf %%q \"$%s\")'\",' >> \"$AGAVE_CALLBACK_FILE\"\n", key, value));
                 	}
                 }
             }
