@@ -17,15 +17,18 @@ import org.iplantc.service.jobs.managers.JobQuotaCheck;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
+import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
 import org.iplantc.service.jobs.phases.schedulers.AbstractPhaseScheduler;
-import org.iplantc.service.jobs.phases.schedulers.AbstractPhaseScheduler.QueueableJob;
 import org.iplantc.service.jobs.queue.actions.WorkerAction;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
 import org.joda.time.DateTime;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConsumerCancelledException;
@@ -89,6 +92,13 @@ public abstract class AbstractPhaseWorker
     /* ---------------------------------------------------------------------- */
     /* processJob:                                                            */
     /* ---------------------------------------------------------------------- */
+    /** Subclasses implement this method to perform their phase's work for the
+     * specified job.  Problems that should cause the job to be rejected are
+     * communicated back to the command processor by throwing an exception.
+     * 
+     * @param job the job requiring phase processing
+     * @throws JobWorkerException if the job's queued message should be rejected
+     */
     protected abstract void processJob(Job job) throws JobWorkerException;
     
     /* ********************************************************************** */
@@ -157,79 +167,74 @@ public abstract class AbstractPhaseWorker
 
             // Tracing.
             if (_log.isDebugEnabled()) dumpMessageInfo(envelope, properties, body);
+
+            // Once we receive a message, we're on the hook to ack or reject it.
+            boolean ack = true;  // assume success
             
-            // We expect only json messages.
-            boolean ack = true; // assume success
+            // ----------------- Extract Command --------------------
+            // Read the queued json generically.
             ObjectMapper m = new ObjectMapper();
-            QueueableJob qjob = null;
-            try {qjob = m.readValue(body, QueueableJob.class);}
+            JsonNode node = null;
+            try {node = m.readTree(body);}
             catch (IOException e) {
                 // Log error message.
                 String msg = "Worker " + getName() + 
-                             " cannot decode data from queue " + 
-                             _queueName + ": " + e.getMessage();
+                     " cannot decode data from queue " + 
+                     _queueName + ": " + e.getMessage();
                 _log.error(msg, e);
-                
-                // Reject this input.
                 ack = false;
             }
             
-            // Allow graceful processing. 
-            if (qjob == null) qjob = new QueueableJob();
-            
-            // ----------------- Message Processing -----------------
-            // ----- Test message input case
-            if (!StringUtils.isBlank(qjob.testMessage)) {
-                System.out.println("Worker " + getName() +  
-                        " received message:\n > " + qjob.testMessage + "\n");
-            }
-            // ----- Job input case
-            else if (!StringUtils.isBlank(qjob.uuid)) {
-                // We have a job reference to process.
-                Job job = null;
-                try {job = JobDao.getByUuid(qjob.uuid);}
-                catch (JobException e) {
+            // Navigate to the command field.
+            JobCommand command = null;
+            if (node == null) 
+                ack = false;
+            else
+            {
+                // Get the command field from the queued json.
+                String cmd = node.path("command").asText();
+                try {command = JobCommand.valueOf(cmd);}
+                catch (Exception e) {
                     String msg = "Worker " + getName() + 
-                                 " unable to retrieve Job with UUID " + qjob.uuid +
-                                 " (" + qjob.name + ") from database.";
+                         " decoded an invalid command (" + cmd + 
+                         ") from queue " + _queueName + ": " + e.getMessage();
                     _log.error(msg, e);
                     ack = false;
                 }
-                
-                // Make sure we got a job.
-                if (job == null) {
+            }
+            
+            // ----------------- Message Processing -----------------
+            // All message processors return the ack boolean value that
+            // determines the final disposition of the queued message.
+            
+            // Process the command.
+            try {
+                // ----- Job input case
+                if (command == JobCommand.WKR_PROCESS_JOB) {
+                    ack = doProcessJob(envelope, properties, body);
+                }
+                // ----- Test message input case
+                else if (command == JobCommand.NOOP) {
+                    ack = doNoop(node);
+                }
+                // ----- Invalid input case
+                else {
+                    // Log the invalid input.
                     String msg = "Worker " + getName() + 
-                                 " unable to find Job with UUID " + qjob.uuid +
-                                 " (" + qjob.name + ") from database.";
+                            " received an invalid command: " + (new String(body));
                     _log.error(msg);
+                
+                    // Reject this input.
                     ack = false;
                 }
-                else {
-                    // This has no tenant info loaded.  We set it up here so things 
-                    // like app and system lookups will stay local to the tenant.
-                    TenancyHelper.setCurrentTenantId(job.getTenantId());
-                    TenancyHelper.setCurrentEndUser(job.getOwner());
-                
-                    // Invoke the phase processor.
-                    try {processJob(job);}
-                    catch (Exception e)
-                    {
-                        String msg = "Worker " + getName() + 
-                                     " unable to process Job with UUID " + qjob.uuid +
-                                     " (" + qjob.name + ").";
-                        _log.error(msg);
-                        ack = false;
-                    }
-                }
             }
-            // ----- Invalid input case
-            else {
-                // Log the invalid input.
-                String msg = "Worker " + getName() + " received invalid input: " +
-                (new String(body));
-                _log.error(msg);
-                
-                // Reject this input.
+            catch (Exception e) {
+                // Command processor are not supposed to throw exceptions,
+                // but we double check anyway.
+                String msg = "Worker " + getName() + 
+                             " caught an unexpected command processor exception: " + 
+                             e.getMessage();
+                _log.error(msg, e);
                 ack = false;
             }
             
@@ -271,6 +276,143 @@ public abstract class AbstractPhaseWorker
             _log.debug("<- Exiting worker thread " + getName() + ".");
     }
 
+    /* ********************************************************************** */
+    /*                          Command Processors                            */
+    /* ********************************************************************** */
+    /* Each command processor handles a specific worker command as defined in
+     * AbstractQueueMessage.JobCommand.  Command processors should never throw
+     * exception and always return the ack boolean that determines whether
+     * a basicAck or basicReject is communicated to the queue from which the 
+     * messge was read.
+     * 
+     * On a case by case basis, command processor implementations can reside
+     * in this class (if all phases can share the same code), or in subclasses
+     * (if some phase need customized processing) or in both.  If a processor
+     * is only implemented in this class, then it can be made private and 
+     * reference     
+     */
+    
+    /* ---------------------------------------------------------------------- */
+    /* doProcessJob:                                                          */
+    /* ---------------------------------------------------------------------- */
+    /** Process WKR_PROCESS_JOB message, which are central focus of the jobs
+     * subsystem since they cause jobs to execute. 
+     * 
+     * @param envelope message envelop
+     * @param properties message properties
+     * @param body the raw bytes of the message
+     * @return true to acknowledge the message, false to reject it
+     */
+    protected boolean doProcessJob(Envelope envelope, 
+                                   BasicProperties properties, 
+                                   byte[] body) 
+    {
+        // ---------------------- Marshalling ----------------------
+        // Marshal the json message into it message object.
+        ObjectMapper m = new ObjectMapper();
+        ProcessJobMessage qjob = null;
+        try {qjob = m.readValue(body, ProcessJobMessage.class);}
+        catch (IOException e) {
+            // Log error message.
+            String msg = "Worker " + getName() + 
+                         " cannot decode data from queue " + 
+                         getQueueName() + ": " + e.getMessage();
+            _log.error(msg, e);
+            
+            // Reject this input.
+            return false;
+        }
+        
+        // ---------------------- Get Job --------------------------
+        // At a minimum we need the unique job id.
+        if (StringUtils.isBlank(qjob.uuid))
+        {
+            // Log the invalid input and quit.
+            String msg = "Worker " + getName() + 
+                         " received a WKR_PROCESS_JOB message with an invalid uuid: " +
+                         (new String(body));
+            _log.error(msg);
+            return false;
+        }
+        
+        // We have a job reference to process.
+        Job job = null;
+        try {job = JobDao.getByUuid(qjob.uuid);}
+        catch (JobException e) {
+            String msg = "Worker " + getName() + 
+                         " unable to retrieve Job with UUID " + qjob.uuid +
+                         " (" + qjob.name + ") from database.";
+            _log.error(msg, e);
+            return false;
+        }
+        
+        // Make sure we got a job.
+        if (job == null) {
+            String msg = "Worker " + getName() + 
+                         " unable to find Job with UUID " + qjob.uuid +
+                         " (" + qjob.name + ") from database.";
+            _log.error(msg);
+            return false;
+        }
+        
+        // TODO: Do we need to set the status on this job?
+        // Make sure the job tenant matches this worker's assigned tenant.
+        if (!getTenantId().equals(job.getTenantId())) {
+            String msg = "Worker " + getName() + " assigned tenantId " +
+                    getTenantId() + " received a job with UUID " + qjob.uuid +
+                    " (" + qjob.name + ") with tenantId " + 
+                    job.getTenantId() + ".";
+            _log.error(msg);
+            return false;
+        }
+        
+        // ---------------------- Phase Processing -----------------
+        // This thread should have no tenant info loaded.  We set it 
+        // up here so things like app and system lookups will stay 
+        // local to the tenant.  The calling method resets these values.
+        TenancyHelper.setCurrentTenantId(job.getTenantId());
+        TenancyHelper.setCurrentEndUser(job.getOwner());
+        
+        // Invoke the phase processor.
+        try {processJob(job);}
+        catch (Exception e)
+        {
+            String msg = "Worker " + getName() + 
+                         " unable to process Job with UUID " + qjob.uuid +
+                         " (" + qjob.name + ").";
+            _log.error(msg, e);
+            return false;
+        }
+        
+        // Successful processing.
+        return true;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* doNoop:                                                                */
+    /* ---------------------------------------------------------------------- */
+    /** Process a command that only logs an informational message.  If test 
+     * text is included in the message, it is also logged.
+     * 
+     * @param node a parsed json node representation of the message
+     * @return true to acknowledge the message, false to reject it
+     */
+    protected boolean doNoop(JsonNode node)
+    {
+        // No-op can have a test message
+        String testMessage = node.path("testMessage").asText();
+        if (StringUtils.isBlank(testMessage)) {
+            _log.info("Worker " + getName() + " received NOOP message.");
+        }
+        else {
+            _log.info("Worker " + getName() +  
+                    " received NOOP test message:\n > " + testMessage + "\n");
+        }
+        
+        // Always release message from queue.
+        return true;
+    }
+    
     /* ********************************************************************** */
     /*                               Accessors                                */
     /* ********************************************************************** */

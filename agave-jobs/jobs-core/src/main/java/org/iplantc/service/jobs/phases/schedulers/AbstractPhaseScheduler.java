@@ -23,6 +23,7 @@ import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
 import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
@@ -83,7 +84,7 @@ import com.rabbitmq.client.Envelope;
  * When state changes are delivered first through the database and then via the
  * topic thread, there's a chance that the job completed on its own so that no
  * worker is responsible for it any longer.  When something like a ConcurrentHashMap
- * is used, the result can be orphaned entries.  The address leaks such as that,
+ * is used, the result can be orphaned entries.  To address leaks such as that,
  * the scheduler thread can periodically clean up any orphaned entries.  For 
  * example, once a day when the scheduler thread wakes up it can run an orphan
  * clean up routine.   
@@ -375,7 +376,7 @@ public abstract class AbstractPhaseScheduler
       throws IOException
     {
         // Initialize the queueable object.
-        QueueableJob qjob = new QueueableJob();
+        ProcessJobMessage qjob = new ProcessJobMessage();
         qjob.name = job.getName();
         qjob.uuid = job.getUuid();
         
@@ -724,7 +725,7 @@ public abstract class AbstractPhaseScheduler
             _log.debug("[*] " + _phaseType.name() + " scheduler consuming " + 
                     getTopicQueueName() + " topic.");
 
-        // We auto-acknowledge topic broadcasts.
+        // We don't auto-acknowledge topic broadcasts.
         boolean autoack = false;
         try {_topicChannel.basicConsume(getTopicQueueName(), autoack, consumer);}
         catch (IOException e) {
@@ -1219,18 +1220,4 @@ public abstract class AbstractPhaseScheduler
         _log.debug(msg);
     }
     
-    /* ********************************************************************** */
-    /*                           QueueableJob Class                           */
-    /* ********************************************************************** */
-    /** Job information written to queues by the scheduler thread and read
-     * from queues by worker threads.
-     */
-    public static final class QueueableJob
-    {
-        // The test message field can be used for connectivity testing;
-        // when it is not null, it takes precedence over the other fields.
-        public String name;
-        public String uuid;
-        public String testMessage;
-    }
 }
