@@ -267,7 +267,7 @@ public class Software {
 		}
 		else
 		{
-			if (version.matches("((?:0|[1-9]+[\\d]*)\\.[\\.\\d]+)"))
+			if (version.matches("((?:0|[1-9]+[\\d]*)[\\.\\d]+)"))
 			{
 				if (version.length() > 16) {
 					throw new SoftwareException("'software.version' must be less than 16 characters.");
