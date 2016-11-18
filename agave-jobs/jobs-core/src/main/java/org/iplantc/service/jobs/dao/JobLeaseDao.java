@@ -1,13 +1,16 @@
 package org.iplantc.service.jobs.dao;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.model.JobLease;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.joda.time.DateTime;
 
@@ -253,6 +256,101 @@ public final class JobLeaseDao
         return leaseReleased;
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* getLeases:                                                             */
+    /* ---------------------------------------------------------------------- */
+    /** Dump the current state of all leases.
+     *  
+     * @return the list of all leases in ascending lease order.
+     */
+    List<JobLease> getLeases()
+    {
+        // Initialize result list.
+        List<JobLease> list = new ArrayList<>(4);
+        
+        // Dump the complete table..
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // --------------------- Lock the phase record
+            // Get an exclusive row lock on the phase record in the lease table.
+            // Note that row-level locking in the database depends on proper
+            // index definition.  See MySQL FOR UPDATE documentation for details.
+            String sql = "select lease, last_updated, expires_at, lessee from job_leases " +
+                         "order by lease";
+            
+            // Issue the call and populate the lease object.
+            Query qry = session.createSQLQuery(sql);
+            Object obj = qry.list();
+            
+            // Commit the transaction.
+            HibernateUtil.commitTransaction();
+            
+            // Populate the list.
+            populateList(list, obj);
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to retrieve leases.";
+            _log.error(msg, e);
+        }
+        
+        return list;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* clearLeases:                                                           */
+    /* ---------------------------------------------------------------------- */
+    /** Release all leases.
+     * 
+     * @return the number of leases affected.
+     */
+    public int clearLeases()
+    {
+        // Return value.
+        int rows = 0;
+        
+        // Dump the complete table..
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Advance the last updated timestamp.
+            Date lastDate = new Date();
+            
+            // Release the lease.
+            String sql = "Update job_leases " +
+                         "set last_updated = :lastdate, expires_at = NULL, lessee = NULL";
+            Query qry = session.createSQLQuery(sql);
+            qry.setTimestamp("lastdate", lastDate);
+            rows = qry.executeUpdate();
+            
+            // Commit the transaction.
+            HibernateUtil.commitTransaction();
+            
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to clear all leases.";
+            _log.error(msg, e);
+        }
+        
+        return rows;
+    }
+    
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
@@ -334,6 +432,46 @@ public final class JobLeaseDao
         if (updatedTS != null) leaseInfo._expiresAt = updatedTS.getTime();
         
         return leaseInfo;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* populateList:                                                          */
+    /* ---------------------------------------------------------------------- */
+    private void populateList(List<JobLease> list, Object qryResults)
+     throws JobException
+    {
+       // There should always be the initialized rows for each phase.
+        // We should always get a record back.
+        if (qryResults == null)
+        {
+            String msg = "Configuration error - No lease records found.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+       
+        // The row is returned as an array of object.
+        ArrayList resultArray = (ArrayList) qryResults;
+        
+        // Marshal each row from the query results.
+        for (Object rowobj : resultArray)
+        {
+            // Access row as an array and create new lease.
+            Object[] row = (Object[]) rowobj;
+            JobLease jobLease = new JobLease();
+            
+            // Marshal strings.
+            jobLease.setLease((String) row[0]);
+            jobLease.setLessee((String) row[3]);
+            
+            // Marshal the timestamps.
+            Timestamp lastUpdatedTS = (Timestamp) row[1];
+            if (lastUpdatedTS != null) jobLease.setLastUpdated(new Date(lastUpdatedTS.getTime()));
+            Timestamp expiresAtTS = (Timestamp) row[2];
+            if (expiresAtTS != null) jobLease.setExpiresAt(new Date(expiresAtTS.getTime()));
+
+            // Add the lease to the result list.
+            list.add(jobLease);
+        }
     }
     
     /* ********************************************************************** */

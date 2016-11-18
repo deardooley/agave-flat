@@ -10,13 +10,15 @@ public abstract class AbstractQueueMessage
     /* ********************************************************************** */
     /*                                  Enums                                 */
     /* ********************************************************************** */
-    // Enumeration of all command types.  The commands are
-    // prefixed by their intended consumer:
-    // 
-    //  WKR -> worker threads
-    //  TPC -> topic threads
-    //
-    public enum JobCommand {
+    /* Enumeration of all command types.  The commands are prefixed by their 
+     * intended consumer.
+     *  
+     *  Prefixes
+     *  -------- 
+     *  WKR -> worker threads
+     *  TPC -> topic threads
+     */
+    public enum JobCommand { 
         NOOP,
         WKR_PROCESS_JOB
     }
