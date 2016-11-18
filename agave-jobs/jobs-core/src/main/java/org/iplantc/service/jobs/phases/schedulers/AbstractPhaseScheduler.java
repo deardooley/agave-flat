@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobLeaseDao;
@@ -24,6 +25,7 @@ import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
+import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
 import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
@@ -34,6 +36,7 @@ import org.iplantc.service.jobs.queue.SelectorFilter;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -685,6 +688,9 @@ public abstract class AbstractPhaseScheduler
      */
     private void subscribeToJobTopic() throws JobSchedulerException
     {
+        // Reusable json mapper.
+        final ObjectMapper jsonMapper = new ObjectMapper();
+        
         // Create the topic queue consumer.
         Consumer consumer = new DefaultConsumer(_topicChannel) {
           @Override
@@ -696,27 +702,112 @@ public abstract class AbstractPhaseScheduler
               if (_log.isDebugEnabled()) 
                   dumpMessageInfo(consumerTag, envelope, properties, body);
               
-            // Process messages read from topic.
-            String message = null;
-            try {message = new String(body);}
-            catch (Exception e)
-            {
-                String msg = _phaseType.name() + 
-                             " scheduler cannot decode data from " + 
-                             getTopicQueueName() + " topic: " + e.getMessage();
-                _log.error(msg, e);
-            }
+              // ---------------- Decode Message ----------------
+              // Once we receive a message, we're on the hook to ack or reject it.
+              boolean ack = true;  // assume success
+              
+              // Read the queued json generically.
+              // Null body is caught here.
+              JsonNode node = null;
+              try {node = jsonMapper.readTree(body);}
+              catch (IOException e) {
+                  // Log error message.
+                  String msg = _phaseType.name() +  
+                     " topic reader cannot decode data from topic " + 
+                     getTopicQueueName() + ": " + e.getMessage();
+                  _log.error(msg, e);
+                  ack = false;
+              }
+              
+              // Get the command.
+              JobCommand command = null;
+              if (ack)
+              {
+                  // Get the command field from the queued json.
+                  String cmd = node.path("command").asText();
+                  try {command = JobCommand.valueOf(cmd);}
+                  catch (Exception e) {
+                      String msg = _phaseType.name() + 
+                           " topic reader decoded an invalid command (" + cmd + 
+                           ") from topic " + getTopicQueueName() + ": " + e.getMessage();
+                      _log.error(msg, e);
+                      ack = false;
+                  }
+              }
+              
+              // ---------------- Execute Request ---------------
+              // Process the command.
+              if (ack)
+              {
+                  try {
+                      // ----- Cancel job
+                      if (command == JobCommand.TCP_CANCEL_JOB) {
+                      }
+                      // ----- Pause job
+                      else if (command == JobCommand.TCP_PAUSE_JOB) {
+                      }
+                      // ----- Stop job
+                      else if (command == JobCommand.TCP_STOP_JOB) {
+                      }
+                      // ----- Shutdown scheduler
+                      else if (command == JobCommand.TPC_SHUTDOWN) {
+                      }
+                      // ----- Terminate selected worker threads
+                      else if (command == JobCommand.TCP_TERMINATE_WORKERS) {
+                      }
+                      // ----- Test message input case
+                      else if (command == JobCommand.NOOP) {
+                          ack = doNoop(node);
+                      }
+                      // ----- Invalid input case
+                      else {
+                          // Log the invalid input (we know the body is not null).
+                          String msg = _phaseType.name() + 
+                              " topic reader received an invalid command: " + (new String(body));
+                          _log.error(msg);
+                  
+                          // Reject this input.
+                          ack = false;
+                      }
+                  }
+                  catch (Exception e) {
+                      // Command processor are not supposed to throw exceptions,
+                      // but we double check anyway.
+                      String msg = _phaseType.name() + 
+                               " topic reader caught an unexpected command processor exception: " + 
+                               e.getMessage();
+                      _log.error(msg, e);
+                      ack = false;
+                  }
+              }
             
-            // For now, just print what we receive.
-            // TODO: create command processor 
-            if (message != null)
-               System.out.println(_phaseType.name() + 
-                                  " scheduler received topic message:\n > " +
-                                  message + "\n");
-            
-            // Don't forget to send the ack!
-            boolean multipleAck = false;
-            _topicChannel.basicAck(envelope.getDeliveryTag(), multipleAck);
+              // ---------------- Acknowledge Message -----------
+              // Determine whether to ack or nack the request.
+              if (ack) {
+                  // Don't forget to send the ack!
+                  boolean multipleAck = false;
+                  try {_topicChannel.basicAck(envelope.getDeliveryTag(), multipleAck);}
+                  catch (IOException e) {
+                      // We're in trouble if we cannot acknowledge a message.
+                      String msg = _phaseType.name() +  
+                            " topic reader cannot acknowledge a message received on topic " + 
+                            getTopicQueueName() + ": " + e.getMessage();
+                      _log.error(msg, e);
+                  }
+              }
+              else {
+                  // Reject this unreadable message so that
+                  // it gets discarded or dead-lettered.
+                  boolean requeue = false;
+                  try {_topicChannel.basicReject(envelope.getDeliveryTag(), requeue);} 
+                  catch (IOException e) {
+                      // We're in trouble if we cannot reject a message.
+                      String msg = _phaseType.name() +  
+                            " topic reader cannot reject a message received on topic " + 
+                            getTopicQueueName() + ": " + e.getMessage();
+                      _log.error(msg, e);
+                  }
+              }
           }
         };
         
@@ -1218,6 +1309,34 @@ public abstract class AbstractPhaseScheduler
         msg += "Properties" + buf.toString() + "\n";
         msg += "-------------------------------------------------\n";
         _log.debug(msg);
+    }
+    
+    /* ********************************************************************** */
+    /*                        Topic Command Processors                        */
+    /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* doNoop:                                                                */
+    /* ---------------------------------------------------------------------- */
+    /** Process a command that only logs an informational message.  If test 
+     * text is included in the message, it is also logged.
+     * 
+     * @param node a parsed json node representation of the message
+     * @return true to acknowledge the message, false to reject it
+     */
+    protected boolean doNoop(JsonNode node)
+    {
+        // No-op can have a test message
+        String testMessage = node.path("testMessage").asText();
+        if (StringUtils.isBlank(testMessage)) {
+            _log.info(_phaseType.name() + " topic reader received NOOP message.");
+        }
+        else {
+            _log.info(_phaseType.name() +  
+                    " topic reader received NOOP test message:\n > " + testMessage + "\n");
+        }
+        
+        // Always release message from queue.
+        return true;
     }
     
 }

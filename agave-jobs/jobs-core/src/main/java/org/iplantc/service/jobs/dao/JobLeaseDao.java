@@ -290,10 +290,7 @@ public final class JobLeaseDao
             session.clear();
             HibernateUtil.beginTransaction();
 
-            // --------------------- Lock the phase record
-            // Get an exclusive row lock on the phase record in the lease table.
-            // Note that row-level locking in the database depends on proper
-            // index definition.  See MySQL FOR UPDATE documentation for details.
+            // Dump all rows in the table.
             String sql = "select lease, last_updated, expires_at, lessee from job_leases " +
                          "order by lease";
             

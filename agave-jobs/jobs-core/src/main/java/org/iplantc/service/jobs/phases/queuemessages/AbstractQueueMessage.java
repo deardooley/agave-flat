@@ -1,5 +1,13 @@
 package org.iplantc.service.jobs.phases.queuemessages;
 
+import java.io.IOException;
+import java.io.StringWriter;
+
+import org.apache.log4j.Logger;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /** This is the base class for all message that can be queued on
  * any distributed (i.e., RabbitMQ) job queue.
  * 
@@ -8,10 +16,19 @@ package org.iplantc.service.jobs.phases.queuemessages;
 public abstract class AbstractQueueMessage 
 {
     /* ********************************************************************** */
+    /*                                Constants                               */
+    /* ********************************************************************** */
+    private static final Logger _log = Logger.getLogger(AbstractQueueMessage.class);
+    
+    // Reusable json mapper.
+    private static final ObjectMapper _jsonMapper = new ObjectMapper();
+    
+    /* ********************************************************************** */
     /*                                  Enums                                 */
     /* ********************************************************************** */
-    /* Enumeration of all command types.  The commands are prefixed by their 
-     * intended consumer.
+    /* Enumeration of all command types.  Most commands are prefixed by their 
+     * intended consumer, though commands with no prefix can appear on any
+     * queue.
      *  
      *  Prefixes
      *  -------- 
@@ -20,7 +37,12 @@ public abstract class AbstractQueueMessage
      */
     public enum JobCommand { 
         NOOP,
-        WKR_PROCESS_JOB
+        WKR_PROCESS_JOB,
+        TPC_SHUTDOWN,
+        TCP_PAUSE_JOB,
+        TCP_CANCEL_JOB,
+        TCP_STOP_JOB,
+        TCP_TERMINATE_WORKERS
     }
     
     /* ********************************************************************** */
@@ -32,5 +54,100 @@ public abstract class AbstractQueueMessage
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    protected AbstractQueueMessage(JobCommand jobCommand){this.command = jobCommand;}
+    protected AbstractQueueMessage(JobCommand jobCommand){command = jobCommand;}
+    
+    /* ********************************************************************** */
+    /*                             Public Methods                             */
+    /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* toJson:                                                                */
+    /* ---------------------------------------------------------------------- */
+    /** Generate the json string representation of any subclass.
+     * 
+     * @return the json serialization of the concrete subclass
+     * @throws IOException if serialization fails
+     */
+    public String toJson() throws IOException
+    {
+        // Write the object as a JSON string.
+        StringWriter writer = new StringWriter(150);
+        _jsonMapper.writeValue(writer, this);
+        return writer.toString();
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* fromJson:                                                              */
+    /* ---------------------------------------------------------------------- */
+    /** Create a message object from a json string.
+     * 
+     * @param json a json string that conforms to some subclass's serialization
+     * @return the message object
+     * @throws IOException if something goes wrong
+     */
+    public static AbstractQueueMessage fromJson(String json)
+     throws IOException
+    {
+        // Read the json message generically.
+        JsonNode node = null;
+        node = _jsonMapper.readTree(json);
+        if (node == null) 
+        {
+            String msg = "Invalid queue message received json: " + json;
+            _log.error(msg);
+            throw new IOException(msg);
+        }
+        
+        // Get the command field from the queued json.
+        JobCommand command = null;
+        String cmd = node.path("command").asText();
+        try {command = JobCommand.valueOf(cmd);}
+        catch (Exception e) {
+            String msg = "Invalid queue message command received: " + cmd;
+            _log.error(msg, e);
+            throw new IOException(msg, e);
+        }
+        
+        // Determine the concrete class based on all known commands.
+        Class<?> cls = null;
+        switch (command)
+        {
+            case NOOP:
+                cls = NoOpMessage.class;
+                break;
+            case WKR_PROCESS_JOB:
+                cls = ProcessJobMessage.class;
+                break;
+            case TPC_SHUTDOWN:
+                cls = ShutdownMessage.class;
+                break;
+            case TCP_PAUSE_JOB:
+                cls = PauseJobMessage.class;
+                break;
+            case TCP_CANCEL_JOB:
+                cls = CancelJobMessage.class;
+                break;
+            case TCP_STOP_JOB:
+                cls = StopJobMessage.class;
+                break;
+            case TCP_TERMINATE_WORKERS:
+                cls = TerminateWorkersMessage.class;
+                break;
+            default:
+                String msg = "Unknown queue message command encountered: " + command;
+                _log.error(msg);
+                throw new IOException(msg);
+        }
+        
+        // Create and populate the new message object.
+        AbstractQueueMessage qmsg = null;
+        try {qmsg = (AbstractQueueMessage) _jsonMapper.readValue(json, cls);}
+        catch (IOException e) {
+            String msg = "Unable to populate queue message with received json: " + json;
+            _log.error(msg, e);
+            throw new IOException(msg, e);
+        }
+        
+        // Success.
+        return qmsg;
+    }
 }

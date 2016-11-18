@@ -4,13 +4,11 @@ import java.io.IOException;
 
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
 
-/** This is the main job execution message.  When a worker thread receives
- * this message from its queue, the thread processes the job according its
- * assigned phase.
+/** This message cancels the job identified by uuid.
  * 
  * @author rcardone
  */
-public final class ProcessJobMessage 
+public final class CancelJobMessage 
  extends AbstractQueueMessage
 {
     /* ********************************************************************** */
@@ -23,7 +21,7 @@ public final class ProcessJobMessage
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public ProcessJobMessage(){super(JobCommand.WKR_PROCESS_JOB);}
+    public CancelJobMessage(){super(JobCommand.TCP_CANCEL_JOB);}
     
     /* ********************************************************************** */
     /*                            Public Methods                              */
@@ -37,13 +35,13 @@ public final class ProcessJobMessage
      * @return the message object
      * @throws IOException if something goes wrong
      */
-    public static ProcessJobMessage fromJson(String json)
+    public static CancelJobMessage fromJson(String json)
      throws IOException
     {
-        ProcessJobMessage m = (ProcessJobMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.WKR_PROCESS_JOB)
+        CancelJobMessage m = (CancelJobMessage) AbstractQueueMessage.fromJson(json);
+        if (m.command != JobCommand.TCP_CANCEL_JOB)
         {
-            String msg = "Invalid command value for ProcessJobMessage: " + m.command;
+            String msg = "Invalid command value for CancelJobMessage: " + m.command;
             throw new IOException(msg);
         }
         return m;

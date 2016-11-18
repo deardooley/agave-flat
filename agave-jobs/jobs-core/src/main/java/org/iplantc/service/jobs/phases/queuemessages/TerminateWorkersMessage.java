@@ -2,28 +2,25 @@ package org.iplantc.service.jobs.phases.queuemessages;
 
 import java.io.IOException;
 
-import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
-
-/** This is the main job execution message.  When a worker thread receives
- * this message from its queue, the thread processes the job according its
- * assigned phase.
+/** This message is used to terminate the specified number of workers on
+ * the specified queue.
  * 
  * @author rcardone
  */
-public final class ProcessJobMessage 
+public final class TerminateWorkersMessage 
  extends AbstractQueueMessage
 {
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
     // Job name and unique id.
-    public String name;
-    public String uuid;
+    public String queueName;
+    public int    numWorkers;
     
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public ProcessJobMessage(){super(JobCommand.WKR_PROCESS_JOB);}
+    public TerminateWorkersMessage(){super(JobCommand.TCP_TERMINATE_WORKERS);}
     
     /* ********************************************************************** */
     /*                            Public Methods                              */
@@ -37,13 +34,13 @@ public final class ProcessJobMessage
      * @return the message object
      * @throws IOException if something goes wrong
      */
-    public static ProcessJobMessage fromJson(String json)
+    public static TerminateWorkersMessage fromJson(String json)
      throws IOException
     {
-        ProcessJobMessage m = (ProcessJobMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.WKR_PROCESS_JOB)
+        TerminateWorkersMessage m = (TerminateWorkersMessage) AbstractQueueMessage.fromJson(json);
+        if (m.command != JobCommand.TCP_TERMINATE_WORKERS)
         {
-            String msg = "Invalid command value for ProcessJobMessage: " + m.command;
+            String msg = "Invalid command value for TerminateWorkersMessage: " + m.command;
             throw new IOException(msg);
         }
         return m;

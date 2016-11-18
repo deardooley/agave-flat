@@ -1,29 +1,28 @@
 package org.iplantc.service.jobs.phases.queuemessages;
 
 import java.io.IOException;
+import java.util.List;
 
+import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
 
-/** This is the main job execution message.  When a worker thread receives
- * this message from its queue, the thread processes the job according its
- * assigned phase.
+/** This message is used the shutdown all threads in the listed phases.
  * 
  * @author rcardone
  */
-public final class ProcessJobMessage 
+public final class ShutdownMessage 
  extends AbstractQueueMessage
 {
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
     // Job name and unique id.
-    public String name;
-    public String uuid;
+    public List<JobPhaseType> phases;
     
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public ProcessJobMessage(){super(JobCommand.WKR_PROCESS_JOB);}
+    public ShutdownMessage(){super(JobCommand.TPC_SHUTDOWN);}
     
     /* ********************************************************************** */
     /*                            Public Methods                              */
@@ -37,13 +36,13 @@ public final class ProcessJobMessage
      * @return the message object
      * @throws IOException if something goes wrong
      */
-    public static ProcessJobMessage fromJson(String json)
+    public static ShutdownMessage fromJson(String json)
      throws IOException
     {
-        ProcessJobMessage m = (ProcessJobMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.WKR_PROCESS_JOB)
+        ShutdownMessage m = (ShutdownMessage) AbstractQueueMessage.fromJson(json);
+        if (m.command != JobCommand.TPC_SHUTDOWN)
         {
-            String msg = "Invalid command value for ProcessJobMessage: " + m.command;
+            String msg = "Invalid command value for ShutdownMessage: " + m.command;
             throw new IOException(msg);
         }
         return m;

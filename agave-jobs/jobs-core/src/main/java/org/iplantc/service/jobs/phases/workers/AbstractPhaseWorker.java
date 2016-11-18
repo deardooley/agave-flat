@@ -137,6 +137,9 @@ public abstract class AbstractPhaseWorker
            return; // TODO: figure out better longterm strategy.
         }
         
+        // Reusable json mapper.
+        ObjectMapper jsonMapper = new ObjectMapper();
+        
         // Tracing.
         if (_log.isDebugEnabled())
             _log.debug("[*] Worker " + getName() + " consuming queue " + _queueName + ".");
@@ -173,9 +176,9 @@ public abstract class AbstractPhaseWorker
             
             // ----------------- Extract Command --------------------
             // Read the queued json generically.
-            ObjectMapper m = new ObjectMapper();
+            // Null body is caught here.
             JsonNode node = null;
-            try {node = m.readTree(body);}
+            try {node = jsonMapper.readTree(body);}
             catch (IOException e) {
                 // Log error message.
                 String msg = "Worker " + getName() + 
@@ -184,12 +187,11 @@ public abstract class AbstractPhaseWorker
                 _log.error(msg, e);
                 ack = false;
             }
+            if (node == null) ack = false;
             
             // Navigate to the command field.
             JobCommand command = null;
-            if (node == null) 
-                ack = false;
-            else
+            if (ack)
             {
                 // Get the command field from the queued json.
                 String cmd = node.path("command").asText();
@@ -208,34 +210,37 @@ public abstract class AbstractPhaseWorker
             // determines the final disposition of the queued message.
             
             // Process the command.
-            try {
-                // ----- Job input case
-                if (command == JobCommand.WKR_PROCESS_JOB) {
-                    ack = doProcessJob(envelope, properties, body);
-                }
-                // ----- Test message input case
-                else if (command == JobCommand.NOOP) {
-                    ack = doNoop(node);
-                }
-                // ----- Invalid input case
-                else {
-                    // Log the invalid input.
-                    String msg = "Worker " + getName() + 
+            if (ack)
+            {
+                try {
+                    // ----- Job input case
+                    if (command == JobCommand.WKR_PROCESS_JOB) {
+                        ack = doProcessJob(envelope, properties, body);
+                    }
+                    // ----- Test message input case
+                    else if (command == JobCommand.NOOP) {
+                        ack = doNoop(node);
+                    }
+                    // ----- Invalid input case
+                    else {
+                        // Log the invalid input (we know the body is not null).
+                        String msg = "Worker " + getName() + 
                             " received an invalid command: " + (new String(body));
-                    _log.error(msg);
+                        _log.error(msg);
                 
-                    // Reject this input.
-                    ack = false;
+                        // Reject this input.
+                        ack = false;
+                    }
                 }
-            }
-            catch (Exception e) {
-                // Command processor are not supposed to throw exceptions,
-                // but we double check anyway.
-                String msg = "Worker " + getName() + 
+                catch (Exception e) {
+                    // Command processor are not supposed to throw exceptions,
+                    // but we double check anyway.
+                    String msg = "Worker " + getName() + 
                              " caught an unexpected command processor exception: " + 
                              e.getMessage();
-                _log.error(msg, e);
-                ack = false;
+                    _log.error(msg, e);
+                    ack = false;
+                }
             }
             
             // ----------------- Clean Up ---------------------------
@@ -309,9 +314,8 @@ public abstract class AbstractPhaseWorker
     {
         // ---------------------- Marshalling ----------------------
         // Marshal the json message into it message object.
-        ObjectMapper m = new ObjectMapper();
         ProcessJobMessage qjob = null;
-        try {qjob = m.readValue(body, ProcessJobMessage.class);}
+        try {qjob = ProcessJobMessage.fromJson(body.toString());}
         catch (IOException e) {
             // Log error message.
             String msg = "Worker " + getName() + 
