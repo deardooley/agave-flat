@@ -16,17 +16,31 @@ import org.joda.time.DateTime;
 
 /** This class is the interface to the job_leases table.  The main purpose of 
  * the table is to allow job scheduler threads to acquire and release leases
- * on the jobs table.  Scheduler threads responsible for polling the jobs table
+ * on the jobs table.  Scheduler threads are responsible for polling the jobs table
  * for work in one of the four job processing phases (see JobPhaseType).  The
- * acquireLease() method in this class ensures that only one thread in the
+ * acquireLease() method in this class ensures that only one thread in the whole
  * system can schedule work for its phase.  No matter where scheduler instances 
- * run, only one of them at a time can have the lease for their phase.
+ * run, only one of them at a time can have the lease for a specific phase.
  * 
- * This class in cooperation with the scheduler classes implement the leasing 
+ * This class, in cooperation with AbstractPhaseScheduler, implements the leasing 
  * protocol.  The protocol involves acquiring, renewing and releasing leases
- * that have relatively short lease times.  The protocol guarantees (1) the 
- * assignment of a phase lease to at most one thread at a time and (2) liveness 
- * even under catastrophic scheduler failures.
+ * that have relatively short lease times.  The protocol guarantees (1) phase 
+ * lease assignment to at most one thread at a time and (2) liveness even under 
+ * catastrophic scheduler failures.  
+ * 
+ * Liveness is effectuated by a renewal algorithm that requires the lessee to 
+ * renew its lease before it expires.  The expiration time is on the order of a
+ * few minutes so that if the lessee fails, another scheduler thread can obtain  
+ * the lease before the system is disrupted.  The current algorithm is for
+ * renewal to occur after 25% of the lease has transpired.  This renewal 
+ * frequency gives the lessee ample opportunity to maintain its lease even
+ * under various network traffic, server load and clock skew conditions.  
+ * 
+ * With regard to clock skew, the lease protocol calls for different scheduler
+ * threads to compare the current time to a lease's expiration time.  These
+ * threads may be running on different virtual or real machines, so excessive
+ * clock skew will disrupt operations.  Skew limited to a few seconds or 
+ * even a few 10's of seconds is manageable.
  * 
  * @author rcardone
  */
@@ -259,11 +273,12 @@ public final class JobLeaseDao
     /* ---------------------------------------------------------------------- */
     /* getLeases:                                                             */
     /* ---------------------------------------------------------------------- */
-    /** Dump the current state of all leases.
+    /** Dump the current state of all leases.  This is an administrative command 
+     * that is useful in testing but will probably never be used in production.
      *  
      * @return the list of all leases in ascending lease order.
      */
-    List<JobLease> getLeases()
+    public static List<JobLease> getLeases()
     {
         // Initialize result list.
         List<JobLease> list = new ArrayList<>(4);
@@ -284,13 +299,14 @@ public final class JobLeaseDao
             
             // Issue the call and populate the lease object.
             Query qry = session.createSQLQuery(sql);
-            Object obj = qry.list();
+            @SuppressWarnings("rawtypes")
+            List qryResuts = qry.list();
             
             // Commit the transaction.
             HibernateUtil.commitTransaction();
             
             // Populate the list.
-            populateList(list, obj);
+            populateList(list, qryResuts);
         }
         catch (Exception e)
         {
@@ -308,11 +324,12 @@ public final class JobLeaseDao
     /* ---------------------------------------------------------------------- */
     /* clearLeases:                                                           */
     /* ---------------------------------------------------------------------- */
-    /** Release all leases.
+    /** Release all leases.  This is an administrative command that is useful 
+     * in testing but will probably never be used in production.  
      * 
      * @return the number of leases affected.
      */
-    public int clearLeases()
+    public static int clearLeases()
     {
         // Return value.
         int rows = 0;
@@ -437,7 +454,8 @@ public final class JobLeaseDao
     /* ---------------------------------------------------------------------- */
     /* populateList:                                                          */
     /* ---------------------------------------------------------------------- */
-    private void populateList(List<JobLease> list, Object qryResults)
+    @SuppressWarnings("rawtypes")
+    private static void populateList(List<JobLease> outList, List qryResults)
      throws JobException
     {
        // There should always be the initialized rows for each phase.
@@ -449,11 +467,8 @@ public final class JobLeaseDao
             throw new JobException(msg);
         }
        
-        // The row is returned as an array of object.
-        ArrayList resultArray = (ArrayList) qryResults;
-        
         // Marshal each row from the query results.
-        for (Object rowobj : resultArray)
+        for (Object rowobj : qryResults)
         {
             // Access row as an array and create new lease.
             Object[] row = (Object[]) rowobj;
@@ -470,7 +485,7 @@ public final class JobLeaseDao
             if (expiresAtTS != null) jobLease.setExpiresAt(new Date(expiresAtTS.getTime()));
 
             // Add the lease to the result list.
-            list.add(jobLease);
+            outList.add(jobLease);
         }
     }
     

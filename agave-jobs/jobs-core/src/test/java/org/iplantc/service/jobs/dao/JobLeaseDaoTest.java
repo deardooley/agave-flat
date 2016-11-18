@@ -6,8 +6,15 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.iplantc.service.jobs.model.JobLease;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+/** This test suite does not use any Agave services and should be run when 
+ * the Agave jobs service is not running.  The set-up and tear-down methods
+ * release any existing leases.
+ * 
+ * @author rcardone
+ */
 public class JobLeaseDaoTest {
     /* ********************************************************************** */
     /*                             Static Fields                              */
@@ -23,6 +30,7 @@ public class JobLeaseDaoTest {
     /* ********************************************************************** */
     /*                                 Fields                                 */
     /* ********************************************************************** */
+    // ------------------ alternateThreadTest Fields ------------------
     // Lock used for thread synchronization in alternateThreadTest.
     private final ReentrantLock _altThreadLock = new ReentrantLock();
     
@@ -30,6 +38,29 @@ public class JobLeaseDaoTest {
     private long _thread1Timestamp1;
     private Throwable _thread1Exception;
     private Throwable _thread2Exception;
+    
+    /* ********************************************************************** */
+    /*                            Set Up / Tear Down                          */
+    /* ********************************************************************** */    
+    /* ---------------------------------------------------------------------- */
+    /* setup:                                                                 */
+    /* ---------------------------------------------------------------------- */
+    @BeforeMethod
+    private void setup()
+    {
+        // Destroy existing leases.
+        JobLeaseDao.clearLeases();
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* teardown:                                                              */
+    /* ---------------------------------------------------------------------- */
+    @BeforeMethod
+    private void teardown()
+    {
+        // Destroy existing leases.
+        JobLeaseDao.clearLeases();
+    }
     
     /* ********************************************************************** */
     /*                              Test Methods                              */
@@ -136,7 +167,7 @@ public class JobLeaseDaoTest {
         Assert.assertTrue(haveLease4, "FAILED to acquire ARCHIVING lease for " + LESSEE_1);
         
         // Get all leases and check the lessee.
-        List<JobLease> list = dao1.getLeases();
+        List<JobLease> list = JobLeaseDao.getLeases();
         Assert.assertEquals(list.size(), 4, "Unexpected number of leases retrieved.");
         for (JobLease lease : list) {
             Assert.assertTrue(LESSEE_1.equals(lease.getLessee()), 
@@ -146,11 +177,11 @@ public class JobLeaseDaoTest {
         }
         
         // Clear all leases.
-        int changed = dao1.clearLeases();
+        int changed = JobLeaseDao.clearLeases();
         Assert.assertEquals(changed, 4, "Unexpected number of leases changed.");
         
         // Check that the leases are cleared.
-        list = dao1.getLeases();
+        list = JobLeaseDao.getLeases();
         Assert.assertEquals(list.size(), 4, "(2) Unexpected number of leases retrieved.");
         for (JobLease lease : list) {
             Assert.assertNull(lease.getLessee(), 
