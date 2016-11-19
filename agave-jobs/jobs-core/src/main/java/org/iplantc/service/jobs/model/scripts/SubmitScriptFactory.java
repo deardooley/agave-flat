@@ -76,9 +76,6 @@ public class SubmitScriptFactory {
 		else if (scheduler == SchedulerType.CUSTOM_CONDOR) {
 			return new CustomCondorSubmitScript(job);
 		}
-		else if (scheduler == SchedulerType.ABACO) {
-			return new AbacoSubmitScript(job);
-		}
 		else
 		{
 			return new ForkSubmitScript(job);

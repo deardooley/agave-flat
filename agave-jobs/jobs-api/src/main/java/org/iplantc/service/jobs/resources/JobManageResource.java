@@ -87,7 +87,7 @@ public class JobManageResource extends AbstractJobResource {
 		try
 		{
 			job = JobDao.getByUuid(sJobId);
-			if (job == null || !job.isVisible()) 
+			if (job == null) 
 			{
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
 				getResponse().setEntity(new IplantErrorRepresentation(
@@ -151,7 +151,14 @@ public class JobManageResource extends AbstractJobResource {
 						return;
 					}
 				}
-				if (pTable.get("action").equalsIgnoreCase("resubmit"))
+				else if (!job.isVisible()) 
+				{
+					getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+					getResponse().setEntity(new IplantErrorRepresentation(
+							"No job found with job id " + sJobId));
+					return;
+				}
+				else if (pTable.get("action").equalsIgnoreCase("resubmit"))
 				{
 					AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 
 							AgaveLogServiceClient.ActivityKeys.JobsResubmit.name(), 
