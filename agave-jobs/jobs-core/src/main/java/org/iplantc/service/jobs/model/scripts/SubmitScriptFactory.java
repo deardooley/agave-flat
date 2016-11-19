@@ -35,8 +35,7 @@ public class SubmitScriptFactory {
 		{
 			return new LsfSubmitScript(job);
 		}
-		else if (scheduler.equals(SchedulerType.PBS)
-				|| scheduler.equals(SchedulerType.COBALT))
+		else if (scheduler.equals(SchedulerType.PBS))
 		{
 			return new PbsSubmitScript(job);
 		}
@@ -76,6 +75,9 @@ public class SubmitScriptFactory {
 		}
 		else if (scheduler == SchedulerType.CUSTOM_CONDOR) {
 			return new CustomCondorSubmitScript(job);
+		}
+		else if (scheduler == SchedulerType.ABACO) {
+			return new AbacoSubmitScript(job);
 		}
 		else
 		{

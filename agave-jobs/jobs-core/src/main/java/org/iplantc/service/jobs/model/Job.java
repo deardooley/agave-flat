@@ -1546,7 +1546,8 @@ public class Job {
 			.put("archive", archiveOutput)
 			.put("retries", retries)
 			.put("localId", localJobId)
-			.put("created", new DateTime(created).toString());
+			.put("created", new DateTime(created).toString())
+			.put("lastModified", new DateTime(lastUpdated).toString());
 			
 		if (archiveOutput)
 		{

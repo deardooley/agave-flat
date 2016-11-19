@@ -938,13 +938,13 @@ public class JobDao
 			    for (int i=0;i<systemIds.length;i++) {
 			        
 			        if (StringUtils.contains(systemIds[i], "#")) {
-			            sql += "         (usg.execution_system = :systemid" + i + " and usg.queue_request = :queuename" + i + ")  \n";
+			            sql += "         (j.execution_system = :systemid" + i + " and j.queue_request = :queuename" + i + ")  \n";
 			        } else {
-			            sql += "         (usg.execution_system = :systemId" + i + "  \n"
-                             + "             or usg.archive_system in ( \n"
+			            sql += "         (j.execution_system = :systemid" + i + "  \n"
+                             + "             or j.archive_system in ( \n"
                              + "                                    select s.id  \n"
                              + "                                    from systems s  \n"
-                             + "                                    where s.systemId in :systemid" + i + "  \n" 
+                             + "                                    where e.system_id in (:systemid" + i + ")  \n" 
                              + "                                            and s.tenant_id = j.tenant_id  \n"
                              + "                                     ) \n"
                              + "         )  \n";
@@ -1005,7 +1005,7 @@ public class JobDao
                 }
             }
             
-            // log.debug(q);
+            log.debug(q);
             
             List<Map<String,Object>> aliasToValueMapList = query.setCacheable(false)
                                                                 .setCacheMode(CacheMode.REFRESH)
@@ -1622,7 +1622,7 @@ public class JobDao
 			sql +=	" ORDER BY j.lastUpdated DESC\n";
 			
 			String q = sql;
-			
+			log.debug(q);
 			Query query = session.createQuery(sql)
 								 .setString("tenantid", TenancyHelper.getCurrentTenantId());
 			
@@ -1664,7 +1664,7 @@ public class JobDao
 			    
 			}
 			
-			// log.debug(q);
+			 log.debug(q);
 			
 			List<Job> jobs = query
 					.setFirstResult(offset)

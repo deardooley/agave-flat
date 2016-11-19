@@ -36,6 +36,8 @@ public enum JobEventType {
 	KILLED("Job execution killed at user request"), 
 	STOPPED("Job execution intentionally stopped"), 
 	FAILED("Job failed"), 
+	DELETED("Job deleted"),
+	RESTORED("Job restored"),
 	
 	HEARTBEAT("Job heartbeat received");
 	

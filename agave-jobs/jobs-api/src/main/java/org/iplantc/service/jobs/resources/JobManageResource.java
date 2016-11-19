@@ -3,18 +3,15 @@
  */
 package org.iplantc.service.jobs.resources;
 
-import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Map;
 
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.iplantc.service.apps.dao.SoftwareDao;
-import org.iplantc.service.apps.managers.ApplicationManager;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.auth.AuthorizationHelper;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
+import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.jobs.dao.JobDao;
@@ -25,11 +22,6 @@ import org.iplantc.service.jobs.exceptions.JobTerminationException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.JobPermissionManager;
 import org.iplantc.service.jobs.model.Job;
-import org.iplantc.service.jobs.util.DataLocator;
-import org.iplantc.service.systems.dao.SystemDao;
-import org.iplantc.service.systems.model.RemoteSystem;
-import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
-import org.iplantc.service.transfer.RemoteDataClient;
 import org.restlet.Context;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
@@ -40,10 +32,6 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * The JobManageResource is the job management interface for users. Through the
@@ -136,9 +124,33 @@ public class JobManageResource extends AbstractJobResource {
 //					} else if (!ServiceUtils.isValid(pTable.get("path"))) {
 //						throw new JobException("path cannot be empty");
 //					}
-//					
 //				}
-//				else if (pTable.get("action").equalsIgnoreCase("resubmit"))
+				else if (pTable.get("action").equalsIgnoreCase("restore")) {
+					
+					AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 
+							AgaveLogServiceClient.ActivityKeys.JobRestore.name(), 
+							username, "", getRequest().getClientInfo().getUpstreamAddress());
+					
+					try {
+						Job restoredJob = JobManager.restore(job.getId(), getAuthenticatedUsername());
+						
+						getResponse().setEntity(new IplantSuccessRepresentation(restoredJob.toJSON()));
+						getResponse().setStatus(Status.SUCCESS_OK);
+					}
+					catch (JobException e) {
+						getResponse().setEntity(
+								new IplantErrorRepresentation(e.getMessage()));
+						getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
+						return;
+					}
+			    	catch (Exception e) {
+						getResponse().setEntity(
+								new IplantErrorRepresentation("Failed to restore job: " + e.getMessage()));
+						getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
+						log.error("Failed to restore job " + job.getUuid(), e);
+						return;
+					}
+				}
 				if (pTable.get("action").equalsIgnoreCase("resubmit"))
 				{
 					AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 
@@ -379,7 +391,6 @@ public class JobManageResource extends AbstractJobResource {
 					new IplantErrorRepresentation("Job id cannot be empty"));
 			getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
 			return;
-
 		}
 		
 		try
@@ -393,7 +404,7 @@ public class JobManageResource extends AbstractJobResource {
 			}
 			else if (new JobPermissionManager(job, username).canWrite(username))
 			{
-				JobManager.hide(job.getId());
+				JobManager.hide(job.getId(), username);
 				
 				getResponse().setEntity(new IplantSuccessRepresentation());
 				getResponse().setStatus(Status.SUCCESS_OK);
