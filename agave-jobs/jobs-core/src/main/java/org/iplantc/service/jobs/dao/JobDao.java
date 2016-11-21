@@ -1052,10 +1052,15 @@ public class JobDao
 					+ "		and j.status = 'CLEANING_UP' \n"
 					+ "order by rand() ";
 				
+				
+				
 				String jq = StringUtils.replace(sql, ":excludesystems", excludeSystems ? "not" : "");
 				jq = StringUtils.replace(jq, ":tenantid", tid);
 				jq = StringUtils.replace(jq, ":owner", username);
 				
+				sql = StringUtils.replace(sql, ":excludetenant", excludeTenant ? "not" : "");
+				sql = StringUtils.replace(sql, ":excludesystems", excludeSystems ? "not" : "");
+	           
 				Query jobQuery = session.createSQLQuery(sql)
 						.setString("owner", username)
 						.setString("tenantid", tid);
