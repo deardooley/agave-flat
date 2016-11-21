@@ -172,7 +172,7 @@ public class MetadataSchemaCollection extends AgaveResource
 	        BasicDBObject query = null;
 	        
 	        // Include user defined query clauses given within the URL as q=<clauses>
-            if (!StringUtils.isEmpty(userQuery)) {
+            if (StringUtils.isEmpty(userQuery)) {
                 
             	AgaveLogServiceClient.log(METADATA02.name(), SchemaList.name(), username, "", getRequest().getClientInfo().getUpstreamAddress());
             	
@@ -256,6 +256,7 @@ public class MetadataSchemaCollection extends AgaveResource
         } 
         catch (Throwable e) 
         {
+        	log.error("Failed to list metadata schema", e);
         	throw new ResourceException(org.restlet.data.Status.SERVER_ERROR_INTERNAL, 
                     "An error occurred while fetching the metadata schema. " +
                     "If this problem persists, " +

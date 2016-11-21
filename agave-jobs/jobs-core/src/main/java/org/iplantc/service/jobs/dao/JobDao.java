@@ -1005,7 +1005,7 @@ public class JobDao
                 }
             }
             
-            log.debug(q);
+//            log.debug(q);
             
             List<Map<String,Object>> aliasToValueMapList = query.setCacheable(false)
                                                                 .setCacheMode(CacheMode.REFRESH)
@@ -1622,7 +1622,7 @@ public class JobDao
 			sql +=	" ORDER BY j.lastUpdated DESC\n";
 			
 			String q = sql;
-			log.debug(q);
+			//log.debug(q);
 			Query query = session.createQuery(sql)
 								 .setString("tenantid", TenancyHelper.getCurrentTenantId());
 			
@@ -1664,7 +1664,7 @@ public class JobDao
 			    
 			}
 			
-			 log.debug(q);
+			// log.debug(q);
 			
 			List<Job> jobs = query
 					.setFirstResult(offset)
