@@ -66,7 +66,8 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         catch (Throwable e) {
         	log.error("Failed to retrieve tag " + entityId, e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to retrieve tag " + entityId, e);
+            		"An unexpected error occurred while fetching associatinoIds for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
 		
 	}
@@ -100,7 +101,8 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         catch (Exception e) {
         	log.error("Failed to delete tag " + entityId, e);
         	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-                    "Failed to add tag " + entityId, e);
+        			"An unexpected error occurred while removing associatinoIds for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 
@@ -134,7 +136,8 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         catch (Throwable e) {
         	log.error("Failed to retrieve tag " + entityId, e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to retrieve tag " + entityId, e);
+            		"An unexpected error occurred while adding associatinoIds for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 }

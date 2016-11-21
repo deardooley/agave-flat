@@ -70,7 +70,8 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
         catch (Throwable e) {
         	log.error("Failed to retrieve user permissions", e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to retrieve user permissions.", e);
+            		"An unexpected error occurred while fetching user permissions for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
     }
 	
@@ -145,7 +146,8 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
         catch (Exception e) {
         	log.error("Failed to updated permission", e);
         	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-                    "Failed to update permission.", e);
+        			"An unexpected error occurred while updating user permissions for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
     }
     
@@ -193,7 +195,8 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
         catch (Exception e) {
         	log.error("Failed to remove user permissions", e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to remove user permissions.", e);
+            		"An unexpected error occurred while removing permissions for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 }

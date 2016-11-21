@@ -145,7 +145,8 @@ public class SystemRoleResource extends AgaveResource
 						if (authClient.getUser(sharedUsername) == null) 
 						{
 							throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-									"No roles found for user " + sharedUsername);
+									"No roles found for user " + sharedUsername,
+									new FileNotFoundException());
 						} 
 						else 
 						{
@@ -154,7 +155,8 @@ public class SystemRoleResource extends AgaveResource
 									role = new SystemRole(sharedUsername, RoleType.ADMIN);
 								} else {
 									throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-											"No roles found for user " + sharedUsername);
+											"No roles found for user " + sharedUsername, 
+											new FileNotFoundException());
 								}
 							}
 							
@@ -162,7 +164,7 @@ public class SystemRoleResource extends AgaveResource
 						}
 					} catch (Exception e) {
 						throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-								"No roles found for user " + sharedUsername);
+								"No roles found for user " + sharedUsername, e);
 					}
 				}
 				

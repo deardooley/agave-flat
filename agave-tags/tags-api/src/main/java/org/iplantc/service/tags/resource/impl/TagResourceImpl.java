@@ -63,7 +63,8 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
         catch (Throwable e) {
         	log.error("Failed to retrieve tag " + entityId, e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to retrieve tag " + entityId, e);
+            		"An unexpected error occurred while fetching tag  " + entityId + ". "
+                			+ "If this continues, please contact your tenant administrator.", e);
         }
 		
 	}
@@ -96,7 +97,8 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
         catch (Exception e) {
         	log.error("Failed to delete tag " + entityId, e);
         	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-                    "Failed to add tag " + entityId, e);
+        			"An unexpected error occurred while deleting tag  " + entityId + ". "
+                			+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 
@@ -120,9 +122,10 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
             throw e;
         }
         catch (Throwable e) {
-        	log.error("Failed to retrieve tag " + entityId, e);
+        	log.error("Failed to update tag " + entityId, e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to retrieve tag " + entityId, e);
+            		"An unexpected error occurred while updating tag  " + entityId + ". "
+                			+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 }
