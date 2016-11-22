@@ -172,7 +172,7 @@ public class SystemRoleResource extends AgaveResource
 			}
 			else if (system.isPubliclyAvailable()) 
 			{
-				if (StringUtils.isEmpty(sharedUsername)) {
+				if (StringUtils.isEmpty(sharedUsername) || StringUtils.equals(sharedUsername, username)) {
 					SystemRole role = system.getUserRole(username);
 					return new IplantSuccessRepresentation("[" + role.toJSON(system) + "]");
 				} else {
@@ -181,7 +181,7 @@ public class SystemRoleResource extends AgaveResource
 				}
 			}
 			else if (system.getUserRole(username).canRead()) {
-			    if (StringUtils.isEmpty(sharedUsername)) {
+			    if (StringUtils.isEmpty(sharedUsername) || StringUtils.equals(sharedUsername, username)) {
                     SystemRole role = system.getUserRole(username);
                     return new IplantSuccessRepresentation("[" + role.toJSON(system) + "]");
                 } else {

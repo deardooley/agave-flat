@@ -39,6 +39,7 @@ import org.iplantc.service.transfer.model.RemoteFilePermission;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
 import org.iplantc.service.transfer.util.ServiceUtils;
+import org.irods.jargon.core.checksum.ChecksumValue;
 import org.irods.jargon.core.connection.AuthScheme;
 import org.irods.jargon.core.connection.GSIIRODSAccount;
 import org.irods.jargon.core.connection.IRODSAccount;
@@ -1282,7 +1283,7 @@ public class IRODS4 implements RemoteDataClient
 	 */
 	@Override
 	public String checksum(String remotepath)
-	throws IOException, RemoteDataException
+	throws IOException, RemoteDataException, NotImplementedException
 	{
 //
 

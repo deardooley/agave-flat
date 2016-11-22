@@ -1018,7 +1018,7 @@ public class HTTP implements RemoteDataClient {
 
 	@Override
 	public String checksum(String remotepath) throws IOException,
-			RemoteDataException
+			RemoteDataException, NotImplementedException
 	{
 		throw new NotImplementedException();
 		

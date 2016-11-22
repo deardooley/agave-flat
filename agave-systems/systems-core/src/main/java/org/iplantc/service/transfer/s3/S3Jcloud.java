@@ -1145,7 +1145,7 @@ public class S3Jcloud implements RemoteDataClient
 
 	@Override
 	public String checksum(String remotepath)
- 	throws IOException, RemoteDataException 
+ 	throws IOException, RemoteDataException, NotImplementedException
 	{
 		try
 		{

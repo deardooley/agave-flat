@@ -984,14 +984,14 @@ public class MaverickSFTP implements RemoteDataClient
 
 	@Override
 	public String checksum(String remotepath) 
-	throws IOException, FileNotFoundException, RemoteDataException
+	throws IOException, FileNotFoundException, RemoteDataException, NotImplementedException
 	{
 		try
 		{
 			if (isDirectory(remotepath)) {
 				throw new RemoteDataException("Directory cannot be checksummed.");
 			} else {
-			    throw new NotImplementedException();
+				throw new NotImplementedException();
 			}
 		}
 		catch (IOException e) {
