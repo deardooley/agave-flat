@@ -42,7 +42,7 @@ public class LsfSubmitScript extends AbstractSubmitScript {
 			+ DIRECTIVE_PREFIX + "-e " + standardErrorFile + "\n" 
 			+ DIRECTIVE_PREFIX + "-W " + getTime() + "\n"
 			+ DIRECTIVE_PREFIX + "-q " + queue.getEffectiveMappedName() + "\n"
-			+ DIRECTIVE_PREFIX + "-L bash";
+			+ DIRECTIVE_PREFIX + "-L bash \n";
 		
 		if (parallelismType.equals(ParallelismType.PTHREAD))
 		{
