@@ -1032,10 +1032,10 @@ public class ExecutionSystem extends RemoteSystem implements SerializableSystem 
 		system.maxSystemJobs = maxSystemJobs;
 		system.maxSystemJobsPerUser = maxSystemJobsPerUser;
 		
-		for (BatchQueue queue: batchQueues) {
+		for (BatchQueue queue: getBatchQueues()) {
 			BatchQueue q = queue.clone();
 			q.setExecutionSystem(system);
-			system.batchQueues.add(q.clone());
+			system.getBatchQueues().add(q.clone());
 		}
 		
 		return system;
