@@ -7,6 +7,7 @@ import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemException;
 import org.iplantc.service.systems.model.AuthConfig;
+import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.JSONTestDataUtil;
 import org.iplantc.service.systems.model.RemoteSystem;
@@ -184,6 +185,7 @@ public class SystemManagerTest extends SystemsModelTestCommon
 			
 			Assert.assertTrue(updatedSystem.getStorageConfig().getAuthConfigs().size() == 0, "No auth configs should be present after a clone operation.");
 			Assert.assertNull(updatedSystem.getStorageConfig().getDefaultAuthConfig(), "Auth config should be empty after cloning.");
+			
 //			Assert.assertNotEquals(updatedSystem.getStorageConfig().getDefaultAuthConfig(), 
 //					updatedSystem.getStorageConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
 //					"New internal user auth config was incorrectly set as default when added.");
@@ -203,6 +205,85 @@ public class SystemManagerTest extends SystemsModelTestCommon
 
 		Assert.assertTrue(exceptionFlag == shouldThrowException, exceptionMsg);
 	}
+	
+	@Test(dependsOnMethods={"cloneSystem"})
+	public void cloneExecutionSystemPersistsClonedQueues()
+	throws Exception
+	{
+		ExecutionSystem system = (ExecutionSystem)getPrivateExecutionSystem();
+		String apiUsername = system.getOwner();
+		
+		ExecutionSystem clonedSystem = null;
+		try 
+		{
+			String cloneSystemName = "cloneSystem" + Thread.currentThread().getId() + "-" + System.currentTimeMillis();
+			
+			if (system != null) 
+			{
+				dao.persist(system);
+				Assert.assertNotNull(system.getId(), "Private storage system was not saved.");
+			}
+			
+			clonedSystem = (ExecutionSystem)manager.cloneSystem(system, apiUsername, cloneSystemName);
+			
+			Assert.assertNotNull(clonedSystem.getId(), "Clone system was not saved.");
+			
+			Assert.assertTrue(clonedSystem.getStorageConfig().getAuthConfigs().size() == 0, "No auth configs should be present after a clone operation.");
+			Assert.assertNull(clonedSystem.getStorageConfig().getDefaultAuthConfig(), "Auth config should be empty after cloning.");
+			
+			Assert.assertFalse(clonedSystem.getBatchQueues().isEmpty(), 
+					"Batch queues from original system should be present in cloned system after cloning.");
+			for (BatchQueue queue: system.getBatchQueues()) {
+				BatchQueue clonedQueue = clonedSystem.getQueue(queue.getName());
+				Assert.assertNotNull(clonedQueue,
+						"Batch queue " + queue.getName() + " was not present in the cloned system after cloning.");
+				
+				Assert.assertTrue(queue.getName().equals(clonedQueue.getName()), "Queue name was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getMappedName().equals(clonedQueue.getMappedName()), "Queue mappedName was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getDescription().equals(clonedQueue.getDescription()), "Queue description was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getMaxJobs().equals(clonedQueue.getMaxJobs()), "Queue maxJobs was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getMaxUserJobs().equals(clonedQueue.getMaxUserJobs()), "Queue maxUserJobs was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getMaxNodes().equals(clonedQueue.getMaxNodes()), "Queue maxNodes was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getMaxProcessorsPerNode().equals(clonedQueue.getMaxProcessorsPerNode()), "Queue maxProcessorsPerNode was not copied over on clone.");
+		    	Assert.assertTrue(queue.getMaxMemoryPerNode().equals(clonedQueue.getMaxMemoryPerNode()), "Queue maxMemoryPerNode was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getCustomDirectives().equals(clonedQueue.getCustomDirectives()), "Queue customDirectives was not copied over on clone. ");
+		    	Assert.assertEquals(queue.isSystemDefault(), clonedQueue.isSystemDefault(), "Queue systemDefault was not copied over on clone. ");
+		    	Assert.assertEquals(clonedSystem.getId(), clonedQueue.getExecutionSystem().getId(), "Queue executionSystem should be associated with the cloned execution system.");
+		    	Assert.assertNotEquals(queue.getId(), clonedQueue.getId(), "Queue id should not be copied id a clone operation.");
+		    	Assert.assertNotEquals(queue.getUuid(), clonedQueue.getUuid(), "Queue uuid should not be copied id a clone operation.");
+			}
+			
+			// verify the persisted system fetched carried the associations with it.
+			ExecutionSystem savedSystem = new SystemDao().getUserExecutionSystem(apiUsername, cloneSystemName);
+			
+			Assert.assertNotNull(savedSystem, "Cloned system should be queryable after clone.");
+			Assert.assertFalse(savedSystem.getBatchQueues().isEmpty(), 
+					"Batch queues from original system should be present in cloned system after cloning.");
+			for (BatchQueue queue: system.getBatchQueues()) {
+				BatchQueue clonedQueue = savedSystem.getQueue(queue.getName());
+				Assert.assertNotNull(clonedQueue,
+						"Batch queue " + queue.getName() + " was not present in the cloned system after cloning.");
+				
+				Assert.assertTrue(queue.getName().equals(clonedQueue.getName()), "Queue name was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getMappedName().equals(clonedQueue.getMappedName()), "Queue mappedName was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getDescription().equals(clonedQueue.getDescription()), "Queue description was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getMaxJobs().equals(clonedQueue.getMaxJobs()), "Queue maxJobs was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getMaxUserJobs().equals(clonedQueue.getMaxUserJobs()), "Queue maxUserJobs was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getMaxNodes().equals(clonedQueue.getMaxNodes()), "Queue maxNodes was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getMaxProcessorsPerNode().equals(clonedQueue.getMaxProcessorsPerNode()), "Queue maxProcessorsPerNode was not copied over on clone.");
+		    	Assert.assertTrue(queue.getMaxMemoryPerNode().equals(clonedQueue.getMaxMemoryPerNode()), "Queue maxMemoryPerNode was not copied over on clone. ");
+		    	Assert.assertTrue(queue.getCustomDirectives().equals(clonedQueue.getCustomDirectives()), "Queue customDirectives was not copied over on clone. ");
+		    	Assert.assertEquals(queue.isSystemDefault(), clonedQueue.isSystemDefault(), "Queue systemDefault was not copied over on clone. ");
+		    	Assert.assertEquals(clonedSystem.getId(), clonedQueue.getExecutionSystem().getId(), "Queue executionSystem should be associated with the cloned execution system.");
+		    	Assert.assertNotEquals(queue.getId(), clonedQueue.getId(), "Queue id should not be copied id a cone operation.");
+		    	Assert.assertNotEquals(queue.getUuid(), clonedQueue.getUuid(), "Queue uuid should not be copied id a cone operation.");
+			}
+		}
+		finally {
+			try {dao.remove(system); } catch (Exception e) {}
+			try {dao.remove(clonedSystem); } catch (Exception e) {}
+		}
+	}
 
 	@DataProvider(name="parseSystemProvider")
 	public Object[][] parseSystemProvider() throws Exception
@@ -213,7 +294,7 @@ public class SystemManagerTest extends SystemsModelTestCommon
 		};
 	}
 	
-	@Test(dataProvider = "parseSystemProvider", dependsOnMethods={"cloneSystem"})
+	@Test(dataProvider = "parseSystemProvider", dependsOnMethods={"cloneExecutionSystemPersistsClonedQueues"})
 	public void parseSystem(JSONObject json, Class<?> expectedClass, String message) throws SystemException, PermissionException
 	{
 		RemoteSystem system = manager.parseSystem(json, SYSTEM_OWNER, null);
@@ -589,245 +670,245 @@ public class SystemManagerTest extends SystemsModelTestCommon
 		};
 	}
 	
-	@Test(dataProvider="updateInternalUserAuthConfigOfTypeProvider", dependsOnMethods={"updateInternalUserAuthConfigOnSystemOfTypeB"})
-	public void updateInternalUserAuthConfigOfType(String apiUsername, String message, boolean shouldThrowException) throws Exception
-	{
-		boolean exceptionFlag = false;
-		String exceptionMsg = message;
-		
-		RemoteSystem privateStorageSystem = null;
-        RemoteSystem privateExecutionSystem = null;
-        
-		try 
-		{
-		    privateStorageSystem = getPrivateStorageSystem();
-		    privateExecutionSystem = getPrivateExecutionSystem();
-            
-            dao.persist(privateStorageSystem);
-			Assert.assertNotNull(privateStorageSystem.getId(), "Private storage system was not saved.");
-			Assert.assertTrue(privateStorageSystem.getStorageConfig().getAuthConfigs().size() == 1, "More than one storage auth config present.");
-			Assert.assertNotNull(privateStorageSystem.getStorageConfig().getDefaultAuthConfig(), "No default auth storage config was found.");
-			
-			dao.persist(privateExecutionSystem);
-			Assert.assertNotNull(privateExecutionSystem.getId(), "Private execution system was not saved.");
-			Assert.assertTrue(privateExecutionSystem.getStorageConfig().getAuthConfigs().size() == 1, "More than one execution auth config present.");
-			Assert.assertNotNull(privateExecutionSystem.getStorageConfig().getDefaultAuthConfig(), "No default auth execution config was found.");
-			
-			AuthConfig defaultAuthConfig = privateStorageSystem.getStorageConfig().getDefaultAuthConfig();
-			manager.updateAllInternalUserAuthConfigOfType("storage", 
-		                                                apiUsername, 
-		                                                SYSTEM_INTERNAL_USERNAME, 
-                                    			        apiUsername, 
-                                    			        apiUsername, 
-                                    			        defaultAuthConfig.getType().name(), 
-                                    			        "", 
-                                    			        privateStorageSystem.getStorageConfig().getResource(), 
-                                    			        privateStorageSystem.getStorageConfig().getZone(), 
-                                    			        defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getEndpoint(), 
-                            			                defaultAuthConfig.getCredentialServer() == null ? 0 : defaultAuthConfig.getCredentialServer().getPort(),
-                    			                        defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getProtocol().name());
-			
-			for (RemoteSystem system: dao.getUserSystems(apiUsername, false)) 
-			{
-				Assert.assertTrue(system.getStorageConfig().getAuthConfigs().size() == 2, "Incorrect number of auth configs present after adding internal user config.");
-				Assert.assertNotNull(system.getStorageConfig().getDefaultAuthConfig(), "No default auth config was found.");
-				Assert.assertNotEquals(system.getStorageConfig().getDefaultAuthConfig(), 
-						system.getStorageConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
-						"New internal user auth config was incorrectly set as default when added.");
-			}
-		}
-		catch(SystemException e) {
-			exceptionFlag = true;
-			exceptionMsg = apiUsername + " " + message;
-			if (!shouldThrowException) 
-				e.printStackTrace();
-		}
-		catch(Exception se){
-			exceptionFlag = true;
-			exceptionMsg = apiUsername + " " + message;
-			if (!shouldThrowException) 
-				se.printStackTrace();
-		}
-		finally {
-			try {dao.remove(privateStorageSystem); } catch (Exception e) {}
-			try {dao.remove(privateExecutionSystem); } catch (Exception e) {}
-		}
-		
-		System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + exceptionFlag);
-
-		Assert.assertTrue(exceptionFlag == shouldThrowException, exceptionMsg);
-	}
-	
-	@DataProvider(name="updateInternalUserAuthConfigProvider")
-	public Object[][] updateInternalUserAuthConfigProvider() throws Exception
-	{
-		return new Object[][] {
-				{ SYSTEM_OWNER, "Private execution system owner can add internal users to multiple systems at once", false },
-		};
-	}
-	
-	@Test(dataProvider="updateInternalUserAuthConfigOfTypeProvider", dependsOnMethods={"updateInternalUserAuthConfigOfType"})
-	public void updateInternalUserAuthConfig(String apiUsername, String message, boolean shouldThrowException) throws Exception
-	{
-		boolean exceptionFlag = false;
-		String exceptionMsg = message;
-		
-		RemoteSystem privateStorageSystem = null;
-        RemoteSystem privateExecutionSystem = null;
-        
-        try 
-        {
-            privateStorageSystem = getPrivateStorageSystem();
-            privateExecutionSystem = getPrivateExecutionSystem();
-        
-			dao.persist(privateStorageSystem);
-			Assert.assertNotNull(privateStorageSystem.getId(), "Private storage system was not saved.");
-			Assert.assertTrue(privateStorageSystem.getStorageConfig().getAuthConfigs().size() == 1, "More than one storage auth config present.");
-			Assert.assertNotNull(privateStorageSystem.getStorageConfig().getDefaultAuthConfig(), "No default auth storage config was found.");
-			
-			dao.persist(privateExecutionSystem);
-			Assert.assertNotNull(privateExecutionSystem.getId(), "Private execution system was not saved.");
-			Assert.assertTrue(privateExecutionSystem.getStorageConfig().getAuthConfigs().size() == 1, "More than one execution auth config present.");
-			Assert.assertNotNull(privateExecutionSystem.getStorageConfig().getDefaultAuthConfig(), "No default auth execution config was found.");
-			
-			AuthConfig defaultAuthConfig = privateStorageSystem.getStorageConfig().getDefaultAuthConfig();
-			manager.updateAllInternalUserAuthConfig(
-			        privateStorageSystem.getOwner(), 
-			        SYSTEM_INTERNAL_USERNAME, 
-					"foo", 
-					"bar", 
-					defaultAuthConfig.getType().name(), 
-                    "", 
-                    privateStorageSystem.getStorageConfig().getResource(), 
-                    privateStorageSystem.getStorageConfig().getZone(), 
-                    defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getEndpoint(), 
-                    defaultAuthConfig.getCredentialServer() == null ? 0 : defaultAuthConfig.getCredentialServer().getPort(),
-                    defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getProtocol().name());
-
-			
-			for (RemoteSystem system: dao.getUserSystems(apiUsername, false)) 
-			{
-				Assert.assertTrue(system.getStorageConfig().getAuthConfigs().size() == 2, "Incorrect number of storage auth configs present after adding internal user config.");
-				Assert.assertNotNull(system.getStorageConfig().getDefaultAuthConfig(), "No default storage auth config was found.");
-				Assert.assertNotEquals(system.getStorageConfig().getDefaultAuthConfig(), 
-						system.getStorageConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
-						"New internal user storage auth config was incorrectly set as default when added.");
-				
-				if (system instanceof ExecutionSystem)
-				{
-					Assert.assertTrue(((ExecutionSystem)system).getLoginConfig().getAuthConfigs().size() == 2, "Incorrect number of login auth configs present after adding internal user config.");
-					Assert.assertNotNull(((ExecutionSystem)system).getLoginConfig().getDefaultAuthConfig(), "No default login auth config was found.");
-					Assert.assertNotEquals(((ExecutionSystem)system).getLoginConfig().getDefaultAuthConfig(), 
-							((ExecutionSystem)system).getLoginConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
-							"New internal user login auth config was incorrectly set as default when added.");
-				}
-			}
-		}
-		catch(Exception e){
-			exceptionFlag = true;
-			exceptionMsg = apiUsername + " " + message;
-			if (!shouldThrowException) 
-			    Assert.fail(message, e);
-		}
-		finally {
-			try {dao.remove(privateStorageSystem); } catch (Exception e) {}
-			try {dao.remove(privateExecutionSystem); } catch (Exception e) {}
-		}
-		
-		System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + exceptionFlag);
-
-		Assert.assertTrue(exceptionFlag == shouldThrowException, exceptionMsg);
-	}
-	
-	@DataProvider(name="updateInternalUserAuthConfigOnSystemProvider")
-	public Object[][] updateInternalUserAuthConfigOnSystemProvider() throws Exception
-	{
-		return new Object[][] {
-				{ getSharedExecutionSystem(), SYSTEM_SHARE_USER, "Shared storage system admin can add internal users", false },
-				{ getPrivateStorageSystem(), SYSTEM_OWNER, "Private storage system owner can add internal users", false },
-				{ getPrivateExecutionSystem(), SYSTEM_OWNER, "Private execution system owner can add internal users", false },
-				{ getPrivateStorageSystem(), SYSTEM_SHARE_USER, "Private storage system non user cannot add internal users", true },
-		};
-	}
-				
-	@DataProvider(name="updateInternalUserAuthConfigOnSystemProviderB")
-	public Object[][] updateInternalUserAuthConfigOnSystemProviderB() throws Exception
-	{
-		return new Object[][] {			
-				{ getSharedExecutionSystem(), SYSTEM_OWNER, "Private storage system owner can add internal users", false },
-				{ getSharedExecutionSystem(), SYSTEM_UNSHARED_USER, "Shared storage system non user cannot add internal users", true },
-				{ getPublicStorageSystem(), SYSTEM_OWNER, "Internal users cannot be added to public storage systems", true },
-				{ getPublicExecutionSystem(), SYSTEM_OWNER, "Internal users cannot be added to public execution systems", true },
-		};
-	}
-	
-	@Test(dataProvider="updateInternalUserAuthConfigOnSystemProvider", dependsOnMethods={"updateInternalUserAuthConfig"})
-	public void updateInternalUserAuthConfigOnSystem(RemoteSystem system, String apiUsername, String message, boolean shouldThrowException) throws Exception
-	{
-		boolean exceptionFlag = false;
-		String exceptionMsg = message;
-		RemoteSystem updatedSystem = null;
-		try 
-		{
-			dao.persist(system);
-			Assert.assertNotNull(system.getId(), "Private storage system was not saved.");
-			Assert.assertTrue(system.getStorageConfig().getAuthConfigs().size() == 1, "More than one storage auth config present.");
-			Assert.assertNotNull(system.getStorageConfig().getDefaultAuthConfig(), "No default auth storage config was found.");
-			
-			AuthConfig defaultAuthConfig = system.getStorageConfig().getDefaultAuthConfig();
-            manager.updateAllInternalUserAuthConfigOnSystem(
-			        system, 
-			        apiUsername, 
-                    SYSTEM_INTERNAL_USERNAME, 
-                    "internalusername", 
-                    "password", 
-                    defaultAuthConfig.getType().name(), 
-                    "", 
-                    system.getStorageConfig().getResource(), 
-                    system.getStorageConfig().getZone(), 
-                    defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getEndpoint(), 
-                    defaultAuthConfig.getCredentialServer() == null ? 0 : defaultAuthConfig.getCredentialServer().getPort(),
-                    defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getProtocol().name());
-
-			
-			updatedSystem = dao.findById(system.getId());
-			
-			Assert.assertTrue(updatedSystem.getStorageConfig().getAuthConfigs().size() == 2, "Incorrect number of storage auth configs present after adding internal user config.");
-			Assert.assertNotNull(updatedSystem.getStorageConfig().getDefaultAuthConfig(), "No default storage auth config was found.");
-			Assert.assertNotEquals(updatedSystem.getStorageConfig().getDefaultAuthConfig(), 
-					updatedSystem.getStorageConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
-					"New internal user storage auth config was incorrectly set as default when added.");
-			
-			if (updatedSystem instanceof ExecutionSystem)
-			{
-				Assert.assertTrue(((ExecutionSystem)updatedSystem).getLoginConfig().getAuthConfigs().size() == 2, "Incorrect number of login auth configs present after adding internal user config.");
-				Assert.assertNotNull(((ExecutionSystem)updatedSystem).getLoginConfig().getDefaultAuthConfig(), "No default login auth config was found.");
-				Assert.assertNotEquals(((ExecutionSystem)updatedSystem).getLoginConfig().getDefaultAuthConfig(), 
-						((ExecutionSystem)updatedSystem).getLoginConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
-						"New internal user login auth config was incorrectly set as default when added.");
-			}
-		}
-		catch(Exception e){
-			exceptionFlag = true;
-			exceptionMsg = apiUsername + " " + message;
-			if (!shouldThrowException) 
-			    Assert.fail(message, e);
-		}
-		finally {
-			try {dao.remove(system); } catch (Exception e) {}
-			try {dao.remove(updatedSystem); } catch (Exception e) {}
-			try { HibernateUtil.flush(); } catch (Exception e) {}
-			try { HibernateUtil.closeSession(); } catch (Exception e) {}
-		}
-		
-		System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + exceptionFlag);
-
-		Assert.assertTrue(exceptionFlag == shouldThrowException, exceptionMsg);
-	}
-	
-	@Test(dataProvider="updateInternalUserAuthConfigOnSystemProviderB", dependsOnMethods={"updateInternalUserAuthConfigOnSystem"})
-	public void updateInternalUserAuthConfigOnSystemB(RemoteSystem system, String apiUsername, String message, boolean shouldThrowException) throws Exception
-	{
-		updateInternalUserAuthConfigOnSystem(system, apiUsername, message, shouldThrowException);
-	}
+//	@Test(dataProvider="updateInternalUserAuthConfigOfTypeProvider", dependsOnMethods={"updateInternalUserAuthConfigOnSystemOfTypeB"})
+//	public void updateInternalUserAuthConfigOfType(String apiUsername, String message, boolean shouldThrowException) throws Exception
+//	{
+//		boolean exceptionFlag = false;
+//		String exceptionMsg = message;
+//		
+//		RemoteSystem privateStorageSystem = null;
+//        RemoteSystem privateExecutionSystem = null;
+//        
+//		try 
+//		{
+//		    privateStorageSystem = getPrivateStorageSystem();
+//		    privateExecutionSystem = getPrivateExecutionSystem();
+//            
+//            dao.persist(privateStorageSystem);
+//			Assert.assertNotNull(privateStorageSystem.getId(), "Private storage system was not saved.");
+//			Assert.assertTrue(privateStorageSystem.getStorageConfig().getAuthConfigs().size() == 1, "More than one storage auth config present.");
+//			Assert.assertNotNull(privateStorageSystem.getStorageConfig().getDefaultAuthConfig(), "No default auth storage config was found.");
+//			
+//			dao.persist(privateExecutionSystem);
+//			Assert.assertNotNull(privateExecutionSystem.getId(), "Private execution system was not saved.");
+//			Assert.assertTrue(privateExecutionSystem.getStorageConfig().getAuthConfigs().size() == 1, "More than one execution auth config present.");
+//			Assert.assertNotNull(privateExecutionSystem.getStorageConfig().getDefaultAuthConfig(), "No default auth execution config was found.");
+//			
+//			AuthConfig defaultAuthConfig = privateStorageSystem.getStorageConfig().getDefaultAuthConfig();
+//			manager.updateAllInternalUserAuthConfigOfType("storage", 
+//		                                                apiUsername, 
+//		                                                SYSTEM_INTERNAL_USERNAME, 
+//                                    			        apiUsername, 
+//                                    			        apiUsername, 
+//                                    			        defaultAuthConfig.getType().name(), 
+//                                    			        "", 
+//                                    			        privateStorageSystem.getStorageConfig().getResource(), 
+//                                    			        privateStorageSystem.getStorageConfig().getZone(), 
+//                                    			        defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getEndpoint(), 
+//                            			                defaultAuthConfig.getCredentialServer() == null ? 0 : defaultAuthConfig.getCredentialServer().getPort(),
+//                    			                        defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getProtocol().name());
+//			
+//			for (RemoteSystem system: dao.getUserSystems(apiUsername, false)) 
+//			{
+//				Assert.assertEquals(system.getStorageConfig().getAuthConfigs().size(), 2, "Incorrect number of auth configs present after adding internal user config.");
+//				Assert.assertNotNull(system.getStorageConfig().getDefaultAuthConfig(), "No default auth config was found.");
+//				Assert.assertNotEquals(system.getStorageConfig().getDefaultAuthConfig(), 
+//						system.getStorageConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
+//						"New internal user auth config was incorrectly set as default when added.");
+//			}
+//		}
+//		catch(SystemException e) {
+//			exceptionFlag = true;
+//			exceptionMsg = apiUsername + " " + message;
+//			if (!shouldThrowException) 
+//				e.printStackTrace();
+//		}
+//		catch(Exception se){
+//			exceptionFlag = true;
+//			exceptionMsg = apiUsername + " " + message;
+//			if (!shouldThrowException) 
+//				se.printStackTrace();
+//		}
+//		finally {
+//			try {dao.remove(privateStorageSystem); } catch (Exception e) {}
+//			try {dao.remove(privateExecutionSystem); } catch (Exception e) {}
+//		}
+//		
+//		System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + exceptionFlag);
+//
+//		Assert.assertTrue(exceptionFlag == shouldThrowException, exceptionMsg);
+//	}
+//	
+//	@DataProvider(name="updateInternalUserAuthConfigProvider")
+//	public Object[][] updateInternalUserAuthConfigProvider() throws Exception
+//	{
+//		return new Object[][] {
+//				{ SYSTEM_OWNER, "Private execution system owner can add internal users to multiple systems at once", false },
+//		};
+//	}
+//	
+//	@Test(dataProvider="updateInternalUserAuthConfigOfTypeProvider", dependsOnMethods={"updateInternalUserAuthConfigOfType"})
+//	public void updateInternalUserAuthConfig(String apiUsername, String message, boolean shouldThrowException) throws Exception
+//	{
+//		boolean exceptionFlag = false;
+//		String exceptionMsg = message;
+//		
+//		RemoteSystem privateStorageSystem = null;
+//        RemoteSystem privateExecutionSystem = null;
+//        
+//        try 
+//        {
+//            privateStorageSystem = getPrivateStorageSystem();
+//            privateExecutionSystem = getPrivateExecutionSystem();
+//        
+//			dao.persist(privateStorageSystem);
+//			Assert.assertNotNull(privateStorageSystem.getId(), "Private storage system was not saved.");
+//			Assert.assertTrue(privateStorageSystem.getStorageConfig().getAuthConfigs().size() == 1, "More than one storage auth config present.");
+//			Assert.assertNotNull(privateStorageSystem.getStorageConfig().getDefaultAuthConfig(), "No default auth storage config was found.");
+//			
+//			dao.persist(privateExecutionSystem);
+//			Assert.assertNotNull(privateExecutionSystem.getId(), "Private execution system was not saved.");
+//			Assert.assertTrue(privateExecutionSystem.getStorageConfig().getAuthConfigs().size() == 1, "More than one execution auth config present.");
+//			Assert.assertNotNull(privateExecutionSystem.getStorageConfig().getDefaultAuthConfig(), "No default auth execution config was found.");
+//			
+//			AuthConfig defaultAuthConfig = privateStorageSystem.getStorageConfig().getDefaultAuthConfig();
+//			manager.updateAllInternalUserAuthConfig(
+//			        privateStorageSystem.getOwner(), 
+//			        SYSTEM_INTERNAL_USERNAME, 
+//					"foo", 
+//					"bar", 
+//					defaultAuthConfig.getType().name(), 
+//                    "", 
+//                    privateStorageSystem.getStorageConfig().getResource(), 
+//                    privateStorageSystem.getStorageConfig().getZone(), 
+//                    defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getEndpoint(), 
+//                    defaultAuthConfig.getCredentialServer() == null ? 0 : defaultAuthConfig.getCredentialServer().getPort(),
+//                    defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getProtocol().name());
+//
+//			
+//			for (RemoteSystem system: dao.getUserSystems(apiUsername, false)) 
+//			{
+//				Assert.assertTrue(system.getStorageConfig().getAuthConfigs().size() == 2, "Incorrect number of storage auth configs present after adding internal user config.");
+//				Assert.assertNotNull(system.getStorageConfig().getDefaultAuthConfig(), "No default storage auth config was found.");
+//				Assert.assertNotEquals(system.getStorageConfig().getDefaultAuthConfig(), 
+//						system.getStorageConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
+//						"New internal user storage auth config was incorrectly set as default when added.");
+//				
+//				if (system instanceof ExecutionSystem)
+//				{
+//					Assert.assertTrue(((ExecutionSystem)system).getLoginConfig().getAuthConfigs().size() == 2, "Incorrect number of login auth configs present after adding internal user config.");
+//					Assert.assertNotNull(((ExecutionSystem)system).getLoginConfig().getDefaultAuthConfig(), "No default login auth config was found.");
+//					Assert.assertNotEquals(((ExecutionSystem)system).getLoginConfig().getDefaultAuthConfig(), 
+//							((ExecutionSystem)system).getLoginConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
+//							"New internal user login auth config was incorrectly set as default when added.");
+//				}
+//			}
+//		}
+//		catch(Exception e){
+//			exceptionFlag = true;
+//			exceptionMsg = apiUsername + " " + message;
+//			if (!shouldThrowException) 
+//			    Assert.fail(message, e);
+//		}
+//		finally {
+//			try {dao.remove(privateStorageSystem); } catch (Exception e) {}
+//			try {dao.remove(privateExecutionSystem); } catch (Exception e) {}
+//		}
+//		
+//		System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + exceptionFlag);
+//
+//		Assert.assertTrue(exceptionFlag == shouldThrowException, exceptionMsg);
+//	}
+//	
+//	@DataProvider(name="updateInternalUserAuthConfigOnSystemProvider")
+//	public Object[][] updateInternalUserAuthConfigOnSystemProvider() throws Exception
+//	{
+//		return new Object[][] {
+//				{ getSharedExecutionSystem(), SYSTEM_SHARE_USER, "Shared storage system admin can add internal users", false },
+//				{ getPrivateStorageSystem(), SYSTEM_OWNER, "Private storage system owner can add internal users", false },
+//				{ getPrivateExecutionSystem(), SYSTEM_OWNER, "Private execution system owner can add internal users", false },
+//				{ getPrivateStorageSystem(), SYSTEM_SHARE_USER, "Private storage system non user cannot add internal users", true },
+//		};
+//	}
+//				
+//	@DataProvider(name="updateInternalUserAuthConfigOnSystemProviderB")
+//	public Object[][] updateInternalUserAuthConfigOnSystemProviderB() throws Exception
+//	{
+//		return new Object[][] {			
+//				{ getSharedExecutionSystem(), SYSTEM_OWNER, "Private storage system owner can add internal users", false },
+//				{ getSharedExecutionSystem(), SYSTEM_UNSHARED_USER, "Shared storage system non user cannot add internal users", true },
+//				{ getPublicStorageSystem(), SYSTEM_OWNER, "Internal users cannot be added to public storage systems", true },
+//				{ getPublicExecutionSystem(), SYSTEM_OWNER, "Internal users cannot be added to public execution systems", true },
+//		};
+//	}
+//	
+//	@Test(dataProvider="updateInternalUserAuthConfigOnSystemProvider", dependsOnMethods={"updateInternalUserAuthConfig"})
+//	public void updateInternalUserAuthConfigOnSystem(RemoteSystem system, String apiUsername, String message, boolean shouldThrowException) throws Exception
+//	{
+//		boolean exceptionFlag = false;
+//		String exceptionMsg = message;
+//		RemoteSystem updatedSystem = null;
+//		try 
+//		{
+//			dao.persist(system);
+//			Assert.assertNotNull(system.getId(), "Private storage system was not saved.");
+//			Assert.assertTrue(system.getStorageConfig().getAuthConfigs().size() == 1, "More than one storage auth config present.");
+//			Assert.assertNotNull(system.getStorageConfig().getDefaultAuthConfig(), "No default auth storage config was found.");
+//			
+//			AuthConfig defaultAuthConfig = system.getStorageConfig().getDefaultAuthConfig();
+//            manager.updateAllInternalUserAuthConfigOnSystem(
+//			        system, 
+//			        apiUsername, 
+//                    SYSTEM_INTERNAL_USERNAME, 
+//                    "internalusername", 
+//                    "password", 
+//                    defaultAuthConfig.getType().name(), 
+//                    "", 
+//                    system.getStorageConfig().getResource(), 
+//                    system.getStorageConfig().getZone(), 
+//                    defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getEndpoint(), 
+//                    defaultAuthConfig.getCredentialServer() == null ? 0 : defaultAuthConfig.getCredentialServer().getPort(),
+//                    defaultAuthConfig.getCredentialServer() == null ? null : defaultAuthConfig.getCredentialServer().getProtocol().name());
+//
+//			
+//			updatedSystem = dao.findById(system.getId());
+//			
+//			Assert.assertTrue(updatedSystem.getStorageConfig().getAuthConfigs().size() == 2, "Incorrect number of storage auth configs present after adding internal user config.");
+//			Assert.assertNotNull(updatedSystem.getStorageConfig().getDefaultAuthConfig(), "No default storage auth config was found.");
+//			Assert.assertNotEquals(updatedSystem.getStorageConfig().getDefaultAuthConfig(), 
+//					updatedSystem.getStorageConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
+//					"New internal user storage auth config was incorrectly set as default when added.");
+//			
+//			if (updatedSystem instanceof ExecutionSystem)
+//			{
+//				Assert.assertTrue(((ExecutionSystem)updatedSystem).getLoginConfig().getAuthConfigs().size() == 2, "Incorrect number of login auth configs present after adding internal user config.");
+//				Assert.assertNotNull(((ExecutionSystem)updatedSystem).getLoginConfig().getDefaultAuthConfig(), "No default login auth config was found.");
+//				Assert.assertNotEquals(((ExecutionSystem)updatedSystem).getLoginConfig().getDefaultAuthConfig(), 
+//						((ExecutionSystem)updatedSystem).getLoginConfig().getAuthConfigForInternalUsername(SYSTEM_INTERNAL_USERNAME), 
+//						"New internal user login auth config was incorrectly set as default when added.");
+//			}
+//		}
+//		catch(Exception e){
+//			exceptionFlag = true;
+//			exceptionMsg = apiUsername + " " + message;
+//			if (!shouldThrowException) 
+//			    Assert.fail(message, e);
+//		}
+//		finally {
+//			try {dao.remove(system); } catch (Exception e) {}
+//			try {dao.remove(updatedSystem); } catch (Exception e) {}
+//			try { HibernateUtil.flush(); } catch (Exception e) {}
+//			try { HibernateUtil.closeSession(); } catch (Exception e) {}
+//		}
+//		
+//		System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + exceptionFlag);
+//
+//		Assert.assertTrue(exceptionFlag == shouldThrowException, exceptionMsg);
+//	}
+//	
+//	@Test(dataProvider="updateInternalUserAuthConfigOnSystemProviderB", dependsOnMethods={"updateInternalUserAuthConfigOnSystem"})
+//	public void updateInternalUserAuthConfigOnSystemB(RemoteSystem system, String apiUsername, String message, boolean shouldThrowException) throws Exception
+//	{
+//		updateInternalUserAuthConfigOnSystem(system, apiUsername, message, shouldThrowException);
+//	}
 }

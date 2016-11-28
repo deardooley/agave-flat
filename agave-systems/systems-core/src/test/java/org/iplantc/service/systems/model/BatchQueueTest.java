@@ -363,5 +363,34 @@ public class BatchQueueTest extends SystemsModelTestCommon{
 			se.printStackTrace();
 		}
     }
+    
+    @Test (groups={"model","system"})
+    public void cloneTest() 
+    throws Exception 
+    {
+    	ExecutionSystem e = new ExecutionSystem();
+    	
+    	BatchQueue original = BatchQueue.fromJSON(jsonTree);
+    	original.setId(1);
+    	original.setExecutionSystem(e);
+    	
+    	BatchQueue clone = original.clone();
+
+    	Assert.assertFalse(original.equals(clone), "Cloned queue should not pass the equality test");
+    	
+    	Assert.assertTrue(original.getName().equals(clone.getName()), "Queue name was not copied over on clone. ");
+    	Assert.assertTrue(original.getMappedName().equals(clone.getMappedName()), "Queue mappedName was not copied over on clone. ");
+    	Assert.assertTrue(original.getDescription().equals(clone.getDescription()), "Queue description was not copied over on clone. ");
+    	Assert.assertTrue(original.getMaxJobs().equals(clone.getMaxJobs()), "Queue maxJobs was not copied over on clone. ");
+    	Assert.assertTrue(original.getMaxUserJobs().equals(clone.getMaxUserJobs()), "Queue maxUserJobs was not copied over on clone. ");
+    	Assert.assertTrue(original.getMaxNodes().equals(clone.getMaxNodes()), "Queue maxNodes was not copied over on clone. ");
+    	Assert.assertTrue(original.getMaxProcessorsPerNode().equals(clone.getMaxProcessorsPerNode()), "Queue maxProcessorsPerNode was not copied over on clone. ");
+    	Assert.assertTrue(original.getMaxMemoryPerNode().equals(clone.getMaxMemoryPerNode()), "Queue maxMemoryPerNode was not copied over on clone. ");
+    	Assert.assertTrue(original.getCustomDirectives().equals(clone.getCustomDirectives()), "Queue customDirectives was not copied over on clone. ");
+    	Assert.assertEquals(original.isSystemDefault(), clone.isSystemDefault(), "Queue systemDefault was not copied over on clone. ");
+    	Assert.assertNull(clone.getExecutionSystem(), "Queue executionSystem should not be copied on a cone operation.");
+    	Assert.assertNotEquals(original.getId(), clone.getId(), "Queue id should not be copied id a cone operation.");
+    	Assert.assertNotEquals(original.getUuid(), clone.getUuid(), "Queue uuid should not be copied id a cone operation.");
+    }
 
 }

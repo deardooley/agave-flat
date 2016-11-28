@@ -1035,7 +1035,7 @@ public class ExecutionSystem extends RemoteSystem implements SerializableSystem 
 		for (BatchQueue queue: getBatchQueues()) {
 			BatchQueue q = queue.clone();
 			q.setExecutionSystem(system);
-			system.getBatchQueues().add(q.clone());
+			system.addBatchQueue(q);
 		}
 		
 		return system;
