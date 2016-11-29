@@ -31,4 +31,16 @@ public class UNICORESubmissionClient implements RemoteSubmissionClient {
 		return false;
 	}
 
+	@Override
+	public String getHost() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getPort() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

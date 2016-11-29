@@ -1,8 +1,5 @@
 package org.iplantc.service.jobs.managers.monitors.parsers;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.exceptions.RemoteJobFailureDetectedException;
@@ -10,6 +7,7 @@ import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseExceptio
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 import org.iplantc.service.jobs.exceptions.RemoteJobUnknownStateException;
 import org.iplantc.service.jobs.exceptions.RemoteJobUnrecoverableStateException;
+import org.iplantc.service.jobs.managers.monitors.parsers.responses.SlurmJobStatusResponse;
 
 public class SlurmHPCMonitorResponseParser implements JobMonitorResponseParser {
 	
@@ -17,51 +15,31 @@ public class SlurmHPCMonitorResponseParser implements JobMonitorResponseParser {
 			.getLogger(SlurmHPCMonitorResponseParser.class);
 	
 	@Override
-	public boolean isJobRunning(String result) throws RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException
+	public boolean isJobRunning(String remoteServerRawResponse) 
+	throws RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException
 	{
-		// The request made was for {@code sacct -p -o 'JOBID,State,ExitCode' -n -j <job_id>}. That means 
-		// the response should come back in a pipe-delimited string as {@code <job_id>|<state>|<exit_code>|}.
-		// It is sufficient to split the string and look at the second term
-		if (StringUtils.isEmpty(result)) {
-			throw new RemoteJobMonitorEmptyResponseException("Empty response received from job status check on the remote system. This is likely caused by a ");
+		SlurmJobStatusResponse statusResponse = new SlurmJobStatusResponse(remoteServerRawResponse);
+		
+		// if the state info is missing, job isn't running
+		if (StringUtils.isBlank(statusResponse.getStatus())) {
+			return false;
 		}
-		else if (!result.contains("|")) {
-			throw new RemoteJobMonitorResponseParsingException("Unexpected fields in the response from the scheduler: " + result);
+		else if (statusResponse.getStatus().toLowerCase().contains("eqw")) {
+			throw new RemoteJobUnrecoverableStateException();
+		}
+		else if (StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "completed")) {
+			return false;
+		}
+		else if (StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "failed")) {
+			throw new RemoteJobFailureDetectedException("Exit code was " + statusResponse.getExitCode());
+		}
+		else if (StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "resizing") ||
+				StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "running") || 
+				StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "pending")) {
+			return true;
 		}
 		else {
-			List<String> lines = Arrays.asList(StringUtils.stripToEmpty(result).split("[\\r\\n]+"));
-			
-			
-			for (String line: lines) {
-				List<String> tokens = Arrays.asList(StringUtils.split(line, "|"));
-				
-				if (tokens.size() != 3) {
-					throw new RemoteJobMonitorResponseParsingException("Unexpected fields in the response from the scheduler: " + result);
-				}
-				// if the state info is missing, job isn't running
-				else if (StringUtils.isEmpty(tokens.get(1))) {
-					return false;
-				}
-				else if (tokens.get(1).toLowerCase().contains("eqw")) {
-					throw new RemoteJobUnrecoverableStateException();
-				}
-				else if (StringUtils.equalsIgnoreCase(tokens.get(1), "completed")) {
-					return false;
-				}
-				else if (StringUtils.equalsIgnoreCase(tokens.get(1), "failed")) {
-					throw new RemoteJobFailureDetectedException("Exit code was " + tokens.get(2));
-				}
-				else if (StringUtils.equalsIgnoreCase(tokens.get(1), "resizing") ||
-						StringUtils.equalsIgnoreCase(tokens.get(1), "running") || 
-						StringUtils.equalsIgnoreCase(tokens.get(1), "pending")) {
-					return true;
-				}
-				else {
-					throw new RemoteJobUnknownStateException(tokens.get(1), "Detected job in an unknown state ");
-				}
-			}
-			
-			return false;
+			throw new RemoteJobUnknownStateException(statusResponse.getStatus(), "Detected job in an unknown state ");
 		}
 	}
 }

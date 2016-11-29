@@ -437,4 +437,14 @@ public class MaverickSSHSubmissionClient implements RemoteSubmissionClient
 			close();
 		}
 	}
+
+	@Override
+	public String getHost() {
+		return hostname;
+	}
+
+	@Override
+	public int getPort() {
+		return port;
+	}
 }
