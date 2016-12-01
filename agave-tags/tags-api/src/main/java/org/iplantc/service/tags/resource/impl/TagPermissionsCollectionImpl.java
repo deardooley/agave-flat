@@ -42,7 +42,6 @@ public class TagPermissionsCollectionImpl extends AbstractTagCollection implemen
 	
     public TagPermissionsCollectionImpl() {}
     
-    @GET
     @Override
     public Response getEntityPermissions(@PathParam("entityId") String entityId) {
         
@@ -87,7 +86,6 @@ public class TagPermissionsCollectionImpl extends AbstractTagCollection implemen
         }
     }
 	
-	@POST
 	@Override
 	public Response addEntityPermission(@PathParam("entityId") String entityId, Representation input) 
 	{   
@@ -153,7 +151,6 @@ public class TagPermissionsCollectionImpl extends AbstractTagCollection implemen
         }
 	}
 	
-	@DELETE
 	@Override
     public Response clearAllEntityPermissions(@PathParam("entityId") String entityId) {
 	    

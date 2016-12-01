@@ -7,15 +7,19 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.Filters;
 import org.hibernate.annotations.Index;
+import org.hibernate.annotations.ParamDef;
 import org.iplantc.service.common.Settings;
-import org.iplantc.service.common.exceptions.UUIDException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
@@ -24,6 +28,8 @@ import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -39,7 +45,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  *
  */
 @Entity
-public class TagEvent { //extends AbstractEventEntity<Tag> {
+@Table(name = "tagevents")
+@FilterDef(name="tagEventTenantFilter", parameters=@ParamDef(name="tenantId", type="string"))
+@Filters(@Filter(name="tagEventTenantFilter", condition="tenant_id=:tenantId"))
+public class TagEvent {
 
     protected UUIDType getEventCode() {
         return UUIDType.TAG_EVENT;
@@ -146,7 +155,7 @@ public class TagEvent { //extends AbstractEventEntity<Tag> {
     }
 
     /**
-     * @return the softwareUuid
+     * @return the tagUuid
      */
     public String getEntity() {
         return entity;
@@ -267,14 +276,15 @@ public class TagEvent { //extends AbstractEventEntity<Tag> {
 
     @Transient
     @JsonProperty("_links")
-    public String getLinks() { 	
+    public JsonNode getLinks() { 	
     	ObjectMapper mapper = new ObjectMapper();
     	ObjectNode linksObject = mapper.createObjectNode();
         try {
         	AgaveUUID uuid = new AgaveUUID(getUuid());
 	        linksObject.put("self", (ObjectNode)mapper.createObjectNode()
-	            .put("href", TenancyHelper.resolveURLToCurrentTenant(uuid.getObjectReference())));
-        } catch (UUIDException e) {
+	            .put("href", TenancyHelper.resolveURLToCurrentTenant(
+	            		Settings.IPLANT_TAGS_SERVICE + getEntity()+ "/history/" + getUuid())));
+        } catch (Throwable e) {
         	linksObject.put("self", (ObjectNode)mapper.createObjectNode()
 		            .putNull("href"));
     	}
@@ -282,8 +292,21 @@ public class TagEvent { //extends AbstractEventEntity<Tag> {
         linksObject.put("tag", (ObjectNode)mapper.createObjectNode()
                 .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getEntity()));
         
-        return mapper.createObjectNode().put("_links", linksObject).toString();  	
+        return linksObject;  	
     }
+    
+    @JsonValue
+    public String toJSON() {
+	    ObjectMapper mapper = new ObjectMapper();
+        ObjectNode json = mapper.createObjectNode()
+                .put("status", getStatus())
+                .put("createdBy", getCreatedBy())
+                .put("description", getDescription())
+                .put("created", new DateTime(getCreated()).toString())
+                .put("id", getUuid());
+			json.set("_links", getLinks());
+        return json.toString();
+	}
 
 //    @JsonValue
 //    public String toJSON() throws SerializationException {

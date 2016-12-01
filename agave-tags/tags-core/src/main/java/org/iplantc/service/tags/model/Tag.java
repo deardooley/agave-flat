@@ -30,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.Filters;
+import org.hibernate.annotations.OptimisticLock;
 import org.hibernate.annotations.ParamDef;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.exceptions.UUIDException;
@@ -99,7 +100,7 @@ public class Tag  {
 	 * The last time this entity was updated
 	 */
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "last_updated", nullable = false, length = 19)
+	@Column(name = "last_updated", nullable = false)
 	@NotNull(message="Invalid notification lastUpdated. Notification lastUpdated cannot be null.")
 	private Date lastUpdated;	
 	
@@ -107,7 +108,7 @@ public class Tag  {
 	 * The creation date of this entity 
 	 */
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "created", nullable = false, length = 19)
+	@Column(name = "created", nullable = false)
 	@NotNull(message="Invalid notification created. Notification created cannot be null.")
 	private Date created;
 	
@@ -124,7 +125,8 @@ public class Tag  {
 	 * The tags to which this uuid applies.
 	 */
 	@OneToMany(cascade = CascadeType.ALL)
-	@JsonProperty("associatedIds")
+	@JsonProperty("associationIds")
+	@OptimisticLock(excluded = true)
     private List<TaggedResource> taggedResources = new ArrayList<TaggedResource>();
     
 	/**

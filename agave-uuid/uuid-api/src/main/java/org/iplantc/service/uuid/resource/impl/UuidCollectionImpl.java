@@ -6,6 +6,7 @@ package org.iplantc.service.uuid.resource.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -20,6 +21,7 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
+import org.iplantc.service.common.exceptions.TenantException;
 import org.iplantc.service.common.exceptions.UUIDException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
@@ -181,6 +183,8 @@ public class UuidCollectionImpl extends AbstractUuidCollection implements UuidCo
 		    	
     		}
     		catch (UUIDException e) {
+    			log.error("Failed to resolve resource representations for " + uuid, e);
+    			
     			urls.add(mapper.createObjectNode()
 		    			.put("status", "error")
 		    			.put("message", "Failed to resolve " + uuid + ". " + e.getMessage()));
@@ -199,21 +203,30 @@ public class UuidCollectionImpl extends AbstractUuidCollection implements UuidCo
     }
 	
 	/**
-	 * Check N sites, in parallel, using up to 4 threads. Report the results
-	 * only when all have completed.
+	 * @throws TenantException 
+	 */
+	/**
+	 * @param urls
+	 * @param filter
+	 * @return
+	 * @throws InterruptedException
+	 * @throws ExecutionException
+	 * @throws TenantException
 	 */
 	protected ArrayNode batchResolveResourceUrls(List<Object> urls, String filter) 
-	throws InterruptedException, ExecutionException 
+	throws InterruptedException, ExecutionException, TenantException 
 	{
 		ArrayNode jsonArray = new ObjectMapper().createArrayNode();
+		
+		Map<String,String> headerMap = getRequestAuthCredentials();
 		
 		Collection<Callable<JsonNode>> tasks = new ArrayList<>();
 		for (Object url : urls) {
 			if (url instanceof JsonNode) {
-				tasks.add(new ResourceResolutionTask((JsonNode)url, filter));
+				tasks.add(new ResourceResolutionTask((JsonNode)url, filter, headerMap));
 			}
 			else {
-				tasks.add(new ResourceResolutionTask((String)url, filter));
+				tasks.add(new ResourceResolutionTask((String)url, filter, headerMap));
 			}
 		}
 		int numThreads = urls.size() > 4 ? 4 : urls.size(); // max 4 threads

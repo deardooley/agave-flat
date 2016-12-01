@@ -10,7 +10,6 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.tags.dao.TagDao;
@@ -19,7 +18,6 @@ import org.iplantc.service.tags.exceptions.TagEventProcessingException;
 import org.iplantc.service.tags.exceptions.TagException;
 import org.iplantc.service.tags.exceptions.TagPermissionException;
 import org.iplantc.service.tags.exceptions.TagValidationException;
-import org.iplantc.service.tags.managers.TagPermissionManager;
 import org.iplantc.service.tags.model.Tag;
 import org.iplantc.service.tags.model.TagEvent;
 import org.iplantc.service.tags.model.TaggedResource;
@@ -75,7 +73,7 @@ public class TagManager {
     	return tag;
 	}
 	
-	public Tag updateTagAssociatedUuid(Tag existingTag, JsonNode json, String username) 
+	public Tag updateTagAssociationId(Tag existingTag, JsonNode json, String username) 
 	throws TagValidationException, TagException 
 	{
 		Tag tag = Tag.fromJSON(json);
@@ -87,30 +85,33 @@ public class TagManager {
     	}
     	else {
     		TagEventProcessor eventProcessor = new TagEventProcessor();
-    		if (json.has("associatedIds")) {
-    			if (json.get("associatedIds").isNull() || 
-    					(json.get("associatedIds").isArray() && json.get("associatedIds").size() == 0)) {
-    				List<TaggedResource> oldTaggedResources = tag.getTaggedResources();
-    				tag.getTaggedResources().clear();
-    				dao.persist(tag);
+    		if (json.has("associationIds")) {
+    			if (json.get("associationIds").isNull() || 
+    					(json.get("associationIds").isArray() && json.get("associationIds").size() == 0)) {
+    				List<TaggedResource> oldTaggedResources = existingTag.getTaggedResources();
+    				existingTag.getTaggedResources().clear();
+    				dao.persist(existingTag);
     				
     				
     				try {
-						eventProcessor.processAssociatedUuidUpdateEvent(tag, oldTaggedResources,  
-								new TagEvent(tag.getUuid(),
+						eventProcessor.processAssociatedUuidUpdateEvent(existingTag, oldTaggedResources,  
+								new TagEvent(existingTag.getUuid(),
 										TagEventType.UPDATED,
 										"The following resources were untagged: " + 
-												StringUtils.join(tag.getTaggedResourcesAsArray()),
+												StringUtils.join(existingTag.getTaggedResourcesAsArray()),
 										username));
 					} catch (TagEventProcessingException e) {
-						log.error("Failed to send tag resource removal event for " + tag.getUuid(), e);
+						log.error("Failed to send tag resource removal event for " + existingTag.getUuid(), e);
 					}
     			}
-    			else if (json.get("associatedIds").isArray()) {
+    			else if (json.get("associationIds").isArray()) {
     				
     				List<TaggedResource> newTaggedResources = new ArrayList<TaggedResource>();
-    				for(Iterator<JsonNode> iter = json.get("associatedIds").iterator(); iter.hasNext();) {
-    					newTaggedResources.add(new TaggedResource(iter.next().textValue(), tag));
+    				for(Iterator<JsonNode> iter = json.get("associationIds").iterator(); iter.hasNext();) {
+    					TaggedResource tr = new TaggedResource(iter.next().textValue(), existingTag);
+    					if (StringUtils.isNotBlank(tr.getUuid())) {
+    						newTaggedResources.add(tr);
+    					}
     				}
     				
     				ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
@@ -118,21 +119,26 @@ public class TagManager {
     		        
     		        Set<ConstraintViolation<List<TaggedResource>>> violations = validator.validate(newTaggedResources);
     				if (violations.isEmpty()) {
-    					List<TaggedResource> oldTaggedResources = tag.getTaggedResources();
-        				tag.getTaggedResources().clear();
-        				dao.persist(tag);
-        				tag.setTaggedResources(newTaggedResources);
-        				dao.persist(tag);
+    					List<TaggedResource> oldTaggedResources = existingTag.getTaggedResources();
+    					existingTag.getTaggedResources().clear();
+    					for (TaggedResource taggedResource: newTaggedResources) {
+    						if (StringUtils.isNotBlank(taggedResource.getUuid())) {
+    							existingTag.addTaggedResource(taggedResource);
+    						}
+    					}
+        				dao.persist(existingTag);
+//        				existingTag.setTaggedResources(newTaggedResources);
+//        				dao.persist(tag);
         				
         				try {
-							eventProcessor.processAssociatedUuidUpdateEvent(tag, oldTaggedResources,  
-									new TagEvent(tag.getUuid(),
+							eventProcessor.processAssociatedUuidUpdateEvent(existingTag, oldTaggedResources,  
+									new TagEvent(existingTag.getUuid(),
 											TagEventType.UPDATED,
-											"The following resources were to: " + 
-													StringUtils.join(tag.getTaggedResourcesAsArray()),
+											"The following resources were tagged: " + 
+													StringUtils.join(existingTag.getTaggedResourcesAsArray()),
 											username));
         				} catch (TagEventProcessingException e) {
-    						log.error("Failed to send tag resource update event for " + tag.getUuid(), e);
+    						log.error("Failed to send tag resource update event for " + existingTag.getUuid(), e);
     					}
     	        	} 
     				else {
@@ -140,32 +146,35 @@ public class TagManager {
     	        	}
     			}
     			else {
-    				throw new TagValidationException("Invalid associatedIds. "
-    						+ "Please provide an array of uuid for the associatedIds field.");
+    				throw new TagValidationException("Invalid associationIds. "
+    						+ "Please provide an array of uuid for the associationIds field.");
     			}
     		}
     		else if (json.isArray()) {
     			if(json.isArray() && json.size() == 0) {
     				List<TaggedResource> oldTaggedResources = tag.getTaggedResources();
-    				tag.getTaggedResources().clear();
-    				dao.persist(tag);
+    				existingTag.getTaggedResources().clear();
+    				dao.persist(existingTag);
     				
     				
     				try {
-						eventProcessor.processAssociatedUuidUpdateEvent(tag, oldTaggedResources,  
-								new TagEvent(tag.getUuid(),
+						eventProcessor.processAssociatedUuidUpdateEvent(existingTag, oldTaggedResources,  
+								new TagEvent(existingTag.getUuid(),
 										TagEventType.UPDATED,
 										"The following resources were untagged: " + 
-												StringUtils.join(tag.getTaggedResourcesAsArray()),
+												StringUtils.join(existingTag.getTaggedResourcesAsArray()),
 										username));
     				} catch (TagEventProcessingException e) {
-						log.error("Failed to send tag resource removal event for " + tag.getUuid(), e);
+						log.error("Failed to send tag resource removal event for " + existingTag.getUuid(), e);
 					}
     			}
     			else {
     				List<TaggedResource> newTaggedResources = new ArrayList<TaggedResource>();
-    				for(Iterator<JsonNode> iter = json.get("associatedIds").iterator(); iter.hasNext();) {
-    					newTaggedResources.add(new TaggedResource(iter.next().textValue(), tag));
+    				for(Iterator<JsonNode> iter = json.get("associationIds").iterator(); iter.hasNext();) {
+    					TaggedResource tr = new TaggedResource(iter.next().textValue(), existingTag);
+    					if (StringUtils.isNotBlank(tr.getUuid())) {
+    						newTaggedResources.add(tr);
+    					}
     				}
     				
     				ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
@@ -173,21 +182,24 @@ public class TagManager {
     		        
     		        Set<ConstraintViolation<List<TaggedResource>>> violations = validator.validate(newTaggedResources);
     				if (violations.isEmpty()) {
-    					List<TaggedResource> oldTaggedResources = tag.getTaggedResources();
-        				tag.getTaggedResources().clear();
-        				dao.persist(tag);
-        				tag.setTaggedResources(newTaggedResources);
-        				dao.persist(tag);
+    					List<TaggedResource> oldTaggedResources = existingTag.getTaggedResources();
+        				existingTag.getTaggedResources().clear();
+        				for (TaggedResource taggedResource: newTaggedResources) {
+    						if (StringUtils.isNotBlank(taggedResource.getUuid())) {
+    							existingTag.addTaggedResource(taggedResource);
+    						}
+    					}
+        				dao.persist(existingTag);
         				
         				try {
-							eventProcessor.processAssociatedUuidUpdateEvent(tag, oldTaggedResources,  
-									new TagEvent(tag.getUuid(),
+							eventProcessor.processAssociatedUuidUpdateEvent(existingTag, oldTaggedResources,  
+									new TagEvent(existingTag.getUuid(),
 											TagEventType.UPDATED,
-											"The following resources were to: " + 
-													StringUtils.join(tag.getTaggedResourcesAsArray()),
+											"The following resources were tagged: " + 
+													StringUtils.join(existingTag.getTaggedResourcesAsArray()),
 											username));
         				} catch (TagEventProcessingException e) {
-    						log.error("Failed to send tag resource update event for " + tag.getUuid(), e);
+    						log.error("Failed to send tag resource update event for " + existingTag.getUuid(), e);
     					}
     	        	} 
     				else {
@@ -196,8 +208,8 @@ public class TagManager {
     			}
     		}
     		else {
-				throw new TagValidationException("Invalid associatedIds. "
-						+ "Please provide an array of uuid for the associatedIds field.");
+				throw new TagValidationException("Invalid associationIds. "
+						+ "Please provide an array of uuid for the associationIds field.");
 			}
     	}
 		

@@ -155,8 +155,14 @@ public class StagingJob extends AbstractJobWatch<StagingTask>
 			{
 				String src;
 				if (ApiUriUtil.isInternalURI(sourceUri)) {
+					// this strips double paths and lends itself to unhandled decoding
 					src = ApiUriUtil.getPath(sourceUri);
+					// decode the path for use in the RemoteDataClient instances and 
+					// resolve the relative vs absolute path issue
 					src = UrlPathEscaper.decode(StringUtils.removeStart(src, "/"));
+					// if double slashes were there, ensure it starts with a slash
+					if (StringUtils.startsWith(sourceUri.getPath(), "//")) src = "/" + src;
+					
 				} else {
 					src = sourceUri.getRawPath();
 				}

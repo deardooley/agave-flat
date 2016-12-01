@@ -3,6 +3,8 @@
  */
 package org.iplantc.service.uuid.resource.impl;
 
+import java.util.Map;
+
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -61,8 +63,10 @@ public class UuidResourceImpl extends AbstractUuidResource implements
 			
 			// if expand=true, return the resource representation for the uuid
 			if (expandResources) {
-	    		
-	    		JsonNode json = fetchResource(TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference()), filter);
+				
+				Map<String,String> headerMap = getRequestAuthCredentials();
+				
+				JsonNode json = fetchResource(TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference()), filter, headerMap);
 	    		
 	    		return Response.ok(new AgaveSuccessRepresentation(json.toString())).build();
 	    	}

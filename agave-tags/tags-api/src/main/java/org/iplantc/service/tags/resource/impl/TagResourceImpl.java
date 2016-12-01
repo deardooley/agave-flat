@@ -17,9 +17,6 @@ import org.iplantc.service.tags.model.Tag;
 import org.iplantc.service.tags.resource.TagResource;
 import org.restlet.data.Status;
 import org.restlet.representation.Representation;
-import org.restlet.resource.Delete;
-import org.restlet.resource.Get;
-import org.restlet.resource.Put;
 import org.restlet.resource.ResourceException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -40,7 +37,6 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.tags.resource.TagsCollection#getTags()
 	 */
-	@Get
 	@Override
 	public Response represent(@PathParam("entityId") String entityId) throws Exception {
 		
@@ -49,12 +45,8 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
 		try
         {
         	Tag tag = getResourceFromPathValue(entityId);
-			
-        	ObjectMapper mapper = new ObjectMapper();
-    		String json = mapper.writerWithType(new TypeReference<Tag>() {})
-					.writeValueAsString(tag);
         	
-    		return Response.ok(new AgaveSuccessRepresentation(json.toString())).build();
+    		return Response.ok(new AgaveSuccessRepresentation(tag.toJSON())).build();
             
         }
         catch (ResourceException e) {
@@ -72,7 +64,6 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.tags.resource.TagsCollection#addTagFromForm(java.lang.String, java.util.List)
 	 */
-	@Delete
 	@Override
 	public Response remove(@PathParam("entityId") String entityId) throws Exception {
 		
@@ -102,9 +93,11 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
         }
 	}
 
-	@Put
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.tags.resource.TagResource#store(java.lang.String, org.restlet.representation.Representation)
+	 */
 	@Override
-	public Response store(@PathParam("entityId") String entityId, Representation input) throws Exception {
+	public Response accept(@PathParam("entityId") String entityId, Representation input) throws Exception {
 		
 		logUsage(AgaveLogServiceClient.ActivityKeys.TagsUpdate);
         
@@ -113,7 +106,7 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
         	Tag tag = getResourceFromPathValue(entityId);
         	JsonNode json = getPostedContentAsJsonNode(input);  	
         	TagManager manager = new TagManager();
-        	Tag updatedTag = manager.updateTagAssociatedUuid(tag, json, getAuthenticatedUsername());
+        	Tag updatedTag = manager.updateTagAssociationId(tag, json, getAuthenticatedUsername());
         	
         	return Response.ok(new AgaveSuccessRepresentation(updatedTag.toJSON())).build();
             

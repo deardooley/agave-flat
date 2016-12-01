@@ -19,6 +19,7 @@ import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.exceptions.UUIDException;
 import org.iplantc.service.common.persistence.TenancyHelper;
@@ -43,17 +44,19 @@ public class TaggedResource {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonIgnore
+    @Column(name = "`id`", unique = true, nullable = false)
+	@JsonIgnore
     private Long id;
     
     @Column(name = "associated_uuid", nullable = false, length = 64)
     @ValidAgaveUuid
+    @NotEmpty
+    @NotNull
     private String uuid;
 
     @Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "created", nullable = false, length = 19)
-	@NotNull(message="Invalid tag created. Tag created cannot be null.")
-    @JsonIgnore
+	@Column(name = "created", nullable = false)
+	@JsonIgnore
 	private Date created = new Date();
 
     @ManyToOne

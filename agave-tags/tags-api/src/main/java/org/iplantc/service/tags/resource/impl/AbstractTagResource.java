@@ -3,7 +3,6 @@ package org.iplantc.service.tags.resource.impl;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.clients.AgaveLogServiceClient.ServiceKeys;
 import org.iplantc.service.common.restlet.resource.AbstractAgaveResource;
-import org.iplantc.service.notification.model.Notification;
 import org.iplantc.service.tags.dao.TagDao;
 import org.iplantc.service.tags.exceptions.TagException;
 import org.iplantc.service.tags.exceptions.TagPermissionException;
@@ -24,16 +23,16 @@ public class AbstractTagResource extends AbstractAgaveResource {
     public AbstractTagResource() {}
     
     /**
-     * Fetches the {@link Notification} object for the uuid in the URL or throws 
+     * Fetches the {@link Tag} object for the uuid in the URL or throws 
      * an exception that can be re-thrown from the route method.
-     * @param softwareId
-     * @return Software object referenced in the path
+     * @param tagId
+     * @return Tag object referenced in the path
      * @throws ResourceException
      */
     protected Tag getResourceFromPathValue(String uuid)
     throws TagException
     {
-    	Tag existingTag = new TagDao().findByUuid(uuid);
+    	Tag existingTag = new TagDao().findByNameOrUuid(uuid, getAuthenticatedUsername());
         
         if (existingTag == null) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,

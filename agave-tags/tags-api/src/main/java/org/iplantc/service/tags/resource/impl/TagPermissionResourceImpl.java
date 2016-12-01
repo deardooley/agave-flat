@@ -44,7 +44,6 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
     /* (non-Javadoc)
      * @see org.iplantc.service.apps.resources.impl.SoftwarePermissionResource#getNotification(java.lang.String, java.lang.String)
      */
-    @GET
     @Override
 	public Response getEntityPermissionForUser(@PathParam("entityId") String entityId,
                                     		   @PathParam("sharedUsername") String sharedUsername) {
@@ -79,7 +78,6 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
      * @see org.iplantc.service.apps.resources.impl.SoftwarePermissionResource#updateUserSoftwarePermission(java.lang.String, java.lang.String, org.restlet.representation.Representation)
      */
     @Override
-    @POST
     public Response updateEntityPermissionForUser(@PathParam("entityId") String entityId,
             									  @PathParam("sharedUsername") String sharedUsername,
             									  Representation input) {
@@ -154,7 +152,6 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.apps.resources.impl.SoftwarePermissionResource#deleteUserSoftwarePermission(java.lang.String, java.lang.String)
 	 */
-	@DELETE
 	@Override
 	public Response removeEntityPermissionForUser(@PathParam("entityId") String entityId,
 			  									  @PathParam("sharedUsername") String sharedUsername) {

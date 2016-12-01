@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.util.FileUtils;
+import org.hibernate.CacheMode;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.iplantc.service.common.Settings;
@@ -109,6 +110,9 @@ public class UUIDEntityLookup {
 			return Settings.IPLANT_ABACO_SERVICE + uuid;
 		} else if (entityType.equals(UUIDType.REPOSITORY)) {
 			return Settings.IPLANT_REPOSITORY_SERVICE + uuid;
+		} else if (entityType.equals(UUIDType.TAG_EVENT)) {
+			Object tagUuid = getEntityFieldByUuid("tagevent", "entity_uuid", uuid);
+			return Settings.IPLANT_TAGS_SERVICE + tagUuid.toString() + "/history/" + uuid;
 		} else {
 			throw new UUIDException("Unable to resolve " + entityType.name().toLowerCase() 
 					+ " identifier to a known resource.");
@@ -132,16 +136,14 @@ public class UUIDEntityLookup {
 
         try 
         {
-        	HibernateUtil.beginTransaction();
-			Session session = HibernateUtil.getSession();
-            session.clear();
+        	Session session = HibernateUtil.getSession();
             
             List<Object> fieldValues = session
             		.createSQLQuery("select " + fieldName + " from " + tableName + " where uuid = :uuid")
             		.setString("uuid", uuid.toString())
+            		.setCacheable(false)
+            		.setCacheMode(CacheMode.IGNORE)
             		.list();
-
-            session.flush();
             
             if (fieldValues.isEmpty())
                 throw new UUIDException("No such uuid present");
@@ -154,10 +156,6 @@ public class UUIDEntityLookup {
         catch(Throwable e) 
         {
             throw new UUIDException(e);
-        } 
-        finally 
-        {
-        	try { HibernateUtil.commitTransaction();} catch (Exception e) {}
         }
     }
 	
@@ -171,17 +169,14 @@ public class UUIDEntityLookup {
         
         try 
         {
-        	HibernateUtil.beginTransaction();
+//        	HibernateUtil.beginTransaction();
 			Session session = HibernateUtil.getSession();
-            session.clear();
             
             Map<String, Object> row = (Map<String, Object>)session
             		.createSQLQuery(sql)
             		.setResultTransformer(Criteria.ALIAS_TO_ENTITY_MAP)
             		.uniqueResult();
 
-            session.flush();
-            
             if (row == null)
                 throw new UUIDException("No such UUID present");
             
@@ -191,10 +186,10 @@ public class UUIDEntityLookup {
         {
             throw new UUIDException(e);
         } 
-        finally 
-        {
-        	try { HibernateUtil.commitTransaction();} catch (Exception e) {}
-        }
+//        finally 
+//        {
+//        	try { HibernateUtil.commitTransaction();} catch (Exception e) {}
+//        }
     }
 	
 	protected static String resolveLogicalFileURLFromUUID(String uuid) throws UUIDException

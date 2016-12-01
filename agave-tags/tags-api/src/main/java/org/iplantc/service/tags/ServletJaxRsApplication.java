@@ -23,7 +23,7 @@ public class ServletJaxRsApplication extends JaxRsApplication
         // add basic auth
   		Verifier verifier = new VerifierFactory().createVerifier(Settings.AUTH_SOURCE);
   		ChallengeAuthenticator guard = new ChallengeAuthenticator(context,
-  				 ChallengeScheme.HTTP_BASIC, "iPlant Agave API");
+  				 ChallengeScheme.HTTP_BASIC, "The Agave Platform");
   		guard.setVerifier(verifier);
   		
   		guard.setNext(this);

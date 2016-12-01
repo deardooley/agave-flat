@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.iplantc.service.notification.managers.NotificationManager;
+import org.iplantc.service.tags.dao.TagEventDao;
+import org.iplantc.service.tags.exceptions.TagEventPersistenceException;
 import org.iplantc.service.tags.exceptions.TagEventProcessingException;
 import org.iplantc.service.tags.model.Tag;
 import org.iplantc.service.tags.model.TagEvent;
@@ -31,6 +33,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class TagEventProcessor {
 	private static final Logger log = Logger.getLogger(TagEventProcessor.class);
 	private ObjectMapper mapper = new ObjectMapper();
+	private TagEventDao dao = new TagEventDao();
 	
 	public TagEventProcessor(){}
 	
@@ -62,6 +65,13 @@ public class TagEventProcessor {
 		            + "%s to json for %s event notification", 
 		            tag.getUuid(), event.getStatus()), e);
 		    json = null;
+		}
+		
+		try {
+			dao.persist(event);
+		}
+		catch (TagEventPersistenceException e) {
+			log.error("Failed to save tag event " + event.getStatus() + " on tag " + tag.getUuid(), e);
 		}
 		
 		NotificationManager.process(tag.getUuid(), event.getStatus(), event.getCreatedBy(), json.toString());
@@ -106,6 +116,13 @@ public class TagEventProcessor {
 		            + "%s to json for %s event notification", 
 		            tag.getUuid(), event.getStatus()), e);
 		    json = null;
+		}
+		
+		try {
+			dao.persist(event);
+		}
+		catch (TagEventPersistenceException e) {
+			log.error("Failed to save tag event " + event.getStatus() + " on tag " + tag.getUuid(), e);
 		}
 		
 		NotificationManager.process(tag.getUuid(), event.getStatus(), event.getCreatedBy(), json.toString());
@@ -159,8 +176,8 @@ public class TagEventProcessor {
 		ObjectNode json = null;
 		try {
 		    json = mapper.createObjectNode();
-	    	json.put("tag", mapper.readTree(tag.toJSON()));
-		    json.put("permission", mapper.readTree(permission.toJSON()));
+	    	json.set("tag", mapper.readTree(tag.toJSON()));
+		    json.set("permission", mapper.readTree(permission.toJSON()));
 		} catch (Throwable e) {
 		    log.error(String.format("Failed to serialize tag "
 		            + "%s to json for %s event notification", 
@@ -168,9 +185,13 @@ public class TagEventProcessor {
 		    json = null;
 		}
 		
-//		event.setEntity(tag.getUuid());
-//		TagEventDao.persist(event);
-//		
+		try {
+			dao.persist(event);
+		}
+		catch (TagEventPersistenceException e) {
+			log.error("Failed to save tag event " + event.getStatus() + " on tag " + tag.getUuid(), e);
+		}
+		
 		NotificationManager.process(tag.getUuid(), event.getStatus(), event.getCreatedBy(), json.toString());
 		
 		// We do not fire delegated tag permission events on associated uuids 

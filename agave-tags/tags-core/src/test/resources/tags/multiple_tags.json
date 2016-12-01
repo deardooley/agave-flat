@@ -1,14 +1,14 @@
 [
 	{
 		"name": "test_tag",
-		"associatedIds": [ "abc1234-abc1234-abc1234-abc1234-011" ]
+		"associationIds": [ "abc1234-abc1234-abc1234-abc1234-011" ]
 	},
 	{
 		"name": "test_tag2",
-		"associatedIds": [ "abc1234-abc1234-abc1234-abc1234-011" ]
+		"associationIds": [ "abc1234-abc1234-abc1234-abc1234-011" ]
 	},
 	{
 		"name": "test_tag3",
-		"associatedIds": [ "abc1234-abc1234-abc1234-abc1234-011" ]
+		"associationIds": [ "abc1234-abc1234-abc1234-abc1234-011" ]
 	}
 ]

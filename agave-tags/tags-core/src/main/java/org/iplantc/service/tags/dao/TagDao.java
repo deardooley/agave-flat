@@ -13,7 +13,6 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.transform.Transformers;
 import org.iplantc.service.common.auth.AuthorizationHelper;
-import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.dao.AbstractDao;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
@@ -131,85 +130,89 @@ public class TagDao extends AbstractDao
 		}
 	}
 	
-//	/**
-//	 * Find a {@link Tag} by either name or uuid.
-//	 * 
-//	 * @param uuid
-//	 * @return
-//	 * @throws TagException
-//	 */
-//	public Tag findByNameOrUuid(String uuidOrName) throws TagException
-//	{
-//		if (StringUtils.isEmpty(uuidOrName)) {
-//			return null;
-//		}
-//		else {
-//			try {
-//				AgaveUUID uuid = new AgaveUUID(uuidOrName);
-//				if (UUIDType.TAG == uuid.getResourceType()) {
-//					return findByUuid(uuidOrName);
-//				}
-//				// it's still a valid name, go for it
-//				else {
-//					return findByNameAndOwner(uuidOrName, TenancyHelper.getCurrentEndUser());
-//				}
-//			}
-//			catch (Exception e) {
-//				return findByNameAndOwner(uuidOrName, TenancyHelper.getCurrentEndUser());
-//			}
-//		}
-//	}
+	/**
+	 * Find a {@link Tag} by either name or uuid.
+	 * 
+	 * @param uuid
+	 * @return
+	 * @throws TagException
+	 */
+	public Tag findByNameOrUuid(String uuidOrName, String username) throws TagException
+	{
+		if (StringUtils.isEmpty(uuidOrName)) {
+			return null;
+		}
+		else {
+			try {
+				AgaveUUID uuid = new AgaveUUID(uuidOrName);
+				if (UUIDType.TAG == uuid.getResourceType()) {
+					return findByUuid(uuidOrName);
+				}
+				// it's still a valid name, go for it
+				else {
+					return findByNameAndOwner(uuidOrName, username);
+				}
+			}
+			catch (Exception e) {
+				return findByNameAndOwner(uuidOrName, username);
+			}
+		}
+	}
 		
-//	@SuppressWarnings("unchecked")
-//	public Tag findByNameAndOwner(String name, String owner) 
-//	throws TagException 
-//	{
-//		try
-//		{	
-//			HibernateUtil.beginTransaction();
-//			Session session = HibernateUtil.getSession();
-//			session.clear();
-//			
-//			String hql = "from Tag t where t.name = :name " +
-//					"		t.owner = :owner OR \n" +
-//                    "       t.id in ( \n" + 
-//                    "               SELECT tp.tag.id FROM TagPermission tp \n" +
-//                    "               WHERE tp.username = :owner AND tp.permission <> :none \n" +
-//                    "              ) \n" +
-//                    "      )";
-//			
-//			List<Tag> tags = (List<Tag>)session.createQuery(hql)
-//					.setString("name",name)
-//					.setString("owner", owner)
-//					.list();
-//			
-//			session.flush();
-//			
-//			if (tags.size() > 1) {
-//				for (Tag tag: tags) {
-//					if (StringUtils.equals(tag.getOwner(), owner)) {
-//						return tag;
-//					}
-//				}
-//			}
-//			return tag;
-//		}
-//		catch (HibernateException ex)
-//		{
-//			try
-//			{
-//				if (HibernateUtil.getSession().isOpen()) {
-//					HibernateUtil.rollbackTransaction();
-//				}
-//			}
-//			catch (Exception e) {}
-//			
-//			throw new TagException(ex);
-//		}
-//		finally {
-//			try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
-//		}
-//	}
+	@SuppressWarnings("unchecked")
+	public Tag findByNameAndOwner(String name, String owner) 
+	throws TagException 
+	{
+		try
+		{	
+			HibernateUtil.beginTransaction();
+			Session session = HibernateUtil.getSession();
+			session.clear();
+			
+			String hql = "from Tag t where t.name = :name and " +
+					"		( " +
+					"			t.owner = :owner OR \n" +
+                    "	        t.id in ( \n" + 
+                    "               SELECT tp.entityId FROM TagPermission tp \n" +
+                    "               WHERE tp.username = :owner AND tp.permission <> :none \n" +
+                    "           ) \n" +
+                    "       ) \n" +
+                    "      )";
+			
+			List<Tag> tags = (List<Tag>)session.createQuery(hql)
+					.setString("name",name)
+					.setString("owner", owner)
+					.setString("none", PermissionType.NONE.name())
+					.list();
+			
+			session.flush();
+			
+			if (tags.size() > 0) {
+				for (Tag tag: tags) {
+					if (StringUtils.equals(tag.getOwner(), owner)) {
+						return tag;
+					}
+				}
+			}
+			
+			return null;
+		}
+		catch (HibernateException ex)
+		{
+			try
+			{
+				if (HibernateUtil.getSession().isOpen()) {
+					HibernateUtil.rollbackTransaction();
+				}
+			}
+			catch (Exception e) {}
+			
+			throw new TagException(ex);
+		}
+		finally {
+			try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
+		}
+	}
 	
 	/**
 	 * Returns the {@link Tag} matching the given uuid within the current tenant id
@@ -439,12 +442,12 @@ public class TagDao extends AbstractDao
 
 	/**
 	 * Returns true if a {@link Tag} by the same name already exists for the given user.
-	 * @param username
-	 * @param name
-	 * @return
+	 * @param name name of tag
+	 * @param username owner of tag
+	 * @return true of a match exists within the current tenant. false otherwise
 	 * @throws TagException
 	 */
-	public boolean doesTagNameExistForUser(String username, String name) throws TagException 
+	public boolean doesTagNameExistForUser(String name, String username) throws TagException 
 	{
 		try
 		{
