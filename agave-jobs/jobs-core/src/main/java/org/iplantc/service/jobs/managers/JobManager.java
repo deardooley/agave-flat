@@ -30,6 +30,7 @@ import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.apps.model.enumerations.SoftwareParameterType;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.exceptions.PermissionException;
+import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.io.dao.LogicalFileDao;
 import org.iplantc.service.io.model.LogicalFile;
@@ -38,6 +39,7 @@ import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobProcessingException;
 import org.iplantc.service.jobs.exceptions.JobTerminationException;
 import org.iplantc.service.jobs.managers.killers.JobKiller;
@@ -47,6 +49,8 @@ import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobArchivePathMacroType;
 import org.iplantc.service.jobs.model.enumerations.JobMacroType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.TopicMessageSender;
+import org.iplantc.service.jobs.phases.queuemessages.StopJobMessage;
 import org.iplantc.service.jobs.queue.ZombieJobWatch;
 import org.iplantc.service.jobs.util.Slug;
 import org.iplantc.service.notification.exceptions.NotificationException;
@@ -196,28 +200,8 @@ public class JobManager {
 	{
 		if (!JobStatusType.hasQueued(job.getStatus()) || job.getStatus() == JobStatusType.ARCHIVING)
 		{
-			// if it's not in queue, just update the status
-//			JobDao.refresh(job);
-			job = JobManager.updateStatus(job, JobStatusType.STOPPED, "Job cancelled by user.");
-
-			for (JobEvent event: job.getEvents()) {
-				if (event.getTransferTask() != null)
-				{
-					if (event.getTransferTask().getStatus() == TransferStatusType.PAUSED ||
-							event.getTransferTask().getStatus() == TransferStatusType.QUEUED ||
-							event.getTransferTask().getStatus() == TransferStatusType.RETRYING ||
-							event.getTransferTask().getStatus() == TransferStatusType.TRANSFERRING) {
-						try {
-							TransferTaskDao.cancelAllRelatedTransfers(event.getTransferTask().getId());
-						} catch (Exception e ) {
-							log.error("Failed to cancel transfer task " +
-									event.getTransferTask().getUuid() + " while stopping job " +
-									job.getUuid(), e);
-						}
-					}
-				}
-			}
-
+			// if it's not in queue, just update the status.
+			job = stopRunningJob(job, "Job cancelled by user.");
 			return job;
 		}
 		else if (!job.isRunning())
@@ -295,35 +279,59 @@ public class JobManager {
 			// prior to this being called. That will invalidate the current object. Here we
 			// refresh with job prior to updating the status so we don't get a stale state
 			// exception
-//			JobDao.refresh(job);
-			job = JobManager.updateStatus(job, JobStatusType.STOPPED);
-//			job.setStatus(JobStatusType.STOPPED,  JobStatusType.STOPPED.getDescription());
-//			job.setLastUpdated(new DateTime().toDate());
-//			job.setEndTime(job.getLastUpdated());
-//			JobDao.persist(job);
-
-			for (JobEvent event: job.getEvents()) {
-				if (event.getTransferTask() != null)
-				{
-					if (event.getTransferTask().getStatus() == TransferStatusType.PAUSED ||
-							event.getTransferTask().getStatus() == TransferStatusType.QUEUED ||
-							event.getTransferTask().getStatus() == TransferStatusType.RETRYING ||
-							event.getTransferTask().getStatus() == TransferStatusType.TRANSFERRING) {
-						try {
-							TransferTaskDao.cancelAllRelatedTransfers(event.getTransferTask().getId());
-						} catch (Exception e ) {
-							log.error("Failed to cancel transfer task " +
-									event.getTransferTask().getUuid() + " while stopping job " +
-									job.getUuid(), e);
-						}
-					}
-				}
-			}
-
+			job = stopRunningJob(job, null);
 			return job;
 		}
 	}
 
+	/** Stop a running job by doing the following: 
+	 * 
+	 *     1. Change the job status
+	 *     2. Cancel transfers
+	 *     3. Interrupt the job's worker thread
+	 * 
+	 * @param job to the job to be stopped
+	 * @param stopMsg a custom message saved with the status change or 
+	 *         null to save the standard message
+	 * @return the refreshed job object
+	 * @throws JobException on error
+	 */
+	private static Job stopRunningJob(Job job, String stopMsg) throws JobException
+	{
+	    // ----- Update the job status.
+	    if (stopMsg == null) stopMsg = JobStatusType.STOPPED.getDescription();
+        job = JobManager.updateStatus(job, JobStatusType.STOPPED, stopMsg);
+
+        // ----- Cancel transfers.
+        for (JobEvent event: job.getEvents()) {
+            if (event.getTransferTask() != null)
+            {
+                if (event.getTransferTask().getStatus() == TransferStatusType.PAUSED ||
+                        event.getTransferTask().getStatus() == TransferStatusType.QUEUED ||
+                        event.getTransferTask().getStatus() == TransferStatusType.RETRYING ||
+                        event.getTransferTask().getStatus() == TransferStatusType.TRANSFERRING) {
+                    try {
+                        TransferTaskDao.cancelAllRelatedTransfers(event.getTransferTask().getId());
+                    } catch (Exception e ) {
+                        log.error("Failed to cancel transfer task " +
+                                event.getTransferTask().getUuid() + " while stopping job " +
+                                job.getUuid(), e);
+                    }
+                }
+            }
+        }
+        
+        // ----- Interrupt the job's worker thread.
+        StopJobMessage message = new StopJobMessage(job.getName(), job.getUuid(), job.getTenantId());
+        try {TopicMessageSender.sendJobMessage(message);}
+        catch (Exception e) {
+            String msg = "Unable to send job interrupt message: " + message.toString();
+            log.error(msg, e);
+        }
+
+        return job;
+	}
+	
 	/**
 	 * Sets the job's visibility attribute to false and
 	 * updates the timestamp.
@@ -369,12 +377,21 @@ public class JobManager {
 						" at user's request.", t);
 			}
 			finally {
+			    // Update job record.
 				job.setVisible(Boolean.FALSE);
 				job.setStatus(JobStatusType.STOPPED, "Job deleted by user.");
 				Date jobHiddenDate = new DateTime().toDate();
 				job.setLastUpdated(jobHiddenDate);
 				job.setEndTime(jobHiddenDate);
 				JobDao.persist(job);
+				
+				// Interrupt the worker thread that might be processing this job now.
+		        StopJobMessage message = new StopJobMessage(job.getName(), job.getUuid(), job.getTenantId());
+		        try {TopicMessageSender.sendJobMessage(message);}
+		        catch (Exception e) {
+		            String msg = "Unable to send job interrupt message: " + message.toString();
+		            log.error(msg, e);
+		        }
 			}
 		}
 		
@@ -409,39 +426,117 @@ public class JobManager {
 	throws JobException
 	{
 		job.setStatus(status, errorMessage);
-
-		Date date = new DateTime().toDate();
-		job.setLastUpdated(date);
-		if (status.equals(JobStatusType.QUEUED))
-		{
-		    if (job.getSubmitTime() == null) {
-		        job.setSubmitTime(date);
-		    }
-		}
-		else if (status.equals(JobStatusType.RUNNING))
-		{
-			if (job.getStartTime() == null) {
-			    job.setStartTime(date);
-			}
-		}
-		else if (status.equals(JobStatusType.FINISHED)
-				|| status.equals(JobStatusType.KILLED)
-				|| status.equals(JobStatusType.STOPPED)
-				|| status.equals(JobStatusType.FAILED))
-		{
-		    if (job.getEndTime() == null) {
-		        job.setEndTime(date);
-		    }
-		}
-		else if (status.equals(JobStatusType.STAGED)) {
-			//
-		}
+		assignStatusDates(job, status);
 
 		JobDao.persist(job, false);
 
 		return job;
 	}
 
+    /** Conditionally updates the status of a job, updates the timestamps as appropriate
+     * based on the status, and writes a new JobEvent to the job's history.  If the 
+     * specified transition is allowed, then the job will be updated.  If the specified 
+     * transition is not allowed, we throw an exception.  
+     *
+     * @param job
+     * @param status
+     * @throws JobException
+     */
+    public static Job safeUpdateStatus(Job job, JobStatusType status)
+            throws JobException, JobFinishedException
+    {
+        return safeUpdateStatus(job, status, status.getDescription());
+    }
+
+	/** Conditionally updates the status of a job, updates the timestamps as appropriate
+     * based on the status, and writes a new JobEvent to the job's history.  If the 
+     * specified transition is allowed, then the job will be updated.  If the specified 
+     * transition is not allowed, we throw an exception.  
+	 * 
+	 * @param job the job to be updated
+	 * @param status the new status
+	 * @param errorMessage the message saved with the status
+	 * @return the updated job if the status change is allowed
+	 * @throws JobException if the proposed status change is not valid
+	 */
+    public static Job safeUpdateStatus(Job job, JobStatusType status, String errorMessage)
+    throws JobException, JobFinishedException
+    {
+        // Get the current value of the job status from the database.
+        // Note: A non-null results obligates us to complete the
+        //       database transaction on this thread.
+        JobStatusType curStatus = JobDao.lockJobForStatus(job);
+        if (curStatus == null) {
+            String msg = "Unable to retrieve latest version of job " + 
+                         job.getUuid() + " (" + job.getName() + ").";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+            
+        // Determine if the state transition is allowed.
+        if (JobStatusType.isFinished(curStatus))
+        {
+            // Rollback the locking transaction.
+            try {HibernateUtil.rollbackTransaction();}
+            catch (Exception e) {
+                String msg = "safeUpdateStatus transaction rollback failed for job " + 
+                             job.getUuid() + " (" + job.getName() + ").";
+                log.error(msg, e);
+            }
+            
+            // Note the incident.
+            String msg = "Cannot safely update the status of job " + 
+                         job.getUuid() + " (" + job.getName() + ") to " +
+                         status.name() + " from " + curStatus.name() + ".";
+            log.warn(msg);
+            throw new JobFinishedException(msg);
+        }
+        
+        // We can make the state transition
+        // and commit the transaction.
+        job.setStatus(status, errorMessage);
+        assignStatusDates(job, status);
+        JobDao.persistLockedJob(job); // transaction committed
+        
+        return job;
+    }
+    
+    /** Set various job date fields when changing status.  Date fields
+     * in the job are assigned based on the new status. 
+     * 
+     * @param job the job that is changing status
+     * @param status the new status being assigned to the job
+     */
+    private static void assignStatusDates(Job job, JobStatusType status)
+    {
+        Date date = new DateTime().toDate();
+        job.setLastUpdated(date);
+        if (status.equals(JobStatusType.QUEUED))
+        {
+            if (job.getSubmitTime() == null) {
+                job.setSubmitTime(date);
+            }
+        }
+        else if (status.equals(JobStatusType.RUNNING))
+        {
+            if (job.getStartTime() == null) {
+                job.setStartTime(date);
+            }
+        }
+        else if (status.equals(JobStatusType.FINISHED)
+                || status.equals(JobStatusType.KILLED)
+                || status.equals(JobStatusType.STOPPED)
+                || status.equals(JobStatusType.FAILED))
+        {
+            if (job.getEndTime() == null) {
+                job.setEndTime(date);
+            }
+        }
+        else if (status.equals(JobStatusType.STAGED)) {
+            //
+        }
+    }
+    
 	/**
 	 * This method attempts to archive a job's output by retirieving the
 	 * .agave.archive shadow file from the remote job directory and staging
@@ -771,222 +866,6 @@ public class JobManager {
 	{
 		JobRequestProcessor processor = new JobRequestProcessor(username, internalUsername);
 		return processor.processJob(json);
-		
-//	    HashMap<String, Object> jobRequestMap = new HashMap<String, Object>();
-//
-//		String currentKey = null;
-//
-//		try
-//		{
-//			Iterator<String> fields = json.fieldNames();
-//   			while(fields.hasNext()) {
-//				String key = fields.next();
-//
-//				if (StringUtils.isEmpty(key)) continue;
-//
-//				currentKey = key;
-//
-//				if (key.equals("notifications")) {
-//					continue;
-//				}
-//
-//				if (key.equals("dependencies"))
-//				{
-//					throw new JobProcessingException(400,
-//							"Job dependencies are not yet supported.");
-//				}
-//
-//				JsonNode child = json.get(key);
-//
-//				if (child.isNull()) {
-//				    jobRequestMap.put(key, null);
-//				}
-//				else if (child.isNumber())
-//				{
-//				    jobRequestMap.put(key, child.asText());
-//				}
-//				else if (child.isObject())
-//				{
-//					Iterator<String> childFields = child.fieldNames();
-//					while(childFields.hasNext())
-//					{
-//						String childKey = childFields.next();
-//						JsonNode childchild = child.path(childKey);
-//						if (StringUtils.isEmpty(childKey) || childchild.isNull() || childchild.isMissingNode()) {
-//							continue;
-//						}
-//						else if (childchild.isDouble()) {
-//						    jobRequestMap.put(childKey, childchild.decimalValue().toPlainString());
-//						}
-//						else if (childchild.isNumber())
-//						{
-//						    jobRequestMap.put(childKey, new Long(childchild.longValue()).toString());
-//						}
-//						else if (childchild.isArray()) {
-//						    List<String> arrayValues = new ArrayList<String>();
-//							for (Iterator<JsonNode> argIterator = childchild.iterator(); argIterator.hasNext();)
-//							{
-//								JsonNode argValue = argIterator.next();
-//								if (argValue.isNull() || argValue.isMissingNode()) {
-//									continue;
-//								} else {
-//								    arrayValues.add(argValue.asText());
-//								}
-//							}
-//							jobRequestMap.put(childKey, StringUtils.join(arrayValues, ";"));
-//						}
-//						else if (childchild.isTextual()) {
-//						    jobRequestMap.put(childKey, childchild.textValue());
-//						}
-//						else if (childchild.isBoolean()) {
-//						    jobRequestMap.put(childKey, childchild.asBoolean() ? "true" : "false");
-//						}
-//					}
-//				}
-//				else
-//				{
-//				    jobRequestMap.put(key, json.get(key).asText());
-//				}
-//			}
-//
-//   			List<Notification> notifications = new ArrayList<Notification>();
-//
-////   			if (json.has("dependencies"))
-////			{
-////   				if (!json.get("dependencies").isArray())
-////				{
-////					throw new NotificationException("Invalid " + currentKey + " value given. "
-////							+ "dependencies must be an array of dependency objects one or more "
-////							+ "valid dependency constraints.");
-////				}
-////				else
-////				{
-////					currentKey = "dependencies";
-////
-////					ArrayNode jsonDependencies = (ArrayNode)json.get("dependencies");
-////					for (int i=0; i<jsonDependencies.size(); i++)
-////					{
-////						currentKey = "dependencies["+i+"]";
-////						JsonNode jsonDependency = jsonDependencies.get(i);
-////						JobDependency dependency = JobDependency.fromJson(dependency);
-////
-////					}
-////				}
-////			}
-//
-//			if (json.has("notifications"))
-//			{
-//				if (!json.get("notifications").isArray())
-//				{
-//					throw new NotificationException("Invalid " + currentKey + " value given. "
-//							+ "notifications must be an array of notification objects specifying a "
-//							+ "valid url, event, and an optional boolean persistence attribute.");
-//				}
-//				else
-//				{
-//					currentKey = "notifications";
-//
-//					ArrayNode jsonNotifications = (ArrayNode)json.get("notifications");
-//					for (int i=0; i<jsonNotifications.size(); i++)
-//					{
-//						currentKey = "notifications["+i+"]";
-//						JsonNode jsonNotif = jsonNotifications.get(i);
-//						if (!jsonNotif.isObject())
-//						{
-//							throw new NotificationException("Invalid " + currentKey + " value given. "
-//								+ "Each notification objects should specify a "
-//								+ "valid url, event, and an optional boolean persistence attribute.");
-//						}
-//						else
-//						{
-//							
-//							Notification notification = Notification.fromJSON(jsonNotif);
-//							
-////							currentKey = "notifications["+i+"].url";
-////							if (!jsonNotif.has("url")) {
-////								throw new NotificationException("No " + currentKey + " attribute given. "
-////										+ "Notifications must have valid url and event attributes.");
-////							}
-////							else
-////							{
-////								notification.setCallbackUrl(jsonNotif.get("url").textValue());
-////							}
-////
-////							currentKey = "notifications["+i+"].event";
-////							if (!jsonNotif.has("event")) {
-////								throw new NotificationException("No " + currentKey + " attribute given. "
-////										+ "Notifications must have valid url and event attributes.");
-////							}
-////							else
-////							{
-////								String event = jsonNotif.get("event").textValue();
-////								try {
-////									if (!StringUtils.equals("*", event)) {
-////										try {
-////											JobStatusType.valueOf(event.toUpperCase());
-////										} catch (IllegalArgumentException e) {
-////											JobMacroType.valueOf(event.toUpperCase());
-////										}
-////										notification.setEvent(StringUtils.upperCase(event));
-////									}
-////									else {
-////										notification.setEvent("*");
-////									}
-////								} catch (Throwable e) {
-////									throw new NotificationException("Valid values are: *, " +
-////											ServiceUtils.explode(", ", Arrays.asList(JobStatusType.values())) + ", " +
-////											ServiceUtils.explode(", ", Arrays.asList(JobMacroType.values())));
-////								}
-////							}
-////
-////
-////							if (jsonNotif.has("persistent"))
-////							{
-////								currentKey = "notifications["+i+"].persistent";
-////								if (jsonNotif.get("persistent").isNull()) {
-////									throw new NotificationException(currentKey + " cannot be null");
-////								}
-////								else if (!jsonNotif.get("persistent").isBoolean())
-////								{
-////									throw new NotificationException("Invalid value for " + currentKey + ". "
-////											+ "If provided, " + currentKey + " must be a boolean value.");
-////								} else {
-////									notification.setPersistent(jsonNotif.get("persistent").asBoolean());
-////								}
-////							}
-//							notifications.add(notification);
-////							Thread.sleep(5);
-//						}
-//					}
-//				}
-//			}
-//
-//			Job job = processJob(jobRequestMap, username, internalUsername);
-//
-//			for (Notification notification: notifications) {
-//				job.addNotification(notification);
-//			}
-//
-//			// If the job request had notification configured for job creation
-//			// they could not have fired yet. Here we explicitly add them.
-//			for (JobEvent jobEvent: job.getEvents()) {
-//			    JobEventProcessor eventProcessor = new JobEventProcessor(jobEvent);
-//			    eventProcessor.process();
-//			}
-//
-//			return job;
-//		}
-//		catch (JobProcessingException e) {
-//			throw e;
-//		}
-//		catch (SoftwareException e) {
-//			throw new JobProcessingException(400, e.getMessage());
-//		}
-//		catch (Throwable e) {
-//			throw new JobProcessingException(400,
-//					"Failed to parse json job description. Invalid value for " +
-//							currentKey + ". " + e.getMessage());
-//		}
 	}
 
 	/**
@@ -1003,1008 +882,6 @@ public class JobManager {
 		JobRequestProcessor processor = new JobRequestProcessor(username, internalUsername);
 		return processor.processJob(jobRequestMap);
 		
-//	    Job job = new Job();
-//
-//		SystemManager systemManager = new SystemManager();
-//
-//		String name = null;
-//		if (jobRequestMap.containsKey("name")) {
-//			name = (String)jobRequestMap.get("name");
-//		} else {
-//			name = (String)jobRequestMap.get("jobName");
-//		}
-//
-//		if (StringUtils.isEmpty(name) || StringUtils.length(name) > 64)
-//		{
-//			throw new JobProcessingException(400,
-//					"Job name cannot be empty.");
-//		}
-//		else if (StringUtils.length(name) > 64) {
-//			throw new JobProcessingException(400,
-//					"Job name must be less than 64 characters.");
-//		}
-//		else
-//		{
-//			name = name.trim();
-//		}
-//
-//		String softwareName = null;
-//		if (jobRequestMap.containsKey("appId")) {
-//			softwareName = (String)jobRequestMap.get("appId");
-//		} else {
-//			softwareName = (String)jobRequestMap.get("softwareName");
-//		}
-//
-//		if (StringUtils.isEmpty(softwareName))
-//		{
-//			throw new JobProcessingException(400,
-//					"appId cannot be empty");
-//		}
-//		else if (StringUtils.length(name) > 80) {
-//			throw new JobProcessingException(400,
-//					"appId must be less than 80 characters");
-//		}
-//		else if (!softwareName.contains("-") || softwareName.endsWith("-"))
-//		{
-//			throw new JobProcessingException(400,
-//					"Invalid appId. " +
-//					"Please specify an app using its unique id. " +
-//					"The unique id is defined by the app name " +
-//					"and version separated by a hyphen. eg. example-1.0");
-//		}
-//
-//		Software software = SoftwareDao.getSoftwareByUniqueName(softwareName.trim());
-//
-//		if (software == null) {
-//			throw new JobProcessingException(400, "No app found matching " + softwareName + " for " + username);
-//		}
-//		else if (!ApplicationManager.isInvokableByUser(software, username)) {
-//			throw new JobProcessingException(403, "Permission denied. You do not have permission to access this app");
-//		}
-//
-//		// validate the optional execution system matches the software execution system
-//		String exeSystem = (String)jobRequestMap.get("executionSystem");
-//		if (jobRequestMap.containsKey("executionSystem")) {
-//			softwareName = (String)jobRequestMap.get("executionSystem");
-//		} else {
-//			softwareName = (String)jobRequestMap.get("executionHost");
-//		}
-//		ExecutionSystem executionSystem = software.getExecutionSystem();
-//		if (StringUtils.length(exeSystem) > 80) {
-//			throw new JobProcessingException(400,
-//					"executionSystem must be less than 80 characters");
-//		}
-//		else if (!StringUtils.isEmpty(exeSystem) && !StringUtils.equals(exeSystem, executionSystem.getSystemId())) {
-//			throw new JobProcessingException(403,
-//					"Invalid execution system. Apps are registered to run on a specific execution system. If specified, " +
-//					"the execution system must match the execution system in the app description. The execution system " +
-//					"for " + software.getName() + " is " + software.getExecutionSystem().getSystemId() + ".");
-//		}
-//
-//		/***************************************************************************
-//		 **						Batch Parameter Selection 						  **
-//		 ***************************************************************************/
-//
-//		String currentParameter = null;
-//		String queueName = null;
-//		BatchQueue jobQueue = null;
-//		Long nodeCount = null;
-//		Double memoryPerNode = null;
-//		String requestedTime = null;
-//		Long processorsPerNode = null;
-//
-//		try
-//		{
-//			/********************************** Queue Selection *****************************************/
-//
-//			currentParameter = "batchQueue";
-//			String userBatchQueue = (String)jobRequestMap.get("batchQueue");
-//			if (StringUtils.isEmpty(userBatchQueue)) {
-//				userBatchQueue = (String)jobRequestMap.get("queue");
-//			}
-//
-//			if (StringUtils.length(userBatchQueue) > 128) {
-//				throw new JobProcessingException(400,
-//						"batchQueue must be less than 128 characters");
-//			}
-//			else if (StringUtils.isEmpty(userBatchQueue))
-//			{
-//				// use the software default queue if present, otherwise we'll pick it for them in a bit
-//				if (!StringUtils.isEmpty(software.getDefaultQueue()))
-//				{
-//					queueName = software.getDefaultQueue();
-//					jobQueue = executionSystem.getQueue(queueName);
-//					if (jobQueue == null)
-//					{
-//						throw new JobProcessingException(400,
-//								"Invalid default batchQueue. No batchQueue named " + queueName +
-//								" is defined on system " + executionSystem.getSystemId());
-//					}
-//				}
-//			}
-//			else
-//			{
-//				// user gave a queue. see if it's a valid one
-//				jobQueue = executionSystem.getQueue(userBatchQueue);
-//				queueName = userBatchQueue;
-//				if (jobQueue == null) {
-//					throw new JobProcessingException(400,
-//							"Invalid batchQueue. No batchQueue named " + queueName +
-//							" is defined on system " + executionSystem.getSystemId());
-//				}
-//			}
-//
-//			/********************************** Node Count Selection *****************************************/
-//
-//			currentParameter = "nodeCount";
-//			String userNodeCount = (String)jobRequestMap.get("nodeCount");
-//			if (StringUtils.isEmpty(userNodeCount))
-//			{
-//				// use the software default queue if present
-//				if (software.getDefaultNodes() != null && software.getDefaultNodes() != -1) {
-//					nodeCount = software.getDefaultNodes();
-//				}
-//				else
-//				{
-//					// use a single node otherwise
-//					nodeCount = new Long(1);
-//				}
-//			}
-//			else
-//			{
-//				nodeCount = NumberUtils.toLong(userNodeCount);
-//			}
-//
-//			if (nodeCount < 1)
-//			{
-//				throw new JobProcessingException(400,
-//						"Invalid " + (StringUtils.isEmpty(userNodeCount) ? "" : "default ") +
-//						"nodeCount. If specified, nodeCount must be a positive integer value.");
-//			}
-//
-////			nodeCount = pTable.containsKey("nodeCount") ? Long.parseLong(pTable.get("nodeCount")) : software.getDefaultNodes();
-////			if (nodeCount < 1) {
-////				throw new JobProcessingException(400,
-////						"Invalid nodeCount value. nodeCount must be a positive integer value.");
-////			}
-//
-//			// if the queue wasn't specified by the user or app, pick a queue with just node count info
-//			if (jobQueue == null) {
-//				jobQueue = selectQueue(executionSystem, nodeCount, -1.0, (long)-1, BatchQueue.DEFAULT_MIN_RUN_TIME);
-//			}
-//
-//			if (jobQueue == null) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userNodeCount) ? "" : "default ") +
-//						"nodeCount. No queue found on " +
-//						executionSystem.getSystemId() + " that support jobs with " +
-//						nodeCount + " nodes.");
-//			} else if (!validateBatchSubmitParameters(jobQueue, nodeCount, (long)-1, -1.0, BatchQueue.DEFAULT_MIN_RUN_TIME)) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userNodeCount) ? "" : "default ") +
-//						"nodeCount. The " + jobQueue.getName() + " queue on " +
-//						executionSystem.getSystemId() + " does not support jobs with " + nodeCount + " nodes.");
-//			}
-//
-//			/********************************** Max Memory Selection *****************************************/
-//
-//			currentParameter = "memoryPerNode";
-//			String userMemoryPerNode = (String)jobRequestMap.get("memoryPerNode");
-//			if (StringUtils.isEmpty(userMemoryPerNode)) {
-//				userMemoryPerNode = (String)jobRequestMap.get("maxMemory");
-//			}
-//
-//			if (StringUtils.isEmpty(userMemoryPerNode))
-//			{
-//				if (software.getDefaultMemoryPerNode() != null) {
-//					memoryPerNode = software.getDefaultMemoryPerNode();
-//				}
-//				else if (jobQueue.getMaxMemoryPerNode() != null && jobQueue.getMaxMemoryPerNode() > 0) {
-//					memoryPerNode = jobQueue.getMaxMemoryPerNode();
-//				}
-//				else {
-//					memoryPerNode = (double)0;
-//				}
-//			}
-//			else // memory was given, validate
-//			{
-//				try {
-//					// try to parse it as a number in GB first
-//					memoryPerNode = Double.parseDouble(userMemoryPerNode);
-//				}
-//				catch (Throwable e)
-//				{
-//					// Otherwise parse it as a string matching ###.#[EPTGM]B
-//					try
-//					{
-//						memoryPerNode = BatchQueue.parseMaxMemoryPerNode(userMemoryPerNode);
-//					}
-//					catch (NumberFormatException e1)
-//					{
-//						memoryPerNode = (double)0;
-//					}
-//				}
-//			}
-//
-//			if (memoryPerNode <= 0) {
-//				throw new JobProcessingException(400,
-//						"Invalid " + (StringUtils.isEmpty(userMemoryPerNode) ? "" : "default ") +
-//						"memoryPerNode. memoryPerNode should be a postive value specified in ###.#[EPTGM]B format.");
-//			}
-//
-//			// if the queue wasn't specified by the user or app, reselect with node and memory info
-//			if (StringUtils.isEmpty(queueName)) {
-//				jobQueue = selectQueue(executionSystem, nodeCount, memoryPerNode, (long)-1, BatchQueue.DEFAULT_MIN_RUN_TIME);
-//			}
-//
-//			if (jobQueue == null) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userMemoryPerNode) ? "" : "default ") +
-//						"memoryPerNode. No queue found on " +
-//						executionSystem.getSystemId() + " that support jobs with " + nodeCount + " nodes and " +
-//						memoryPerNode + "GB memory per node");
-//			} else if (!validateBatchSubmitParameters(jobQueue, nodeCount, (long)-1, memoryPerNode, BatchQueue.DEFAULT_MIN_RUN_TIME)) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userMemoryPerNode) ? "" : "default ") +
-//						"memoryPerNode. The " + jobQueue.getName() + " queue on " +
-//						executionSystem.getSystemId() + " does not support jobs with " + nodeCount + " nodes and " +
-//						memoryPerNode + "GB memory per node");
-//			}
-//
-//			/********************************** Run Time Selection *****************************************/
-//
-//			currentParameter = "requestedTime";
-//			//requestedTime = pTable.containsKey("requestedTime") ? pTable.get("requestedTime") : software.getDefaultMaxRunTime();
-//
-//			String userRequestedTime = (String)jobRequestMap.get("maxRunTime");
-//			if (StringUtils.isEmpty(userRequestedTime)) {
-//				// legacy compatibility
-//				userRequestedTime = (String)jobRequestMap.get("requestedTime");
-//			}
-//
-//			if (StringUtils.isEmpty(userRequestedTime))
-//			{
-//				if (!StringUtils.isEmpty(software.getDefaultMaxRunTime())) {
-//					requestedTime = software.getDefaultMaxRunTime();
-//				} else if (!StringUtils.isEmpty(jobQueue.getMaxRequestedTime())) {
-//					requestedTime = jobQueue.getMaxRequestedTime();
-//				}
-//			}
-//			else
-//			{
-//				requestedTime = userRequestedTime;
-//			}
-//
-//			if (!org.iplantc.service.systems.util.ServiceUtils.isValidRequestedJobTime(requestedTime)) {
-//				throw new JobProcessingException(400,
-//						"Invalid maxRunTime. maxRunTime should be the maximum run time " +
-//							"time for this job in hh:mm:ss format.");
-//			} else if (org.iplantc.service.systems.util.ServiceUtils.compareRequestedJobTimes(requestedTime, BatchQueue.DEFAULT_MIN_RUN_TIME) == -1) {
-//				throw new JobProcessingException(400,
-//						"Invalid maxRunTime. maxRunTime should be greater than 00:00:00.");
-//			}
-//
-//			// if the queue wasn't specified by the user or app, reselect with node and memory info
-//			if (StringUtils.isEmpty(queueName)) {
-//				jobQueue = selectQueue(executionSystem, nodeCount, memoryPerNode, (long)-1, requestedTime);
-//			}
-//
-//			if (jobQueue == null) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userRequestedTime) ? "" : "default ") +
-//						"maxRunTime. No queue found on " +
-//						executionSystem.getSystemId() + " that supports jobs with " + nodeCount + " nodes, " +
-//						memoryPerNode + "GB memory per node, and a run time of " + requestedTime);
-//			} else if (!validateBatchSubmitParameters(jobQueue, nodeCount, (long)-1, memoryPerNode, requestedTime)) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userRequestedTime) ? "" : "default ") +
-//						"maxRunTime. The " + jobQueue.getName() + " queue on " +
-//						executionSystem.getSystemId() + " does not support jobs with " + nodeCount + " nodes, " +
-//						memoryPerNode + "GB memory per node, and a run time of " + requestedTime);
-//			}
-//
-//			/********************************** Max Processors Selection *****************************************/
-//
-//			currentParameter = "processorsPerNode";
-//			String userProcessorsPerNode = (String)jobRequestMap.get("processorsPerNode");
-//			if (StringUtils.isEmpty(userProcessorsPerNode)) {
-//				userProcessorsPerNode = (String)jobRequestMap.get("processorCount");
-//			}
-//			if (StringUtils.isEmpty(userProcessorsPerNode))
-//			{
-//				if (software.getDefaultProcessorsPerNode() != null) {
-//					processorsPerNode = software.getDefaultProcessorsPerNode();
-//				} else if (jobQueue.getMaxProcessorsPerNode() != null && jobQueue.getMaxProcessorsPerNode() > 0) {
-//					processorsPerNode = jobQueue.getMaxProcessorsPerNode();
-//				} else {
-//					processorsPerNode = new Long(1);
-//				}
-//			}
-//			else
-//			{
-//				processorsPerNode = NumberUtils.toLong(userProcessorsPerNode);
-//			}
-//
-//			if (processorsPerNode < 1) {
-//				throw new JobProcessingException(400,
-//						"Invalid " + (StringUtils.isEmpty(userProcessorsPerNode) ? "" : "default ") +
-//						"processorsPerNode value. processorsPerNode must be a positive integer value.");
-//			}
-//
-//			// if the queue wasn't specified by the user or app, reselect with node and memory info
-//			if (StringUtils.isEmpty(queueName)) {
-//				jobQueue = selectQueue(executionSystem, nodeCount, memoryPerNode, processorsPerNode, requestedTime);
-//			}
-//
-//			if (jobQueue == null) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userProcessorsPerNode) ? "" : "default ") +
-//						"processorsPerNode. No queue found on " +
-//						executionSystem.getSystemId() + " that supports jobs with " + nodeCount + " nodes, " +
-//						memoryPerNode + "GB memory per node, a run time of " + requestedTime + " and " +
-//						processorsPerNode + " processors per node");
-//			} else if (!validateBatchSubmitParameters(jobQueue, nodeCount, processorsPerNode, memoryPerNode, requestedTime)) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userProcessorsPerNode) ? "" : "default ") +
-//						"processorsPerNode. The " + jobQueue.getName() + " queue on " +
-//						executionSystem.getSystemId() + " does not support jobs with " + nodeCount + " nodes, " +
-//						memoryPerNode + "GB memory per node, a run time of " + requestedTime + " and " +
-//						processorsPerNode + " processors per node");
-//			}
-//		}
-//		catch (JobProcessingException e)
-//		{
-//			throw e;
-//		}
-//		catch (Exception e) {
-//			throw new JobProcessingException(400, "Invalid " + currentParameter + " value.", e);
-//		}
-//
-//		/***************************************************************************
-//		 **						End Batch Queue Selection 						  **
-//		 ***************************************************************************/
-//
-//
-//		String defaultNotificationCallback = null;
-//		List<Notification> notifications = new ArrayList<Notification>();
-//		if (jobRequestMap.containsKey("callbackUrl")) {
-//			defaultNotificationCallback = (String)jobRequestMap.get("callbackUrl");
-//		} else if (jobRequestMap.containsKey("callbackURL")) {
-////			throw new JobProcessingException(400,
-////					"The callbackUrl attribute is no longer supported. Please specify " +
-////					"one or more notification objects, including valid url and event attributes, " +
-////					"in a notifications array instead.");
-//			defaultNotificationCallback = (String)jobRequestMap.get("callbackURL");
-//		} else if (jobRequestMap.containsKey("notifications")) {
-//			defaultNotificationCallback = (String)jobRequestMap.get("notifications");
-//		}
-//
-//		if (!StringUtils.isEmpty(defaultNotificationCallback))
-//		{
-//			try {
-//				notifications.add(new Notification(JobStatusType.FINISHED.name(), defaultNotificationCallback));
-//				// uuid generation was happening too fast here. we need to pause since this runs in the same
-//				// thread and processor.
-//				Thread.sleep(5);
-//				notifications.add(new Notification(JobStatusType.FAILED.name(), defaultNotificationCallback));
-//			} catch (NotificationException e) {
-//				throw new JobProcessingException(400, e.getMessage());
-//			} catch (InterruptedException e) {
-//				throw new JobProcessingException(500, "Failed to verify notication callback url");
-//			}
-//		}
-//
-//		/***************************************************************************
-//		 **						Verifying remote connectivity 					  **
-//		 ***************************************************************************/
-//
-//		AuthConfig authConfig = executionSystem.getLoginConfig().getAuthConfigForInternalUsername(internalUsername);
-//		String salt = executionSystem.getEncryptionKeyForAuthConfig(authConfig);
-//		if (authConfig.isCredentialExpired(salt))
-//		{
-//			throw new JobProcessingException(412,
-//					(authConfig.isSystemDefault() ? "Default " : "Internal user " + internalUsername) +
-//					" credential for " + software.getExecutionSystem().getSystemId() + " is not active." +
-//					" Please add a valid " + software.getExecutionSystem().getLoginConfig().getType() +
-//					" execution credential for the execution system and resubmit the job.");
-//		}
-//
-//		try
-//		{
-//			if (!executionSystem.getRemoteSubmissionClient(internalUsername).canAuthentication()) {
-//				throw new RemoteExecutionException("Unable to authenticate to " + executionSystem.getSystemId());
-//			}
-//		}
-//		catch (Exception e)
-//		{
-//			throw new JobProcessingException(412,
-//					"Unable to authenticate to " + executionSystem.getSystemId() + " with the " +
-//					(authConfig.isSystemDefault() ? "default " : "internal user " + internalUsername) +
-//					"credential. Please check the " + executionSystem.getLoginConfig().getType() +
-//					" execution credential for the execution system and resubmit the job.");
-//		}
-//
-//		authConfig = executionSystem.getStorageConfig().getAuthConfigForInternalUsername(internalUsername);
-//		salt = executionSystem.getEncryptionKeyForAuthConfig(authConfig);
-//		if (authConfig.isCredentialExpired(salt))
-//		{
-//			throw new JobProcessingException(412,
-//					"Credential for " + software.getExecutionSystem().getSystemId() + " is not active." +
-//					" Please add a valid " + software.getExecutionSystem().getStorageConfig().getType() +
-//					" storage credential for the execution system and resubmit the job.");
-//		}
-//
-//		RemoteDataClient remoteExecutionDataClient = null;
-//		try {
-//			remoteExecutionDataClient = executionSystem.getRemoteDataClient(internalUsername);
-//			remoteExecutionDataClient.authenticate();
-//		} catch (Exception e) {
-//			throw new JobProcessingException(412,
-//					"Unable to authenticate to " + executionSystem.getSystemId() + " with the " +
-//					(authConfig.isSystemDefault() ? "default " : "internal user " + internalUsername) +
-//					"credential. Please check the " + executionSystem.getLoginConfig().getType() +
-//					" execution credential for the execution system and resubmit the job.");
-//		} finally {
-//			try { remoteExecutionDataClient.disconnect(); } catch (Exception e) {}
-//		}
-//
-//		/***************************************************************************
-//		 **						Verifying Input Parmaeters						  **
-//		 ***************************************************************************/
-//
-//		// Verify the inputs by their keys given in the SoftwareInputs
-//		// in the Software object. We should also be inserting any other
-//		// hidden inputs here
-////		HashMap<String, String> inputTable = new HashMap<String, String>();
-//		ObjectNode jobInputs = new ObjectMapper().createObjectNode();
-//		for (SoftwareInput softwareInput : software.getInputs())
-//		{
-//			try
-//			{
-//				// add hidden inputs into the input array so we have a full record
-//				// of all inputs for this job in the history.
-//				if (!softwareInput.isVisible())
-//				{
-//					if (jobRequestMap.containsKey(softwareInput.getKey())) {
-//						throw new JobProcessingException(400,
-//								"Invalid value for " + softwareInput.getKey() +
-//								". " + softwareInput.getKey() + " is a fixed value that "
-//								+ "cannot be set manually. ");
-//					} else {
-//						jobInputs.put(softwareInput.getKey(), softwareInput.getDefaultValueAsJsonArray());
-//					}
-//				}
-//				else if (!jobRequestMap.containsKey(softwareInput.getKey()))
-//				{
-//					if (softwareInput.isRequired())
-//					{
-//						throw new JobProcessingException(400,
-//								"No input specified for " + softwareInput.getKey());
-//					}
-//					else
-//					{
-//						continue;
-//					}
-//				}
-//				else if ((jobRequestMap.get(softwareInput.getKey()) instanceof String) &&
-//						StringUtils.isEmpty((String)jobRequestMap.get(softwareInput.getKey())))
-//				{
-//					throw new JobProcessingException(400, "No input specified for " + softwareInput.getKey());
-//				}
-//				else
-//				{
-//					String[] explodedInputs = null;
-//					if (jobRequestMap.get(softwareInput.getKey()) == null) {
-//						explodedInputs = new String[]{};
-//					} else if (jobRequestMap.get(softwareInput.getKey()) instanceof String[]) {
-//						explodedInputs = (String[])jobRequestMap.get(softwareInput.getKey());
-//					} else {
-//						explodedInputs = StringUtils.split((String)jobRequestMap.get(softwareInput.getKey()), ";");
-//					}
-//
-//					if (softwareInput.getMinCardinality() > explodedInputs.length)
-//					{
-//						throw new JobProcessingException(400,
-//								softwareInput.getKey() + " requires at least " +
-//								softwareInput.getMinCardinality() + " values");
-//					}
-//					else if (softwareInput.getMaxCardinality() != -1 &&
-//							softwareInput.getMaxCardinality() < explodedInputs.length)
-//					{
-//						throw new JobProcessingException(400,
-//								softwareInput.getKey() + " may have at most " +
-//								softwareInput.getMaxCardinality() + " values");
-//					}
-//					else
-//					{
-//						for(String singleInput: explodedInputs)
-//						{
-//							singleInput = StringUtils.trim(singleInput);
-//
-//							if (StringUtils.isEmpty(singleInput)) continue;
-//
-//							if (StringUtils.isNotEmpty(softwareInput.getValidator()) &&
-//									!ServiceUtils.doesValueMatchValidatorRegex(singleInput, softwareInput.getValidator()))
-//							{
-//								throw new JobProcessingException(400,
-//										"Invalid input value, " + singleInput + ", for " + softwareInput.getKey() +
-//										". Value must match the following expression: " +
-//										softwareInput.getValidator());
-//							}
-//							else
-//							{
-//								URI inputUri = new URI(singleInput);
-//								if (!RemoteDataClientFactory.isSchemeSupported(inputUri))
-//								{
-//									throw new JobProcessingException(400,
-//											"Invalid value for " + softwareInput.getKey() +
-//											". URI with the " + inputUri.getScheme() + " scheme are not currently supported. " +
-//											"Please specify your input as a relative path, an Agave Files service endpoint, " +
-//											"or a URL with one of the following schemes: http, https, sftp, or agave.");
-//								}
-//								else if (!PermissionManager.canUserReadUri(username, internalUsername, inputUri))
-//								{
-//									throw new JobProcessingException(403,
-//											"You do not have permission to access this the input file or directory "
-//											+ "at " + singleInput);
-//								}
-//							}
-//						}
-//
-//						// serialize the inputs to a string or array
-//						if (explodedInputs.length == 1)
-//						{
-//							jobInputs.put(softwareInput.getKey(), explodedInputs[0]);
-//						}
-//						else
-//						{
-//							ArrayNode jsonInputValueArrayNode = new ObjectMapper().createArrayNode();
-//							for (String input: explodedInputs) {
-//								if (StringUtils.isNotBlank(input)) {
-//									jsonInputValueArrayNode.add(input);
-//								}
-//							}
-//							jobInputs.put(softwareInput.getKey(), jsonInputValueArrayNode);
-//						}
-//					}
-//				}
-//			}
-//			catch (PermissionException e)
-//			{
-//				throw new JobProcessingException(400,
-//						e.getMessage(), e);
-//			}
-//			catch (JobProcessingException e)
-//			{
-//				throw e;
-//			}
-//			catch (Exception e)
-//			{
-//				throw new JobProcessingException(400,
-//						"Failed to parse input for " + softwareInput.getKey(), e);
-//			}
-//		}
-//
-//		/***************************************************************************
-//		 **						Verifying  Parameters							  **
-//		 ***************************************************************************/
-//
-//		// Verify the parameters by their keys given in the
-//		// SoftwareParameter in the Software object.
-//		ObjectMapper mapper = new ObjectMapper();
-//		ObjectNode jobParameters = mapper.createObjectNode();
-//		for (SoftwareParameter softwareParameter : software.getParameters())
-//		{
-//			ArrayNode validatedJobParamValueArray = mapper.createArrayNode();
-//
-//			try
-//			{
-//				// add hidden parameters into the input array so we have a full record
-//				// of all parameters for this job in the history.
-//				if (!softwareParameter.isVisible())
-//				{
-//					if (jobRequestMap.containsKey(softwareParameter.getKey())) {
-//						throw new JobProcessingException(400,
-//								"Invalid parameter value for " + softwareParameter.getKey() +
-//								". " + softwareParameter.getKey() + " is a fixed value that "
-//								+ "cannot be set manually. ");
-//					} else if (softwareParameter.getType().equals(SoftwareParameterType.bool) ||
-//							softwareParameter.getType().equals(SoftwareParameterType.flag)) {
-//						if (softwareParameter.getDefaultValueAsJsonArray().size() > 0) {
-//							jobParameters.put(softwareParameter.getKey(), softwareParameter.getDefaultValueAsJsonArray().get(0));
-//						} else {
-//							jobParameters.put(softwareParameter.getKey(), false);
-//						}
-//					} else {
-//						jobParameters.put(softwareParameter.getKey(), softwareParameter.getDefaultValueAsJsonArray());
-//					}
-//				}
-//				else if (!jobRequestMap.containsKey(softwareParameter.getKey()))
-//				{
-//					if (softwareParameter.isRequired())
-//					{
-//						throw new JobProcessingException(400,
-//								"No input parameter specified for " + softwareParameter.getKey());
-//					}
-//					else
-//					{
-//						continue;
-//					}
-//				}
-//				else
-//				{
-//					String[] explodedParameters = null;
-//					if (jobRequestMap.get(softwareParameter.getKey()) == null) {
-////						explodedParameters = new String[]{};
-//						continue;
-//					} else if (jobRequestMap.get(softwareParameter.getKey()) instanceof String[]) {
-//						explodedParameters = (String[])jobRequestMap.get(softwareParameter.getKey());
-//
-//					} else {
-//						explodedParameters = StringUtils.split((String)jobRequestMap.get(softwareParameter.getKey()), ";");
-////						explodedParameters = new String[]{(String)pTable.get(softwareParameter.getKey())};
-//					}
-//
-//					if (softwareParameter.getMinCardinality() > explodedParameters.length)
-//					{
-//						throw new JobProcessingException(400,
-//								softwareParameter.getKey() + " requires at least " +
-//										softwareParameter.getMinCardinality() + " values");
-//					}
-//					else if (softwareParameter.getMaxCardinality() != -1 &&
-//						softwareParameter.getMaxCardinality() < explodedParameters.length)
-//					{
-//						throw new JobProcessingException(400,
-//								softwareParameter.getKey() + " may have at most " +
-//								softwareParameter.getMaxCardinality() + " values");
-//					}
-//					else if (softwareParameter.getType().equals(SoftwareParameterType.enumeration))
-//					{
-//						List<String> validParamValues = null;
-//						try {
-//							validParamValues = softwareParameter.getEnumeratedValuesAsList();
-//						} catch (SoftwareException e) {
-//							throw new JobProcessingException(400,
-//									"Unable to validate parameter value for " + softwareParameter.getKey() +
-//									" against the enumerated values defined for this parameter.", e);
-//						}
-//
-//						if (validParamValues.isEmpty())
-//						{
-//							throw new JobProcessingException(400,
-//									"Invalid parameter value for " + softwareParameter.getKey() +
-//									". Value must be one of: " + ServiceUtils.explode(",  ", validParamValues));
-//						}
-//						else if (explodedParameters.length == 0) {
-//							continue;
-//						}
-//						else
-//						{
-//							for (String jobParam: explodedParameters)
-//							{
-//								if (validParamValues.contains(jobParam))
-//								{
-//									if (explodedParameters.length == 1) {
-//										jobParameters.put(softwareParameter.getKey(), jobParam);
-//									} else {
-//										validatedJobParamValueArray.add(jobParam);
-//									}
-//								}
-//								else
-//								{
-//									throw new JobProcessingException(400,
-//											"Invalid parameter value, " + jobParam + ", for " + softwareParameter.getKey() +
-//											". Value must be one of: " + ServiceUtils.explode(",  ", validParamValues));
-//								}
-//							}
-//
-//							if (validatedJobParamValueArray.size() > 1) {
-//								jobParameters.put(softwareParameter.getKey(), validatedJobParamValueArray);
-//							}
-//						}
-//					}
-//					else if (softwareParameter.getType().equals(SoftwareParameterType.bool) ||
-//							softwareParameter.getType().equals(SoftwareParameterType.flag))
-//					{
-//						if (explodedParameters.length > 1)
-//						{
-//							throw new JobProcessingException(400,
-//									"Invalid parameter value for " + softwareParameter.getKey() +
-//									". Boolean and flag parameters do not support multiple values.");
-//						}
-//						else if (explodedParameters.length == 0) {
-//							continue;
-//						}
-//						else
-//						{
-//							String inputValue = explodedParameters[0];
-//							if (inputValue.toString().equalsIgnoreCase("true")
-//									|| inputValue.toString().equals("1")
-//									|| inputValue.toString().equalsIgnoreCase("on"))
-//							{
-//								jobParameters.put(softwareParameter.getKey(), true);
-//							}
-//							else if (inputValue.toString().equalsIgnoreCase("false")
-//									|| inputValue.toString().equals("0")
-//									|| inputValue.toString().equalsIgnoreCase("off"))
-//							{
-//								jobParameters.put(softwareParameter.getKey(), false);
-//							}
-//							else
-//							{
-//								throw new JobProcessingException(400,
-//										"Invalid parameter value for " + softwareParameter.getKey() +
-//										". Value must be a boolean value. Use 1,0 or true/false as available values.");
-//							}
-//						}
-//					}
-//					else if (softwareParameter.getType().equals(SoftwareParameterType.number))
-//					{
-//						if (explodedParameters.length == 0) {
-//							continue;
-//						}
-//						else
-//						{
-//							for (String jobParam: explodedParameters)
-//							{
-//								try
-//								{
-//									if (NumberUtils.isDigits(jobParam))
-//									{
-//										if (ServiceUtils.doesValueMatchValidatorRegex(jobParam, softwareParameter.getValidator())) {
-//											if (explodedParameters.length == 1) {
-//												jobParameters.put(softwareParameter.getKey(), new Long(jobParam));
-//											} else {
-//												validatedJobParamValueArray.add(new Long(jobParam));
-//											}
-//										} else {
-//											throw new JobProcessingException(400,
-//													"Invalid parameter value for " + softwareParameter.getKey() +
-//													". Value must match the regular expression " +
-//													softwareParameter.getValidator());
-//										}
-//
-//									}
-//									else if (NumberUtils.isNumber(jobParam))
-//									{
-//										if (ServiceUtils.doesValueMatchValidatorRegex(jobParam, softwareParameter.getValidator())) {
-//											if (explodedParameters.length == 1) {
-//												jobParameters.put(softwareParameter.getKey(), new BigDecimal(jobParam).toPlainString());
-//											} else {
-//												validatedJobParamValueArray.add(new BigDecimal(jobParam).toPlainString());
-//											}
-//
-//										} else {
-//											throw new JobProcessingException(400,
-//													"Invalid parameter value for " + softwareParameter.getKey() +
-//													". Value must match the regular expression " +
-//													softwareParameter.getValidator());
-//										}
-//									}
-//								} catch (NumberFormatException e) {
-//									throw new JobProcessingException(400,
-//											"Invalid parameter value for " + softwareParameter.getKey() +
-//											". Value must be a number.");
-//								}
-//							}
-//
-//							if (validatedJobParamValueArray.size() > 1) {
-//								jobParameters.put(softwareParameter.getKey(), validatedJobParamValueArray);
-//							}
-//						}
-//					}
-//					else // string parameter
-//					{
-//						if (explodedParameters.length == 0) {
-//							continue;
-//						}
-//						else
-//						{
-//							for (String jobParam: explodedParameters)
-//							{
-//								if (jobParam == null)
-//								{
-//									continue;
-//								}
-//								else
-//								{
-//									if (ServiceUtils.doesValueMatchValidatorRegex(jobParam, softwareParameter.getValidator()))
-//									{
-//										validatedJobParamValueArray.add(jobParam);
-//									}
-//									else
-//									{
-//										throw new JobProcessingException(400,
-//												"Invalid parameter value for " + softwareParameter.getKey() +
-//												". Value must match the regular expression " +
-//												softwareParameter.getValidator());
-//									}
-//								}
-//							}
-//
-//							if (validatedJobParamValueArray.size() == 1) {
-//								jobParameters.put(softwareParameter.getKey(), validatedJobParamValueArray.iterator().next().asText());
-//							} else {
-//								jobParameters.put(softwareParameter.getKey(), validatedJobParamValueArray);
-//							}
-//						}
-//					}
-//				}
-//			}
-//			catch (JobProcessingException e) {
-//				throw e;
-//			}
-//			catch (Exception e)
-//			{
-//				throw new JobProcessingException(500,
-//						"Failed to parse parameter "+ softwareParameter.getKey(), e);
-//			}
-//		}
-//
-//		/***************************************************************************
-//         **                 Create and assign job data                            **
-//         ***************************************************************************/
-//
-//        try
-//        {
-//            // create a job object
-//            job.setName(name);
-//            job.setOwner(username);
-//            job.setSoftwareName(software.getUniqueName());
-//            job.setInternalUsername(internalUsername);
-//            job.setSystem(software.getExecutionSystem().getSystemId());
-//            job.setBatchQueue(jobQueue.getName());
-//            job.setNodeCount(nodeCount);
-//            job.setProcessorsPerNode(processorsPerNode);
-//            job.setMemoryPerNode(memoryPerNode);
-//            job.setMaxRunTime(requestedTime);
-//            // bridget between the old callback urls and the new multiple webhook support.
-//            for (Notification n: notifications) {
-//                job.addNotification(n);
-//            }
-//            job.setInputsAsJsonObject(jobInputs);
-//            job.setParametersAsJsonObject(jobParameters);
-//            job.setSubmitTime(new DateTime().toDate());
-//        }
-//        catch (JobException e) {
-//            throw new JobProcessingException(500, e.getMessage(), e);
-//        }
-//        catch (NotificationException e) {
-//            throw new JobProcessingException(500, "Failed to assign notification to job", e);
-//        }
-//
-//
-//		/***************************************************************************
-//		 **						Verifying archive configuration					  **
-//		 ***************************************************************************/
-//
-//        // default to archiving the output
-//		job.setArchiveOutput(true);
-//
-//		if (jobRequestMap.containsKey("archive") && StringUtils.isNotEmpty((String)jobRequestMap.get("archive")))
-//		{
-//		    String doArchive = (String)jobRequestMap.get("archive");
-//		    if (!BooleanUtils.toBoolean(doArchive) && !doArchive.equals("1")) {
-//			    job.setArchiveOutput(false);
-//			}
-//		}
-//
-//		RemoteSystem archiveSystem;
-//		if (job.isArchiveOutput() && jobRequestMap.containsKey("archiveSystem"))
-//	    {
-//			// lookup the user system
-//			String archiveSystemId = (String)jobRequestMap.get("archiveSystem");
-//			archiveSystem = new SystemDao().findUserSystemBySystemId(username, archiveSystemId, RemoteSystemType.STORAGE);
-//			if (archiveSystem == null) {
-//				throw new JobProcessingException(400,
-//						"No storage system found matching " + archiveSystem + " for " + username);
-//			}
-//		}
-//		else
-//		{
-//		    // grab the user's default storage system
-//            archiveSystem = systemManager.getUserDefaultStorageSystem(username);
-//
-//            if (job.isArchiveOutput() && archiveSystem == null) {
-//				throw new JobProcessingException(400,
-//						"Invalid archiveSystem. No archiveSystem was provided and you "
-//						+ "have no public or private default storage system configured. "
-//						+ "Please specify a valid system id for archiveSystem or configure "
-//						+ "a default storage system.");
-//			}
-//		}
-//
-//		job.setArchiveSystem(archiveSystem);
-//
-//		String archivePath = null;
-//		if (job.isArchiveOutput())
-//		{
-//		    if (jobRequestMap.containsKey("archivePath"))
-//		    {
-//    		    archivePath = (String)jobRequestMap.get("archivePath");
-//
-//    		    if (StringUtils.isNotEmpty(archivePath))
-//                {
-//    //	            if (!archivePath.startsWith("/"))
-//    //	                archivePath = "/" + archivePath;
-//
-//                    // resolve any macros from the user-supplied archive path into valid values based
-//                    // on the job request and use those
-//                    archivePath = JobArchivePathMacroType.resolveMacrosInPath(job, archivePath);
-//
-//                    RemoteDataClient remoteDataClient = null;
-//                    try
-//                    {
-//                        remoteDataClient = archiveSystem.getRemoteDataClient(internalUsername);
-//                        remoteDataClient.authenticate();
-//
-//                        LogicalFile logicalFile = LogicalFileDao.findBySystemAndPath(archiveSystem, archivePath);
-//                        PermissionManager pm = new PermissionManager(archiveSystem, remoteDataClient, logicalFile, username);
-//
-//                        if (!pm.canWrite(remoteDataClient.resolvePath(archivePath)))
-//                        {
-//                            throw new JobProcessingException(403,
-//                                    "User does not have permission to access the provided archive path " + archivePath);
-//                        }
-//                        else
-//                        {
-//                            if (!remoteDataClient.doesExist(archivePath))
-//                            {
-//                                if (!remoteDataClient.mkdirs(archivePath, username)) {
-//                                    throw new JobProcessingException(400,
-//                                            "Unable to create job archive directory " + archivePath);
-//                                }
-//                            }
-//                            else
-//                            {
-//                                if (!remoteDataClient.isDirectory(archivePath))
-//                                {
-//                                    throw new JobProcessingException(400,
-//                                            "Archive path is not a folder");
-//                                }
-//                            }
-//                        }
-//                    }
-//                    catch (JobProcessingException e) {
-//                        throw e;
-//                    }
-//                    catch (RemoteDataException e) {
-//                        int httpcode = 500;
-//                        if (e.getMessage().contains("No credentials associated")) {
-//                            httpcode = 400;
-//                        }
-//                        throw new JobProcessingException(httpcode, e.getMessage(), e);
-//                    }
-//                    catch (Exception e) {
-//                        throw new JobProcessingException(500, "Could not verify archive path", e);
-//                    }
-//                    finally {
-//                        try { remoteDataClient.disconnect(); } catch (Exception e) {}
-//                    }
-//    			}
-//		    }
-//		}
-//
-//		if (StringUtils.isEmpty(archivePath)) {
-//		    archivePath = username + "/archive/jobs/job-" + job.getUuid();
-//        }
-//
-//		try
-//        {
-//		    job.setArchivePath(archivePath);
-//
-//            // persisting the job makes it available to the job queue
-//            // for submission
-//            JobDao.persist(job);
-//            job.setStatus(JobStatusType.PENDING, JobStatusType.PENDING.getDescription());
-//            JobDao.persist(job);
-//
-//            return job;
-//        }
-//        catch (Exception e)
-//        {
-//            throw new JobProcessingException(500, e.getMessage(), e);
-//        }
 	}
 
 	/**
@@ -2055,7 +932,6 @@ public class JobManager {
 
 		return null;
 	}
-
 
 	/**
 	 * Validates that the queue supports the number of nodes, processors per node, memory and

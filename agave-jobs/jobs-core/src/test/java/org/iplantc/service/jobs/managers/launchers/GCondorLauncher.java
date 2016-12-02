@@ -59,62 +59,62 @@ class GCondorLauncher {
         //job = jobrecord.insertFullJobTestRecordObjectGraph();
     }
 	
-    @Test
-    void testLaunch()
-	{   
+//    @Test
+//    void testLaunch()
+//	{   
+//
+//        try
+//        {
+//            launcher = new CondorLauncher(job);
+//            launcher.launch();
+//        } 
+//		catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//		finally 
+//		{
+////			Software software = null;
+////			SystemManager sysManager = new SystemManager();
+//
+//			
+///*
+//			try {
+//				software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
+//				SoftwareDao.delete(software);
+//			} catch (Exception e) {}
+//			
+//			try { 
+//				RemoteSystem defaultStorageSystem = sysManager.getDefaultStorageSystem();
+//				dao.remove(defaultStorageSystem);
+//			} catch (Exception e) {}
+//			
+//			try {
+//				RemoteSystem defaultExecutionSystem = sysManager.getDefaultExecutionSystem();
+//				dao.remove(defaultExecutionSystem);
+//			} catch (Exception e) {}
+//			
+//			try { JobDao.delete(job); } catch (Exception e) {}
+//*/
+//		}
+//
+//        JobStatusType actualStatus = job.getStatus();
+//        JobStatusType  expectedStatus = JobStatusType.RUNNING;
+//
+//        boolean result = (actualStatus == expectedStatus ) ? true : false;
+//        //sleep(10000);
+//        Assert.assertTrue(result,"The status is RUNNING");
+//        // expectedLocalJobId should not be NULL but can be any integer value
+//
+//    }
 
-        try
-        {
-            launcher = new CondorLauncher(job);
-            launcher.launch();
-        } 
-		catch (Exception e) {
-            e.printStackTrace();
-        }
-		finally 
-		{
-//			Software software = null;
-//			SystemManager sysManager = new SystemManager();
-
-			
-/*
-			try {
-				software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
-				SoftwareDao.delete(software);
-			} catch (Exception e) {}
-			
-			try { 
-				RemoteSystem defaultStorageSystem = sysManager.getDefaultStorageSystem();
-				dao.remove(defaultStorageSystem);
-			} catch (Exception e) {}
-			
-			try {
-				RemoteSystem defaultExecutionSystem = sysManager.getDefaultExecutionSystem();
-				dao.remove(defaultExecutionSystem);
-			} catch (Exception e) {}
-			
-			try { JobDao.delete(job); } catch (Exception e) {}
-*/
-		}
-
-        JobStatusType actualStatus = job.getStatus();
-        JobStatusType  expectedStatus = JobStatusType.RUNNING;
-
-        boolean result = (actualStatus == expectedStatus ) ? true : false;
-        //sleep(10000);
-        Assert.assertTrue(result,"The status is RUNNING");
-        // expectedLocalJobId should not be NULL but can be any integer value
-
-    }
-
-    public static void main(String[] args){
-        System.out.println("this works ...");
-        GCondorLauncher gcl = new GCondorLauncher();
-        gcl.setup();
-        gcl.testLaunch();
-
-
-    }
+//    public static void main(String[] args){
+//        System.out.println("this works ...");
+//        GCondorLauncher gcl = new GCondorLauncher();
+//        gcl.setup();
+//        gcl.testLaunch();
+//
+//
+//    }
 
     /*@Test(dependsOnMethods=("testLaunch") )
     void testReturnFromCondor(){

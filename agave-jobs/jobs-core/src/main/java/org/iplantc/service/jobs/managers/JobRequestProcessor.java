@@ -485,18 +485,6 @@ public class JobRequestProcessor {
 						"memoryPerNode. memoryPerNode should be a postive value specified in ###.#[EPTGM]B format.");
 			}
 
-//			// if the queue wasn't specified by the user or app, reselect with node and memory info
-//			if (jobQueue == null) {
-//				jobQueue = this.queueProcessor.selectQueue(executionSystem, nodeCount, memoryPerNode, (long)-1, BatchQueue.DEFAULT_MIN_RUN_TIME);
-//			}
-
-//			if (jobQueue == null) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userMemoryPerNode) ? "" : "default ") +
-//						"memoryPerNode. No queue found on " +
-//						executionSystem.getSystemId() + " that support jobs with " + nodeCount + " nodes and " +
-//						memoryPerNode + "GB memory per node");
-//			} else
 			if (!this.queueProcessor.validateBatchSubmitParameters(jobQueue, nodeCount, (long)-1, memoryPerNode, BatchQueue.DEFAULT_MIN_RUN_TIME)) {
 				throw new JobProcessingException(400, "Invalid " +
 						(StringUtils.isEmpty(userMemoryPerNode) ? "" : "default ") +
@@ -538,19 +526,6 @@ public class JobRequestProcessor {
 						"Invalid maxRunTime. maxRunTime should be greater than 00:00:00.");
 			}
 
-			// if the queue wasn't specified by the user or app, reselect with node and memory info
-//			if (StringUtils.isEmpty(queueName)) {
-//				jobQueue = this.queueProcessor.selectQueue(executionSystem, nodeCount, memoryPerNode, (long)-1, requestedTime);
-//			}
-//
-//			if (jobQueue == null) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userRequestedTime) ? "" : "default ") +
-//						"maxRunTime. No queue found on " +
-//						executionSystem.getSystemId() + " that supports jobs with " + nodeCount + " nodes, " +
-//						memoryPerNode + "GB memory per node, and a run time of " + requestedTime);
-//			} else
-//			
 			if (!this.queueProcessor.validateBatchSubmitParameters(jobQueue, nodeCount, (long)-1, memoryPerNode, requestedTime)) {
 				throw new JobProcessingException(400, "Invalid " +
 						(StringUtils.isEmpty(userRequestedTime) ? "" : "default ") +
@@ -587,20 +562,6 @@ public class JobRequestProcessor {
 						"processorsPerNode value. processorsPerNode must be a positive integer value.");
 			}
 
-//			// if the queue wasn't specified by the user or app, reselect with node and memory info
-//			if (StringUtils.isEmpty(queueName)) {
-//				jobQueue = this.queueProcessor.selectQueue(executionSystem, nodeCount, memoryPerNode, processorsPerNode, requestedTime);
-//			}
-
-//			if (jobQueue == null) {
-//				throw new JobProcessingException(400, "Invalid " +
-//						(StringUtils.isEmpty(userProcessorsPerNode) ? "" : "default ") +
-//						"processorsPerNode. No queue found on " +
-//						executionSystem.getSystemId() + " that supports jobs with " + nodeCount + " nodes, " +
-//						memoryPerNode + "GB memory per node, a run time of " + requestedTime + " and " +
-//						processorsPerNode + " processors per node");
-//			} else 
-				
 			if (!this.queueProcessor.validateBatchSubmitParameters(jobQueue, nodeCount, processorsPerNode, memoryPerNode, requestedTime)) {
 				throw new JobProcessingException(400, "Invalid " +
 						(StringUtils.isEmpty(userProcessorsPerNode) ? "" : "default ") +
@@ -997,7 +958,7 @@ public class JobRequestProcessor {
 
 	/**
 	 * @param jobRequestMap
-	 * @param name
+	 * @param jobName
 	 * @return
 	 * @throws JobProcessingException
 	 */

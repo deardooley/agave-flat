@@ -21,6 +21,9 @@ public final class StagingScheduler
     // Tracing.
     private static final Logger _log = Logger.getLogger(StagingScheduler.class);
 
+    // A place to squirrel away our triggers.
+    private List<JobStatusType> _phaseTriggerStatuses;
+
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
@@ -41,10 +44,13 @@ public final class StagingScheduler
     @Override
     protected List<JobStatusType> getPhaseTriggerStatuses()
     {
-        ArrayList<JobStatusType> list = new ArrayList<>();
-        list.add(JobStatusType.PENDING);
-        list.add(JobStatusType.PROCESSING_INPUTS);
-        list.add(JobStatusType.STAGING_INPUTS);
-        return list;
+        if (_phaseTriggerStatuses == null)
+        {
+            _phaseTriggerStatuses = new ArrayList<>();
+            _phaseTriggerStatuses.add(JobStatusType.PENDING);
+            _phaseTriggerStatuses.add(JobStatusType.PROCESSING_INPUTS);
+            _phaseTriggerStatuses.add(JobStatusType.STAGING_INPUTS);
+        }
+        return _phaseTriggerStatuses;
     }
 }

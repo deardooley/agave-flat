@@ -12,18 +12,18 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.monitors.parsers.ForkJobMonitorResponseParser;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.remote.RemoteSubmissionClient;
-import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.enumerations.LoginProtocolType;
-import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.joda.time.DateTime;
 
 /**
@@ -38,13 +38,15 @@ public class ProcessMonitor extends AbstractJobMonitor
 {
 	private static final Logger log = Logger.getLogger(ProcessMonitor.class);
 	
-	public ProcessMonitor(Job job)
+	public ProcessMonitor(Job job, IPhaseWorker worker)
 	{
-		super(job);
+		super(job, worker);
 	}
 
 	@Override
-	public Job monitor() throws RemoteJobMonitoringException, SystemUnavailableException, ClosedByInterruptException
+	public Job monitor() 
+	   throws RemoteJobMonitoringException, SystemUnavailableException, 
+	          ClosedByInterruptException, JobFinishedException
 	{
 		RemoteSubmissionClient remoteSubmissionClient = null;
 		
@@ -131,7 +133,7 @@ public class ProcessMonitor extends AbstractJobMonitor
 			
 			return this.job;
 		}
-		catch (ClosedByInterruptException e) {
+		catch (ClosedByInterruptException | JobFinishedException e) {
             throw e;
         }
         catch (StaleObjectStateException | UnresolvableObjectException e) {

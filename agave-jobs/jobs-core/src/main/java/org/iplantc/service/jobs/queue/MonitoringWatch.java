@@ -106,7 +106,7 @@ public class MonitoringWatch extends AbstractJobWatch
                 {
                     this.job = JobManager.updateStatus(this.job,  this.job.getStatus(), this.job.getErrorMessage());
                     
-                    setWorkerAction(new MonitoringAction(job));
+//                    setWorkerAction(new MonitoringAction(job));
                     
                     try {
                         // wrap this in a try/catch so we can update the local reference to the 

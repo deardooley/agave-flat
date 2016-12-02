@@ -11,6 +11,7 @@ import org.iplantc.service.jobs.exceptions.MissingSoftwareDependencyException;
 import org.iplantc.service.jobs.exceptions.SoftwareUnavailableException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
@@ -37,7 +38,8 @@ public class JobLauncherFactory
 	 * @throws SystemUnavailableException
 	 * @throws SoftwareUnavailableException
 	 */
-	public static JobLauncher getInstance(Job job) throws JobException, SystemUnavailableException, SoftwareUnavailableException
+	public static JobLauncher getInstance(Job job, IPhaseWorker worker) 
+	 throws JobException, SystemUnavailableException, SoftwareUnavailableException
 	{
 	    Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
 		ExecutionSystem executionSystem = JobManager.getJobExecutionSystem(job);
@@ -114,12 +116,8 @@ public class JobLauncherFactory
 				}
 			    else if (!remoteDataClient.doesExist(software.getDeploymentPath() + '/' + software.getExecutablePath())) 
 				{
-//					software.setAvailable(false);
-//					SoftwareDao.persist(software);
 					throw new MissingSoftwareDependencyException();
 				}
-//			} catch (NotificationException e) {
-//				log.error("Public app bundle for " + software.getUniqueName() + " is missing.");
 			
 			} catch (MissingSoftwareDependencyException e) {
 			    throw new SoftwareUnavailableException(
@@ -138,15 +136,15 @@ public class JobLauncherFactory
 		// now submit the job to the target system using the correct launcher.
 		if (software.getExecutionSystem().getExecutionType().equals(ExecutionType.HPC))
 		{
-			return new HPCLauncher(job);
+			return new HPCLauncher(job, worker);
 		}
 		else if (software.getExecutionSystem().getExecutionType().equals(ExecutionType.CONDOR))
 		{
-			return new CondorLauncher(job);
+			return new CondorLauncher(job, worker);
 		}
 		else
 		{
-			return new CLILauncher(job);
+			return new CLILauncher(job, worker);
 		}
 	}
 }

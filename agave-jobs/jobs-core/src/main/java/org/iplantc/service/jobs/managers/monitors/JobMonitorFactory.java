@@ -3,11 +3,10 @@
  */
 package org.iplantc.service.jobs.managers.monitors;
 
-import org.iplantc.service.apps.dao.SoftwareDao;
-import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.enumerations.ExecutionType;
@@ -22,7 +21,7 @@ import org.iplantc.service.systems.model.enumerations.SystemStatusType;
  */
 public class JobMonitorFactory {
 
-	public static JobMonitor getInstance(Job job) 
+	public static JobMonitor getInstance(Job job, IPhaseWorker worker) 
 	throws RemoteJobMonitoringException, SystemUnavailableException
 	{
 		ExecutionSystem executionSystem = JobManager.getJobExecutionSystem(job);
@@ -40,22 +39,14 @@ public class JobMonitorFactory {
         }
 		else
 		{
-//		    Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
-//		    ExecutionType executionType = null;
-//		    if (software == null) {
-//		        executionType = executionSystem.getExecutionType();
-//		    } else {
-//		        executionType = software.getExecutionType();
-//		    }
-//		    
 	        ExecutionType executionType = executionSystem.getExecutionType();
 	        
 			if (executionType == ExecutionType.CONDOR) {
-				return new CondorJobMonitor(job);
+				return new CondorJobMonitor(job, worker);
 			} else if (executionType == ExecutionType.HPC) {
-				return new HPCMonitor(job);
+				return new HPCMonitor(job, worker);
 			} else if (executionType == ExecutionType.CLI) {
-				return new ProcessMonitor(job);
+				return new ProcessMonitor(job, worker);
 			} else {
 				throw new RemoteJobMonitoringException("Unable to monitor unknown execution type.");
 			}

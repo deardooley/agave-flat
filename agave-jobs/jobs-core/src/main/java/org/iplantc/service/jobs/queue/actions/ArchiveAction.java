@@ -19,6 +19,7 @@ import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.model.ExecutionSystem;
@@ -42,8 +43,8 @@ public class ArchiveAction extends AbstractWorkerAction {
     
     private static Logger log = Logger.getLogger(ArchiveAction.class);
     
-    public ArchiveAction(Job job) {
-        super(job);
+    public ArchiveAction(Job job, IPhaseWorker worker) {
+        super(job, worker);
     }
     
     /**
@@ -258,7 +259,7 @@ public class ArchiveAction extends AbstractWorkerAction {
                 if (!isStopped()) {
                     executionDataClient.delete(getJob().getWorkPath());
                     this.job = JobManager.updateStatus(getJob(), JobStatusType.ARCHIVING_FINISHED, 
-                            "Job archiving completed successfully.");
+                                                       "Job archiving completed successfully.");
                 }
             }
             catch (Exception e) {
@@ -270,7 +271,12 @@ public class ArchiveAction extends AbstractWorkerAction {
         catch (StaleObjectStateException e) {
             throw e;
         }
-        catch (SystemUnavailableException | ClosedByInterruptException | SystemUnknownException | JobException e) 
+        catch (ClosedByInterruptException e) 
+        {
+            if (getUrlCopy() != null) getUrlCopy().setKilled(true);
+            throw e;
+        }
+        catch (SystemUnavailableException | SystemUnknownException | JobException e) 
         {
             throw e;
         }

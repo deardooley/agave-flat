@@ -7,6 +7,7 @@ import java.nio.channels.ClosedByInterruptException;
 
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
@@ -31,14 +32,10 @@ public interface WorkerAction {
      * @throws JobDependencyException 
      */
     public void run() 
-    throws SystemUnavailableException, SystemUnknownException, JobException, ClosedByInterruptException, JobDependencyException;
+    throws SystemUnavailableException, SystemUnknownException, JobException, ClosedByInterruptException, 
+           JobDependencyException, JobFinishedException;
     
     public boolean isStopped();
-
-    /**
-     * @param stopped the stopped to set
-     */
-    public void setStopped(boolean stopped);
 
     /**
      * @return the job
@@ -63,7 +60,8 @@ public interface WorkerAction {
     /**
      * Throws an exception if {@link #isStopped()} returns true
      * @throws ClosedByInterruptException
+     * @throws JobFinishedException 
      */
-    void checkStopped() throws ClosedByInterruptException;
+    void checkStopped() throws ClosedByInterruptException, JobFinishedException;
     
 }

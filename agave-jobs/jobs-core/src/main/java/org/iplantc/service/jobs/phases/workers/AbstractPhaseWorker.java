@@ -1,6 +1,8 @@
 package org.iplantc.service.jobs.phases.workers;
 
 import java.io.IOException;
+import java.nio.channels.ClosedByInterruptException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -10,6 +12,7 @@ import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.exceptions.QuotaViolationException;
 import org.iplantc.service.jobs.managers.JobManager;
@@ -17,6 +20,8 @@ import org.iplantc.service.jobs.managers.JobQuotaCheck;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.JobInterruptUtils;
+import org.iplantc.service.jobs.phases.QueueConstants;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
 import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
 import org.iplantc.service.jobs.phases.schedulers.AbstractPhaseScheduler;
@@ -42,6 +47,7 @@ import com.rabbitmq.client.ShutdownSignalException;
  */
 public abstract class AbstractPhaseWorker 
  extends Thread
+ implements IPhaseWorker
 {
     /* ********************************************************************** */
     /*                               Constants                                */
@@ -50,7 +56,7 @@ public abstract class AbstractPhaseWorker
     private static final Logger _log = Logger.getLogger(AbstractPhaseWorker.class);
     
     // Communication constants.
-    public static final String WORKER_EXCHANGE_NAME = "JobWorkerExchange";
+    private static final String WORKER_EXCHANGE_NAME = QueueConstants.WORKER_EXCHANGE_NAME ;
 
     /* ********************************************************************** */
     /*                                Fields                                  */
@@ -63,11 +69,17 @@ public abstract class AbstractPhaseWorker
     private final int                    _threadNum;
     
     // Calculated fields.
-    private Channel                      _channel;
+    private Channel                      _jobChannel;
+    private String                       _jobChannelConsumerTag;
+    private Channel                      _interruptChannel;
     private WorkerAction                 _workerAction;
     
     // The job currently being processed.  Updated by subclasses directly.
     protected Job                        _job;
+    
+    // Sticky state variable indicating whether the job status
+    // has been assigned a finished state.
+    private AtomicBoolean _jobStopped = new AtomicBoolean(false);
     
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -80,10 +92,10 @@ public abstract class AbstractPhaseWorker
         // Unpack the parameters.
         super(parms.threadGroup, parms.threadName);
         _connection = parms.connection;
-        _scheduler = parms.scheduler;
-        _tenantId = parms.tenantId;
-        _queueName = parms.queueName;
-        _threadNum = parms.threadNum;
+        _scheduler  = parms.scheduler;
+        _tenantId   = parms.tenantId;
+        _queueName  = parms.queueName;
+        _threadNum  = parms.threadNum;
     }
     
     /* ********************************************************************** */
@@ -114,26 +126,26 @@ public abstract class AbstractPhaseWorker
         if (_log.isDebugEnabled())
             _log.debug("-> Starting worker thread " + getName() + "");
         
-        // ----------------- Queue Set Up -----------------------
+        // ----------------- Job Queue Set Up -------------------
         // Create the channel and bind our queue to it.
-        _channel = initChannel();
+        _jobChannel = initJobChannel();
         
         // Exit without a fuss if something's wrong.
-        if (_channel == null) return;
+        if (_jobChannel == null) return;
         
         // Use a queuing consumer so that we control the threading.  This
         // consumer implements a blocking read call, which allows us to
         // process requests on this thread.
-        QueueingConsumer consumer = new QueueingConsumer(_channel);
+        QueueingConsumer consumer = new QueueingConsumer(_jobChannel);
         
         // We explicitly acknowledge message receipt after processing them.
         boolean autoack = false;
-        try {_channel.basicConsume(_queueName, autoack, consumer);}
+        try {_jobChannelConsumerTag = _jobChannel.basicConsume(_queueName, autoack, consumer);}
         catch (IOException e) {
             String msg = "Worker " + getName() + " is unable consume messages from queue " + 
                         _queueName + ".";
            _log.error(msg, e);
-           try {_channel.abort(AMQP.CHANNEL_ERROR, msg);} catch (Exception e1){}
+           try {_jobChannel.abort(AMQP.CHANNEL_ERROR, msg);} catch (Exception e1){}
            return; // TODO: figure out better longterm strategy.
         }
         
@@ -147,10 +159,16 @@ public abstract class AbstractPhaseWorker
         // ----------------- Queue Read -------------------------
         // Read loop.
         while (true) {
+            // Check interrupt status.
+            // TODO: Maybe this shouldn't be checked here.
+            //       Check for thread interrupts and do clean up.
+            //       Note the window here before we wait on I/O
+            
             // Wait for next request.
             QueueingConsumer.Delivery delivery = null;
             try {
                 // TODO: figure out how to handle interruptions; for now we just exit.
+                //       Also, might need a timeout to check on interrupts that occur before I/O wait.
                 delivery = consumer.nextDelivery();
             } catch (ShutdownSignalException e) {
                 _log.info("Shutdown signal received by thread " + getName(), e);
@@ -160,6 +178,9 @@ public abstract class AbstractPhaseWorker
                 break;
             } catch (InterruptedException e) {
                 _log.info("Interrupted signal received by thread " + getName(), e);
+                break;
+            } catch (Exception e) {
+                _log.info("Unexpected exception received by thread " + getName(), e);
                 break;
             }
             
@@ -208,7 +229,7 @@ public abstract class AbstractPhaseWorker
             // ----------------- Message Processing -----------------
             // All message processors return the ack boolean value that
             // determines the final disposition of the queued message.
-            
+            //
             // Process the command.
             if (ack)
             {
@@ -252,7 +273,7 @@ public abstract class AbstractPhaseWorker
             if (ack) {
                 // Don't forget to send the ack!
                 boolean multipleAck = false;
-                try {_channel.basicAck(envelope.getDeliveryTag(), multipleAck);}
+                try {_jobChannel.basicAck(envelope.getDeliveryTag(), multipleAck);}
                 catch (IOException e) {
                     // We're in trouble if we cannot acknowledge a message.
                     String msg = "Worker " + getName() + 
@@ -264,8 +285,9 @@ public abstract class AbstractPhaseWorker
             else {
                 // Reject this unreadable message so that
                 // it gets discarded or dead-lettered.
+                // TODO: Double check reject semantics
                 boolean requeue = false;
-                try {_channel.basicReject(envelope.getDeliveryTag(), requeue);} 
+                try {_jobChannel.basicReject(envelope.getDeliveryTag(), requeue);} 
                 catch (IOException e) {
                     // We're in trouble if we cannot reject a message.
                     String msg = "Worker " + getName() + 
@@ -275,6 +297,9 @@ public abstract class AbstractPhaseWorker
                 }
             }
         } // polling loop
+        
+        // Best effort try to close channels and cancel consumers.
+        closeChannels();
         
         // This thread is terminating.
         if (_log.isDebugEnabled())
@@ -315,7 +340,7 @@ public abstract class AbstractPhaseWorker
         // ---------------------- Marshalling ----------------------
         // Marshal the json message into it message object.
         ProcessJobMessage qjob = null;
-        try {qjob = ProcessJobMessage.fromJson(body.toString());}
+        try {qjob = ProcessJobMessage.fromJson(new String(body));}
         catch (IOException e) {
             // Log error message.
             String msg = "Worker " + getName() + 
@@ -354,7 +379,7 @@ public abstract class AbstractPhaseWorker
         if (job == null) {
             String msg = "Worker " + getName() + 
                          " unable to find Job with UUID " + qjob.uuid +
-                         " (" + qjob.name + ") from database.";
+                         " (" + qjob.name + ") in database.";
             _log.error(msg);
             return false;
         }
@@ -378,6 +403,7 @@ public abstract class AbstractPhaseWorker
         TenancyHelper.setCurrentEndUser(job.getOwner());
         
         // Invoke the phase processor.
+        boolean jobProcessed = true;
         try {processJob(job);}
         catch (Exception e)
         {
@@ -385,11 +411,11 @@ public abstract class AbstractPhaseWorker
                          " unable to process Job with UUID " + qjob.uuid +
                          " (" + qjob.name + ").";
             _log.error(msg, e);
-            return false;
+            jobProcessed = false;
         }
         
         // Successful processing.
-        return true;
+        return jobProcessed;
     }
     
     /* ---------------------------------------------------------------------- */
@@ -440,9 +466,6 @@ public abstract class AbstractPhaseWorker
         return _scheduler.getPhaseType();
     }
     
-    /* ********************************************************************** */
-    /*                            Protected Methods                           */
-    /* ********************************************************************** */
     protected WorkerAction getWorkerAction() {
         return _workerAction;
     }
@@ -452,18 +475,92 @@ public abstract class AbstractPhaseWorker
     }
     
     /* ---------------------------------------------------------------------- */
-    /* isStopped:                                                             */
+    /* checkStopped:                                                          */
     /* ---------------------------------------------------------------------- */
-    protected boolean isStopped()
+    /** This method is called at convenient points during execution in which
+     * exception processing will not leave the system in an inconsistent state.
+     * This call is equivalent to calling:
+     * 
+     *      checkStopped(false)
+     * 
+     * @throws ClosedByInterruptException when the worker thread has been interrupted
+     * @throws JobFinishedException when the job has transitioned to a finished state
+     */
+    @Override
+    public void checkStopped() 
+     throws ClosedByInterruptException, JobFinishedException
     {
-        // TODO: Implement the interrupt mechanism described in the class 
-        //       comment of AbstractPhaseScheduler.  The solution must also
-        //       take into account StagingAction.  Also consider what state
-        //       hibernate is in when we receive the interrupt (see 
-        //       StageWatch.rollback()).
-        return false;
+        checkStopped(false);
     }
     
+    /* ---------------------------------------------------------------------- */
+    /* checkStopped:                                                          */
+    /* ---------------------------------------------------------------------- */
+    /** This method is called at convenient points during execution in which
+     * exception processing will not leave the system in an inconsistent state.
+     * The logging flag causes debug records to be written to the log when an
+     * exception is going to be thrown.
+     * 
+     * @param logException true causes this method to log before throwing an exception
+     * @throws ClosedByInterruptException when the worker thread has been interrupted
+     * @throws JobFinishedException when the job has transitioned to a finished state
+     */
+    @Override
+    public void checkStopped(boolean logException) 
+     throws ClosedByInterruptException, JobFinishedException
+    {
+        // See if the thread was interrupted and leave the flag unchanged.
+        if (Thread.currentThread().isInterrupted()) {
+            if (logException && _log.isDebugEnabled()) {
+                String msg = "Worker " + Thread.currentThread().getName() +
+                             " interrupted while processing job " + 
+                             _job.getUuid() + " (" + _job.getName() + ").";
+                _log.debug(msg);
+            }
+            // Always throw the identifying exception.
+            throw new ClosedByInterruptException();
+        }
+        
+        // See if the job was stopped.
+        if (isJobStopped()) {
+            String msg = "Worker " + Thread.currentThread().getName() +
+                         " stopping job " + _job.getUuid() + 
+                         " (" + _job.getName() + ").";
+            if (logException && _log.isDebugEnabled()) _log.debug(msg);
+            
+            // Always throw the identifying exception.
+            throw new JobFinishedException(msg);
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* isJobStopped:                                                          */
+    /* ---------------------------------------------------------------------- */
+    /** Determine if the job was explicitly stopped using the topic interrupt
+     * mechanism.  If so, we set a sticky flag so that subsequent checks can
+     * quickly discover that the job was moved into a stopped state.
+     * 
+     * @return true if the job is in a finished state; false otherwise.
+     */
+    @Override
+    public boolean isJobStopped()
+    {
+        // Did we previously encounter a job interrupt?
+        if (_jobStopped.get()) return true;
+        
+        // We shouldn't be called when there's no 
+        // current job, but we play it safe.
+        if (_job == null) return true;
+        
+        // Query the database for changes to a finished status.
+        boolean interrupted = JobInterruptUtils.isJobInterrupted(_job);
+        if (interrupted) _jobStopped.set(true);
+        return interrupted;
+    }
+    
+    /* ********************************************************************** */
+    /*                            Protected Methods                           */
+    /* ********************************************************************** */
     /* ---------------------------------------------------------------------- */
     /* reset:                                                                 */
     /* ---------------------------------------------------------------------- */
@@ -475,6 +572,9 @@ public abstract class AbstractPhaseWorker
     {
         // Reset the job state.
         _job = null;
+        
+        // Reset the job stopped flag.
+        _jobStopped.set(false);
         
         // Remove the action associated with a job.
         setWorkerAction(null);
@@ -587,10 +687,10 @@ public abstract class AbstractPhaseWorker
     /*                            Private Methods                             */
     /* ********************************************************************** */
     /* ---------------------------------------------------------------------- */
-    /* initChannel:                                                           */
+    /* initJobChannel:                                                        */
     /* ---------------------------------------------------------------------- */
-    private Channel initChannel() {
-        
+    private Channel initJobChannel() 
+    {
         // Create this thread's channel.
         Channel channel = null;
         try {channel = _connection.createChannel();} 
@@ -606,7 +706,7 @@ public abstract class AbstractPhaseWorker
                  return null;
          }
          if (_log.isInfoEnabled()) 
-             _log.info("Created channel number " + channel.getChannelNumber() + 
+             _log.info("Created job channel number " + channel.getChannelNumber() + 
                        " for worker " + getName() + ".");
          
          // Set the prefetch count so that the consumer using this 
@@ -677,6 +777,36 @@ public abstract class AbstractPhaseWorker
          
          // Success.
          return channel;
+    }
+    
+   /* ---------------------------------------------------------------------- */
+    /* closeChannels:                                                         */
+    /* ---------------------------------------------------------------------- */
+    /** Make a best-effort attempt to release all channels and cancel all queue 
+     * consumers for which we've registered. 
+     */
+    private void closeChannels()
+    {
+        // Try to close job input channel.
+        if (_jobChannel != null) 
+            try {_jobChannel.close();}
+            catch (Exception e)
+            {
+                String msg = "Worker " + getName() + " unable to close job channel " + 
+                             _jobChannel.getChannelNumber() + ".";
+                _log.error(msg, e);
+            }
+        
+        // Try to close the interrupt channel.
+        // Try to close job input channel.
+        if (_interruptChannel != null) 
+            try {_interruptChannel.close();}
+            catch (Exception e)
+            {
+                String msg = "Worker " + getName() + " unable to close interrupt channel " + 
+                             _interruptChannel.getChannelNumber() + ".";
+                _log.error(msg, e);
+            }
     }
     
     /* ---------------------------------------------------------------------- */

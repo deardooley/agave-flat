@@ -377,7 +377,7 @@ public class AbstractJobSubmissionTest {
     */
    protected void stageJobInputs(Job job) throws Exception {
        try {
-           StagingAction staging = new StagingAction(job);
+           StagingAction staging = new StagingAction(job, null);
            staging.run();
        } catch (Exception e) {
            Assert.fail("Failed to stage input for job " + job.getUuid(), e);
@@ -873,7 +873,7 @@ public class AbstractJobSubmissionTest {
 		boolean actuallyThrewException = false;
 		String exceptionMsg = message;
 		
-		SubmissionAction submissionAction = new SubmissionAction(job);
+		SubmissionAction submissionAction = new SubmissionAction(job,null);
 		
 		try
         {
@@ -945,13 +945,13 @@ public class AbstractJobSubmissionTest {
 	 * @param message
 	 * @param shouldThrowException
 	 */
-	protected void genericProcessApplicationTemplate(Job job, String expectedString, String message, boolean shouldThrowException)
-	throws Exception 
-	{
-		JobLauncher launcher = JobLauncherFactory.getInstance(job);
-		File ipcexeFile = launcher.processApplicationTemplate();
-		String contents = FileUtils.readFileToString(ipcexeFile);
-		
-		Assert.assertTrue(contents.contains(expectedString), message);
-	}
+//	protected void genericProcessApplicationTemplate(Job job, String expectedString, String message, boolean shouldThrowException)
+//	throws Exception 
+//	{
+//		JobLauncher launcher = JobLauncherFactory.getInstance(job);
+//		File ipcexeFile = launcher.processApplicationTemplate();
+//		String contents = FileUtils.readFileToString(ipcexeFile);
+//		
+//		Assert.assertTrue(contents.contains(expectedString), message);
+//	}
 }

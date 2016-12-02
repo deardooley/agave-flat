@@ -3,6 +3,7 @@ package org.iplantc.service.jobs.managers.monitors;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
 import org.iplantc.service.jobs.managers.launchers.JobLauncher;
 import org.iplantc.service.jobs.model.Job;
@@ -22,19 +23,13 @@ public interface JobMonitor {
     public boolean isStopped();
     
     /**
-     * Stops the submission task asynchronously.
-     * 
-     * @param stopped
-     */
-    public void setStopped(boolean stopped);
-    
-    /**
      * Checks whether this launcher has been stopped and if so, 
      * throws a {@link ClosedByInterruptException}
      * 
      * @throws ClosedByInterruptException
+     * @throws JobFinishedException 
      */
-    void checkStopped() throws ClosedByInterruptException;
+    void checkStopped() throws ClosedByInterruptException, JobFinishedException;
    
 	/**
 	 * Checks the status of the job on the remote system and updates
@@ -42,9 +37,10 @@ public interface JobMonitor {
 	 * 
 	 * @throws RemoteJobMonitoringException
 	 * @throws SystemUnavailableException
+	 * @throws JobFinishedException 
 	 */
 	public Job monitor() 
-	throws RemoteJobMonitoringException, SystemUnavailableException, ClosedByInterruptException;
+	throws RemoteJobMonitoringException, SystemUnavailableException, ClosedByInterruptException, JobFinishedException;
 	
 	/**
 	 * Threadsafe getter of the job passed to the {@link JobMonitor}.

@@ -303,11 +303,11 @@ public class CondorLauncherTest extends AbstractJobSubmissionTest
 		return testData;
 	}
 	
-	@Test (groups={"submission"}, dataProvider="resolveMacrosProvider", enabled=true)
-	public void resolveMacros(Job job, String macro, String expectedValue, boolean archive) throws JobException {
-		JobLauncher launcher = new CondorLauncher(job);
-		Assert.assertEquals(launcher.resolveMacros("${" + macro + "}"), expectedValue, "Launcher did not resolve wrapper template macro " + macro + " properly.");
-	}
+//	@Test (groups={"submission"}, dataProvider="resolveMacrosProvider", enabled=true)
+//	public void resolveMacros(Job job, String macro, String expectedValue, boolean archive) throws JobException {
+//		JobLauncher launcher = new CondorLauncher(job);
+//		Assert.assertEquals(launcher.resolveMacros("${" + macro + "}"), expectedValue, "Launcher did not resolve wrapper template macro " + macro + " properly.");
+//	}
 	
 	@DataProvider
 	private Object[][] resolveNotificationsMacrosProvider() throws Exception {
@@ -337,11 +337,11 @@ public class CondorLauncherTest extends AbstractJobSubmissionTest
 		};
 	}
 	
-	@Test (groups={"submission"}, dataProvider="resolveNotificationsMacrosProvider", dependsOnMethods={"resolveMacros"}, enabled=true)
-	public void resolveNotificationMacros(Job job, String macroVars, String expectedValue, boolean archive) throws JobException {
-		JobLauncher launcher = new CondorLauncher(job);
-		Assert.assertEquals(launcher.resolveRuntimeNotificationMacros("${AGAVE_JOB_CALLBACK_NOTIFICATION|" + macroVars + "}"), expectedValue, "Launcher did not resolve wrapper template notification macro properly.");
-	}
+//	@Test (groups={"submission"}, dataProvider="resolveNotificationsMacrosProvider", dependsOnMethods={"resolveMacros"}, enabled=true)
+//	public void resolveNotificationMacros(Job job, String macroVars, String expectedValue, boolean archive) throws JobException {
+//		JobLauncher launcher = new CondorLauncher(job);
+//		Assert.assertEquals(launcher.resolveRuntimeNotificationMacros("${AGAVE_JOB_CALLBACK_NOTIFICATION|" + macroVars + "}"), expectedValue, "Launcher did not resolve wrapper template notification macro properly.");
+//	}
 	
 //	@Test (groups={"submission"}, dataProvider="processApplicationTemplateProvider", dependsOnMethods={"resolveMacros"})
 //	public void processApplicationTemplate(Software software, String message, boolean shouldThrowException) 

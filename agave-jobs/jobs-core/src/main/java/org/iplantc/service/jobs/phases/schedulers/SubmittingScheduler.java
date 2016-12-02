@@ -21,6 +21,9 @@ public final class SubmittingScheduler
     // Tracing.
     private static final Logger _log = Logger.getLogger(SubmittingScheduler.class);
 
+    // A place to squirrel away our triggers.
+    private List<JobStatusType> _phaseTriggerStatuses;
+
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
@@ -41,10 +44,13 @@ public final class SubmittingScheduler
     @Override
     protected List<JobStatusType> getPhaseTriggerStatuses()
     {
-        ArrayList<JobStatusType> list = new ArrayList<>();
-        list.add(JobStatusType.SUBMITTING);
-        list.add(JobStatusType.STAGED);
-        list.add(JobStatusType.STAGING_JOB);
-        return list;
+        if (_phaseTriggerStatuses == null)
+        {
+            _phaseTriggerStatuses = new ArrayList<>();
+            _phaseTriggerStatuses.add(JobStatusType.SUBMITTING);
+            _phaseTriggerStatuses.add(JobStatusType.STAGED);
+            _phaseTriggerStatuses.add(JobStatusType.STAGING_JOB);
+        }
+        return _phaseTriggerStatuses;
     }
 }

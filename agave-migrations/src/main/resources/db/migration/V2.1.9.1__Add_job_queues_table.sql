@@ -51,6 +51,23 @@ CREATE TABLE IF NOT EXISTS `job_queues` (
     ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+# Jobs are identified by their uuids and can have multiple
+# outstanding interrupts at a time.  Worker threads remove
+# interrupts when they are finish processing them or, as 
+# a failsafe, a reaper thread periodically removes expired
+# interrupts.
+CREATE TABLE IF NOT EXISTS `job_interrupts` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `job_uuid` varchar(64) NOT NULL,
+  `tenant_id` varchar(64) NOT NULL,
+  `interrupt_type` enum('DELETE','PAUSE','STOP') NOT NULL,
+  `created` datetime NOT NULL,
+  `expires_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `job_uuid` (`job_uuid`,`tenant_id`,`created`),
+  KEY `expires_at` (`expires_at`)
+) ENGINE=InnoDB;
+
 # Create the scheduler lease table that is used to limit
 # the number of active schedulers for each phase to 1.
 CREATE TABLE `job_leases` (

@@ -270,7 +270,7 @@ public class ArchiveWatch extends AbstractJobWatch
         	                    throw new ClosedByInterruptException();
         	                }
 
-        				    setWorkerAction(new ArchiveAction(getJob()));
+//        				    setWorkerAction(new ArchiveAction(getJob()));
 
         				    try {
         				        getWorkerAction().run();

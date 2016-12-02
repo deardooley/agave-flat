@@ -10,6 +10,7 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.managers.launchers.parsers.RemoteJobIdParser;
 import org.iplantc.service.jobs.managers.launchers.parsers.RemoteJobIdParserFactory;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.jobs.util.Slug;
 import org.iplantc.service.systems.model.enumerations.RemoteShell;
 import org.iplantc.service.transfer.RemoteDataClient;
@@ -30,9 +31,9 @@ public class CLILauncher extends HPCLauncher
 	 * Creates an instance of a JobLauncher capable of submitting jobs to
 	 * Atmosphere VMs.
 	 */
-	public CLILauncher(Job job)
+	public CLILauncher(Job job, IPhaseWorker worker)
 	{
-		super(job);
+		super(job, worker);
 	}
 
 	@Override

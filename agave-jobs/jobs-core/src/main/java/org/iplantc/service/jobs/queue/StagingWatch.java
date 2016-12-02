@@ -165,7 +165,7 @@ public class StagingWatch extends AbstractJobWatch
                                 throw new ClosedByInterruptException();
                             }
                             
-                            setWorkerAction(new StagingAction(getJob()));
+                            setWorkerAction(new StagingAction(getJob(), null));
                             
                             try {
                                 // wrap this in a try/catch so we can update the local reference to the 

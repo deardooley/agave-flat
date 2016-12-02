@@ -22,8 +22,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.globus.ftp.GridFTPSession;
-import org.iplantc.service.systems.exceptions.RemoteCredentialException;
-import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.RangeValidationException;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
@@ -42,35 +40,12 @@ import org.iplantc.service.transfer.model.enumerations.TransferStatusType;
 public class URLCopy
 {
 	private static Logger log = Logger.getLogger(URLCopy.class);
-//	private static final Counter activeTransfers = CommonMetrics.addCounter(URLCopy.class, "active");
-//	private static final Map<Class, Map<Class, Counter>> sourceDestCounters = new HashMap<Class, Map<Class, Counter>>();
-//	private static final Map<Class, Counter> totalCounters = new HashMap<Class, Counter>();
-//	static {
-//		Class[] remoteDataClientClasses = {SFTP.class, GridFTP.class, IRODS.class, FTP.class, Local.class, S3.class};
-//		for (Class clazz: Arrays.asList(remoteDataClientClasses)) {
-//			Map<Class, Counter> sourceCounters = new HashMap<Class, Counter>();
-//			for (Class clazz2: Arrays.asList(remoteDataClientClasses)) {
-//				if (!StringUtils.equals(clazz.getName(), clazz2.getName())) {
-//					sourceCounters.put(clazz2, CommonMetrics.addCounter(clazz, "src." + clazz2.getSimpleName()));
-//				}
-//			}
-//			sourceDestCounters.put(clazz, sourceCounters);
-//			totalCounters.put(clazz, CommonMetrics.addCounter(clazz, "total"));
-//		}
-//	}
 
 	private TransferTask task;
 	private RemoteDataClient sourceClient;
 	private RemoteDataClient destClient;
 	private AtomicBoolean killed = new AtomicBoolean(false);
 
-//	public URLCopy(RemoteSystem sourceSystem, RemoteSystem destSystem) 
-//	throws RemoteDataException, RemoteCredentialException 
-//	{
-//		this.sourceClient = sourceSystem.getRemoteDataClient();
-//		this.destClient = destSystem.getRemoteDataClient();
-//	}
-	
 	public URLCopy(RemoteDataClient sourceClient, RemoteDataClient destClient)
 	{
 		this.sourceClient = sourceClient;
@@ -215,12 +190,6 @@ public class URLCopy
 	                if (!destClient.doesExist(destPath))
 	                {
 	                    destClient.mkdirs(destPath, transferTask.getOwner());
-//	                    
-//	                    // be progressive about maintaining permission mirroring
-//	                    if (destClient.isPermissionMirroringRequired()) {
-//	                        destClient.setOwnerPermission(destClient.getUsername(), destPath, true);
-//	                        destClient.setOwnerPermission(transferTask.getOwner(), destPath, true);
-//	                    }
 	                }
 								
     				// we need to thread this transfer or throw each transfer into queue for processing
@@ -598,8 +567,6 @@ public class URLCopy
                         + aggregateTransferTask.getUuid() + " status to FAILED");
             }
 		    
-//			checkCancelled(remoteTransferListener);
-			
 			throw e;
 		}
 		catch (Exception e)
@@ -612,8 +579,6 @@ public class URLCopy
                 log.error("Failed to update parent transfer task " 
                         + aggregateTransferTask.getUuid() + " status to FAILED");
             }
-			
-//			checkCancelled(remoteTransferListener);
 			
 			throw new RemoteDataException(
 			        getDefaultErrorMessage(
@@ -1289,21 +1254,7 @@ public class URLCopy
 	        ((GridFTP)sourceClient).setMode(GridFTPSession.MODE_EBLOCK);
 	        ((GridFTP)sourceClient).setTCPBufferSize(sourceClient.getMaxBufferSize());
 
-//	        log.info("Enabling striped transfer.");
 	        ((GridFTP)sourceClient).setStripedActive(((GridFTP)destClient).setStripedPassive());
-
-//	        if (task != null)
-//	        {
-//	            try {
-//	          	   task.setTotalSize(sourceClient.length(srcPath));
-//	            } catch (Exception e) {}
-//
-//	            task.setBytesTransferred(0);
-//	            task.setAttempts(task.getAttempts() + 1);
-//	            task.setStatus(TransferStatusType.TRANSFERRING);
-//	            task.setStartTime(new Date());
-//	            TransferTaskDao.persist(task);
-//	        }
 
 	        if (((GridFTP)sourceClient).getHost().equals(((GridFTP)destClient).getHost()))
 	        {

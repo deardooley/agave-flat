@@ -8,11 +8,12 @@ import java.nio.channels.ClosedByInterruptException;
 import org.iplantc.service.apps.model.SoftwareInput;
 import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.QuotaViolationException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.enumerations.WrapperTemplateStatusVariableType;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
-import org.iplantc.service.transfer.URLCopy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -34,13 +35,6 @@ public interface JobLauncher
      */
     public boolean isStopped();
     
-    /**
-     * Stops the submission task asynchronously.
-     * 
-     * @param stopped
-     */
-    public void setStopped(boolean stopped);
-    
 	/** 
 	 * Performs the tasks required to start a job on a remote execution system.
 	 *  
@@ -50,7 +44,8 @@ public interface JobLauncher
 	 * @throws QuotaViolationException
 	 * @throws SystemUnavailableException
 	 */
-	public void launch() throws JobException, SchedulerException, IOException, SystemUnavailableException;
+	public void launch() throws JobException, SchedulerException, IOException, SystemUnavailableException,
+	                            ClosedByInterruptException, JobFinishedException;
 
 	/**
 	 * Resolves a parameter JSON value or JSON array of values into a serialized string of variables
@@ -110,25 +105,10 @@ public interface JobLauncher
      * throws a {@link ClosedByInterruptException}
      * 
      * @throws ClosedByInterruptException
+     * @throws JobFinishedException 
      */
-    void checkStopped() throws ClosedByInterruptException;
+    void checkStopped() throws ClosedByInterruptException, JobFinishedException;
 
-    /**
-     * Returns the local reference to the {@link URLCopy} instanced used
-     * for this job submission.
-     * 
-     * @return 
-     */
-    public URLCopy getUrlCopy();
-
-    /**
-     * Sets the {@link URLCopy} instance used for data transfer 
-     * by this {@link JobLauncher}.
-     * 
-     * @param urlCopy
-     */
-    public void setUrlCopy(URLCopy urlCopy);
-    
     /**
      * Threadsafe getter of the job passed to the launcher.
      * @return

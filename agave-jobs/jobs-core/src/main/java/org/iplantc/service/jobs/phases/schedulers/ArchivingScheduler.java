@@ -20,6 +20,9 @@ public final class ArchivingScheduler
     /* ********************************************************************** */
     // Tracing.
     private static final Logger _log = Logger.getLogger(ArchivingScheduler.class);
+    
+    // A place to squirrel away our triggers.
+    private List<JobStatusType> _phaseTriggerStatuses;
 
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -41,9 +44,12 @@ public final class ArchivingScheduler
     @Override
     protected List<JobStatusType> getPhaseTriggerStatuses()
     {
-        ArrayList<JobStatusType> list = new ArrayList<>();
-        list.add(JobStatusType.ARCHIVING);
-        list.add(JobStatusType.CLEANING_UP);
-        return list;
+        if (_phaseTriggerStatuses == null)
+        {
+            _phaseTriggerStatuses = new ArrayList<>();
+            _phaseTriggerStatuses.add(JobStatusType.ARCHIVING);
+            _phaseTriggerStatuses.add(JobStatusType.CLEANING_UP);
+        }
+        return _phaseTriggerStatuses;
     }
 }

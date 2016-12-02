@@ -18,6 +18,7 @@ import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.launchers.parsers.CondorJobIdParser;
 import org.iplantc.service.jobs.model.Job;
@@ -26,6 +27,7 @@ import org.iplantc.service.jobs.model.scripts.CommandStripper;
 import org.iplantc.service.jobs.model.scripts.CondorSubmitScript;
 import org.iplantc.service.jobs.model.scripts.SubmitScript;
 import org.iplantc.service.jobs.model.scripts.SubmitScriptFactory;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.remote.local.CmdLineProcessHandler;
 import org.iplantc.service.remote.local.CmdLineProcessOutput;
@@ -61,8 +63,8 @@ public class CondorLauncher  extends AbstractJobLauncher {
      * Creates an instance of a JobLauncher capable of submitting jobs to batch
      * queuing systems on Condor resources.
      */
-    public CondorLauncher(Job job) {
-        super(job);
+    public CondorLauncher(Job job, IPhaseWorker worker) {
+        super(job, worker);
         this.submitFileObject = SubmitScriptFactory.getScript(job);
     }
 
@@ -401,56 +403,6 @@ public class CondorLauncher  extends AbstractJobLauncher {
 
     }
 
-//    /**
-//     * Update the Job object status in the database
-//     *
-//     * @param status
-//     */
-//    private void updateJobStatus(JobStatusType status, String description) throws JobException {
-//        step = "Updating job status in data store for job " + job.getUuid();
-//        log.debug(step);
-//        Date date = new DateTime().toDate();
-//        job.setLastUpdated(date);
-//        job.setStatus(status, description);
-//
-//        JobDao.persist(job);
-//    }
-
-//    /**
-//     * Is Condor ready to take job submissions?
-//     */
-//    private boolean isCondorReady() throws JobException {
-//        // todo make this tacc condor server specific see if condor_q is up
-//        step = "Call to condor_q to see if Condor is active";
-//        log.debug(step);
-//        int exitCode = executeCommand("condor_q", "condor_q").getExitCode();
-//        boolean isCondorUp = exitCode == 0 ? true : false;
-//
-//        if (!isCondorUp) {
-//            // if the system is down, return it to the queue to wait for the system
-//            // to come back up by setting job status to "Staged"
-//            updateJobStatus(JobStatusType.STAGED, "Condor is not currently available. Returning job to queue.");
-//        }
-//        return isCondorUp;
-//    }
-
-//    /**
-//     * We got here because some step in the arduous process of staging and submitting a
-//     * Condor job failed.
-//     *
-//     * @return boolean false to be used to exit launch
-//     */
-//    private boolean registerJobFailure(String message) {
-//        step = "Register Job failure for job " + job.getUuid();
-//        log.debug(step);
-//        try {
-//            JobManager.updateStatus(job, JobStatusType.FAILED, message);
-//        } catch (JobException e) {
-//            e.printStackTrace();
-//        }
-//        return false;
-//    }
-
     /**
      * Currently for the OSG condor submit host, IRods files pushed to the execution system lose their executable setting so they
      * need to be reset.
@@ -481,7 +433,8 @@ public class CondorLauncher  extends AbstractJobLauncher {
     }
 
     @Override
-    public void launch() throws JobException, SystemUnavailableException, ClosedByInterruptException
+    public void launch() 
+      throws JobException, SystemUnavailableException, ClosedByInterruptException, JobFinishedException
     {
         String condorSubmitCmdString = null;
         try 
@@ -569,7 +522,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
             JobDao.persist(job);
             
         }
-        catch (ClosedByInterruptException e) {
+        catch (ClosedByInterruptException | JobFinishedException e) {
             throw e;
         } 
         catch (JobException e) {
@@ -640,23 +593,5 @@ public class CondorLauncher  extends AbstractJobLauncher {
         } catch (Exception e) {}
     }
 
-    public static void main(String[] args) throws IOException 
-    {
-        CondorLauncher launcher = null;
-
-        try {
-            // load the service configuration settings and start the queues
-
-            Job job = JobDao.getById(9);
-            // job.setStatus(JobStatusType.PENDING);
-            // job.setCreated(new DateTime().toDate());            // this should give us a new directory for storing output
-            launcher = new CondorLauncher(job);
-            //JobManager.submit(job);
-            launcher.launch();
-        } 
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
 }

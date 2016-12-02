@@ -1,23 +1,23 @@
 package org.iplantc.service.jobs.queue.actions;
 
 import java.nio.channels.ClosedByInterruptException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.transfer.URLCopy;
 import org.iplantc.service.transfer.model.TransferTask;
 
 public abstract class AbstractWorkerAction implements WorkerAction {
 
-//    private static Logger log = Logger.getLogger(AbstractWorkerAction.class);
-    private AtomicBoolean stopped = new AtomicBoolean(false);
-    
     protected Job job;
+    protected IPhaseWorker worker;
     protected URLCopy urlCopy;
     protected TransferTask rootTask;
 
-    public AbstractWorkerAction(Job job) {
+    public AbstractWorkerAction(Job job, IPhaseWorker worker) {
         this.job = job;
+        this.worker = worker;
     }
 
     /**
@@ -25,19 +25,7 @@ public abstract class AbstractWorkerAction implements WorkerAction {
      */
     @Override
     public boolean isStopped() {
-        return stopped.get();
-    }
-
-    /**
-     * @param stopped the stopped to set
-     */
-    @Override
-    public synchronized void setStopped(boolean stopped) {
-        this.stopped.set(stopped);
-        
-        if (getUrlCopy() != null) {
-            getUrlCopy().setKilled(true);
-        }
+        return worker.isJobStopped();
     }
 
     /**
@@ -72,13 +60,12 @@ public abstract class AbstractWorkerAction implements WorkerAction {
         this.urlCopy = urlCopy;
     }
     
-    /* (non-Javadoc)
+    /** 
      * @see org.iplantc.service.jobs.queue.actions.WorkerAction#checkStopped()
      */
     @Override
-    public void checkStopped() throws ClosedByInterruptException {
-        if (isStopped()) {
-            throw new ClosedByInterruptException();
-        }
+    public void checkStopped() throws ClosedByInterruptException, JobFinishedException
+    {
+        worker.checkStopped();
     }
 }

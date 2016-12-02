@@ -9,7 +9,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.channels.ClosedByInterruptException;
-import java.util.Date;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -19,6 +18,7 @@ import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.RemoteJobIDParsingException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
 import org.iplantc.service.jobs.exceptions.SoftwareUnavailableException;
@@ -29,6 +29,7 @@ import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.scripts.CommandStripper;
 import org.iplantc.service.jobs.model.scripts.SubmitScript;
 import org.iplantc.service.jobs.model.scripts.SubmitScriptFactory;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.jobs.util.Slug;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.enumerations.ExecutionType;
@@ -52,16 +53,18 @@ public class HPCLauncher extends AbstractJobLauncher
 	 * Creates an instance of a JobLauncher capable of submitting jobs to batch
 	 * queuing systems on HPC resources.
 	 */
-	public HPCLauncher(Job job)
+	public HPCLauncher(Job job, IPhaseWorker worker)
 	{
-		super(job);
+		super(job, worker);
 	}
 
 	/*
 	 * Put the job in the batch scheduling queue
 	 */
 	@Override
-	public void launch() throws JobException, ClosedByInterruptException, SchedulerException, IOException, SystemUnavailableException
+	public void launch() 
+	  throws JobException, ClosedByInterruptException, JobFinishedException, 
+	         SchedulerException, IOException, SystemUnavailableException
 	{
 		File tempAppDir = null;
 		try
@@ -105,8 +108,6 @@ public class HPCLauncher extends AbstractJobLauncher
             
             String remoteJobId = submitJobToQueue();
             
-//            JobDao.refresh(job);
-            
             job.setSubmitTime(new DateTime().toDate()); // Date job submitted to queue
             job.setLastUpdated(new DateTime().toDate());  // Date job started by queue
             job.setLocalJobId(remoteJobId);
@@ -142,7 +143,7 @@ public class HPCLauncher extends AbstractJobLauncher
             
             JobDao.persist(job);
 		}
-		catch (ClosedByInterruptException e) {
+		catch (ClosedByInterruptException | JobFinishedException e) {
             throw e;
         }
         catch (SchedulerException e) {
@@ -156,8 +157,6 @@ public class HPCLauncher extends AbstractJobLauncher
 		{
 			try { HibernateUtil.closeSession(); } catch (Exception e) {}
 			try { FileUtils.deleteDirectory(tempAppDir); } catch (Exception e) {}
-//			try { remoteSoftwareDataClient.disconnect(); } catch (Exception e) {}
-//			try { remoteExecutionDataClient.disconnect(); } catch (Exception e) {}
 			try { submissionClient.close(); } catch (Exception e) {}
 		}
 	}
@@ -197,10 +196,6 @@ public class HPCLauncher extends AbstractJobLauncher
 			
 			// write the callback to trigger status update at start
 			batchWriter.write(resolveMacros("\n${AGAVE_JOB_CALLBACK_RUNNING} \n\n"));
-//					"\ncurl -sSk \"" + Settings.IPLANT_JOB_SERVICE
-//					+ "trigger/job/" + job.getUuid() + "/token/"
-//					+ job.getUpdateToken() + "/status/" + JobStatusType.RUNNING
-//					+ "?pretty=true\" 1>&2 \n\n");
 			
 			
 			batchWriter.write("\n\n# Environmental settings for "

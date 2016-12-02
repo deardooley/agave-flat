@@ -10,10 +10,12 @@ import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.JobInterruptUtils;
 import org.iplantc.service.jobs.queue.actions.MonitoringAction;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
@@ -60,9 +62,11 @@ public final class MonitoringWorker
         // This structure maintains compatibility with legacy code.
         try {
             // ----- Check date.
+            checkStopped(true);
             checkExpiration();
             
             // ----- Check storage locality
+            checkStopped(true);
             checkSoftwareLocalityUsingJobManager();
             
             // ----- Monitor the running job
@@ -153,7 +157,7 @@ public final class MonitoringWorker
         try {
             _job = JobManager.updateStatus(_job,  _job.getStatus(), _job.getErrorMessage());
         
-            setWorkerAction(new MonitoringAction(_job));
+            setWorkerAction(new MonitoringAction(_job, this));
         
             try {
                 // Wrap this in a try/catch so we can update the local reference to the job.
@@ -162,8 +166,14 @@ public final class MonitoringWorker
             finally {_job = getWorkerAction().getJob();}
         }
         catch (ClosedByInterruptException e) {
-            String msg = "Monitoring task for job " + _job.getUuid() + " aborted due to interrupt by worker process.";
-            _log.debug(msg);
+            String msg = "Monitoring task for job " + _job.getUuid() + " aborted due to worker interrupt.";
+            _log.debug(msg, e);
+            throw new JobWorkerException(msg, e);
+        }
+        catch (JobFinishedException e) {
+            String msg = "Submission task for job " + _job.getUuid() + 
+                         " forced to stop by a job interrupt.";
+            _log.debug(msg, e);
             throw new JobWorkerException(msg, e);
         }
         catch (StaleObjectStateException | UnresolvableObjectException e) {

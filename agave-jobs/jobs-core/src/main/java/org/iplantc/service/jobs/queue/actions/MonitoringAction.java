@@ -10,9 +10,11 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.managers.monitors.JobMonitor;
 import org.iplantc.service.jobs.managers.monitors.JobMonitorFactory;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 
@@ -26,13 +28,8 @@ public class MonitoringAction extends AbstractWorkerAction {
     
     private JobMonitor jobMonitor = null;
     
-    public MonitoringAction(Job job) {
-        super(job);
-    }
-    
-    public synchronized void setStopped(boolean stopped) {
-        super.setStopped(stopped);
-        jobMonitor.setStopped(true);
+    public MonitoringAction(Job job, IPhaseWorker worker) {
+        super(job, worker);
     }
     
     /**
@@ -49,17 +46,17 @@ public class MonitoringAction extends AbstractWorkerAction {
      */
     public void run() 
     throws SystemUnavailableException, SystemUnknownException, JobException, 
-            ClosedByInterruptException, JobDependencyException
+            ClosedByInterruptException, JobDependencyException, JobFinishedException
     {
         try 
         {
-            setJobMonitor(JobMonitorFactory.getInstance(getJob()));
+            setJobMonitor(JobMonitorFactory.getInstance(getJob(), worker));
             
             if (log.isDebugEnabled()) log.debug("Checking status of job " + job.getUuid());
             
             this.job = getJobMonitor().monitor();
         } 
-        catch (ClosedByInterruptException e) {
+        catch (ClosedByInterruptException | JobFinishedException e) {
             throw e;
         }
         catch (StaleObjectStateException | UnresolvableObjectException e) {

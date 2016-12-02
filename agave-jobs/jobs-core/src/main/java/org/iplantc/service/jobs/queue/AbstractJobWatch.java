@@ -162,7 +162,7 @@ public abstract class AbstractJobWatch implements WorkerWatch {
     public void setStopped(boolean killed) throws UnableToInterruptJobException {
         this.stopped.set(killed);
         if (getWorkerAction() != null) {
-            getWorkerAction().setStopped(true);
+//            getWorkerAction().setThreadStopped(true);
             // Nothing else is acting on behalf of this task, so just kill it immediately. 
             // all transfers will be cleaned up in the setRollaback method.
             

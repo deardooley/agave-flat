@@ -4,28 +4,38 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.dao.JobDao;
+import org.iplantc.service.jobs.dao.JobInterruptDao;
 import org.iplantc.service.jobs.dao.JobLeaseDao;
 import org.iplantc.service.jobs.dao.JobQueueDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobQueueFilterException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobInterrupt;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
+import org.iplantc.service.jobs.phases.QueueConstants;
+import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
+import org.iplantc.service.jobs.phases.queuemessages.DeleteJobMessage;
+import org.iplantc.service.jobs.phases.queuemessages.PauseJobMessage;
+import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
+import org.iplantc.service.jobs.phases.queuemessages.StopJobMessage;
 import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
@@ -39,6 +49,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -50,50 +61,99 @@ import com.rabbitmq.client.Envelope;
  * 
  * Asynchronous Interrupts
  * -----------------------
- * TODO: The design described here still needs to be implemented.
  * 
  * Jobs need to be interrupted during any processing phase.  When worker threads
  * are blocked on certain IO calls or wait(), a signal can be sent that wakes up 
  * the thread.  When a thread is active, however, a cooperative approach is needed
- * in which the thread checks some condition variable to determine if a signal has 
- * been sent.  Below is an outline of the scheduler's cooperative interrupt 
- * mechanism.
+ * in which the thread can determine if a signal has been sent.  Below is an outline 
+ * of the scheduler's cooperative interrupt mechanism.
  * 
  * The main components of the interrupt mechanism are:
  * 
- *  1. Each scheduler's topic and scheduler threads
- *  2. Worker threads
- *  3. The jobs table
- *  4. Shared condition variables
+ *  1. Each scheduler's topic, scheduler and worker threads
+ *  2. Jobs table
+ *  3. Scheduler topic
+ *  4. Interrupt topic
+ *  5. InterruptManager singleton
+ *  6. Scheduler's InterruptedList 
  *  
- * Interrupts are posted to scheduler topic using the phase-specific or "all" routing
- * key.  The topic thread(s) receive the interrupt and set the appropriate condition
- * variable.  These variables are usually implemented in this base class so they can 
- * be accessed from all concrete schedulers.  
+ * The interrupt mechanism introduces the interrupt topic and the InterruptManager
+ * singleton class.  The interrupt topic is a RabbitMQ topic to which the interrupt
+ * thread in the InterruptManager subscribes.  The interrupt thread binds to 
+ * the topic in multiple ways to accommodate other topic readers that we might
+ * conceivably want in the future but are currently unplanned.  We use the following
+ * binding keys:
  * 
- * Depending on the interrupt the topic thread may also update a job's status in the 
- * database.  This database update is performed according to a state machine and forces
- * all subsequent attempts to update the job's status to conform to the same state 
- * machine.  
+ *      1. QueueConstants.INTERRUPT_WORKER_KEY
+ *          - For messages targeting all workers
+ *      2. <queueName>
+ *          - For messages targeting all workers servicing a specific queue
+ *      3. <tenanId>
+ *          - For messages targeting all workers servicing a specific tenant 
  * 
- * Worker threads are expected to frequently check the condition variables pertinent
- * to their phase and take action if necessary.  Checking a condition variable 
- * should be a fast operation that does not include a database or network call.
- * For example, workers could check a ConcurrentHashMap in this base scheduler class 
- * to detect if their job has been stopped.  If so, the worker would discontinue 
- * processing the job and perform any job-related clean up, including removing the 
- * job entry from the ConcurrentHashMap.
+ * Additionally, the AbstractPhaseScheduler class maintains a list of interrupted jobs.
+ * All the jobs in this InterruptedList are always scheduled the next time the 
+ * scheduler wakes up before the normal scheduling regime is executed.  This allows
+ * interrupts to be serviced in a timely fashion. 
  * 
- * When state changes are delivered first through the database and then via the
- * topic thread, there's a chance that the job completed on its own so that no
- * worker is responsible for it any longer.  When something like a ConcurrentHashMap
- * is used, the result can be orphaned entries.  To address leaks such as that,
- * the scheduler thread can periodically clean up any orphaned entries.  For 
- * example, once a day when the scheduler thread wakes up it can run an orphan
- * clean up routine.   
+ * Asynchronous requests come into the jobs subsystem via the scheduler topic.  These
+ * requests are usually triggered by an action taken by an end user (e.g., stop a job)
+ * or an administrator (e.g., shutdown the jobs subsystem).  The topic thread subscribes
+ * to the scheduler topic and is responsible for parsing, validating and acting upon
+ * the request message.  Requests are well-defined subclasses of the AbstractQueueMessage
+ * class and are represented as a JSON string when queued.
+ * 
+ * Once a message is validated, the topic thread determines how to process it.
+ * Administrative requests that are not job-specific are handled by the topic thread 
+ * itself, sometimes in cooperation with worker threads.  Job-specific requests are
+ * handled by worker threads through the InterruptManager.
+ * 
+ * Once the topic thread determines that a worker thread needs to handle a message, the
+ * topic thread publishes the message on the interrupt topic using one of the binding
+ * keys listed above.  Depending on the circumstance, the topic thread may also issue
+ * a thread interrupt directly to all targeted threads.  For example, after publishing
+ * to the interrupt topic with the <queueName> binding key, the topic thread may choose
+ * to interrupt all threads servicing that queue to wake up those that are blocked.
+ * 
+ * The interrupt thread runs under the auspices of the InterruptManager and subscribes
+ * to all messages published on the interrupt topic.  When the interrupt thread receives
+ * a new message, it inserts that message into a concurrent hashmap maintained by the
+ * InterruptManager.  The InterruptManager maintains a mapping of tenantId's to job
+ * maps, where each job map maps job uuid to a message list.  
+ * 
+ * At frequent and convenient intervals, worker threads check the InterruptManager's
+ * job map to discover any asynchronous messages targeting their jobs.  Any messages
+ * found are process in the order they were received.
+ * 
+ * The correctness of the asynchronous interrupt mechanism depends on eliminating all
+ * race conditions.  When worker thread is assigned a specific job (i.e., when the
+ * AbstractPhaseWorker._job field is non-null), then any interrupt messages received
+ * by that thread for that job can be acted upon by that thread.  Unfortunately,
+ * when a job is not assigned to any worker thread, as is the case when a job  is queued, 
+ * then job-specific interrupt messages cannot be immediately processed by any worker 
+ * thread.  The mappings maintained by InterruptManager prevents race conditions from
+ * causing messages to be lost.
+ * 
+ * The protocol used to avoid losing any interrupt messages is as follows:
+ * 
+ *      1. Topic thread conditionally updates the job status in jobs table to reflect 
+ *         the message request.
+ *      2. Topic thread publishes job-specific message to interrupt topic.
+ *      3. InterruptManager reads message and puts it in appropriate job map.
+ *      4. Topic thread adds the job to the scheduler's InterruptedList. 
+ *      5. Worker currently or eventually assigned the job checks job map for messages.
+ *      6. Worker processes the interrupt message.
+ * 
+ * Note that Step 1 is conditioned on the validity of the transition to the state request
+ * in the message.  This step is important because after step 3, the database contains the
+ * only persistent indication of the interrupt request. 
+ * 
+ *     TODO:  step 6 when state reverts from step 1 transition
+ *            step 1 does other clean up work?  Maybe need intermediate states: STOP_PENDING, etc.
  *  
  * @author rcardone
  */
+
 public abstract class AbstractPhaseScheduler 
   implements Runnable, Thread.UncaughtExceptionHandler
 {
@@ -103,10 +163,10 @@ public abstract class AbstractPhaseScheduler
     // Tracing.
     private static final Logger _log = Logger.getLogger(AbstractPhaseScheduler.class);
     
-    // Queuing information.
-    public static final String TOPIC_EXCHANGE_NAME = "JobTopicExchange";
-    public static final String TOPIC_QUEUE_PREFIX = "JobSchedulerTopic";
-    public static final String ALL_TOPIC_BINDING_KEY = "JobScheduler.All.#";
+    // Inbound topic queuing information.
+    private static final String TOPIC_EXCHANGE_NAME = QueueConstants.TOPIC_EXCHANGE_NAME;
+    private static final String TOPIC_QUEUE_NAME = QueueConstants.TOPIC_QUEUE_NAME;
+    private static final String TOPIC_ALL_BINDING_KEY = QueueConstants.TOPIC_ALL_BINDING_KEY;
     
     // Suffixes used in naming.
     private static final String THREADGROUP_SUFFIX = "-ThreadGroup";
@@ -129,28 +189,29 @@ public abstract class AbstractPhaseScheduler
     // The parent thread group of all thread groups created by this scheduler.
     // By default, this thread group is not a daemon, so it will not be destroyed
     // if it becomes empty.
-    private final ThreadGroup    _phaseThreadGroup;
+    private final ThreadGroup _phaseThreadGroup;
     
     // This phase's tenant/queue mapping. The keys are tenant ids, the values
     // are the lists of job queues defined for that tenant.  The queues are 
     // listed in priority order.
     private final HashMap<String,List<JobQueue>> _tenantQueues = new HashMap<>();
     
+    // The running set of job uuids that represent in one of this phase's
+    // trigger states that have already been published to a RabbitMQ queue
+    // by this phase's scheduler.  This set prevents a job from being published
+    // multiple time in the same stage.
+    private final HashSet<String> _publishedJobs = new HashSet<>();
+    
     // Monotonically increasing sequence number generator used as part of thread names.
     private static final AtomicInteger _threadSeqno = new AtomicInteger(0);
-    
-    // The single mapping of stopped job uuids to stop messages with initial 
-    // capacity specified.  The uuids are jobs that need to be stopped;
-    // the message is intending to be any string appropriate for logging.
-    // TODO: This field is part of the not-yet-implemented interrupt mechanism.
-    private static final ConcurrentHashMap<String,String> _stoppedJobs = new ConcurrentHashMap<>(23);
-    
+        
     // This phase's queuing artifacts.
     private ConnectionFactory    _factory;
     private Connection           _inConnection;
     private Connection           _outConnection;
     private Channel              _topicChannel;
     private Channel              _schedulerChannel;
+    private String               _topicChannelConsumerTag;
     
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -219,9 +280,9 @@ public abstract class AbstractPhaseScheduler
     public void run() 
     {
         try {
-            // Connect to the queuing subsystem.
+            // Connect to the scheduler topic (incoming).
             initJobTopic();
-        
+            
             // Connect the database.
             initQueueCache();
             
@@ -298,19 +359,11 @@ public abstract class AbstractPhaseScheduler
     protected ThreadGroup getPhaseThreadGroup(){return _phaseThreadGroup;}
     
     /* ---------------------------------------------------------------------- */
-    /* getTopicQueueName:                                                    */
-    /* ---------------------------------------------------------------------- */
-    protected String getTopicQueueName()
-    {
-        return TOPIC_QUEUE_PREFIX + "-" + _phaseType.name();
-    }
-    
-    /* ---------------------------------------------------------------------- */
     /* getPhaseBindingKey:                                                    */
     /* ---------------------------------------------------------------------- */
     protected String getPhaseBindingKey()
     {
-        return "JobScheduler." + _phaseType.name() + ".#";
+        return TOPIC_QUEUE_NAME + "." + _phaseType.name() + ".#";
     }
     
     /* ---------------------------------------------------------------------- */
@@ -365,7 +418,7 @@ public abstract class AbstractPhaseScheduler
     }
     
     /* ---------------------------------------------------------------------- */
-    /* toQueuableJSON:                                                        */
+    /* toQueueableJSON:                                                       */
     /* ---------------------------------------------------------------------- */
     /** Create the json representation of a job on a worker queue.
      * 
@@ -375,7 +428,7 @@ public abstract class AbstractPhaseScheduler
      * @throws JsonMappingException 
      * @throws JsonGenerationException 
      */
-    protected String toQueuableJSON(Job job) 
+    protected String toQueueableJSON(Job job) 
       throws IOException
     {
         // Initialize the queueable object.
@@ -579,14 +632,15 @@ public abstract class AbstractPhaseScheduler
     /* initJobTopic:                                                          */
     /* ---------------------------------------------------------------------- */
     /** Create the queuing system artifacts needed to read and manage the
-     * scheduler topic.  Bind the topic using the All binding key and the 
-     * phase-specific key.
+     * job topic.  Bind the topic using the All binding key and the 
+     * phase-specific key.  The topic thread reads from the job topic
+     * and writes to the interrupt topic.
      * 
      * @throws JobSchedulerException on error
      */
     private void initJobTopic() throws JobSchedulerException
     {
-        // Get this topic's channel.
+        // Get a local reference to the topic channel field.
         Channel topicChannel = getTopicChannel();
         
         // Create the durable, non-autodelete topic exchange.
@@ -603,30 +657,30 @@ public abstract class AbstractPhaseScheduler
         durable = true;
         boolean exclusive = false;
         boolean autoDelete = false;
-        try {topicChannel.queueDeclare(getTopicQueueName(), durable, exclusive, autoDelete, null);}
+        try {topicChannel.queueDeclare(TOPIC_QUEUE_NAME, durable, exclusive, autoDelete, null);}
             catch (IOException e) {
-                String msg = "Unable to declare topic queue " + getTopicQueueName() +
+                String msg = "Unable to declare topic queue " + TOPIC_QUEUE_NAME +
                              " on " + getPhaseInConnectionName() + "/" + 
                              topicChannel.getChannelNumber() + ": " + e.getMessage();
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
             }
         
-        // Bind the topic queue to the topic exchange.
-        try {topicChannel.queueBind(getTopicQueueName(), TOPIC_EXCHANGE_NAME, ALL_TOPIC_BINDING_KEY);}
+        // Bind the topic queue to the topic exchange with the All binding key.
+        try {topicChannel.queueBind(TOPIC_QUEUE_NAME, TOPIC_EXCHANGE_NAME, TOPIC_ALL_BINDING_KEY);}
             catch (IOException e) {
-                String msg = "Unable to bind topic queue " + getTopicQueueName() +
-                         " with binding key " + ALL_TOPIC_BINDING_KEY +
+                String msg = "Unable to bind topic queue " + TOPIC_QUEUE_NAME +
+                         " with binding key " + TOPIC_ALL_BINDING_KEY +
                          " on " + getPhaseInConnectionName() + "/" + 
                          topicChannel.getChannelNumber() + ": " + e.getMessage();
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
             }
         
-        // Bind the topic queue to the topic exchange.
-        try {topicChannel.queueBind(getTopicQueueName(), TOPIC_EXCHANGE_NAME, getPhaseBindingKey());}
+        // Bind the topic queue to the topic exchange with the stage-specific binding key.
+        try {topicChannel.queueBind(TOPIC_QUEUE_NAME, TOPIC_EXCHANGE_NAME, getPhaseBindingKey());}
             catch (IOException e) {
-                String msg = "Unable to bind topic queue " + getTopicQueueName() +
+                String msg = "Unable to bind topic queue " + TOPIC_QUEUE_NAME +
                         " with binding key " + getPhaseBindingKey() +
                          " on " + getPhaseInConnectionName() + "/" + 
                          topicChannel.getChannelNumber() + ": " + e.getMessage();
@@ -714,10 +768,11 @@ public abstract class AbstractPhaseScheduler
                   // Log error message.
                   String msg = _phaseType.name() +  
                      " topic reader cannot decode data from topic " + 
-                     getTopicQueueName() + ": " + e.getMessage();
+                     TOPIC_QUEUE_NAME + ": " + e.getMessage();
                   _log.error(msg, e);
                   ack = false;
               }
+              if (node == null) ack = false;
               
               // Get the command.
               JobCommand command = null;
@@ -729,7 +784,7 @@ public abstract class AbstractPhaseScheduler
                   catch (Exception e) {
                       String msg = _phaseType.name() + 
                            " topic reader decoded an invalid command (" + cmd + 
-                           ") from topic " + getTopicQueueName() + ": " + e.getMessage();
+                           ") from topic " + TOPIC_QUEUE_NAME + ": " + e.getMessage();
                       _log.error(msg, e);
                       ack = false;
                   }
@@ -740,34 +795,40 @@ public abstract class AbstractPhaseScheduler
               if (ack)
               {
                   try {
-                      // ----- Cancel job
-                      if (command == JobCommand.TCP_CANCEL_JOB) {
-                      }
-                      // ----- Pause job
-                      else if (command == JobCommand.TCP_PAUSE_JOB) {
-                      }
-                      // ----- Stop job
-                      else if (command == JobCommand.TCP_STOP_JOB) {
-                      }
-                      // ----- Shutdown scheduler
-                      else if (command == JobCommand.TPC_SHUTDOWN) {
-                      }
-                      // ----- Terminate selected worker threads
-                      else if (command == JobCommand.TCP_TERMINATE_WORKERS) {
-                      }
-                      // ----- Test message input case
-                      else if (command == JobCommand.NOOP) {
-                          ack = doNoop(node);
-                      }
-                      // ----- Invalid input case
-                      else {
-                          // Log the invalid input (we know the body is not null).
-                          String msg = _phaseType.name() + 
-                              " topic reader received an invalid command: " + (new String(body));
-                          _log.error(msg);
-                  
-                          // Reject this input.
-                          ack = false;
+                      switch (command)
+                      {
+                          // ################### Worker Interrupts ###################
+                          // ----- Job interrupts
+                          case TCP_DELETE_JOB:
+                          case TCP_PAUSE_JOB:
+                          case TCP_STOP_JOB:
+                              ack = doJobInterrupt(command, envelope, properties, body);
+                              break;
+                              
+                          // ################# Scheduler Interrupts ##################
+                          // ----- Shutdown scheduler
+                          case TPC_SHUTDOWN:
+                              break;
+                          // ----- Start specified number of worker threads
+                          case TCP_START_WORKERS:
+                              break;
+                          // ----- Terminate specified number of worker threads  
+                          case TCP_TERMINATE_WORKERS:
+                              break;
+                          // ----- Test message input case   
+                          case NOOP:
+                              ack = doNoop(node);
+                              break;
+                           // ----- Invalid input case    
+                          default:
+                              // Log the invalid input (we know the body is not null).
+                              String msg = _phaseType.name() + 
+                                  " topic reader received an invalid command: " + (new String(body));
+                              _log.error(msg);
+                      
+                              // Reject this input.
+                              ack = false;
+                              break;
                       }
                   }
                   catch (Exception e) {
@@ -781,7 +842,11 @@ public abstract class AbstractPhaseScheduler
                   }
               }
             
-              // ---------------- Acknowledge Message -----------
+              // ----------------- Clean Up ---------------------------
+              // Don't leave stale state around.
+              TenancyHelper.setCurrentTenantId(null);
+              TenancyHelper.setCurrentEndUser(null);
+              
               // Determine whether to ack or nack the request.
               if (ack) {
                   // Don't forget to send the ack!
@@ -791,7 +856,7 @@ public abstract class AbstractPhaseScheduler
                       // We're in trouble if we cannot acknowledge a message.
                       String msg = _phaseType.name() +  
                             " topic reader cannot acknowledge a message received on topic " + 
-                            getTopicQueueName() + ": " + e.getMessage();
+                            TOPIC_QUEUE_NAME + ": " + e.getMessage();
                       _log.error(msg, e);
                   }
               }
@@ -804,7 +869,7 @@ public abstract class AbstractPhaseScheduler
                       // We're in trouble if we cannot reject a message.
                       String msg = _phaseType.name() +  
                             " topic reader cannot reject a message received on topic " + 
-                            getTopicQueueName() + ": " + e.getMessage();
+                            TOPIC_QUEUE_NAME + ": " + e.getMessage();
                       _log.error(msg, e);
                   }
               }
@@ -814,14 +879,19 @@ public abstract class AbstractPhaseScheduler
         // Tracing.
         if (_log.isDebugEnabled())
             _log.debug("[*] " + _phaseType.name() + " scheduler consuming " + 
-                    getTopicQueueName() + " topic.");
+                    TOPIC_QUEUE_NAME + " topic.");
 
         // We don't auto-acknowledge topic broadcasts.
         boolean autoack = false;
-        try {_topicChannel.basicConsume(getTopicQueueName(), autoack, consumer);}
+        try {
+            // Save the server generated tag for this consumer.  The tag can be used
+            // as input on other APIs, such as basicCancel.
+            _topicChannelConsumerTag = _topicChannel.basicConsume(TOPIC_QUEUE_NAME, 
+                                                                  autoack, consumer);
+        }
         catch (IOException e) {
             String msg = _phaseType.name() + " scheduler is unable consume messages from " + 
-                    getTopicQueueName() + " topic.";
+                    TOPIC_QUEUE_NAME + " topic.";
             _log.error(msg, e);
             throw new JobSchedulerException(msg, e);
         }
@@ -956,7 +1026,7 @@ public abstract class AbstractPhaseScheduler
         
         // Create the exchange to publish to.
         boolean durable = true;
-        try {_schedulerChannel.exchangeDeclare(AbstractPhaseWorker.WORKER_EXCHANGE_NAME, 
+        try {_schedulerChannel.exchangeDeclare(QueueConstants.WORKER_EXCHANGE_NAME, 
                                                "direct", durable);}
         catch (IOException e) {
             String msg = "Unable to create exchange on " + getPhaseOutConnectionName() + 
@@ -991,9 +1061,11 @@ public abstract class AbstractPhaseScheduler
                 // get the lease, we keep retrying until we do or are interrupted.
                 if (!jobLeaseDao.acquireLease()) waitToAcquireLease(jobLeaseDao);
                 
-                // Query the database for all candidate jobs for this phase.
+                // Query the database for all candidate jobs for this phase.  This
+                // method also maintains the published jobs set and filters the list
+                // of candidate jobs using that set.
                 List<Job> jobs = null;
-                try {jobs = getJobsReadyForPhase();}
+                try {jobs = getJobsReadyForPhase(_publishedJobs);}
                     catch (Exception e) 
                     {
                         String msg = _phaseType.name() + " scheduler database polling " +
@@ -1034,8 +1106,12 @@ public abstract class AbstractPhaseScheduler
                     String routingKey = selectQueueName(job);
                     try {
                         // Write the job to the selected worker queue.
-                        _schedulerChannel.basicPublish(AbstractPhaseWorker.WORKER_EXCHANGE_NAME, 
-                            routingKey, null, toQueuableJSON(job).getBytes("UTF-8"));
+                        _schedulerChannel.basicPublish(QueueConstants.WORKER_EXCHANGE_NAME, 
+                            routingKey, QueueConstants.PERSISTENT_JSON, 
+                            toQueueableJSON(job).getBytes("UTF-8"));
+                       
+                        // Let's not publish this job to a queue more than once in this phase.
+                        _publishedJobs.add(job.getUuid());
                     
                         // Tracing.
                         if (_log.isDebugEnabled()) {
@@ -1069,6 +1145,9 @@ public abstract class AbstractPhaseScheduler
         finally {
             // Always try to release the lease since we might be holding it.
             jobLeaseDao.releaseLease();
+            
+            // TODO: Should the scheduler thread take down all other threads
+            //       and close all channels?
             
             // Announce our termination.
             if (_log.isInfoEnabled()) {
@@ -1169,7 +1248,17 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* getJobsReadyForPhase:                                                  */
     /* ---------------------------------------------------------------------- */
-    private List<Job> getJobsReadyForPhase()
+    /** Query the database for jobs that execute in this phase.  Filter those
+     * job using the published job set to avoid writing the same job more than
+     * once to a queue for this phase.  This method also preens the published job
+     * set by removing jobs that have progress out of this phase. 
+     * 
+     * @param publishedJobs the set of jobs still in this phase that have already
+     *          been published to a queue.
+     * @return the list of jobs that have yet to be published in this phase
+     * @throws JobSchedulerException
+     */
+    private List<Job> getJobsReadyForPhase(HashSet<String> publishedJobs)
       throws JobSchedulerException
     {
         // Initialize result list.
@@ -1189,6 +1278,32 @@ public abstract class AbstractPhaseScheduler
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
             }
+        
+        // Maintain the published job set by removing obsolete jobs from the set.
+        // Obsolete job are those that are no longer in any of this phase's trigger
+        // states.  We do not need to guard against republishing jobs that progressed
+        // beyond this phase's purview, so we remove them from the publish job set.
+        //
+        // Put the job uuids in an easily searched set.
+        HashSet<String> jobUuids = new HashSet<>((jobs.size() * 2) + 1);
+        for (Job job : jobs)  jobUuids.add(job.getUuid());
+            
+        // Remove uuids in the published set that are not in the current job set.
+        Iterator<String> publishedIt = publishedJobs.iterator();
+        while (publishedIt.hasNext()) {
+            String publishedUuid = publishedIt.next();
+            if (!jobUuids.contains(publishedUuid)) publishedIt.remove();
+        }
+        
+        // Remove jobs that have already been published to a RabbitMQ queue
+        // and are still in one of this phase's trigger states.
+        ListIterator<Job> jobIt = jobs.listIterator();
+        while (jobIt.hasNext()) {
+            // Remove the job if it has been published.
+            Job job = jobIt.next();
+            if (publishedJobs.contains(job.getUuid()))
+                jobIt.remove();
+        }
         
         return jobs;
     }
@@ -1315,6 +1430,84 @@ public abstract class AbstractPhaseScheduler
     /*                        Topic Command Processors                        */
     /* ********************************************************************** */
     /* ---------------------------------------------------------------------- */
+    /* doJobInterrupt:                                                        */
+    /* ---------------------------------------------------------------------- */
+    /** Process pause job message.
+     * 
+     * @param node a parsed json node representation of the message
+     * @return true to acknowledge the message, false to reject it
+     */
+    protected boolean doJobInterrupt(JobCommand jobCommand,
+                                     Envelope envelope, 
+                                     BasicProperties properties, 
+                                     byte[] body)
+    {
+        // ---------------------- Marshalling ----------------------
+        // Marshal the json message into it message object.
+        AbstractQueueJobMessage qjob = null;
+        try {
+            if (jobCommand == JobCommand.TCP_PAUSE_JOB)
+                qjob = PauseJobMessage.fromJson(body.toString());
+            else if (jobCommand == JobCommand.TCP_STOP_JOB)
+                qjob = StopJobMessage.fromJson(body.toString());
+            else if (jobCommand == JobCommand.TCP_DELETE_JOB)
+                qjob = DeleteJobMessage.fromJson(body.toString());
+            else
+            {
+                // This should never happen.
+                String msg = "Invalid job interrupt command received: " + jobCommand;
+                _log.error(msg);
+                return false;
+            }
+        }
+        catch (IOException e) {
+            // Log error message.
+            String msg = _phaseType.name() + 
+                         " topic reader cannot decode data from queue " + 
+                         TOPIC_QUEUE_NAME + ": " + e.getMessage();
+            _log.error(msg, e);
+            return false;
+        }
+            
+        // ---------------------- Get Job --------------------------
+        // Retrieve the job from the database and validate.
+        Job job = getInterruptedJob(qjob, body);
+        if (job == null)
+        {
+            // Log warning message.
+            String msg = _phaseType.name() + 
+                         " topic reader skipping interrupt message: " + 
+                         (new String(body));
+            _log.warn(msg);
+            return false;
+        }
+         
+        // ---------------------- Create Interrupt -----------------
+        // Insert an interrupt record into the interrupt table.  At some later point,
+        // either a worker thread assigned the job will process the interrupt or the
+        // interrupt clean up thread will remove the interrupt after it expires.
+        JobInterrupt jobInterrupt = 
+           new JobInterrupt(qjob.jobUuid, qjob.tenantId, qjob.command.toInterruptType());
+        try {
+            // We expect to insert one row in the interrupts table.
+            int rows = JobInterruptDao.createInterrupt(jobInterrupt);
+            if (rows != 1) 
+                throw new JobException("JobInterruptDao.createInterrupt() failed to insert row.");
+        }
+        catch (JobException e) {
+            // Log error message.
+            String msg = _phaseType.name() + 
+                         " topic reader cannot create a new job interrupt: " + 
+                         e.getMessage();
+            _log.error(msg, e);
+            return false;
+        }
+        
+        // Success.
+        return true;
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* doNoop:                                                                */
     /* ---------------------------------------------------------------------- */
     /** Process a command that only logs an informational message.  If test 
@@ -1337,6 +1530,82 @@ public abstract class AbstractPhaseScheduler
         
         // Always release message from queue.
         return true;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getInterruptedJob:                                                     */
+    /* ---------------------------------------------------------------------- */
+    /** Retrieves job records from the database and validates them in the 
+     * context of a topic message.
+     * 
+     * @param qjob the job interrupt message read from the scheduler topic
+     * @param body the original topic message
+     * @return the retrieved job or null if retrieval or validation fails
+     */
+    private Job getInterruptedJob(AbstractQueueJobMessage qjob, byte[] body)
+    {
+        // Make sure we got a message tenant id.
+        if (StringUtils.isBlank(qjob.tenantId)) {
+            String msg = _phaseType.name() + 
+                         " topic reader received a message with no tenantId.";
+            _log.error(msg);
+            return null;
+        }
+        
+        // At a minimum we need the unique job id.
+        if (StringUtils.isBlank(qjob.jobUuid))
+        {
+            // Log the invalid input and quit.
+            String msg = _phaseType.name() + 
+                         " topic reader received a WKR_PROCESS_JOB message with an invalid uuid: " +
+                         (new String(body));
+            _log.error(msg);
+            return null;
+        }
+        
+        // We have a job reference to process.
+        Job job = null;
+        try {job = JobDao.getByUuid(qjob.jobUuid);}
+        catch (JobException e) {
+            String msg = _phaseType.name() + 
+                         " topic reader unable to retrieve Job with UUID " + qjob.jobUuid +
+                         " (" + qjob.jobName + ") from database.";
+            _log.error(msg, e);
+            return null;
+        }
+        
+        // Make sure we got a job.
+        if (job == null) {
+            String msg = _phaseType.name() + 
+                         " topic reader unable to find Job with UUID " + qjob.jobUuid +
+                         " (" + qjob.jobName + ") from database.";
+            _log.error(msg);
+            return null;
+        }
+        
+        // Make sure the job tenant matches this worker's assigned tenant.
+        if (!qjob.tenantId.equals(job.getTenantId())) {
+            String msg = _phaseType.name() + " topic message with tenantId " +
+                    qjob.tenantId + " specified a job with UUID " + qjob.jobUuid +
+                    " (" + qjob.jobName + ") with tenantId " + 
+                    job.getTenantId() + ".";
+            _log.error(msg);
+            return null;
+        }
+        
+        // Make sure the job is not in a final state.
+        if (JobStatusType.isFinished(job.getStatus()))
+        {
+            String msg = _phaseType.name() + " topic message cannot interrupt job " + 
+                          qjob.jobUuid + " (" + qjob.jobName + 
+                          ") because the job is already in finished state " + 
+                          job.getStatus().name() + "."; 
+            _log.warn(msg);
+            return null;
+        }
+        
+        // Success
+        return job;
     }
     
 }

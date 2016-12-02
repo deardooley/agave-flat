@@ -144,7 +144,7 @@ public class SubmissionWatch extends AbstractJobWatch
                     throw new ClosedByInterruptException();
                 }
                 
-				setWorkerAction(new SubmissionAction(getJob()));
+				setWorkerAction(new SubmissionAction(getJob(), null));
 				
 				try {
 				    // wrap this in a try/catch so we can update the local reference to the 

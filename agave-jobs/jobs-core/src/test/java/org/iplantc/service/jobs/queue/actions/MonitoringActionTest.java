@@ -67,7 +67,7 @@ public class MonitoringActionTest extends AbstractJobSubmissionTest {
      */
     protected Job genericRemoteMonitoringTestCase(Job job, JobStatusType expectedStatus, String message, boolean shouldThrowException) 
     {
-        MonitoringAction action = new MonitoringAction(job);
+        MonitoringAction action = new MonitoringAction(job, null);
         
         try
         {

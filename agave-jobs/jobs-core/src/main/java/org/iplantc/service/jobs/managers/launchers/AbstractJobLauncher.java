@@ -6,10 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.ClosedByInterruptException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,12 +29,14 @@ import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.util.HTMLizer;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.WrapperTemplateAttributeVariableType;
 import org.iplantc.service.jobs.model.enumerations.WrapperTemplateStatusVariableType;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.jobs.util.Slug;
 import org.iplantc.service.notification.util.EmailMessage;
 import org.iplantc.service.remote.RemoteSubmissionClient;
@@ -47,9 +46,7 @@ import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.iplantc.service.transfer.RemoteDataClient;
-import org.iplantc.service.transfer.RemoteDataClientFactory;
 import org.iplantc.service.transfer.RemoteTransferListener;
-import org.iplantc.service.transfer.URLCopy;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.local.Local;
 import org.iplantc.service.transfer.model.TransferTask;
@@ -70,22 +67,19 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	private static final Logger log = Logger.getLogger(AbstractJobLauncher.class);
 	public static final String ARCHIVE_FILENAME = ".agave.archive";
 	
-	private AtomicBoolean stopped = new AtomicBoolean(false);
-    
 	protected File 						tempAppDir = null;
 	protected String 					step;
     protected Job						job;
+    protected IPhaseWorker              worker;
     protected Software 					software;
 	protected ExecutionSystem 			executionSystem;
-//	protected RemoteDataClient	 		remoteExecutionDataClient;
-//	protected RemoteDataClient	 		remoteSoftwareDataClient;
 	protected RemoteDataClient          localDataClient;
 	protected RemoteSubmissionClient 	submissionClient = null;
-	protected URLCopy                   urlCopy;
 	protected TransferTask              transferTask;
 	
-	public AbstractJobLauncher(Job job) {
+	public AbstractJobLauncher(Job job, IPhaseWorker worker) {
 		this.job = job;
+		this.worker = worker;
         this.software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
         this.executionSystem = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
         
@@ -97,56 +91,24 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	 */
 	@Override
     public synchronized boolean isStopped() {
-        return stopped.get();
+        return worker.isJobStopped();
     }
 
-    /* (non-Javadoc)
-     * @see org.iplantc.service.jobs.managers.launchers.JobLauncher#setStopped(boolean)
-     */
-    @Override
-    public synchronized void setStopped(boolean stopped) {
-        this.stopped.set(stopped);
-        
-        if (getUrlCopy() != null) {
-            getUrlCopy().setKilled(true);
-        }
-        
-        if (transferTask != null) {
-            
-        }
-    }
-    
-    /* (non-Javadoc)
-     * @see org.iplantc.service.jobs.managers.launchers.JobLauncher#getUrlCopy()
-     */
-    @Override
-    public synchronized URLCopy getUrlCopy() {
-        return urlCopy;
-    }
-    
-    /* (non-Javadoc)
-     * @see org.iplantc.service.jobs.managers.launchers.JobLauncher#setUrlCopy(org.iplantc.service.transfer.URLCopy)
-     */
-    @Override
-    public synchronized void setUrlCopy(URLCopy urlCopy) {
-        this.urlCopy = urlCopy;
-    }
-    
     /* (non-Javadoc)
      * @see org.iplantc.service.jobs.managers.launchers.JobLauncher#checkStopped()
      */
     @Override
-    public void checkStopped() throws ClosedByInterruptException {
-        if (isStopped()) {
-            throw new ClosedByInterruptException();
-        }
+    public void checkStopped() throws ClosedByInterruptException, JobFinishedException {
+        worker.checkStopped();
     }
 	
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.jobs.managers.launchers.JobLauncher#launch()
 	 */
 	@Override
-	public abstract void launch() throws JobException, ClosedByInterruptException, SchedulerException, IOException, SystemUnavailableException;
+	public abstract void launch() 
+	  throws JobException, ClosedByInterruptException, JobFinishedException, 
+	         SchedulerException, IOException, SystemUnavailableException;
 	
 	/**
 	 * Removes all the user-provided job status macros that agave inserts into the wrapper template
@@ -219,41 +181,12 @@ public abstract class AbstractJobLauncher implements JobLauncher
 		}
 		
 		for (WrapperTemplateStatusVariableType macro: WrapperTemplateStatusVariableType.values()) {
-//			if (macro != WrapperTemplateStatusVariableType.AGAVE_JOB_CALLBACK_NOTIFICATION) {
-				wrapperTemplate = StringUtils.replace(wrapperTemplate, "${" + macro.name() + "}", macro.resolveForJob(job));
-//			}
+		    wrapperTemplate = StringUtils.replace(wrapperTemplate, "${" + macro.name() + "}", macro.resolveForJob(job));
 		}
 		
 		return wrapperTemplate;
 	}
 	
-//	/**
-//	 * Returns the name of the 
-//	 * @param apiUsername
-//	 * @param internalUsername
-//	 * @param inputValue
-//	 * @return
-//	 * @throws Exception
-//	 */
-//	protected String getInputFileName(String apiUsername, String internalUsername, String inputValue) 
-//	throws Exception {
-//		try
-//		{
-//			if (StringUtils.isEmpty(inputValue)) {
-//				return "";
-//			} else {
-//				URI uri = new URI(inputValue);
-//				RemoteDataClientFactory factory = new RemoteDataClientFactory();
-//				RemoteDataClient rdc = factory.getInstance(apiUsername, internalUsername, uri);
-//				return rdc.resolvePath(uri.getPath());
-//			}
-//		}
-//		catch (URISyntaxException e)
-//		{
-//			return FilenameUtils.getName(inputValue);
-//		}
-//	}
-//	
 	/**
      * sets up the application dir for job launch
      * @throws JobException 
@@ -340,13 +273,6 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	    					"https://workers.prod.agaveapi.co/" + tempAppDir.getAbsolutePath(), 
 	    					job.getOwner(), null, null);
 	    			
-//	    			transferTask.setTotalSize(-1);
-//	    			transferTask.setBytesTransferred(0);
-//	    			transferTask.setAttempts(1);
-//	    			transferTask.setStatus(TransferStatusType.TRANSFERRING);
-//	    			transferTask.setStartTime(new DateTime().toDate());
-//	    			TransferTaskDao.persist(transferTask);
-	    			
 	        		TransferTaskDao.persist(transferTask);
 	    			
 	        		JobDao.refresh(job);
@@ -358,7 +284,6 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	    			
 	        		JobDao.persist(job);
 	        			        		
-//	        		urlCopy.copy(software.getDeploymentPath(), tempAppDir.getAbsolutePath(), transferTask);
 	        		remoteSoftwareDataClient.get(software.getDeploymentPath(), tempAppDir.getAbsolutePath(), new RemoteTransferListener(transferTask));
 	        		
 	    			checkStopped();
@@ -389,9 +314,6 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	    						throw new SoftwareException("Failed to unpack the application bundle.");
 	    					}
 	    				} else {
-//	    					software.setAvailable(false);
-//	    					software.setLastUpdated(new DateTime().toDate());
-//	    					SoftwareDao.persist(software);
 	    					Tenant tenant = new TenantDao().findByTenantId(TenancyHelper.getCurrentTenantId());
 	    					String message ="While submitting a job, the Job Service noticed that the checksum " +
                                     "of the public app " + software.getUniqueName() + " had changed. This " +
@@ -498,10 +420,6 @@ public abstract class AbstractJobLauncher implements JobLauncher
 					job.getOwner(), null, null);
 			
 			transferTask.setTotalSize(FileUtils.sizeOfDirectory(tempAppDir));
-//			transferTask.setBytesTransferred(0);
-//			transferTask.setAttempts(1);
-//			transferTask.setStatus(TransferStatusType.TRANSFERRING);
-//			transferTask.setStartTime(new DateTime().toDate());
 			
 			TransferTaskDao.persist(transferTask);
 			

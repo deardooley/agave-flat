@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 import org.apache.log4j.Logger;
+import org.iplantc.service.jobs.model.enumerations.JobInterruptType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,9 +41,23 @@ public abstract class AbstractQueueMessage
         WKR_PROCESS_JOB,
         TPC_SHUTDOWN,
         TCP_PAUSE_JOB,
-        TCP_CANCEL_JOB,
-        TCP_STOP_JOB,
-        TCP_TERMINATE_WORKERS
+        TCP_DELETE_JOB,
+        TCP_STOP_JOB,   
+        TCP_START_WORKERS,
+        TCP_TERMINATE_WORKERS;
+        
+        // Convert a job command to job interrupt type.
+        public JobInterruptType toInterruptType()
+        {
+            switch (this)
+            {   
+                // Only some commands interrupt jobs.
+                case TCP_PAUSE_JOB:     return JobInterruptType.PAUSE; 
+                case TCP_STOP_JOB:      return JobInterruptType.STOP;
+                case TCP_DELETE_JOB:    return JobInterruptType.DELETE;
+                default:                return null;
+            }
+        }
     }
     
     /* ********************************************************************** */
@@ -89,10 +104,15 @@ public abstract class AbstractQueueMessage
     {
         // Read the json message generically.
         JsonNode node = null;
-        node = _jsonMapper.readTree(json);
+        try {node = _jsonMapper.readTree(json);}
+            catch (Exception e) {
+                String msg = "Invalid queue message received json: " + json;
+                _log.error(msg, e);
+                throw e;
+            }
         if (node == null) 
         {
-            String msg = "Invalid queue message received json: " + json;
+            String msg = "Empty queue message received json: " + json;
             _log.error(msg);
             throw new IOException(msg);
         }
@@ -123,11 +143,14 @@ public abstract class AbstractQueueMessage
             case TCP_PAUSE_JOB:
                 cls = PauseJobMessage.class;
                 break;
-            case TCP_CANCEL_JOB:
-                cls = CancelJobMessage.class;
+            case TCP_DELETE_JOB:
+                cls = DeleteJobMessage.class;
                 break;
             case TCP_STOP_JOB:
                 cls = StopJobMessage.class;
+                break;
+            case TCP_START_WORKERS:
+                cls = StartWorkersMessage.class;
                 break;
             case TCP_TERMINATE_WORKERS:
                 cls = TerminateWorkersMessage.class;

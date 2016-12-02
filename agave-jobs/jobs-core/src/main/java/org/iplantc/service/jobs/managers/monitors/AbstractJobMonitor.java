@@ -6,14 +6,15 @@ package org.iplantc.service.jobs.managers.monitors;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Logger;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.scripts.SubmitScript;
 import org.iplantc.service.jobs.model.scripts.SubmitScriptFactory;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
@@ -34,12 +35,12 @@ public abstract class AbstractJobMonitor implements JobMonitor {
 
     private static final Logger log = Logger.getLogger(AbstractJobMonitor.class);
     
-    private AtomicBoolean stopped = new AtomicBoolean(false);
-    
     protected Job job;
+    protected IPhaseWorker worker;
 	
-	public AbstractJobMonitor(Job job) {
+	public AbstractJobMonitor(Job job, IPhaseWorker worker) {
 		this.job = job;
+		this.worker = worker;
 	}
 	
 	/* (non-Javadoc)
@@ -47,17 +48,9 @@ public abstract class AbstractJobMonitor implements JobMonitor {
      */
     @Override
     public synchronized boolean isStopped() {
-        return stopped.get();
+        return worker.isJobStopped();
     }
 
-    /* (non-Javadoc)
-     * @see org.iplantc.service.jobs.managers.launchers.JobLauncher#setStopped(boolean)
-     */
-    @Override
-    public synchronized void setStopped(boolean stopped) {
-        this.stopped.set(stopped);
-    }
-    
     /* (non-Javadoc)
      * @see org.iplantc.service.jobs.managers.monitors.JobMonitor#getJob()
      */
@@ -66,16 +59,14 @@ public abstract class AbstractJobMonitor implements JobMonitor {
         return this.job;
     }
     
-    
-    
     /* (non-Javadoc)
      * @see org.iplantc.service.jobs.managers.launchers.JobLauncher#checkStopped()
      */
     @Override
-    public void checkStopped() throws ClosedByInterruptException {
-        if (isStopped()) {
-            throw new ClosedByInterruptException();
-        }
+    public void checkStopped()
+     throws ClosedByInterruptException, JobFinishedException 
+    {
+        worker.checkStopped();
     }
     
     /* (non-Javadoc)
@@ -166,5 +157,7 @@ public abstract class AbstractJobMonitor implements JobMonitor {
 	 * @see org.iplantc.service.jobs.managers.monitors.JobMonitor#getStatus()
 	 */
 	@Override
-	public abstract Job monitor() throws RemoteJobMonitoringException, SystemUnavailableException, ClosedByInterruptException;
+	public abstract Job monitor()
+	   throws RemoteJobMonitoringException, SystemUnavailableException, 
+	          ClosedByInterruptException, JobFinishedException;
 }

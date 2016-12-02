@@ -11,6 +11,7 @@ import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
@@ -64,15 +65,19 @@ public final class ArchivingWorker
         // This structure maintains compatibility with legacy code.
         try {
             // ----- Check archiving.
+            checkStopped(true);
             isArchiving();
             
             // ----- Check storage locality
+            checkStopped(true);
             checkSoftwareLocality();
             
             // ----- Are we within the retry window?
+            checkStopped(true);
             checkExpirationDate(7);
             
             // ----- Check system availability
+            checkStopped(true);
             checkAvailability(7);
             
             // ----- Archive job
@@ -209,12 +214,25 @@ public final class ArchivingWorker
     /* ---------------------------------------------------------------------- */
     private void archive() throws JobWorkerException
     {
-        // Mark the job as submitting so no other process claims it
+        // Update the status message and the status we were triggered by 
+        // something other than ARCHIVING status (like CLEANING_UP).
         try {
-            _job = JobManager.updateStatus(_job, JobStatusType.ARCHIVING, "Beginning to archive output.");
+            _job = JobManager.safeUpdateStatus(_job, JobStatusType.ARCHIVING, "Beginning to archive output.");
         }
-        catch (Throwable e) {
-            _log.debug("Job " + _job.getUuid() + " already being processed by another thread. Ignoring.");
+        catch (JobFinishedException e) {
+            // Log the occurrence and stop all processing.
+            if (_log.isDebugEnabled()) {
+                String msg = "Safe status update failed for job " + _job.getUuid() +
+                             " (" + _job.getName() + ") due to the job being in a finished state.";
+                _log.warn(msg, e);
+            }
+            return;
+        }
+        catch (JobException e) {
+            // Log the occurrence and stop all processing.
+            String msg = "Safe status update failed for job " + _job.getUuid() +
+                         " (" + _job.getName() + ").";
+            _log.error(msg, e);
             return;
         }
 
@@ -222,40 +240,41 @@ public final class ArchivingWorker
         boolean archived = false;
 
         // Attempt to stage the job several times
-        while (!archived && !isStopped() && attempts <= Settings.MAX_SUBMISSION_RETRIES)
+        while (!archived && !isJobStopped() && attempts <= Settings.MAX_SUBMISSION_RETRIES)
         {
             _job.setRetries(attempts++);
             _log.debug("Attempt " + attempts + " to archive job " + _job.getUuid() + " output");
 
             // Mark the job as archiving.
             // TODO: We have to check if the transition is valid (i.e., not stopped, etc.) 
-            try {_job = JobManager.updateStatus(_job, JobStatusType.ARCHIVING,
+            try {_job = JobManager.safeUpdateStatus(_job, JobStatusType.ARCHIVING,
                     "Attempt " + attempts + " to archive job output");
             }
+            catch (JobFinishedException e) {
+                // Log the occurrence and stop all processing.
+                if (_log.isDebugEnabled()) {
+                    String msg = "Safe status update failed for job " + _job.getUuid() +
+                                 " (" + _job.getName() + ") due to the job being in a finished state.";
+                    _log.warn(msg, e);
+                }
+                return;
+            }
             catch (JobException e) {
-                // Log the error and try to move on.
-                String msg = "Unable to update status for job " + _job.getName() + " (" + _job.getUuid() + ").";
+                // Log the occurrence and stop all processing.
+                String msg = "Safe status update failed for job " + _job.getUuid() +
+                             " (" + _job.getName() + ").";
                 _log.error(msg, e);
+                return;
             }
 
-            // Save the object again so that the timestamp gets updated.
-            // TODO:  Figure out a way not to save the job twice in a row.
-            //        updateStatus saves the job and assigns lastUpdate,
-            //        so this call seem completely superfluous.
-            try {JobDao.persist(_job);}
-            catch (Exception e) {
-                String msg = "Unable to save job " + _job.getName() + " (" + _job.getUuid() + ").";
-                _log.error(msg, e);
-            } 
-            
             // Do the actual archiving.
             try
             {
-                if (isStopped()) {
-                    throw new ClosedByInterruptException();
-                }
+                // Check for thread or job interruptions and throw one 
+                // of two exceptions depending on interrupt type.
+                checkStopped();
 
-                setWorkerAction(new ArchiveAction(_job));
+                setWorkerAction(new ArchiveAction(_job, this));
 
                 try {
                     getWorkerAction().run();
@@ -264,7 +283,7 @@ public final class ArchivingWorker
                     throw t;
                 }
 
-                if (!isStopped() || _job.getStatus() == JobStatusType.ARCHIVING_FINISHED ||
+                if (!isJobStopped() || _job.getStatus() == JobStatusType.ARCHIVING_FINISHED ||
                                     _job.getStatus() == JobStatusType.ARCHIVING_FAILED)
                 {
                     archived = true;
@@ -275,21 +294,25 @@ public final class ArchivingWorker
             catch (ClosedByInterruptException e) {
                 if (_log.isDebugEnabled())
                     _log.debug("Archive task for job " + _job.getName() + " (" + _job.getUuid() + 
-                               ") aborted due to interrupt by worker process.", e);
+                               ") aborted due to worker interrupt.", e);
                 
                 // Update the status.
-                // TODO: Another place where job is saved twice.
                 try {
                     _job = JobManager.updateStatus(_job, JobStatusType.CLEANING_UP, 
                         "Job archiving reset due to worker shutdown. Archiving will resume in another worker automatically.");
-                    JobDao.persist(_job);
                 } catch (Exception e1) {
                     _log.error("Failed to roll back job status when archive task was interrupted.", e1);
                 }
                 
                 // Exit method.
                 throw new JobWorkerException("Staging task for job " + _job.getName() + " (" + _job.getUuid() + 
-                                             ") aborted due to interrupt by worker process.");
+                                             ") aborted due to worker interrupt.");
+            }
+            catch (JobFinishedException e) {
+                String msg = "Submission task for job " + _job.getUuid() + 
+                             " forced to stop by a job interrupt.";
+                _log.debug(msg, e);
+                throw new JobWorkerException(msg, e);
             }
             catch (SystemUnknownException e)
             {

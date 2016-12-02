@@ -2,27 +2,25 @@ package org.iplantc.service.jobs.phases.queuemessages;
 
 import java.io.IOException;
 
-import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
-
 /** This message stops the job identified by uuid.
  * 
  * @author rcardone
  */
 public final class StopJobMessage
- extends AbstractQueueMessage
+ extends AbstractQueueJobMessage
 {
-    /* ********************************************************************** */
-    /*                                Fields                                  */
-    /* ********************************************************************** */
-    // Job name and unique id.
-    public String name;
-    public String uuid;
-    
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
     public StopJobMessage(){super(JobCommand.TCP_STOP_JOB);}
     
+    public StopJobMessage(String     jobName,
+                          String     jobUuid,
+                          String     tenantId)
+    {
+        super(JobCommand.TCP_STOP_JOB, jobName, jobUuid, tenantId);
+    }
+
     /* ********************************************************************** */
     /*                            Public Methods                              */
     /* ********************************************************************** */

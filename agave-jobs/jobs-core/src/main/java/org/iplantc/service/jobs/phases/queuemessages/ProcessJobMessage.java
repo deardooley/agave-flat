@@ -2,8 +2,6 @@ package org.iplantc.service.jobs.phases.queuemessages;
 
 import java.io.IOException;
 
-import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
-
 /** This is the main job execution message.  When a worker thread receives
  * this message from its queue, the thread processes the job according its
  * assigned phase.
@@ -41,11 +39,6 @@ public final class ProcessJobMessage
      throws IOException
     {
         ProcessJobMessage m = (ProcessJobMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.WKR_PROCESS_JOB)
-        {
-            String msg = "Invalid command value for ProcessJobMessage: " + m.command;
-            throw new IOException(msg);
-        }
         return m;
     }
 }

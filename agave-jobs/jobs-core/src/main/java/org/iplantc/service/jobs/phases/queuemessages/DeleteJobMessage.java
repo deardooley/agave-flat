@@ -2,26 +2,24 @@ package org.iplantc.service.jobs.phases.queuemessages;
 
 import java.io.IOException;
 
-import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
-
 /** This message cancels the job identified by uuid.
  * 
  * @author rcardone
  */
-public final class CancelJobMessage 
- extends AbstractQueueMessage
+public final class DeleteJobMessage 
+ extends AbstractQueueJobMessage
 {
-    /* ********************************************************************** */
-    /*                                Fields                                  */
-    /* ********************************************************************** */
-    // Job name and unique id.
-    public String name;
-    public String uuid;
-    
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public CancelJobMessage(){super(JobCommand.TCP_CANCEL_JOB);}
+    public DeleteJobMessage(){super(JobCommand.TCP_DELETE_JOB);}
+    
+    public DeleteJobMessage(String     jobName,
+                            String     jobUuid,
+                            String     tenantId)
+    {
+        super(JobCommand.TCP_DELETE_JOB, jobName, jobUuid, tenantId);
+    }
     
     /* ********************************************************************** */
     /*                            Public Methods                              */
@@ -35,13 +33,13 @@ public final class CancelJobMessage
      * @return the message object
      * @throws IOException if something goes wrong
      */
-    public static CancelJobMessage fromJson(String json)
+    public static DeleteJobMessage fromJson(String json)
      throws IOException
     {
-        CancelJobMessage m = (CancelJobMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.TCP_CANCEL_JOB)
+        DeleteJobMessage m = (DeleteJobMessage) AbstractQueueMessage.fromJson(json);
+        if (m.command != JobCommand.TCP_DELETE_JOB)
         {
-            String msg = "Invalid command value for CancelJobMessage: " + m.command;
+            String msg = "Invalid command value for DeleteJobMessage: " + m.command;
             throw new IOException(msg);
         }
         return m;

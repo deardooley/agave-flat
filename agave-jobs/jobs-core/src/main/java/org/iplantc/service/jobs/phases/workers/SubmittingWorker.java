@@ -8,10 +8,12 @@ import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.JobInterruptUtils;
 import org.iplantc.service.jobs.queue.actions.SubmissionAction;
 
 /**
@@ -55,12 +57,15 @@ public final class SubmittingWorker
         // This structure maintains compatibility with legacy code.
         try {
             // ----- Check the job quota.
+            checkStopped(true);
             checkJobQuota();
         
             // ----- Check storage locality
+            checkStopped(true);
             checkSoftwareLocality();
             
             // ----- Are we within the retry window?
+            checkStopped(true);
             checkRetryPeriod(14);
             
             // ----- Stage the job input.
@@ -99,11 +104,11 @@ public final class SubmittingWorker
             _job = JobManager.updateStatus(_job, JobStatusType.SUBMITTING, 
                                        "Preparing job for submission.");
         
-            if (isStopped()) {
-                throw new ClosedByInterruptException();
-            }
+            // Check for thread or job interruptions and throw one 
+            // of two exceptions depending on interrupt type.
+            checkStopped();
         
-            setWorkerAction(new SubmissionAction(_job));
+            setWorkerAction(new SubmissionAction(_job, this));
         
             try {
                 // Wrap this in a try/catch so we can update the local reference. 
@@ -111,7 +116,7 @@ public final class SubmittingWorker
             }
             finally {_job = getWorkerAction().getJob();}
         
-            if (!isStopped() || _job.getStatus() == JobStatusType.QUEUED || 
+            if (!isJobStopped() || _job.getStatus() == JobStatusType.QUEUED || 
                 _job.getStatus() == JobStatusType.RUNNING)
             {       
                 _job.setRetries(0);
@@ -121,7 +126,7 @@ public final class SubmittingWorker
         catch (ClosedByInterruptException e) {
             if (_log.isDebugEnabled())
                 _log.debug("Submission task for job " + _job.getUuid() + 
-                           " aborted due to interrupt by worker process.");
+                           " aborted due to worker interrupt.");
             
             try {
                 _job = JobManager.updateStatus(_job, JobStatusType.STAGED, 
@@ -131,7 +136,12 @@ public final class SubmittingWorker
                 _log.error("Failed to roll back job status when archive task was interrupted.", e1);
             }
             throw new JobWorkerException("Submission task for job " + _job.getUuid() + 
-                                            " aborted due to interrupt by worker process.", e);
+                                         " aborted due to worker interrupt.", e);
+        }
+        catch (JobFinishedException e) {
+            if (_log.isDebugEnabled())
+                _log.debug("Submission task for job " + _job.getUuid() + 
+                           " forced to stop by a job interrupt.", e);
         }
         catch (StaleObjectStateException | UnresolvableObjectException e) {
             String msg = "Job " + _job.getUuid() + " already being processed by another thread. Ignoring.";

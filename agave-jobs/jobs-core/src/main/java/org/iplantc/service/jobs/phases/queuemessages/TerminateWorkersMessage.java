@@ -13,9 +13,10 @@ public final class TerminateWorkersMessage
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
-    // Job name and unique id.
-    public String queueName;
-    public int    numWorkers;
+    // Command fields.
+    public String tenantId;    // Caller's tenantId
+    public String queueName;   // Target queue name
+    public int    numWorkers;  // Number of workers to terminate
     
     /* ********************************************************************** */
     /*                              Constructors                              */

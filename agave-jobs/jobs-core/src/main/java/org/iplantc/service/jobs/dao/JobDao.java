@@ -4,9 +4,7 @@
 package org.iplantc.service.jobs.dao;
 
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +21,8 @@ import org.hibernate.Session;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.StaleStateException;
 import org.hibernate.UnresolvableObjectException;
+import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.impl.SessionImpl;
 import org.hibernate.transform.AliasToEntityMapResultTransformer;
 import org.hibernate.type.StandardBasicTypes;
 import org.iplantc.service.apps.util.ServiceUtils;
@@ -440,6 +440,58 @@ public class JobDao
         }
     }
 
+    /**
+     * Returns a {@link List} of {@link Job}s with the given status that have
+     * an outstanding interrupt.
+     * 
+     * @param status the status filter
+     * @return the interrupted jobs with the specified status
+     * @throws JobException
+     */
+    @SuppressWarnings("unchecked")
+    public static List<Job> getInterruptedJobsByStatus(JobStatusType status) 
+    throws JobException
+    {
+        // At least one status must be specified.
+        if (status == null)
+        {
+            String msg = "A job status must be specified for job search.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Make the database call for all visible 
+        // jobs with the required statuses.
+        try
+        {
+            Session session = getSession();
+            session.clear();
+            String sql = "select distinct jobs.* from jobs, job_interrupts " + 
+                         "where jobs.uuid = job_interrupts.job_uuid " +
+                         "and jobs.status = :status " +
+                         "and jobs.visible = :visible";
+            List<Job> jobs = session.createSQLQuery(sql).addEntity(Job.class)
+                    .setString("status", status.name())
+                    .setBoolean("visible", true)
+                    .list();
+
+            session.flush();
+            
+            return jobs;
+
+        }
+        catch (ObjectNotFoundException e) {
+            return new ArrayList<Job>();
+        }
+        catch (HibernateException ex)
+        {
+            throw new JobException(ex);
+        }
+        finally {
+            try { HibernateUtil.commitTransaction();} catch (Exception e) {}
+        }
+    }
+
 	/**
 	 * Returns a {@link List} of {@link Job}s belonging to the given user with the given status.
 	 * Permissions are observed in this query.
@@ -815,6 +867,113 @@ public class JobDao
 		}
 	}
 	
+	/** Get the current status value of a job record and maintain an exclusive 
+	 * lock on that record.  We begin a transaction, query a job by its primary
+	 * key, and keep that transaction open when the method completes.  
+	 * 
+	 * The caller is responsible for committing or rolling back the transaction
+	 * and if this requirement is not observed, bad things will happen.  To
+	 * emphasize:
+	 * 
+	 *     THE CALLER MUST COMPLETE THE TRANSACTION BEGUN HERE
+	 *     
+	 * The session on which the transaction can be rolled back or committed is
+	 * the threadlocal session managed by HibernateUtil.  Therefore, the 
+	 * transaction can be completed by calling rollbackTransaction() or
+	 * commitTransaction() on HibernateUtil on the SAME THREAD.  The usual case,
+	 * however, is to call persistLockedJob(job) to update the job record to
+	 * complete the transaction. 
+	 * 
+	 * NOTE: If the query fails, the transaction is rolled back and a null
+	 *       status is returned.  The caller does not need to complete the 
+	 *       transaction in this case.
+	 * 
+	 * @param job
+	 * @return the current version of a job (open transaction) or 
+	 *         null (rolled back transaction) 
+	 */
+    public static JobStatusType lockJobForStatus(Job job)
+    {
+        // Get the current version of a job record 
+        // and obtain an exclusive lock on that record.
+        JobStatusType status = null;
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+            
+            // Retrieve the current version of the job.
+            String sql = "select status from jobs " +
+                         "where id = :id FOR UPDATE";
+       
+            // Make the query and leave transaction open.          
+            String result = (String) session.createSQLQuery(sql)
+                            .setLong("id", job.getId())
+                            .uniqueResult();
+            
+            // Convert the result string.
+            if (result != null) {
+                try {status = JobStatusType.valueOf(result);}
+                catch (Exception e) {
+                    String msg = "Unable to convert " + result + " into a JobStatusType";
+                    log.error(msg, e);
+                    throw e;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to lock running job " + job.getUuid() + 
+                         " (" + job.getName() + ").";
+            log.error(msg, e);
+        }
+        
+        // Return session with uncommitted transaction.
+        return status;
+    }
+	
+	/** Complete an existing transaction on the threadlocal session by
+	 * update the previously locked with lockJob(job).
+	 * 
+	 * @param job the locked job
+	 * @throws JobException when unable to update the job
+	 */
+    public static void persistLockedJob(Job job) 
+    throws JobException
+    {
+        // Try to save the job using the existing transaction
+        // on the threadlocal session.
+        Session session = null;
+        try {
+            session = HibernateUtil.getSession();
+            session.saveOrUpdate(job);
+        }
+        catch (Exception e)
+        {
+            try
+            {
+                if (session != null && session.isOpen())
+                {
+                    HibernateUtil.rollbackTransaction();
+                    session.close();
+                }
+            }
+            catch (Exception e1) {}
+            
+            String msg = "Unable to save locked job " + job.getUuid() + 
+                         " (" + job.getName() + ").";
+            throw new JobException(msg,e);
+        }
+        finally {
+            try {HibernateUtil.commitTransaction(); } catch (Exception e) {}
+        }
+    }
+    
 	public static void persist(Job job) 
 	throws JobException, UnresolvableObjectException 
 	{

@@ -25,11 +25,13 @@ import org.iplantc.service.io.permissions.PermissionManager;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.MissingDataException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.jobs.util.Slug;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
@@ -55,8 +57,8 @@ public class StagingAction extends AbstractWorkerAction {
     
     private static Logger log = Logger.getLogger(StagingAction.class);
     
-    public StagingAction(Job job) {
-        super(job);
+    public StagingAction(Job job, IPhaseWorker worker) {
+        super(job, worker);
     }
     
     /**
@@ -73,14 +75,27 @@ public class StagingAction extends AbstractWorkerAction {
      */
     public void run() 
     throws SystemUnavailableException, SystemUnknownException, JobException, 
-            ClosedByInterruptException, JobDependencyException
+            ClosedByInterruptException, JobDependencyException, JobFinishedException
     {
         ExecutionSystem system = (ExecutionSystem) new SystemDao().findBySystemId(this.job.getSystem());
         
-        log.debug("Beginning staging inputs for job " + this.job.getUuid() + " " + this.job.getName());
-        // we need a way to parallelize this task. Ideally we'd just throw each input
+        if (log.isDebugEnabled())
+           log.debug("Beginning staging inputs for job " + this.job.getUuid() + " " + this.job.getName());
+        
+        // We need a way to parallelize this task. Ideally we'd just throw each input
         // file to the staging queue and let 'em rip 
-        JobManager.updateStatus(this.job, JobStatusType.PROCESSING_INPUTS);
+        //
+        // Mark the job as submitting and assign the _job field the updated content.
+        // An exception here means the status could not be updated because the job 
+        // has been stopped, which means we need to abort job processing.
+        try {JobManager.safeUpdateStatus(this.job, JobStatusType.PROCESSING_INPUTS);}
+        catch (Exception e) {
+            // Log the occurrence and stop all processing.
+            String msg = "Safe status update failed for job " + job.getUuid() +
+                         " (" + job.getName() + ") due to the job being in a finished state.";
+            log.warn(msg, e);
+            return;
+        }
         
         // Get a well-formed map of user-supplied + default + hidden/required inputs for the job
         // Inputs are stored as a JSON object with the Job table, so we use this convenience
@@ -332,7 +347,8 @@ public class StagingAction extends AbstractWorkerAction {
                     }
                 }
             }
-            catch (ClosedByInterruptException e) {
+            catch (ClosedByInterruptException | JobFinishedException e) {
+                if (getUrlCopy() != null) getUrlCopy().setKilled(true);
                 throw e;
             }
             catch (MissingDataException e) {
@@ -374,8 +390,7 @@ public class StagingAction extends AbstractWorkerAction {
         }
                 
         if (!isStopped()) {
-            // status should have been updated in job object if anything was
-            // staged
+            // status should have been updated in job object if anything was staged
             if (this.job.getStatus() == JobStatusType.STAGING_INPUTS)
             {
                 JobManager.updateStatus(this.job, JobStatusType.STAGED);

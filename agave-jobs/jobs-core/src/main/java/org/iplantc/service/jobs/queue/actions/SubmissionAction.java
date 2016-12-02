@@ -13,6 +13,7 @@ import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
 import org.iplantc.service.jobs.exceptions.SoftwareUnavailableException;
 import org.iplantc.service.jobs.managers.JobManager;
@@ -20,6 +21,7 @@ import org.iplantc.service.jobs.managers.launchers.JobLauncher;
 import org.iplantc.service.jobs.managers.launchers.JobLauncherFactory;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 
@@ -33,16 +35,8 @@ public class SubmissionAction extends AbstractWorkerAction {
     
     private JobLauncher jobLauncher = null;
     
-    public SubmissionAction(Job job) {
-        super(job);
-    }
-    
-    public synchronized void setStopped(boolean stopped) {
-        super.setStopped(stopped);
-        
-        if (getJobLauncher() != null) {
-            getJobLauncher().setStopped(true);
-        }
+    public SubmissionAction(Job job, IPhaseWorker worker) {
+        super(job, worker);
     }
     
     /**
@@ -60,7 +54,7 @@ public class SubmissionAction extends AbstractWorkerAction {
      */
     public void run() 
     throws SystemUnavailableException, SystemUnknownException, JobException, 
-            ClosedByInterruptException, JobDependencyException
+            ClosedByInterruptException, JobDependencyException, JobFinishedException
     {
         boolean submitted = false;
         
@@ -78,11 +72,12 @@ public class SubmissionAction extends AbstractWorkerAction {
                 
                 log.debug("Attempt " + attempts + " to submit job " + job.getUuid());
                 
-                this.job = JobManager.updateStatus(this.job, JobStatusType.SUBMITTING, "Attempt " + attempts + " to submit job");
+                this.job = JobManager.safeUpdateStatus(this.job, JobStatusType.SUBMITTING, 
+                                                       "Attempt " + attempts + " to submit job");
                 
                 try 
                 {
-                    setJobLauncher(JobLauncherFactory.getInstance(job));
+                    setJobLauncher(JobLauncherFactory.getInstance(job, worker));
                     
                     getJobLauncher().launch();
                     
@@ -90,7 +85,7 @@ public class SubmissionAction extends AbstractWorkerAction {
                     
                     log.info("Successfully submitted job " + getJob().getUuid() + " to " + getJob().getSystem());
                 }
-                catch (ClosedByInterruptException e) {
+                catch (ClosedByInterruptException | JobFinishedException e) {
                     throw e;
                 } 
                 catch (ConnectException e) 
@@ -108,20 +103,6 @@ public class SubmissionAction extends AbstractWorkerAction {
                         log.error("Failed to update job " + getJob().getUuid() + " status to " + job.getStatus());
                     }
                 }
-//                catch (QuotaViolationException e) 
-//                {
-//                    try
-//                    {
-//                        log.debug("Remote execution of job " + getJob().getUuid() + " is current paused due to quota restrictions. " + e.getMessage());
-//                        JobManager.updateStatus(getJob(), JobStatusType.STAGED, 
-//                            "Remote execution of job " + job.getUuid() + " is current paused due to quota restrictions. " + 
-//                            e.getMessage() + ". This job will resume staging once one or more current jobs complete.");
-//                    }
-//                    catch (Exception e1) {
-//                        log.error("Failed to update job " + job.getUuid() + " status to STAGED");
-//                    }   
-//                    break;
-//                }
                 catch (SystemUnavailableException e) 
                 {
                     try

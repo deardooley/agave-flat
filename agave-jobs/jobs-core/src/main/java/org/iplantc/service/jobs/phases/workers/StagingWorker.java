@@ -10,10 +10,12 @@ import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.JobInterruptUtils;
 import org.iplantc.service.jobs.queue.actions.StagingAction;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 
@@ -58,15 +60,19 @@ public final class StagingWorker
         // This structure maintains compatibility with legacy code.
         try {
             // ----- Check the job quota.
+            checkStopped(true);
             checkJobQuota();
         
             // ----- Check storage locality
+            checkStopped(true);
             checkSoftwareLocality();
             
             // ----- Are we within the retry window?
+            checkStopped(true);
             checkRetryPeriod(7);
             
             // ----- Is there anything to stage?
+            checkStopped(true);
             checkStagingInput();
             
             // ----- Stage the job input.
@@ -123,7 +129,7 @@ public final class StagingWorker
         boolean staged = false;
         
         // Main staging loop.
-        while (!staged && !isStopped() && attempts <= Settings.MAX_SUBMISSION_RETRIES)
+        while (!staged && !isJobStopped() && attempts <= Settings.MAX_SUBMISSION_RETRIES)
         {
             // Set the number of retries and attempts.
             _job.setRetries(attempts++);
@@ -131,26 +137,49 @@ public final class StagingWorker
             if (_log.isDebugEnabled())
                 _log.debug("Attempt " + attempts + " to stage job " + _job.getUuid() + " inputs");
             
-            // Mark the job as submitting so no other process claims it
-            _job = JobManager.updateStatus(_job, JobStatusType.PROCESSING_INPUTS, 
-                                               "Attempt " + attempts + " to stage job inputs");
+            // Mark the job as submitting and assign the _job field the updated content.
+            // An exception here means the status could not be updated because the job 
+            // has been stopped, which means we need to abort job processing.
+            try {
+                _job = JobManager.safeUpdateStatus(_job, JobStatusType.PROCESSING_INPUTS, 
+                                                   "Attempt " + attempts + " to stage job inputs");
+            }
+            catch (JobFinishedException e) {
+                // Log the occurrence and stop all processing.
+                if (_log.isDebugEnabled()) {
+                    String msg = "Safe status update failed for job " + _job.getUuid() +
+                                 " (" + _job.getName() + ") due to the job being in a finished state.";
+                    _log.debug(msg, e);
+                }
+                return;
+            }
+            catch (JobException e) {
+                // Log the occurrence and stop all processing.
+                String msg = "Safe status update failed for job " + _job.getUuid() +
+                             " (" + _job.getName() + ").";
+                _log.error(msg, e);
+                return;
+            }
             
             // Perform the work of this phase.
             try 
             {
-                if (isStopped()) {
-                    throw new ClosedByInterruptException();
-                }
+                // Check for thread or job interruptions and throw one 
+                // of two exceptions depending on interrupt type.
+                checkStopped();
                 
-                setWorkerAction(new StagingAction(_job));
+                setWorkerAction(new StagingAction(_job, this));
                 
                 try {
                     // Wrap this in a try/catch so we can update the local reference.
+                    // Note that we can receive an interrupt that stops processing
+                    // during this method's execution.
                     getWorkerAction().run();
                 }
                 finally {_job = getWorkerAction().getJob();}
                 
-                if (!isStopped() || _job.getStatus() == JobStatusType.STAGED)
+                // If we are stopped we will quietly exit the retry loop.
+                if (!isJobStopped() || _job.getStatus() == JobStatusType.STAGED)
                 {       
                     staged = true;
                     _job.setRetries(0);
@@ -165,7 +194,13 @@ public final class StagingWorker
             catch (ClosedByInterruptException e) {
                 if (_log.isDebugEnabled())
                     _log.debug("Staging task for job " + _job.getUuid() + 
-                               " aborted due to interrupt by worker process.", e);
+                            " aborted due to worker interrupt.", e);
+                throw e;
+            }
+            catch (JobFinishedException e) {
+                if (_log.isDebugEnabled())
+                    _log.debug("Submission task for job " + _job.getUuid() + 
+                               " forced to stop by a job interrupt.", e);
                 throw e;
             }
             catch (SystemUnavailableException e) 

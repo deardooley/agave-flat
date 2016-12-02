@@ -169,7 +169,7 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			doThrow(new SystemUnavailableException()).when(mockJobLauncher).launch();
 			
 			
-			SubmissionAction submissionAction = spy(new SubmissionAction(job));
+			SubmissionAction submissionAction = spy(new SubmissionAction(job, null));
 			doReturn(mockJobLauncher).when(submissionAction).getJobLauncher();
 			
 			PowerMockito.mockStatic(JobManager.class);
@@ -224,7 +224,7 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			
 			JobDao.persist(job);
 			
-			SubmissionAction submissionAction = new SubmissionAction(job);
+			SubmissionAction submissionAction = new SubmissionAction(job, null);
             submissionAction.run();
             
             job = JobDao.getById(job.getId());
@@ -265,7 +265,7 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			
 			JobDao.persist(job);
 			
-			SubmissionAction submissionAction = new SubmissionAction(job);
+			SubmissionAction submissionAction = new SubmissionAction(job, null);
             submissionAction.run();
             
             job = JobDao.getById(job.getId());
@@ -321,7 +321,7 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			
 			JobDao.persist(job);
 			
-			SubmissionAction submissionAction = new SubmissionAction(job);
+			SubmissionAction submissionAction = new SubmissionAction(job, null);
             submissionAction.run();
             
             job = JobDao.getById(job.getId());

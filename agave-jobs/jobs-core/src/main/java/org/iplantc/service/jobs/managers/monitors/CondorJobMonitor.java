@@ -18,6 +18,7 @@ import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobEventDao;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobTerminationException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
 import org.iplantc.service.jobs.managers.JobManager;
@@ -27,6 +28,7 @@ import org.iplantc.service.jobs.managers.monitors.parsers.CondorJobMonitorRespon
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.notification.managers.NotificationManager;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.remote.exceptions.RemoteExecutionException;
@@ -49,16 +51,17 @@ public class CondorJobMonitor extends AbstractJobMonitor
 	private ExecutionSystem executionSystem = null;
 	private RemoteDataClient remoteDataClient = null;
 	
-	public CondorJobMonitor(Job job)
+	public CondorJobMonitor(Job job, IPhaseWorker worker)
 	{
-		super(job);
+		super(job, worker);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.jobs.managers.monitors.AbstractJobMonitor#monitor()
 	 */
 	@Override
-	public Job monitor() throws RemoteJobMonitoringException, SystemUnavailableException, ClosedByInterruptException
+	public Job monitor() 
+	  throws RemoteJobMonitoringException, SystemUnavailableException, ClosedByInterruptException, JobFinishedException
 	{
 		File retrievedCondorLogFile = null;
 		try 
@@ -103,7 +106,7 @@ public class CondorJobMonitor extends AbstractJobMonitor
         	
         	return this.job;
         }
-        catch (ClosedByInterruptException e) {
+        catch (ClosedByInterruptException | JobFinishedException e) {
             throw e;
         }
         catch (StaleObjectStateException | UnresolvableObjectException e) {
@@ -127,9 +130,11 @@ public class CondorJobMonitor extends AbstractJobMonitor
      * 
      * @return {@link File} object reference to the fetched file cached locally to disk
 	 * @throws IOException 
+	 * @throws JobFinishedException 
      * @throws ClosedByInterruptException
      */
-    protected File fetchCondorRuntimeLogFile() throws RemoteJobMonitoringException, IOException
+    protected File fetchCondorRuntimeLogFile() 
+     throws RemoteJobMonitoringException, IOException, ClosedByInterruptException, JobFinishedException
     {
         String remoteLogFilePath = job.getWorkPath() + "/runtime.log";
         
@@ -157,26 +162,9 @@ public class CondorJobMonitor extends AbstractJobMonitor
             {
                 checkStopped();
                 
-//                // here we fetch the remote log file
-//                this.transferTask = new TransferTask(
-//                        "agave://" + job.getSystem() + "/" +remoteLogFilePath,
-//                        "https://workers.prod.agaveapi.co/" + localRuntimeLogFile.getAbsolutePath(), 
-//                        job.getOwner(), null, null);
-//                
-//                this.transferTask.setTotalSize(this.remoteDataClient.length(remoteLogFilePath));
-//                
                 RemoteTransferListener listener = null;
-//                
-//                TransferTaskDao.persist(this.transferTask);
-//                
-//                listener = new RemoteTransferListener(transferTask);
-//                listener = null;
                 
                 this.remoteDataClient.get(remoteLogFilePath, localRuntimeLogFile.getAbsolutePath(), listener);
-                
-//                this.transferTask = listener.getTransferTask();
-//                
-//                TransferTaskDao.persist(this.transferTask);
                 
                 return localRuntimeLogFile;
             }
@@ -199,7 +187,8 @@ public class CondorJobMonitor extends AbstractJobMonitor
      * @return true if killed, false otherwise
      * @throws ClosedByInterruptException if this thread is interrupted by a worker shutdown
      */
-    protected boolean killJob() throws ClosedByInterruptException, JobException, JobTerminationException
+    protected boolean killJob() 
+     throws ClosedByInterruptException, JobException, JobTerminationException, JobFinishedException
     {
         try 
         {   
@@ -250,15 +239,11 @@ public class CondorJobMonitor extends AbstractJobMonitor
                         
                         NotificationManager.process(job.getUuid(), evt.getStatus(), evt.getCreatedBy());
                         this.job = JobDao.getById(this.job.getId());
-//                        Job job2 = 
-//                        this.job = JobManager.updateStatus(job2, JobStatusType.FAILED, "Failed to kill remote process." 
-//                            + " Response from " + job2.getSystem() + ": " + e.getMessage());
                         HibernateUtil.flush();
                     } catch (Exception e2) {
                         log.error("Failed to update job " + job.getUuid() + " status to FAILED after failed " + 
                                 "to kill the remote job process");
                     }
-//                    JobDao.persist(job);
                     
                     throw new JobTerminationException("Failed to kill job " + job.getUuid() 
                             + " identified by id " + job.getLocalJobId() + " on " + job.getSystem(), e);
@@ -266,8 +251,6 @@ public class CondorJobMonitor extends AbstractJobMonitor
                 catch (JobTerminationException e) {
                 
                     retries++;
-                    
-//                    this.job = killer.getJob();
                     
                     String message = "Failed to kill job " + job.getUuid() + 
                             " on attempt " + retries + ". Response from " + job.getSystem() + ": " + e.getMessage();
@@ -292,7 +275,10 @@ public class CondorJobMonitor extends AbstractJobMonitor
             
             return false;
         } 
-        catch (ClosedByInterruptException | JobException | StaleObjectStateException | UnresolvableObjectException e) {
+        catch (JobFinishedException e) {
+            throw e;
+        }
+        catch (ClosedByInterruptException |  JobException | StaleObjectStateException | UnresolvableObjectException e) {
             throw e;  
         } 
         catch (JobTerminationException e) {
@@ -362,7 +348,8 @@ public class CondorJobMonitor extends AbstractJobMonitor
      * @throws RemoteJobMonitoringException
      * @throws JobException
      */
-    public void checkRemoteCondorStatus() throws ClosedByInterruptException, RemoteJobMonitoringException, JobException
+    public void checkRemoteCondorStatus() 
+     throws ClosedByInterruptException, RemoteJobMonitoringException, JobException, JobFinishedException
     {
         RemoteSubmissionClient remoteSubmissionClient = null;
         
@@ -425,7 +412,7 @@ public class CondorJobMonitor extends AbstractJobMonitor
                 this.job = JobManager.updateStatus(job, JobStatusType.FAILED, "Job failed during submission by the Condor server");
             }
         }
-        catch (ClosedByInterruptException | StaleObjectStateException | UnresolvableObjectException e) {
+        catch (ClosedByInterruptException | JobFinishedException | StaleObjectStateException | UnresolvableObjectException e) {
             throw e;
         } 
         catch (Throwable e) {

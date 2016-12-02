@@ -2,24 +2,26 @@ package org.iplantc.service.jobs.phases.queuemessages;
 
 import java.io.IOException;
 
-/** This message pauses the job identified by uuid..
+/** This message is used to start the specified number of workers on
+ * the specified queue.
  * 
  * @author rcardone
  */
-public final class PauseJobMessage 
- extends AbstractQueueJobMessage
+public final class StartWorkersMessage 
+ extends AbstractQueueMessage
 {
+    /* ********************************************************************** */
+    /*                                Fields                                  */
+    /* ********************************************************************** */
+    // Command fields.
+    public String tenantId;    // Caller's tenantId
+    public String queueName;   // Target queue name
+    public int    numWorkers;  // Number of workers to start
+    
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public PauseJobMessage(){super(JobCommand.TCP_PAUSE_JOB);}
-    
-    public PauseJobMessage(String     jobName,
-                           String     jobUuid,
-                           String     tenantId)
-    {
-        super(JobCommand.TCP_PAUSE_JOB, jobName, jobUuid, tenantId);
-    }
+    public StartWorkersMessage(){super(JobCommand.TCP_START_WORKERS);}
     
     /* ********************************************************************** */
     /*                            Public Methods                              */
@@ -33,13 +35,13 @@ public final class PauseJobMessage
      * @return the message object
      * @throws IOException if something goes wrong
      */
-    public static PauseJobMessage fromJson(String json)
+    public static StartWorkersMessage fromJson(String json)
      throws IOException
     {
-        PauseJobMessage m = (PauseJobMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.TCP_PAUSE_JOB)
+        StartWorkersMessage m = (StartWorkersMessage) AbstractQueueMessage.fromJson(json);
+        if (m.command != JobCommand.TCP_START_WORKERS)
         {
-            String msg = "Invalid command value for PauseJobMessage: " + m.command;
+            String msg = "Invalid command value for TerminateWorkersMessage: " + m.command;
             throw new IOException(msg);
         }
         return m;

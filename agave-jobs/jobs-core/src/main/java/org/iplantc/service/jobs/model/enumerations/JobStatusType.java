@@ -1,9 +1,5 @@
 package org.iplantc.service.jobs.model.enumerations;
 
-import static org.iplantc.service.jobs.model.enumerations.JobStatusType.PROCESSING_INPUTS;
-
-import java.util.Arrays;
-
 public enum JobStatusType
 {
 	PAUSED("Job execution paused by user"), 

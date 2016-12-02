@@ -21,6 +21,9 @@ public final class MonitoringScheduler
     // Tracing.
     private static final Logger _log = Logger.getLogger(MonitoringScheduler.class);
 
+    // A place to squirrel away our triggers.
+    private List<JobStatusType> _phaseTriggerStatuses;
+
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
@@ -41,8 +44,11 @@ public final class MonitoringScheduler
     @Override
     protected List<JobStatusType> getPhaseTriggerStatuses()
     {
-        ArrayList<JobStatusType> list = new ArrayList<>();
-        list.add(JobStatusType.RUNNING);
-        return list;
+        if (_phaseTriggerStatuses == null)
+        {
+            _phaseTriggerStatuses = new ArrayList<>();
+            _phaseTriggerStatuses.add(JobStatusType.RUNNING);
+        }
+        return _phaseTriggerStatuses;
     }
 }

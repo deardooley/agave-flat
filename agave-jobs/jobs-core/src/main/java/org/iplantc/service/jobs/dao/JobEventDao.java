@@ -3,8 +3,6 @@
  */
 package org.iplantc.service.jobs.dao;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -17,7 +15,6 @@ import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.joda.time.DateTime;
 
 /**
  * Model class for interacting with job events. JobEvents are

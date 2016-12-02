@@ -62,9 +62,9 @@ public class QueueMessagesTest {
         // ------------------------ CancelJob -------------------------
         {
             // Generate the json.
-            CancelJobMessage m = new CancelJobMessage();
-            m.name = "cancelJob";
-            m.uuid = "999";
+            DeleteJobMessage m = new DeleteJobMessage();
+            m.jobName = "cancelJob";
+            m.jobUuid = "999";
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
@@ -72,7 +72,7 @@ public class QueueMessagesTest {
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
-            CancelJobMessage m2 = CancelJobMessage.fromJson(json);
+            DeleteJobMessage m2 = DeleteJobMessage.fromJson(json);
             Assert.assertEquals(AgaveStringUtils.toComparableString(m2),  
                                 AgaveStringUtils.toComparableString(m),
                                 "Regenerated message object does not match the original object.");
@@ -82,8 +82,8 @@ public class QueueMessagesTest {
         {
             // Generate the json.
             StopJobMessage m = new StopJobMessage();
-            m.name = "stopJbo";
-            m.uuid = "1001";
+            m.jobName = "stopJbo";
+            m.jobUuid = "1001";
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
@@ -101,8 +101,8 @@ public class QueueMessagesTest {
         {
             // Generate the json.
             PauseJobMessage m = new PauseJobMessage();
-            m.name = "pauseJob";
-            m.uuid = "34";
+            m.jobName = "pauseJob";
+            m.jobUuid = "34";
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
