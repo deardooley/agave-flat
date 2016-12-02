@@ -92,9 +92,10 @@ public class SystemRoleResource extends AgaveResource
 							"Please specify an system using its system id. ");
 		} 
 		
+		RemoteSystem system = null;
 		try
 		{
-			RemoteSystem system = dao.findActiveAndInactiveSystemBySystemId(systemId);
+			system = dao.findActiveAndInactiveSystemBySystemId(systemId);
 		
 			if (system == null)
 			{
@@ -144,7 +145,8 @@ public class SystemRoleResource extends AgaveResource
 						if (authClient.getUser(sharedUsername) == null) 
 						{
 							throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-									"No roles found for user " + sharedUsername);
+									"No roles found for user " + sharedUsername,
+									new FileNotFoundException());
 						} 
 						else 
 						{
@@ -153,7 +155,8 @@ public class SystemRoleResource extends AgaveResource
 									role = new SystemRole(sharedUsername, RoleType.ADMIN);
 								} else {
 									throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-											"No roles found for user " + sharedUsername);
+											"No roles found for user " + sharedUsername, 
+											new FileNotFoundException());
 								}
 							}
 							
@@ -161,7 +164,7 @@ public class SystemRoleResource extends AgaveResource
 						}
 					} catch (Exception e) {
 						throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-								"No roles found for user " + sharedUsername);
+								"No roles found for user " + sharedUsername, e);
 					}
 				}
 				
@@ -169,7 +172,7 @@ public class SystemRoleResource extends AgaveResource
 			}
 			else if (system.isPubliclyAvailable()) 
 			{
-				if (StringUtils.isEmpty(sharedUsername)) {
+				if (StringUtils.isEmpty(sharedUsername) || StringUtils.equals(sharedUsername, username)) {
 					SystemRole role = system.getUserRole(username);
 					return new IplantSuccessRepresentation("[" + role.toJSON(system) + "]");
 				} else {
@@ -178,7 +181,7 @@ public class SystemRoleResource extends AgaveResource
 				}
 			}
 			else if (system.getUserRole(username).canRead()) {
-			    if (StringUtils.isEmpty(sharedUsername)) {
+			    if (StringUtils.isEmpty(sharedUsername) || StringUtils.equals(sharedUsername, username)) {
                     SystemRole role = system.getUserRole(username);
                     return new IplantSuccessRepresentation("[" + role.toJSON(system) + "]");
                 } else {
@@ -194,11 +197,25 @@ public class SystemRoleResource extends AgaveResource
 		}
 		catch (ResourceException e) 
 		{
+			if (StringUtils.isEmpty(sharedUsername)) {
+				log.error("Failed to fetch roles for system " + systemId, e);
+			}
+			else {
+				log.error("Failed to fetch roles for user " 
+						+ sharedUsername + " on system " + systemId, e);
+			}
 			getResponse().setStatus(e.getStatus());
 			return new IplantErrorRepresentation(e.getMessage());
 		}
 		catch (Exception e)
 		{
+			if (StringUtils.isEmpty(sharedUsername)) {
+				log.error("Unexpected exception attempting to fetch roles for system " + systemId, e);
+			}
+			else {
+				log.error("Failed to fetch roles for user " 
+						+ sharedUsername + " on system " + systemId, e);
+			}
 			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
 			return new IplantErrorRepresentation("Failed to retrieve system roles: " + e.getMessage());
 		}
@@ -448,6 +465,12 @@ public class SystemRoleResource extends AgaveResource
 		}
 		catch (Exception e)
 		{
+			if (StringUtils.isEmpty(sharedUsername)) {
+				log.error("Failed to clear system roles", e);
+			}
+			else {
+				log.error("Failed to remove system roles for " + sharedUsername, e);
+			}
 			getResponse().setEntity(
 					new IplantErrorRepresentation("Failed to remove system roles: " + e.getMessage()));
 			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);

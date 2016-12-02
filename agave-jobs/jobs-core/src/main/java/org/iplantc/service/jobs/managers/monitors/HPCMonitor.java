@@ -91,6 +91,10 @@ public class HPCMonitor extends AbstractJobMonitor {
 					String result = null;
 					try
 					{
+						log.debug("Forking command " + queryCommand + " on " + 
+								remoteSubmissionClient.getHost() + ":" + remoteSubmissionClient.getPort() +
+								" for job " + job.getUuid());
+						
 						result = remoteSubmissionClient.runCommand(queryCommand);
 						
 						// if the response was empty, the job could be done, but the scheduler could only 
@@ -113,6 +117,8 @@ public class HPCMonitor extends AbstractJobMonitor {
 										+ "No further attempt will be made.");
 							}
 						}
+						
+						log.debug("Response for job " + job.getUuid() + " monitoring command was: " + result);
 					}
 					catch (Throwable e) {
 					    this.job = JobManager.updateStatus(job, job.getStatus());

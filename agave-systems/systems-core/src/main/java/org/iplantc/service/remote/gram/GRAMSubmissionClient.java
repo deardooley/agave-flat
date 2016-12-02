@@ -47,5 +47,17 @@ public class GRAMSubmissionClient implements RemoteSubmissionClient {
 	{
 		return false;
 	}
+	
+
+
+	@Override
+	public String getHost() {
+		return endpoint;
+	}
+
+	@Override
+	public int getPort() {
+		return port;
+	}
 
 }

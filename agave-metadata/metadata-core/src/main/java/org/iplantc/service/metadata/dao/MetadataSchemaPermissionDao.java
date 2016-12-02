@@ -108,7 +108,7 @@ public class MetadataSchemaPermissionDao {
         {
             Session session = getSession();
             
-            String sql = "select distinct uuid from metadata_schema_permissions "
+            String sql = "select distinct schema_id from metadata_schema_permissions "
             		+ "where tenant_id = :tenantid "
             		+ "		and (permission = :allpem or permission like '%READ%') "
             		+ "		and username in (:owner, :world, :public) "

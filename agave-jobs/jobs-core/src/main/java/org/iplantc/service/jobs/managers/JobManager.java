@@ -21,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.StaleObjectStateException;
+import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.exceptions.SoftwareException;
 import org.iplantc.service.apps.managers.ApplicationManager;
@@ -31,6 +32,7 @@ import org.iplantc.service.apps.model.enumerations.SoftwareParameterType;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.persistence.HibernateUtil;
+import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.io.dao.LogicalFileDao;
 import org.iplantc.service.io.model.LogicalFile;
@@ -47,6 +49,7 @@ import org.iplantc.service.jobs.managers.killers.JobKillerFactory;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobArchivePathMacroType;
+import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobMacroType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.TopicMessageSender;
@@ -333,71 +336,134 @@ public class JobManager {
 	}
 	
 	/**
-	 * Sets the job's visibility attribute to false and
-	 * updates the timestamp.
+	 * Sets {@link Job#setVisible(Boolean)} to true and
+	 * updates the timestamp. A {@link JobEventType#RESTORED} event
+	 * is thrown.
 	 *
 	 * @param jobId
 	 * @throws JobException
 	 */
-	public static Job hide(long jobId) throws JobTerminationException, JobException
+	public static Job restore(long jobId, String invokingUsername) throws JobTerminationException, JobException
 	{
-		Job job = JobDao.getById(jobId);
-
-		if (!job.isRunning())
-		{
-			try {
-				job.setVisible(Boolean.FALSE);
-				JobDao.persist(job);
-			}
-			catch (Throwable e) {
-				throw new JobException("Failed to update job " + job.getUuid() + ".", e);
-			}
-		}
-		else
-		{
-			JobKiller killer = null;
-			try {
-				killer = JobKillerFactory.getInstance(job);
-				killer.attack();
-			} 
-			catch (SystemUnavailableException e) {
-				throw new JobTerminationException("Failed to stop job " + job.getUuid() + 
-						". Execution system is unavailable", e);
-			}
-			catch (RemoteExecutionException e) {
-				throw new JobTerminationException("Failed to stop " + job.getUuid()
-						+ " at user's request. An error occurred communicating "
-						+ "with the remote host", e);
-			}
-			catch (JobTerminationException e) {
-				throw e;
-			}
-			catch (Throwable t) {
-				throw new JobException("Unexpected error stopping job " + job.getUuid() + 
-						" at user's request.", t);
-			}
-			finally {
-			    // Update job record.
-				job.setVisible(Boolean.FALSE);
-				job.setStatus(JobStatusType.STOPPED, "Job deleted by user.");
-				Date jobHiddenDate = new DateTime().toDate();
-				job.setLastUpdated(jobHiddenDate);
-				job.setEndTime(jobHiddenDate);
-				JobDao.persist(job);
+		Job job = null; 
 				
-				// Interrupt the worker thread that might be processing this job now.
-		        StopJobMessage message = new StopJobMessage(job.getName(), job.getUuid(), job.getTenantId());
-		        try {TopicMessageSender.sendJobMessage(message);}
-		        catch (Exception e) {
-		            String msg = "Unable to send job interrupt message: " + message.toString();
-		            log.error(msg, e);
-		        }
+		try {
+			job = JobDao.getById(jobId);
+		
+			if (!job.isVisible()) {
+				try {
+					job.setVisible(Boolean.TRUE);
+					
+					job.addEvent(new JobEvent(
+							JobEventType.RESTORED.name(), 
+							"Job was restored by " + invokingUsername,
+							invokingUsername));
+					
+					JobDao.persist(job);
+					
+					return job;
+				}
+				catch (Throwable e) {
+					throw new JobException("Failed to restore job " + job.getUuid() + ".", e);
+				}
+			}
+			else {
+				throw new JobException("Job is already visible.");
 			}
 		}
-		
-		return job;
+		catch (UnresolvableObjectException e) {
+			throw new JobException("Unable to restore job. If this persists, please contact your tenant administrator.", e);
+		}
+		catch (JobException e) {
+			throw e;
+		}
 	}
 
+    /**
+     * Sets the job's visibility attribute to false and
+     * updates the timestamp. A {@link JobEventType#DELETED} event
+     * is thrown. If the job was running, a {@link JobEventType#STOPPED} event
+     * is also thrown.
+     *
+     * @param jobId
+     * @throws JobException
+     */
+    public static Job hide(long jobId, String invokingUsername) throws JobTerminationException, JobException
+    {
+        Job job = JobDao.getById(jobId);
+        
+        // make sure the job is visible
+        if (job.isVisible()) {
+            
+            // if the job isn't running, we can just flip the visibility flag and move on
+            if (!job.isRunning())
+            {
+                try {
+                    job.setVisible(Boolean.FALSE);
+                    
+                    job.addEvent(new JobEvent(
+                            JobEventType.DELETED.name(), 
+                            "Job was deleted by user " + invokingUsername,
+                            invokingUsername));
+                    
+                    JobDao.persist(job);
+                }
+                catch (Throwable e) {
+                    throw new JobException("Failed to update job " + job.getUuid() + ".", e);
+                }
+            }
+            // otherwise, we need to attempt to kill the remote job
+            else
+            {
+                JobKiller killer = null;
+                try {
+                    killer = JobKillerFactory.getInstance(job);
+                    killer.attack();
+                } 
+                catch (SystemUnavailableException e) {
+                    throw new JobTerminationException("Failed to stop job " + job.getUuid() + 
+                            ". Execution system is unavailable", e);
+                }
+                catch (RemoteExecutionException e) {
+                    throw new JobTerminationException("Failed to stop " + job.getUuid()
+                            + " at user's request. An error occurred communicating "
+                            + "with the remote host", e);
+                }
+                catch (JobTerminationException e) {
+                    throw e;
+                }
+                catch (Throwable t) {
+                    throw new JobException("Unexpected error stopping job " + job.getUuid() + 
+                            " at user's request.", t);
+                }
+                finally {
+                    job.setVisible(Boolean.FALSE);
+                    job.setStatus(JobStatusType.STOPPED, "Job stopped by user " + invokingUsername);
+                    
+                    Date jobHiddenDate = new DateTime().toDate();
+                    job.setLastUpdated(jobHiddenDate);
+                    job.setEndTime(jobHiddenDate);
+                    
+                    job.addEvent(new JobEvent(
+                            JobEventType.DELETED.name(), 
+                            "Job was deleted by user " + invokingUsername,
+                            invokingUsername));
+                    
+                    JobDao.persist(job);
+                    
+                    // Interrupt the worker thread that might be processing this job now.
+                    StopJobMessage message = new StopJobMessage(job.getName(), job.getUuid(), job.getTenantId());
+                    try {TopicMessageSender.sendJobMessage(message);}
+                    catch (Exception e) {
+                        String msg = "Unable to send job interrupt message: " + message.toString();
+                        log.error(msg, e);
+                    }
+                }
+            }
+        }
+        
+        return job;
+    }
 	/**
 	 * Updates the status of a job, updates the timestamps as appropriate
 	 * based on the status, and writes a new JobEvent to the job's history.
@@ -551,9 +617,6 @@ public class JobManager {
 	public static void archive(Job job)
 	throws SystemUnavailableException, SystemUnknownException, JobException
 	{
-		// flag to ignore deleting of archiving folder in the event of a race condition
-		boolean skipCleanup = false;
-
 		ExecutionSystem executionSystem = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
 
 		if (executionSystem == null || !executionSystem.isAvailable() || !executionSystem.getStatus().equals(SystemStatusType.UP))
@@ -782,7 +845,6 @@ public class JobManager {
 			}
 		}
 		catch (StaleObjectStateException e) {
-			skipCleanup = true;
 			log.error(e);
 			throw e;
 		}

@@ -190,12 +190,12 @@
 				</exclusion>
 			</exclusions>
 		</dependency> -->
-		<dependency>
+		<!-- <dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
 			<version>${guice.version}</version>
-			<!-- <scope>test</scope> -->
-		</dependency>
+			<scope>test</scope>
+		</dependency> -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>

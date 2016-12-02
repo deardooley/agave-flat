@@ -25,9 +25,11 @@ import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.log4j.Logger;
 import org.iplantc.service.common.auth.JWTClient;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.clients.AgaveLogServiceClient.ServiceKeys;
+import org.iplantc.service.common.exceptions.TenantException;
 import org.iplantc.service.common.exceptions.UUIDException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.restlet.resource.AbstractAgaveResource;
@@ -49,6 +51,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class AbstractUuidResource extends AbstractAgaveResource {
 
+	
+	private static final Logger log = Logger
+			.getLogger(AbstractUuidResource.class);
+	
 	/**
      *
      */
@@ -108,17 +114,20 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 		private final JsonNode json;
 		private final String url;
 		private final String filter;
+		private final Map<String,String> headerMap;
 		
-		ResourceResolutionTask(String url, String filter) {
+		ResourceResolutionTask(String url, String filter, Map<String,String> headerMap) {
 			this.url = url;
 			this.json = null;
 			this.filter = filter;
+			this.headerMap = headerMap;
 		}
 		
-		ResourceResolutionTask(JsonNode json, String filter) {
+		ResourceResolutionTask(JsonNode json, String filter, Map<String,String> headerMap) {
 			this.url = null;
 			this.json = json;
 			this.filter = filter;
+			this.headerMap = headerMap;
 		}
 
 		/** Access a URL, and see if you get a healthy response. */
@@ -126,10 +135,12 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 		public JsonNode call() throws Exception {
 			if (json == null) {
 				try {
-					return fetchResource(this.url, this.filter);
+					return fetchResource(this.url, this.filter, this.headerMap);
 				}
 				catch (UUIDResolutionException e) {
-					return new ObjectMapper().createObjectNode()
+					log.error(e);
+	    			
+	    			return new ObjectMapper().createObjectNode()
 							.put("status", "error")
 							.put("message", e.getMessage());
 				}
@@ -161,16 +172,23 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 	 * Fetches the resource at the given URL using a HTTP Get and pass through
 	 * auth headers.
 	 * 
-	 * @param resourceUrl
+	 * @param resourceUrl the url to the resource requested
+	 * @param filter the url filter to use on the remote request
+	 * @param headers the auth and client headers used to request the resource
 	 * @return JsonNode representation of the naked response
 	 * @throws UUIDResolutionException
 	 */
-	protected JsonNode fetchResource(String resourceUrl, String filter) throws UUIDResolutionException {
+	protected JsonNode fetchResource(String resourceUrl, String filter, Map<String,String> headerMap) throws UUIDResolutionException {
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode attemptResponse = null;
 		try 
 		{
-			URI escapedUri = URI.create(resourceUrl + "?naked=true&filter="+URLEncoder.encode(filter));
+			String filteredResourceUrl = resourceUrl;
+			if (StringUtils.isNotEmpty(filter)) {
+				filteredResourceUrl += "?filter="+URLEncoder.encode(StringUtils.stripToEmpty(filter));
+			}
+			
+			URI escapedUri = URI.create(filteredResourceUrl);
 			
 			CloseableHttpClient httpclient = null;
 			if (escapedUri.getScheme().equalsIgnoreCase("https"))
@@ -212,23 +230,11 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 												.build();
 			httpGet.setConfig(config);
 			
-			Map<String,String> headerMap = new HashMap<String,String>();
-            
-            headerMap.put("Content-Type", "application/json");
-            headerMap.put("User-Agent", "Agave-UUID-API/"+ org.iplantc.service.common.Settings.getContainerId());
-            
-            String jwtHeaderKey = JWTClient.getJwtHeaderKeyForTenant(TenancyHelper.getCurrentTenantId());
-            Series<Header> headers = Request.getCurrent().getHeaders();
-            
-            Header jwtHeader = headers.getFirst(jwtHeaderKey);
-            if (jwtHeader != null) {
-	            headerMap.put(jwtHeaderKey, jwtHeader.getValue());
-            }
-            
-            Header authHeader = headers.getFirst("Authorization");
-            if (authHeader != null) {
-            	headerMap.put("Authorization", authHeader.getValue());
-            }
+			// add the auth and client headers provided to this method
+			for (String headerName: headerMap.keySet()) {
+				httpGet.addHeader(headerName, headerMap.get(headerName));
+	        }
+	        
 			long callstart = System.currentTimeMillis();
 			
 			try
@@ -243,7 +249,7 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 					
 					long contentLength = entity.getContentLength();
 					
-					if (contentLength > 0) {
+					if (contentLength > 0 || contentLength == -1) {
 						in = entity.getContent();
 						attemptResponse = mapper.readTree(in);
 						// if successful, just return the result from the response
@@ -266,6 +272,7 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 					}
 					// if no content is returned, return an empty object.
 					else {
+						
 						return mapper.createObjectNode();
 					}
 				}
@@ -312,6 +319,38 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 			throw new UUIDResolutionException("Failed to resolve " + resourceUrl + 
 					" due to internal server error.");
 		} 
+	}
+	
+	/**
+	 * Creates a {@link Map} of header names and values used in the requests
+	 * to resolve resource representations.
+	 * 
+	 * @return
+	 * @throws TenantException
+	 */
+	protected Map<String,String> getRequestAuthCredentials() throws TenantException {
+		Map<String,String> headerMap = new HashMap<String,String>();
+        
+		// these will uniquely identify the requesting client
+		headerMap.put("Content-Type", "application/json");
+		headerMap.put("User-Agent", "Agave-UUID-API/"+ org.iplantc.service.common.Settings.getContainerId());
+        
+		// we add the jwt header for backend (dev) access
+        String jwtHeaderKey = JWTClient.getJwtHeaderKeyForTenant(TenancyHelper.getCurrentTenantId());
+        Series<Header> headers = Request.getCurrent().getHeaders();
+        
+        Header jwtHeader = headers.getFirst(jwtHeaderKey);
+        if (jwtHeader != null) {
+        	headerMap.put(jwtHeaderKey, jwtHeader.getValue());
+        }
+        
+        // we add the frontend bearer token if present.
+        Header authHeader = headers.getFirst("authorization");
+        if (authHeader != null) {
+        	headerMap.put("Authorization", authHeader.getValue());
+        }
+        
+        return headerMap;
 	}
 
 }

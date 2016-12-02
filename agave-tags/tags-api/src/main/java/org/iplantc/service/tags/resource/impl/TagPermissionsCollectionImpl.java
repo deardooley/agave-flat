@@ -42,7 +42,6 @@ public class TagPermissionsCollectionImpl extends AbstractTagCollection implemen
 	
     public TagPermissionsCollectionImpl() {}
     
-    @GET
     @Override
     public Response getEntityPermissions(@PathParam("entityId") String entityId) {
         
@@ -82,11 +81,11 @@ public class TagPermissionsCollectionImpl extends AbstractTagCollection implemen
         catch (Throwable e)
         {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to retrieve permissions: " + e.getMessage(), e);
+            		"An unexpected error occurred while fetching permissions for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
     }
 	
-	@POST
 	@Override
 	public Response addEntityPermission(@PathParam("entityId") String entityId, Representation input) 
 	{   
@@ -147,11 +146,11 @@ public class TagPermissionsCollectionImpl extends AbstractTagCollection implemen
         catch (Exception e) {
         	log.error("Failed to updated permission", e);
         	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-                    "Failed to update permission. " + e.getMessage(), e);
+        			"An unexpected error occurred while updating permissions for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 	
-	@DELETE
 	@Override
     public Response clearAllEntityPermissions(@PathParam("entityId") String entityId) {
 	    
@@ -181,7 +180,8 @@ public class TagPermissionsCollectionImpl extends AbstractTagCollection implemen
         catch (Exception e)
         {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-                    "Failed to remove permissions: " + e.getMessage(), e);
+            		"An unexpected error occurred while clearing permissions for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 	

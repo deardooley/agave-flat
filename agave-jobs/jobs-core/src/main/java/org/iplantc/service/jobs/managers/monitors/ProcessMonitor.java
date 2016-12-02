@@ -85,7 +85,13 @@ public class ProcessMonitor extends AbstractJobMonitor
 					String result = null;
 					try 
 					{
+						log.debug("Forking command " + queryCommand + " on " + 
+								remoteSubmissionClient.getHost() + ":" + remoteSubmissionClient.getPort() +
+								" for job " + job.getUuid());
+						
 						result = remoteSubmissionClient.runCommand(queryCommand);
+						
+						log.debug("Response for job " + job.getUuid() + " monitoring command was: " + result);
 					}
 					catch (Throwable e)
 					{

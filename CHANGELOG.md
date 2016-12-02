@@ -1,6 +1,35 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.1.9 - 2016-11-21
+
+### Added
+- JOBS: Adding job action to restore a job from deleted or hidden status. Make a JSON POST request with `{"action":"restore"}` as the body.
+- JOBS: Added support for a `restore` action in the job management service so users can "undelete" their deleted jobs.
+- JOBS: Added `lastModified` to the job object as a query able field in the full response body.
+- JOBS: Added `CUSTOM_LSF` and `CUSTOM_LOADLEVELER` support as scheduler types.
+- JOBS: Added `AGAVE_JOB_NAME_RAW`, `AGAVE_BASE_URL`, and `AGAVE_JOB_MAX_RUNTIME_SECONDS` macros for resolution in job wrapper templates.
+- JOBS: Adding `lastModified` and its alias, `lastUpdated`, to the search query fields supported.
+- JOBS: Added `DELETED` and `RESTORED` events to the corresponding job actions.
+- JOBS: Added support for custom field naming in the `AGAVE_JOB_CALLBACK_NOTIFICATION` macro. By listing the environment variables to include in the response in `<field_name>:<env_variable_name>` format, users can customize the json to be sent back. This should help avoid namespace conflicts between response data and the local environment runtime.
+- SYSTEMS: Adding `lastModified` and its alias, `lastUpdated`, to the search query fields supported.
+
+### Changed
+- APPS: Fixed regex to allow regression validation on apps with integer version values.
+- TAGS: Cleaning up response handling and messaging for internal errors.
+- JOBS: Fixed a bug in querying for job archiving tasks with two or more dedicated tenants specified in the container config.
+- JOBS: Fixed bug in `LsfSubmitScript` class where the wall time could be given in "hh:mm:ss" format while LSF only accepts "hh:mm".
+- JOBS: Changed minimum requested job wall time on LSF systems to "00:01".
+- JOBS: Fixed bug where the monitor type was decided based on app execution type rather than system execution type. This impacted cloned apps that went from CLI to HPC execution systems* Fixed bug in LSF directive generation. Closing tick was missing on cpu directives. This closes AH-158.  
+- SYSTEMS: Cleaning up response handling on role grant exceptions.  
+- MIGRATIONS: Added `JobRestore` ActivityKey to the UsageActivities field table to track undulations of jobs.
+- METADATA: Fixing vanilla queries on metadata schema. Permission query was bad.
+
+### Removed
+- JOBS: Removed legacy "COBALT" scheduler type support.
+- JOBS: Removed support for `ActionFolderTemplate` to clear out the last of the legacy cobalt scheduler support.
+
+
 ## 2.1.9 - 2016-11-11
 
 ### Added

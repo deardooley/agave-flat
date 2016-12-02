@@ -44,7 +44,6 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
     /* (non-Javadoc)
      * @see org.iplantc.service.apps.resources.impl.SoftwarePermissionResource#getNotification(java.lang.String, java.lang.String)
      */
-    @GET
     @Override
 	public Response getEntityPermissionForUser(@PathParam("entityId") String entityId,
                                     		   @PathParam("sharedUsername") String sharedUsername) {
@@ -70,7 +69,8 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
         catch (Throwable e) {
         	log.error("Failed to retrieve user permissions", e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to retrieve user permissions.", e);
+            		"An unexpected error occurred while fetching user permissions for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
     }
 	
@@ -78,7 +78,6 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
      * @see org.iplantc.service.apps.resources.impl.SoftwarePermissionResource#updateUserSoftwarePermission(java.lang.String, java.lang.String, org.restlet.representation.Representation)
      */
     @Override
-    @POST
     public Response updateEntityPermissionForUser(@PathParam("entityId") String entityId,
             									  @PathParam("sharedUsername") String sharedUsername,
             									  Representation input) {
@@ -145,14 +144,14 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
         catch (Exception e) {
         	log.error("Failed to updated permission", e);
         	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-                    "Failed to update permission.", e);
+        			"An unexpected error occurred while updating user permissions for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
     }
     
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.apps.resources.impl.SoftwarePermissionResource#deleteUserSoftwarePermission(java.lang.String, java.lang.String)
 	 */
-	@DELETE
 	@Override
 	public Response removeEntityPermissionForUser(@PathParam("entityId") String entityId,
 			  									  @PathParam("sharedUsername") String sharedUsername) {
@@ -193,7 +192,8 @@ public class TagPermissionResourceImpl extends AbstractTagResource implements Ta
         catch (Exception e) {
         	log.error("Failed to remove user permissions", e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to remove user permissions.", e);
+            		"An unexpected error occurred while removing permissions for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 }

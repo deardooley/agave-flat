@@ -19,10 +19,11 @@ public class AgaveUUIDTest {
             String suuid = uuid.toString();
             Assert.assertFalse(uuids.contains(suuid), "Duplicate UUID " + suuid
                     + " was created.");
-            // Thread.currentThread().sleep(10);
             uuids.add(suuid);
-            System.out.println(suuid);
-            log.debug(suuid);
+            if (i%10000 == 0) {
+            	log.debug("["+i+"] UUID generated");
+            }
         }
+        log.debug(count + " uuid generated without conflict");
     }
 }

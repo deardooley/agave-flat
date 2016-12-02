@@ -6,6 +6,7 @@ package org.iplantc.service.tags.resource.impl;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -71,9 +72,10 @@ public class TagsCollectionImpl extends AbstractTagCollection implements TagsCol
             throw e;
         }
         catch (Throwable e) {
-        	log.error("Failed to retrieve permissions", e);
+        	log.error("Failed to retrieve tags", e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to retrieve permissions.", e);
+            		"An unexpected error occurred while fetching the tag. "
+                			+ "If this continues, please contact your tenant administrator.", e);
         }
 		
 	}
@@ -106,7 +108,8 @@ public class TagsCollectionImpl extends AbstractTagCollection implements TagsCol
         catch (Exception e) {
         	log.error("Failed to add tag", e);
         	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-                    "Failed to add tag.", e);
+        			"An unexpected error occurred while adding the tag. "
+                			+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 }

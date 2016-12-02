@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
-@Path("{entityId}/associatedIds")
+@Path("{entityId}/associationIds")
 public class TagResourcesCollectionImpl extends AbstractTagCollection implements TagResourcesCollection {
     
 	private static final Logger log = Logger.getLogger(TagResourcesCollectionImpl.class);
@@ -41,11 +41,10 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
     public TagResourcesCollectionImpl() {}
     
     /* (non-Javadoc)
-     * @see org.iplantc.service.tags.resource.TagResourcesCollection#getTagAssociatedIds(java.lang.String)
+     * @see org.iplantc.service.tags.resource.TagResourcesCollection#getTagAssociationIds(java.lang.String)
      */
-    @GET
-	@Override
-	public Response getTagAssociatedIds(@PathParam("entityId") String entityId) throws Exception {
+    @Override
+	public Response getTagAssociationIds(@PathParam("entityId") String entityId) throws Exception {
 		
 		logUsage(AgaveLogServiceClient.ActivityKeys.TagResourcesList);
         
@@ -66,17 +65,17 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         catch (Throwable e) {
         	log.error("Failed to retrieve tag " + entityId, e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to retrieve tag " + entityId, e);
+            		"An unexpected error occurred while fetching associatinoIds for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
 		
 	}
 
 	/* (non-Javadoc)
-	 * @see org.iplantc.service.tags.resource.TagResourcesCollection#clearTagAssociatedIds(java.lang.String)
+	 * @see org.iplantc.service.tags.resource.TagResourcesCollection#clearTagAssociationIds(java.lang.String)
 	 */
-	@DELETE
 	@Override
-	public Response clearTagAssociatedIds(@PathParam("entityId") String entityId) throws Exception {
+	public Response clearTagAssociationIds(@PathParam("entityId") String entityId) throws Exception {
 		
 		logUsage(AgaveLogServiceClient.ActivityKeys.TagResourceDelete);
         
@@ -85,7 +84,7 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         	Tag tag = getResourceFromPathValue(entityId);
         	ObjectMapper mapper = new ObjectMapper();
         	TagManager manager = new TagManager();
-        	manager.updateTagAssociatedUuid(tag, mapper.createArrayNode(), getAuthenticatedUsername());
+        	manager.updateTagAssociationId(tag, mapper.createArrayNode(), getAuthenticatedUsername());
         	
         	return Response.ok().entity(new AgaveSuccessRepresentation("[]")).build();
         }
@@ -100,16 +99,16 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         catch (Exception e) {
         	log.error("Failed to delete tag " + entityId, e);
         	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-                    "Failed to add tag " + entityId, e);
+        			"An unexpected error occurred while removing associatinoIds for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 
 	/* (non-Javadoc)
-	 * @see org.iplantc.service.tags.resource.TagResourcesCollection#addTagAssociatedIds(java.lang.String, org.restlet.representation.Representation)
+	 * @see org.iplantc.service.tags.resource.TagResourcesCollection#addTagAssociationIds(java.lang.String, org.restlet.representation.Representation)
 	 */
-	@POST
 	@Override
-	public Response addTagAssociatedIds(@PathParam("entityId") String entityId, Representation input) {
+	public Response addTagAssociationIds(@PathParam("entityId") String entityId, Representation input) {
 		
 		logUsage(AgaveLogServiceClient.ActivityKeys.TagResourceUpdate);
         
@@ -119,7 +118,7 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         	JsonNode json = getPostedContentAsJsonNode(input);  	
         	
         	TagManager manager = new TagManager();
-        	Tag updatedTag = manager.updateTagAssociatedUuid(tag, json, getAuthenticatedUsername());
+        	Tag updatedTag = manager.updateTagAssociationId(tag, json, getAuthenticatedUsername());
         	
         	ObjectMapper mapper = new ObjectMapper();
     		String jsonTaggedResources = mapper.writerWithType(new TypeReference<List<TaggedResource>>() {})
@@ -134,7 +133,8 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         catch (Throwable e) {
         	log.error("Failed to retrieve tag " + entityId, e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-                    "Failed to retrieve tag " + entityId, e);
+            		"An unexpected error occurred while adding associatinoIds for tag  " + entityId + ". "
+            				+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
 }

@@ -150,4 +150,14 @@ public class GSISSHClient implements RemoteSubmissionClient
         return true;
 	}
 
+	@Override
+	public String getHost() {
+		return hostname;
+	}
+
+	@Override
+	public int getPort() {
+		return port;
+	}
+
 }

@@ -39,7 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
-@Path("{entityId}/associatedIds/{uuid}")
+@Path("{entityId}/associationIds/{uuid}")
 public class TagResourceResourceImpl extends AbstractTagResource implements
 		TagResourceResource {
 
@@ -48,7 +48,9 @@ public class TagResourceResourceImpl extends AbstractTagResource implements
 	public TagResourceResourceImpl() {
 	}
 
-	@GET
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.tags.resource.TagResourceResource#represent(java.lang.String, java.lang.String)
+	 */
 	@Override
 	public Response represent(@PathParam("entityId") String entityId,
 			@PathParam("uuid") String associatedUuid) {
@@ -80,8 +82,10 @@ public class TagResourceResourceImpl extends AbstractTagResource implements
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.tags.resource.TagResourceResource#accept(java.lang.String, java.lang.String)
+	 */
 	@Override
-	@POST
 	public Response accept(@PathParam("entityId") String entityId,
 			@PathParam("uuid") String associatedUuid) {
 
@@ -101,7 +105,7 @@ public class TagResourceResourceImpl extends AbstractTagResource implements
 					TagManager manager = new TagManager();
 					ObjectMapper mapper = new ObjectMapper();
 
-					Tag updatedTag = manager.updateTagAssociatedUuid(tag,
+					Tag updatedTag = manager.updateTagAssociationId(tag,
 							mapper.createArrayNode().add(associatedUuid),
 							getAuthenticatedUsername());
 
@@ -135,7 +139,9 @@ public class TagResourceResourceImpl extends AbstractTagResource implements
 		}
 	}
 
-	@DELETE
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.tags.resource.TagResourceResource#remove(java.lang.String, java.lang.String)
+	 */
 	@Override
 	public Response remove(@PathParam("entityId") String entityId,
 			@PathParam("uuid") String associatedUuid) {

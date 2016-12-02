@@ -15,13 +15,13 @@ import org.restlet.representation.Representation;
 public interface TagResourcesCollection {
 
     @GET
-    public Response getTagAssociatedIds(@PathParam("entityId") String tagId) throws Exception;
+    public Response getTagAssociationIds(@PathParam("entityId") String tagId) throws Exception;
 
 	@POST
-	public Response addTagAssociatedIds(@PathParam("entityId") String tagId, Representation input);
+	public Response addTagAssociationIds(@PathParam("entityId") String tagId, Representation input);
 	
     @DELETE
-    public Response clearTagAssociatedIds(@PathParam("entityId") String tagId) throws Exception;
+    public Response clearTagAssociationIds(@PathParam("entityId") String tagId) throws Exception;
 
 }
 

@@ -1832,7 +1832,7 @@ public class FTP extends FTPClient implements RemoteDataClient
 	 */
 	@Override
 	public String checksum(String remotePath) throws IOException,
-			RemoteDataException
+			RemoteDataException, NotImplementedException
 	{
 		try
 		{

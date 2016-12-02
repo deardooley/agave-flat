@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.iplantc.service.transfer.exceptions.RemoteDataSyntaxException;
@@ -221,15 +222,14 @@ public interface RemoteDataClient extends RemoteDataClientPermissionProvider {
 	
 	/**
 	 * Generate a MD5 checksum of the remote file item. This is not supported by all protocols.
-	 * When not supported by the underlying implemenation, a {@link NotYetImplemented} exception
-	 * will be thrown.
 	 * 
-	 * @param remotePath
+	 * @param remotePath the virtual path to checksum
 	 * @return a MD5 checksum of the file item
 	 * @throws IOException
 	 * @throws RemoteDataException
+	 * @throws NotImplementedException When not supported by the underlying implementation,
 	 */
-	public abstract String checksum(String remotePath) throws IOException, RemoteDataException;
+	public abstract String checksum(String remotePath) throws IOException, RemoteDataException, NotImplementedException;
 	
 	/**
 	 * Renames a file item from the virtual sourcePath to virtual destPath. This is

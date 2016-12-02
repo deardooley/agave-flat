@@ -743,7 +743,7 @@ public class BatchQueue implements LastUpdatable, Comparable<BatchQueue> {
 	public BatchQueue clone()
 	{
 		BatchQueue queue = new BatchQueue();
-		queue.name = name;
+		queue.name = getName();
 		queue.mappedName = getMappedName();
 		queue.description = getDescription();
 		queue.maxJobs = getMaxJobs();

@@ -1173,13 +1173,13 @@ public class JobDao
 			    for (int i=0;i<systemIds.length;i++) {
 			        
 			        if (StringUtils.contains(systemIds[i], "#")) {
-			            sql += "         (usg.execution_system = :systemid" + i + " and usg.queue_request = :queuename" + i + ")  \n";
+			            sql += "         (j.execution_system = :systemid" + i + " and j.queue_request = :queuename" + i + ")  \n";
 			        } else {
-			            sql += "         (usg.execution_system = :systemId" + i + "  \n"
-                             + "             or usg.archive_system in ( \n"
+			            sql += "         (j.execution_system = :systemid" + i + "  \n"
+                             + "             or j.archive_system in ( \n"
                              + "                                    select s.id  \n"
                              + "                                    from systems s  \n"
-                             + "                                    where s.systemId in :systemid" + i + "  \n" 
+                             + "                                    where e.system_id in (:systemid" + i + ")  \n" 
                              + "                                            and s.tenant_id = j.tenant_id  \n"
                              + "                                     ) \n"
                              + "         )  \n";
@@ -1240,7 +1240,7 @@ public class JobDao
                 }
             }
             
-            // log.debug(q);
+//            log.debug(q);
             
             List<Map<String,Object>> aliasToValueMapList = query.setCacheable(false)
                                                                 .setCacheMode(CacheMode.REFRESH)
@@ -1287,10 +1287,15 @@ public class JobDao
 					+ "		and j.status = 'CLEANING_UP' \n"
 					+ "order by rand() ";
 				
+				
+				
 				String jq = StringUtils.replace(sql, ":excludesystems", excludeSystems ? "not" : "");
 				jq = StringUtils.replace(jq, ":tenantid", tid);
 				jq = StringUtils.replace(jq, ":owner", username);
 				
+				sql = StringUtils.replace(sql, ":excludetenant", excludeTenant ? "not" : "");
+				sql = StringUtils.replace(sql, ":excludesystems", excludeSystems ? "not" : "");
+	           
 				Query jobQuery = session.createSQLQuery(sql)
 						.setString("owner", username)
 						.setString("tenantid", tid);
@@ -1857,7 +1862,7 @@ public class JobDao
 			sql +=	" ORDER BY j.lastUpdated DESC\n";
 			
 			String q = sql;
-			
+			//log.debug(q);
 			Query query = session.createQuery(sql)
 								 .setString("tenantid", TenancyHelper.getCurrentTenantId());
 			

@@ -28,6 +28,7 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.MissingDataException;
 import org.iplantc.service.jobs.managers.JobManager;
+import org.iplantc.service.jobs.managers.JobPermissionManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
@@ -176,8 +177,23 @@ public class StagingAction extends AbstractWorkerAction {
                         {  
                             if (!pm.canRead(absolutePath))
                             {
-                                throw new PermissionException("User does not have permission to access " + 
-                                        logicalFile.getAgaveRelativePathFromAbsolutePath() + " on " + remoteStorageSystem.getSystemId());
+                            	// the file permission check won't catch the job permissions implicitly granted on
+                            	// the output folder because we don't have a complete manifest of the job output folder.
+                            	// If file permissions fail, we still need to manually check the job permissions.
+                            	if (AgaveUriRegex.JOBS_URI.matches(singleRawInputUri)) {
+                            		Matcher jobOutputMatcher = AgaveUriRegex.getMatcher(singleRawInputUri);
+                            		String referencedJobIdFromInputUrl = jobOutputMatcher.group(1);
+                            		Job referenceJob = JobDao.getByUuid(referencedJobIdFromInputUrl);
+                            		
+                            		if (!new JobPermissionManager(referenceJob, this.job.getOwner()).canRead(this.job.getOwner())) {
+                            			throw new PermissionException("User does not have permission to access " + 
+                                                "the output folder of job " + referencedJobIdFromInputUrl);
+                            		}
+                            	}
+                            	else {
+	                                throw new PermissionException("User does not have permission to access " + 
+	                                        remotePath + " on " + remoteStorageSystem.getSystemId());
+                            	}
                             }
                         }
                         else
@@ -301,6 +317,57 @@ public class StagingAction extends AbstractWorkerAction {
                     
                     checkStopped();
                     
+                    // see if we can skip this transfer due to prior success
+                    
+                    boolean skipTransfer = false;
+                    // if destination is a file and it was already transferred
+                    if (remoteExecutionDataClient.doesExist(destPath) && 
+                    		remoteExecutionDataClient.length(destPath) == remoteStorageDataClient.length(remotePath)) {
+                    	
+                		// verify the checksums are the same before skipping?
+                		try {
+                			String sourceChecksum = remoteStorageDataClient.checksum(remotePath);
+                			String destChecksum = remoteExecutionDataClient.checksum(destPath);
+                			
+                			if (StringUtils.equals(sourceChecksum, destChecksum)) {
+                				// they're the same! skip this transfer
+                				log.debug("Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
+        						+ job.getUuid() + ". The checksums were identical. This input will not be recopied.");
+                				
+                				skipTransfer = true;
+                			}
+                			else {
+                				log.debug("Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
+                						+ job.getUuid() + ". The checksums did not match, so the input file will be transfered to the "
+                						+ "target system and overwrite the existing file.");
+                			}
+                		} 
+                		catch (NotImplementedException  e) {
+                			// should we find another way, or just copy the files?
+                			// we'll err on the side of caution and recopy
+                			log.debug("Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
+            						+ job.getUuid() + ". Unable to calculate checksums. This input will not be recopied.");
+                			
+                			skipTransfer = true;
+                		}
+                		catch (Throwable e) {
+                			// couldn't calculate the checksum due to server side error
+                			// we'll err on the side of caution and recopy
+                			log.debug("Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
+            						+ job.getUuid() + ". Unable to calculate checksums. This input will not be recopied.");
+                		}
+                		finally {
+                			if (skipTransfer) {
+                                try { remoteExecutionDataClient.disconnect(); } catch (Exception e) {}
+                                try { remoteStorageDataClient.disconnect(); } catch(Exception e) {};
+                                
+                                continue;
+                			}
+                		}
+                    }
+                    
+                    
+                    // nope. still have to copy them. proceed
                     TransferTask rootTask = new TransferTask(
                             singleRawInputValue, 
                             "agave://" + this.job.getSystem() + "/" + destPath, 
@@ -319,19 +386,19 @@ public class StagingAction extends AbstractWorkerAction {
                     this.job.setStatus(JobStatusType.STAGING_INPUTS, event);
                     this.job.setLastUpdated(new DateTime().toDate());
                     JobDao.persist(this.job);
-
+                    
                     urlCopy = new URLCopy(remoteStorageDataClient, remoteExecutionDataClient);
                     
                     try
                     {
-                        rootTask = urlCopy.copy(remotePath, destPath, rootTask);
+                    	rootTask = urlCopy.copy(remotePath, destPath, rootTask);
                     }
                     catch (ClosedByInterruptException e) {
                         throw e;
                     }
                     catch (Exception e)
                     {   
-                        // we may not be able to kill the gridftp threads assocaited with this transfer,
+                        // we may not be able to kill the gridftp threads associated with this transfer,
                         // so in that event, the transfer will time out and we can catch the exception 
                         // here to rethrow as a ClosedByInterruptException.
                         checkStopped();

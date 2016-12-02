@@ -44,8 +44,8 @@ public class CustomLsfSubmitScript extends LsfSubmitScript {
 		else {
 			String result = "#!/bin/bash \n" 
 				+ DIRECTIVE_PREFIX + "-J " + name + "\n"
-				+ DIRECTIVE_PREFIX + "-o " + standardOutputFile + "\n" 
-				+ DIRECTIVE_PREFIX + "-e " + standardErrorFile + "\n";
+				+ DIRECTIVE_PREFIX + "-oo " + standardOutputFile + "\n" 
+				+ DIRECTIVE_PREFIX + "-e " + standardErrorFile + "\n" ;
 	
 			result += resolveMacros(queue.getCustomDirectives()) + "\n\n";
 			

@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.auth.AuthorizationHelper;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
+import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.jobs.dao.JobDao;
@@ -86,7 +87,7 @@ public class JobManageResource extends AbstractJobResource {
 		try
 		{
 			job = JobDao.getByUuid(sJobId);
-			if (job == null || !job.isVisible()) 
+			if (job == null) 
 			{
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
 				getResponse().setEntity(new IplantErrorRepresentation(
@@ -123,10 +124,41 @@ public class JobManageResource extends AbstractJobResource {
 //					} else if (!ServiceUtils.isValid(pTable.get("path"))) {
 //						throw new JobException("path cannot be empty");
 //					}
-//					
 //				}
-//				else if (pTable.get("action").equalsIgnoreCase("resubmit"))
-				if (pTable.get("action").equalsIgnoreCase("resubmit"))
+				else if (pTable.get("action").equalsIgnoreCase("restore")) {
+					
+					AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 
+							AgaveLogServiceClient.ActivityKeys.JobRestore.name(), 
+							username, "", getRequest().getClientInfo().getUpstreamAddress());
+					
+					try {
+						Job restoredJob = JobManager.restore(job.getId(), getAuthenticatedUsername());
+						
+						getResponse().setEntity(new IplantSuccessRepresentation(restoredJob.toJSON()));
+						getResponse().setStatus(Status.SUCCESS_OK);
+					}
+					catch (JobException e) {
+						getResponse().setEntity(
+								new IplantErrorRepresentation(e.getMessage()));
+						getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
+						return;
+					}
+			    	catch (Exception e) {
+						getResponse().setEntity(
+								new IplantErrorRepresentation("Failed to restore job: " + e.getMessage()));
+						getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
+						log.error("Failed to restore job " + job.getUuid(), e);
+						return;
+					}
+				}
+				else if (!job.isVisible()) 
+				{
+					getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+					getResponse().setEntity(new IplantErrorRepresentation(
+							"No job found with job id " + sJobId));
+					return;
+				}
+				else if (pTable.get("action").equalsIgnoreCase("resubmit"))
 				{
 					AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 
 							AgaveLogServiceClient.ActivityKeys.JobsResubmit.name(), 
@@ -366,7 +398,6 @@ public class JobManageResource extends AbstractJobResource {
 					new IplantErrorRepresentation("Job id cannot be empty"));
 			getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
 			return;
-
 		}
 		
 		try
@@ -380,7 +411,7 @@ public class JobManageResource extends AbstractJobResource {
 			}
 			else if (new JobPermissionManager(job, username).canWrite(username))
 			{
-				JobManager.hide(job.getId());
+				JobManager.hide(job.getId(), username);
 				
 				getResponse().setEntity(new IplantSuccessRepresentation());
 				getResponse().setStatus(Status.SUCCESS_OK);

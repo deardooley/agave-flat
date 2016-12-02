@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.lf5.util.StreamUtils;
@@ -747,7 +748,7 @@ public class Local implements RemoteDataClient
 	 * @see org.iplantc.service.jobs.io.RemoteDataClient#checksum(java.lang.String)
 	 */
 	@Override
-	public String checksum(String remotepath) throws IOException, RemoteDataException
+	public String checksum(String remotepath) throws IOException, RemoteDataException, NotImplementedException
 	{
 		try
 		{

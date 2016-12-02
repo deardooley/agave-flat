@@ -5,6 +5,8 @@ import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
+import org.iplantc.service.tags.resource.impl.TagHistoryCollectionImpl;
+import org.iplantc.service.tags.resource.impl.TagHistoryResourceImpl;
 import org.iplantc.service.tags.resource.impl.TagPermissionResourceImpl;
 import org.iplantc.service.tags.resource.impl.TagPermissionsCollectionImpl;
 import org.iplantc.service.tags.resource.impl.TagResourceImpl;
@@ -25,7 +27,7 @@ public class TagsApplication extends Application {
         rrcs.add(TagResourceImpl.class);
         rrcs.add(TagsCollectionImpl.class);
         
-        // tag associatedIds
+        // tag associationIds
         rrcs.add(TagResourceResourceImpl.class);
         rrcs.add(TagResourcesCollectionImpl.class);
         
@@ -34,8 +36,8 @@ public class TagsApplication extends Application {
         rrcs.add(TagPermissionsCollectionImpl.class);
         
         // tag history
-//        rrcs.add(TagEventResourceImpl.class);
-//        rrcs.add(TagEventsCollectionImpl.class);
+        rrcs.add(TagHistoryResourceImpl.class);
+        rrcs.add(TagHistoryCollectionImpl.class);
         
         
         

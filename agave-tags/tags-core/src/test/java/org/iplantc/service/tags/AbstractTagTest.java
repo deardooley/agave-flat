@@ -40,7 +40,7 @@ public class AbstractTagTest {
 	{
 		ObjectNode json = (ObjectNode)dataHelper.getTestDataObject(TestDataHelper.TEST_TAG);
 		json.put("owner", TestDataHelper.TEST_USER);
-		((ArrayNode)json.get("associatedIds")).removeAll().add(defaultTenant.getUuid());
+		((ArrayNode)json.get("associationIds")).removeAll().add(defaultTenant.getUuid());
 		
 		return Tag.fromJSON(json);
 	}
