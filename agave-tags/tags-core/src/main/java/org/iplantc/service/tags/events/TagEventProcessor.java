@@ -59,7 +59,7 @@ public class TagEventProcessor {
 		
 		JsonNode json = null;
 		try {
-		    json = mapper.createObjectNode().set("tag", mapper.readTree(tag.toJSON()));
+		    json = mapper.createObjectNode().set("tag", tag.toJSON());
 		} catch (Throwable e) {
 		    log.error(String.format("Failed to serialize tag "
 		            + "%s to json for %s event notification", 
@@ -110,7 +110,7 @@ public class TagEventProcessor {
 		
 		JsonNode json = null;
 		try {
-		    json = mapper.createObjectNode().set("tag", mapper.readTree(tag.toJSON()));
+		    json = mapper.createObjectNode().set("tag", tag.toJSON());
 		} catch (Throwable e) {
 		    log.error(String.format("Failed to serialize tag "
 		            + "%s to json for %s event notification", 
@@ -176,7 +176,7 @@ public class TagEventProcessor {
 		ObjectNode json = null;
 		try {
 		    json = mapper.createObjectNode();
-	    	json.set("tag", mapper.readTree(tag.toJSON()));
+	    	json.set("tag", tag.toJSON());
 		    json.set("permission", mapper.readTree(permission.toJSON()));
 		} catch (Throwable e) {
 		    log.error(String.format("Failed to serialize tag "

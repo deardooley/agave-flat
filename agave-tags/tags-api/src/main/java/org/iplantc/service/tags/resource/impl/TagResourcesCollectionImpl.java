@@ -18,6 +18,7 @@ import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
 import org.iplantc.service.tags.exceptions.TagException;
 import org.iplantc.service.tags.exceptions.TagValidationException;
 import org.iplantc.service.tags.managers.TagManager;
+import org.iplantc.service.tags.managers.TaggedResourceManager;
 import org.iplantc.service.tags.model.Tag;
 import org.iplantc.service.tags.model.TaggedResource;
 import org.iplantc.service.tags.resource.TagResourcesCollection;
@@ -82,9 +83,9 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         try
         {
         	Tag tag = getResourceFromPathValue(entityId);
-        	ObjectMapper mapper = new ObjectMapper();
-        	TagManager manager = new TagManager();
-        	manager.updateTagAssociationId(tag, mapper.createArrayNode(), getAuthenticatedUsername());
+        	
+        	TaggedResourceManager manager = new TaggedResourceManager(tag);
+        	manager.clearAllFromTag(getAuthenticatedUsername());
         	
         	return Response.ok().entity(new AgaveSuccessRepresentation("[]")).build();
         }
@@ -99,7 +100,7 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         catch (Exception e) {
         	log.error("Failed to delete tag " + entityId, e);
         	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-        			"An unexpected error occurred while removing associatinoIds for tag  " + entityId + ". "
+        			"An unexpected error occurred while removing associationIds for tag  " + entityId + ". "
             				+ "If this continues, please contact your tenant administrator.", e);
         }
 	}
@@ -117,14 +118,14 @@ public class TagResourcesCollectionImpl extends AbstractTagCollection implements
         	Tag tag = getResourceFromPathValue(entityId);
         	JsonNode json = getPostedContentAsJsonNode(input);  	
         	
-        	TagManager manager = new TagManager();
-        	Tag updatedTag = manager.updateTagAssociationId(tag, json, getAuthenticatedUsername());
+        	TaggedResourceManager manager = new TaggedResourceManager(tag);
+        	List<TaggedResource> updatedTags = manager.addAllToTag(json, getAuthenticatedUsername());
         	
         	ObjectMapper mapper = new ObjectMapper();
-    		String jsonTaggedResources = mapper.writerWithType(new TypeReference<List<TaggedResource>>() {})
-					.writeValueAsString(updatedTag.getTaggedResources());
+//    		String jsonTaggedResources = mapper.writerWithType(new TypeReference<List<TaggedResource>>() {})
+//					.writeValueAsString(updatedTag.getTaggedResources());
         	
-        	return Response.ok(new AgaveSuccessRepresentation(jsonTaggedResources)).build();
+        	return Response.ok(new AgaveSuccessRepresentation(mapper.writeValueAsString(updatedTags))).build();
             
         }
         catch (ResourceException e) {

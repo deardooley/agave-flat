@@ -28,6 +28,7 @@ import org.iplantc.service.tags.model.constraints.ValidAgaveUuid;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 // import org.hibernate.validator.constraints.NotEmpty;
@@ -137,24 +138,28 @@ public class TaggedResource {
     
     @Transient
     @JsonProperty("_links")
-    public String getLinks() {
-    	
-	    	ObjectMapper mapper = new ObjectMapper();
-	    	ObjectNode linksObject = mapper.createObjectNode();
-	        try {
-	        	AgaveUUID uuid = new AgaveUUID(getUuid());
-		        linksObject.put("self", (ObjectNode)mapper.createObjectNode()
-		            .put("href", TenancyHelper.resolveURLToCurrentTenant(uuid.getObjectReference())));
-	        } catch (UUIDException e) {
-	        	linksObject.put("self", (ObjectNode)mapper.createObjectNode()
-			            .putNull("href"));
-	    	}
-	        
-	        linksObject.put("tag", (ObjectNode)mapper.createObjectNode()
-	                .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getTag().getUuid()));
-	        
-	        return mapper.createObjectNode().put("_links", linksObject).toString();
-    	
+    public JsonNode getLinks() { 
+    	ObjectMapper mapper = new ObjectMapper();
+    	ObjectNode linksObject = mapper.createObjectNode();
+        try {
+        	AgaveUUID uuid = new AgaveUUID(getUuid());
+	        linksObject.put("self", (ObjectNode)mapper.createObjectNode()
+	            .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) 
+	            		+ getTag().getUuid()  + "/associationIds/" + uuid.getObjectReference()));
+        } catch (UUIDException e) {
+        	linksObject.put("self", (ObjectNode)mapper.createObjectNode()
+		            .putNull("href"));
+    	}
+        
+        linksObject.put("tag", (ObjectNode)mapper.createObjectNode()
+                .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getTag().getUuid()));
+        
+        return linksObject;
+    }
+    
+    @Override
+    public String toString() {
+    	return getUuid();
     }
 
     public boolean equals(String uuid) {

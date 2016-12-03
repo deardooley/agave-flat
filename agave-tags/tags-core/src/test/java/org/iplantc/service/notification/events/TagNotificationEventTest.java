@@ -43,7 +43,7 @@ public class TagNotificationEventTest extends AbstractTagTest
 			
 			Notification notification = new Notification(tag.getUuid(), tag.getOwner(), TagEventType.UPDATED.name(), requestBin.toString() + "?name=${TAG_NAME}&status=${EVENT}", false);
 			EventFilter event = new TagNotificationEvent(new AgaveUUID(tag.getUuid()), notification, TagEventType.UPDATED.name(), tag.getOwner());
-			event.setCustomNotificationMessageContextData(tag.toJSON());
+			event.setCustomNotificationMessageContextData(tag.toJSON().toString());
 			NotificationAttempt attempt = NotificationMessageProcessor.createNotificationAttemptFromEvent(event);
 			NotificationAttemptProcessor processor = new NotificationAttemptProcessor(attempt);
 			
@@ -70,7 +70,7 @@ public class TagNotificationEventTest extends AbstractTagTest
 			dao.persist(tag);
 			Notification notification = new Notification(tag.getUuid(), tag.getOwner(), "RESULT_CHANGE", "dooley@tacc.utexas.edu", false);
 			MonitorNotificationEvent event = new MonitorNotificationEvent(new AgaveUUID(tag.getUuid()), notification, "RESULT_CHANGE", tag.getOwner());
-			event.setCustomNotificationMessageContextData(tag.toJSON());
+			event.setCustomNotificationMessageContextData(tag.toJSON().toString());
 			
 			NotificationAttempt attempt = NotificationMessageProcessor.createNotificationAttemptFromEvent(event);
 			NotificationAttemptProcessor processor = new NotificationAttemptProcessor(attempt);
