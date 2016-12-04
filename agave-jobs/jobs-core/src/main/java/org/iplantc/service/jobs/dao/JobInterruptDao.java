@@ -483,6 +483,96 @@ public final class JobInterruptDao {
         return totalRowsDeleted;
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* updateExpiresAtDate:                                                   */
+    /* ---------------------------------------------------------------------- */
+    /** Update the expiration date for a specific interrupt.
+     * 
+     * @param id the sequence number of the interrupt record
+     * @param tenantId the job's tenantId
+     * @param expiresAt the new expiration date and time
+     * @return the list of interrupts ordered by creation time
+     * @throws JobException input or operational error
+     */
+    public static int updateExpiresAtDate(long id, String tenantId, Date expiresAt) 
+     throws JobException
+    {
+        // ------------------------- Check Input -------------------------
+        if (StringUtils.isBlank(tenantId)) {
+            String msg = "No tenant id specified in job update call.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        if (expiresAt == null) {
+            String msg = "No expiration date specified in job update call.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // ------------------------- Permission Checks -------------------
+        // We only allow users to create interrupts under their own tenant. 
+        String currentTenantId = TenancyHelper.getCurrentTenantId();
+        if (StringUtils.isBlank(currentTenantId)) {
+            String msg = "Unable to retrieve current tenant id.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        if (!currentTenantId.equals(tenantId)) {
+            String msg = "Unable to query interrupts " + 
+                         "because the current tenant id (" + currentTenantId + 
+                         ") does not match the query tenant id (" + tenantId + ").";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // ------------------------- Call SQL ----------------------------
+        int rows = 0;
+        try
+        {
+            // Begin new transaction.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Create the update command using table definition field order.
+            String sql = "update job_interrupts set expires_at = :expires_at " +
+                         "where id = :id " +
+                         "and tenant_id = :tenant_id";
+            
+            // Fill in the placeholders.           
+            Query qry = session.createSQLQuery(sql);
+            qry.setTimestamp("expires_at", expiresAt);
+            qry.setLong("id", id);
+            qry.setString("tenant_id", tenantId);
+            
+            // Issue the call.
+            rows = qry.executeUpdate();
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to update expiration date for interrupt " +
+                         id + " and tenant " + tenantId + ".";
+            _log.error(msg);
+            throw new JobQueueException(msg, e);
+        }
+        finally {
+            try {HibernateUtil.commitTransaction();} 
+            catch (Exception e) 
+            {
+                String msg = "Unable to commit update expiration data transaction " +
+                             "for interrupt " + id + ", tenant " + tenantId + ".";
+                _log.error(msg);
+                throw new JobQueueException(msg, e);
+            }
+        }
+        
+        return rows;
+    }
+    
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */

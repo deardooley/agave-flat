@@ -65,7 +65,10 @@ CREATE TABLE IF NOT EXISTS `job_interrupts` (
   `expires_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
   KEY `job_uuid` (`job_uuid`,`tenant_id`,`created`),
-  KEY `expires_at` (`expires_at`)
+  KEY `expires_at` (`expires_at`),
+  FOREIGN KEY `fk_tenants_tenant_id` (`tenant_id`)
+    REFERENCES tenants(`tenant_id`)
+    ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 # Create the scheduler lease table that is used to limit
