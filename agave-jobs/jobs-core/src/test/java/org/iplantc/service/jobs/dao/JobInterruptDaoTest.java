@@ -9,9 +9,16 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.JobInterrupt;
 import org.iplantc.service.jobs.model.enumerations.JobInterruptType;
 import org.testng.Assert;
+import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+/** Tests in this class run when jobs subsystem is NOT RUNNING and the
+ * job_interrupts table is empty.  These tests access the database directly 
+ * through a DAO and will conflict with concurrently running application code.
+ * 
+ * @author rcardone
+ */
 public class JobInterruptDaoTest 
 {
     /* ********************************************************************** */
@@ -30,7 +37,9 @@ public class JobInterruptDaoTest
     
     /* ********************************************************************** */
     /*                            Set Up / Tear Down                          */
-    /* ********************************************************************** */    
+    /* ********************************************************************** */
+    // NOTE: If you add more tests, you may need revisit before/after time.s 
+    
     /* ---------------------------------------------------------------------- */
     /* setup:                                                                 */
     /* ---------------------------------------------------------------------- */
@@ -39,6 +48,19 @@ public class JobInterruptDaoTest
     {
         // Set up thread-local context.
         TenancyHelper.setCurrentTenantId(TENANT_ID);
+        
+        // Clear the interrupts table for testing.
+        JobInterruptDao.clearInterrupts();
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* teardown:                                                              */
+    /* ---------------------------------------------------------------------- */
+    @AfterSuite
+    private void teardown()
+    {
+        // Clear the interrupts table for testing.
+        JobInterruptDao.clearInterrupts();
     }
     
     /* ********************************************************************** */
@@ -70,15 +92,17 @@ public class JobInterruptDaoTest
         // later processing.
         interruptList = JobInterruptDao.getInterrupts(getJobUuid(0), TENANT_ID);
         Assert.assertEquals( 
-                interruptList.size(),
+                (double) interruptList.size(),
                 Math.ceil(((double)NUM_INTERRUPTS) / (double)INTERRUPT_JOB_DIVISOR), 
                 "Unexpected number of interrupts created for " + getJobUuid(0) + ".");
         long deleteId = interruptList.get(0).getId();
         long expiredId = interruptList.get(1).getId();
         
-        // Negative case: Try to retrieve for a bad tenant id.
-        interruptList = JobInterruptDao.getInterrupts(getJobUuid(0), "badTenant");
-        Assert.assertEquals(interruptList.size(), 0,
+        // Negative case: Try to retrieve for a bad tenant id.  Exception thrown here.
+        interruptList = null;
+        try {interruptList = JobInterruptDao.getInterrupts(getJobUuid(0), "badTenant");}
+            catch (JobException e){}
+        Assert.assertNull(interruptList,
                 "Unexpected number of interrupts for non-existent tenant id.");
         
         // Negative case: Try to retrieve for a bad job id.
@@ -93,7 +117,7 @@ public class JobInterruptDaoTest
         // Make sure the correct job's interrupt was deleted.
         interruptList = JobInterruptDao.getInterrupts(getJobUuid(0), TENANT_ID);
         Assert.assertEquals( 
-                interruptList.size(),
+                (double) interruptList.size(),
                 Math.ceil(((double)NUM_INTERRUPTS) / (double)INTERRUPT_JOB_DIVISOR) - 1, 
                 "Unexpected number of interrupts after deletion for " + getJobUuid(0) + ".");
         
@@ -101,6 +125,8 @@ public class JobInterruptDaoTest
         Date now = new Date();
         int expired = JobInterruptDao.updateExpiresAtDate(expiredId, TENANT_ID, now);
         Assert.assertEquals(expired, 1, "Unexpected number of interrupts expired.");
+        try {Thread.sleep(1000);}   // Give interrupt time to expire
+            catch (InterruptedException e) {} 
         
         // Delete all expired interrupts.
         deleted = JobInterruptDao.deleteExpiredInterrupts();
@@ -110,7 +136,7 @@ public class JobInterruptDaoTest
         // Make sure the correct job's interrupt was deleted.
         interruptList = JobInterruptDao.getInterrupts(getJobUuid(0), TENANT_ID);
         Assert.assertEquals( 
-                interruptList.size(),
+                (double) interruptList.size(),
                 Math.ceil(((double)NUM_INTERRUPTS) / (double)INTERRUPT_JOB_DIVISOR) - 2, 
                 "Unexpected number of interrupts after expiration deletion for " + getJobUuid(0) + ".");
         

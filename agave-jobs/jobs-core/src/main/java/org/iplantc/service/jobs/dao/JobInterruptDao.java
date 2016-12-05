@@ -573,6 +573,48 @@ public final class JobInterruptDao {
         return rows;
     }
     
+    /* ---------------------------------------------------------------------- */
+    /* clearInterrupts:                                                       */
+    /* ---------------------------------------------------------------------- */
+    /** This is an administrative command useful in testing but not likely to
+     * be used in production.  This command deletes all rows from the interrupts 
+     * table.
+     * 
+     * @return number of rows affected.
+     */
+    public static int clearInterrupts()
+    {
+        // Return value.
+        int rows = 0;
+        
+        // Dump the complete table..
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Release the lease.
+            String sql = "delete from job_interrupts";
+            Query qry = session.createSQLQuery(sql);
+            rows = qry.executeUpdate();
+            
+            // Commit the transaction.
+            HibernateUtil.commitTransaction();
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to clear all interrupts.";
+            _log.error(msg, e);
+        }
+        
+        return rows;
+    }
+    
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */

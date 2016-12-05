@@ -14,6 +14,12 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+/** Tests in this class run when jobs subsystem is NOT RUNNING and the
+ * job_queues table is empty.  These tests access the database directly 
+ * through a DAO and will conflict with concurrently running application code.
+ * 
+ * @author rcardone
+ */
 public class JobQueueDaoTest {
     
     /* ********************************************************************** */
