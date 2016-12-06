@@ -3,13 +3,14 @@
  */
 package org.iplantc.service.jobs.submission;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
-import org.hibernate.cfg.Configuration;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwarePermission;
@@ -21,17 +22,15 @@ import org.iplantc.service.jobs.managers.launchers.JobLauncher;
 import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.jobs.queue.actions.SubmissionAction;
-import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
-import org.iplantc.service.systems.model.SystemRole;
-import org.iplantc.service.systems.model.enumerations.RoleType;
-import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -39,11 +38,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 //import org.iplantc.service.systems.model.JSONTestDataUtil;
-
-
-
-
-
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -168,8 +162,8 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			JobLauncher mockJobLauncher = mock(JobLauncher.class);
 			doThrow(new SystemUnavailableException()).when(mockJobLauncher).launch();
 			
-			
-			SubmissionAction submissionAction = spy(new SubmissionAction(job, null));
+			IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
+			SubmissionAction submissionAction = spy(new SubmissionAction(job, worker));
 			doReturn(mockJobLauncher).when(submissionAction).getJobLauncher();
 			
 			PowerMockito.mockStatic(JobManager.class);
@@ -224,7 +218,8 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			
 			JobDao.persist(job);
 			
-			SubmissionAction submissionAction = new SubmissionAction(job, null);
+			IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
+			SubmissionAction submissionAction = new SubmissionAction(job, worker);
             submissionAction.run();
             
             job = JobDao.getById(job.getId());
@@ -265,7 +260,8 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			
 			JobDao.persist(job);
 			
-			SubmissionAction submissionAction = new SubmissionAction(job, null);
+			IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
+			SubmissionAction submissionAction = new SubmissionAction(job, worker);
             submissionAction.run();
             
             job = JobDao.getById(job.getId());
@@ -321,7 +317,8 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			
 			JobDao.persist(job);
 			
-			SubmissionAction submissionAction = new SubmissionAction(job, null);
+			IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
+			SubmissionAction submissionAction = new SubmissionAction(job, worker);
             submissionAction.run();
             
             job = JobDao.getById(job.getId());

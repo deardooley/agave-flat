@@ -30,6 +30,7 @@ import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.jobs.queue.actions.StagingAction;
 import org.iplantc.service.jobs.queue.actions.SubmissionAction;
 import org.iplantc.service.systems.dao.SystemDao;
@@ -48,6 +49,7 @@ import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.TransferStatusType;
 import org.joda.time.DateTime;
 import org.json.JSONObject;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -377,7 +379,8 @@ public class AbstractJobSubmissionTest {
     */
    protected void stageJobInputs(Job job) throws Exception {
        try {
-           StagingAction staging = new StagingAction(job, null);
+           IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
+           StagingAction staging = new StagingAction(job, worker);
            staging.run();
        } catch (Exception e) {
            Assert.fail("Failed to stage input for job " + job.getUuid(), e);
@@ -873,7 +876,8 @@ public class AbstractJobSubmissionTest {
 		boolean actuallyThrewException = false;
 		String exceptionMsg = message;
 		
-		SubmissionAction submissionAction = new SubmissionAction(job,null);
+		IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
+		SubmissionAction submissionAction = new SubmissionAction(job, worker);
 		
 		try
         {
@@ -945,13 +949,14 @@ public class AbstractJobSubmissionTest {
 	 * @param message
 	 * @param shouldThrowException
 	 */
-//	protected void genericProcessApplicationTemplate(Job job, String expectedString, String message, boolean shouldThrowException)
-//	throws Exception 
-//	{
-//		JobLauncher launcher = JobLauncherFactory.getInstance(job);
-//		File ipcexeFile = launcher.processApplicationTemplate();
-//		String contents = FileUtils.readFileToString(ipcexeFile);
-//		
-//		Assert.assertTrue(contents.contains(expectedString), message);
-//	}
+	protected void genericProcessApplicationTemplate(Job job, String expectedString, String message, boolean shouldThrowException)
+	throws Exception 
+	{
+	    IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
+		JobLauncher launcher = JobLauncherFactory.getInstance(job, worker);
+		File ipcexeFile = launcher.processApplicationTemplate();
+		String contents = FileUtils.readFileToString(ipcexeFile);
+		
+		Assert.assertTrue(contents.contains(expectedString), message);
+	}
 }

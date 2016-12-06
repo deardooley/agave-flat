@@ -13,11 +13,13 @@ import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.jobs.submission.AbstractJobSubmissionTest;
 import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.json.JSONObject;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -67,7 +69,8 @@ public class MonitoringActionTest extends AbstractJobSubmissionTest {
      */
     protected Job genericRemoteMonitoringTestCase(Job job, JobStatusType expectedStatus, String message, boolean shouldThrowException) 
     {
-        MonitoringAction action = new MonitoringAction(job, null);
+        IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
+        MonitoringAction action = new MonitoringAction(job, worker);
         
         try
         {
