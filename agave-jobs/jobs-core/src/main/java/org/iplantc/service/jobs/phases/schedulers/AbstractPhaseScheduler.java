@@ -177,6 +177,9 @@ public abstract class AbstractPhaseScheduler
     private static final int POLLING_FAILURE_DELAY = 15000;
     private static final int LEASE_RENEWAL_DELAY = (JobLeaseDao.LEASE_SECONDS / 4) * 1000;
     
+    // Milliseconds between attempts to delete expired interrupts.
+    private static final int INTERRUPT_DELETE_DELAY = 240000; // 4 minutes
+    
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
@@ -204,6 +207,9 @@ public abstract class AbstractPhaseScheduler
     
     // Monotonically increasing sequence number generator used as part of thread names.
     private static final AtomicInteger _threadSeqno = new AtomicInteger(0);
+    
+    // A thread that periodically removes expired interrupts from database.
+    private Thread _interruptCleanUpThread;
         
     // This phase's queuing artifacts.
     private ConnectionFactory    _factory;
@@ -407,6 +413,14 @@ public abstract class AbstractPhaseScheduler
     {
         // Topic thread processing spans all tenants and queues.
         return _phaseType.name() + "_topic" + THREAD_SUFFIX;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getInterruptCleanUpThreadName:                                         */
+    /* ---------------------------------------------------------------------- */
+    protected String getInterruptCleanUpThreadName()
+    {
+        return _phaseType.name() + "_interruptCleanUp" + THREAD_SUFFIX;
     }
     
     /* ---------------------------------------------------------------------- */
@@ -1037,6 +1051,40 @@ public abstract class AbstractPhaseScheduler
     }
     
     /* ---------------------------------------------------------------------- */
+    /* startInterruptCleanUpThread:                                           */
+    /* ---------------------------------------------------------------------- */
+    /** Start a thread to read from this phase's topic.
+     * 
+     */
+    private void startInterruptCleanUpThread()
+    {
+        // Create the topic thread.
+        _interruptCleanUpThread = 
+           new Thread(_phaseThreadGroup, getInterruptCleanUpThreadName()) {
+            @Override
+            public void run() {
+                
+                // This thread is starting.
+                if (_log.isDebugEnabled())
+                    _log.debug("-> Starting interrupt clean up thread " + getName() + ".");
+                
+                deleteExpiredInterrupts();
+                
+                // This thread is terminating.
+                if (_log.isDebugEnabled())
+                    _log.debug("<- Exiting interrupt clean up thread " + getName() + ".");
+                
+                // Clear the thread reference.
+                _interruptCleanUpThread = null;
+            }
+        };
+        
+        // Configure and start the thread.
+        _interruptCleanUpThread.setDaemon(true);
+        _interruptCleanUpThread.start();
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* schedule:                                                              */
     /* ---------------------------------------------------------------------- */
     /** Main loop that polls database for new work for this phase.
@@ -1061,6 +1109,12 @@ public abstract class AbstractPhaseScheduler
                 // get the lease, we keep retrying until we do or are interrupted.
                 if (!jobLeaseDao.acquireLease()) waitToAcquireLease(jobLeaseDao);
                 
+                // Only the staging scheduler can start an interrupt clean up thread.
+                // There's nothing special about the staging scheduler; we only need
+                // one clean up thread in the whole system.
+                if ((this instanceof StagingScheduler) && _interruptCleanUpThread == null)
+                    startInterruptCleanUpThread();
+                
                 // Query the database for all candidate jobs for this phase.  This
                 // method also maintains the published jobs set and filters the list
                 // of candidate jobs using that set.
@@ -1073,6 +1127,7 @@ public abstract class AbstractPhaseScheduler
                         _log.info(msg, e);
                         
                         // Wait for some period of time before trying again.
+                        // Interrupt exceptions can be thrown from here.
                         waitForWork(jobLeaseDao, POLLING_FAILURE_DELAY);
                         continue;
                     }
@@ -1184,7 +1239,9 @@ public abstract class AbstractPhaseScheduler
         while (true) {
             
             // See if this thread was interrupted before sleeping.
-            if (Thread.currentThread().isInterrupted()) {
+            // Note that the interrupt flag is cleared just like when
+            // an interrupt exception is thrown.
+            if (Thread.interrupted()) {
                 String msg = "Scheduler thread " + Thread.currentThread().getName() +
                              " for phase " + _phaseType.name() + 
                              " interrupted while waiting to acquire lease.";
@@ -1228,7 +1285,7 @@ public abstract class AbstractPhaseScheduler
         while (windDown > 0) {
             
             // See if this thread was interrupted before sleeping.
-            if (Thread.currentThread().isInterrupted()) {
+            if (Thread.interrupted()) {
                 String msg = "Scheduler thread " + Thread.currentThread().getName() +
                              " for phase " + _phaseType.name() + 
                              " interrupted while waiting for new work.";
@@ -1242,6 +1299,54 @@ public abstract class AbstractPhaseScheduler
             
             // Determine if this is a lease renewal wake up.
             if (windDown > 0) jobLeaseDao.acquireLease();
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* deleteExpiredInterrupts:                                               */
+    /* ---------------------------------------------------------------------- */
+    /** Delete expired interrupts periodically. */
+    private void deleteExpiredInterrupts()
+    {
+        // Check for expired interrupts indefinitely.
+        while (true) 
+        {
+            // Attempt to delete any expired interrupts and swallow any exceptions.
+            try {
+                int deleted = JobInterruptDao.deleteExpiredInterrupts();
+                if (_log.isDebugEnabled()) {
+                    _log.debug("Scheduler " + getSchedulerName() + 
+                               " deleted " + deleted + " expired interrupts.");
+                }
+            }
+            catch (Exception e) {
+                // Just log the problem.
+                String msg = getInterruptCleanUpThreadName() + 
+                             " failed to delete expired interrupts but will try again.";
+                _log.error(msg);
+            }
+            
+            // Check for interrupts before sleeping.
+            if (Thread.interrupted()) {
+                if (_log.isInfoEnabled()) {
+                    String msg = getInterruptCleanUpThreadName() + 
+                                 " terminating because of an interrupt during processing.";
+                    _log.info(msg);
+                }
+                break;
+            }
+            
+            // Sleep for the prescribed amount of time before trying again.
+            try {Thread.sleep(INTERRUPT_DELETE_DELAY);}
+            catch (InterruptedException e) {
+                // Terminate this thread.
+                if (_log.isInfoEnabled()) {
+                    String msg = getInterruptCleanUpThreadName() + 
+                                 " terminating because of an interrupt during sleep.";
+                    _log.info(msg);
+                }
+                break;
+            }
         }
     }
     
