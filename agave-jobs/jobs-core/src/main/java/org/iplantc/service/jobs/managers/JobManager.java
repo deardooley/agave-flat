@@ -5,38 +5,25 @@ package org.iplantc.service.jobs.managers;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.apps.dao.SoftwareDao;
-import org.iplantc.service.apps.exceptions.SoftwareException;
-import org.iplantc.service.apps.managers.ApplicationManager;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwareInput;
 import org.iplantc.service.apps.model.SoftwareParameter;
-import org.iplantc.service.apps.model.enumerations.SoftwareParameterType;
 import org.iplantc.service.apps.util.ServiceUtils;
-import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.persistence.HibernateUtil;
-import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.util.TimeUtils;
-import org.iplantc.service.io.dao.LogicalFileDao;
-import org.iplantc.service.io.model.LogicalFile;
-import org.iplantc.service.io.permissions.PermissionManager;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
@@ -48,29 +35,21 @@ import org.iplantc.service.jobs.managers.killers.JobKiller;
 import org.iplantc.service.jobs.managers.killers.JobKillerFactory;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
-import org.iplantc.service.jobs.model.enumerations.JobArchivePathMacroType;
 import org.iplantc.service.jobs.model.enumerations.JobEventType;
-import org.iplantc.service.jobs.model.enumerations.JobMacroType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.TopicMessageSender;
 import org.iplantc.service.jobs.phases.queuemessages.StopJobMessage;
 import org.iplantc.service.jobs.queue.ZombieJobWatch;
 import org.iplantc.service.jobs.util.Slug;
-import org.iplantc.service.notification.exceptions.NotificationException;
-import org.iplantc.service.notification.model.Notification;
 import org.iplantc.service.remote.exceptions.RemoteExecutionException;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
-import org.iplantc.service.systems.manager.SystemManager;
-import org.iplantc.service.systems.model.AuthConfig;
 import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.RemoteSystem;
-import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.iplantc.service.transfer.RemoteDataClient;
-import org.iplantc.service.transfer.RemoteDataClientFactory;
 import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.URLCopy;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
@@ -84,7 +63,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * @author dooley
@@ -281,7 +259,7 @@ public class JobManager {
 			// Occasionally the status check will have run or the job will actually complete
 			// prior to this being called. That will invalidate the current object. Here we
 			// refresh with job prior to updating the status so we don't get a stale state
-			// exception
+			// exception.
 			job = stopRunningJob(job, null);
 			return job;
 		}

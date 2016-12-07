@@ -63,93 +63,92 @@ import com.rabbitmq.client.Envelope;
  * -----------------------
  * 
  * Jobs need to be interrupted during any processing phase.  When worker threads
- * are blocked on certain IO calls or wait(), a signal can be sent that wakes up 
+ * are blocked on certain IO calls or sleep(), a signal can be sent that wakes up 
  * the thread.  When a thread is active, however, a cooperative approach is needed
- * in which the thread can determine if a signal has been sent.  Below is an outline 
+ * in which the thread checks if an interrupt has occurred.  Below is an outline 
  * of the scheduler's cooperative interrupt mechanism.
  * 
  * The main components of the interrupt mechanism are:
  * 
- *  1. Each scheduler's topic, scheduler and worker threads
- *  2. Jobs table
- *  3. Scheduler topic
- *  4. Interrupt topic
- *  5. InterruptManager singleton
- *  6. Scheduler's InterruptedList 
+ *  1. All schedule, topic and worker threads
+ *  2. Jobs table and DAO
+ *  3. Jobs interrupt table and DAO
+ *  4. Scheduler topic
+ *  5. Interrupt clean up thread
  *  
- * The interrupt mechanism introduces the interrupt topic and the InterruptManager
- * singleton class.  The interrupt topic is a RabbitMQ topic to which the interrupt
- * thread in the InterruptManager subscribes.  The interrupt thread binds to 
- * the topic in multiple ways to accommodate other topic readers that we might
- * conceivably want in the future but are currently unplanned.  We use the following
- * binding keys:
+ * Once a job request is received by the jobs subsystem, the job is inserted into the 
+ * jobs table.  At any time, the job's in-memory representation may also be on a worker 
+ * queue or executing in a worker.  When an interrupts occurs, all job artifacts must
+ * transition to a new state. 
+ *   
+ * There are two types of interrupts, those that are job-specific and those that are 
+ * not.  Job-specific interrupts need to be routed and handled by the worker thread
+ * that is currently processing the job, if one exists.  
  * 
- *      1. QueueConstants.INTERRUPT_WORKER_KEY
- *          - For messages targeting all workers
- *      2. <queueName>
- *          - For messages targeting all workers servicing a specific queue
- *      3. <tenanId>
- *          - For messages targeting all workers servicing a specific tenant 
+ * A correct interrupt handling design prohibits race conditions in which interrupts
+ * are lost or processed more than once.  Job-specific interrupts have to be serviced no 
+ * matter what processing phase the job is in or where references to the job may exist.  
+ * Non job-specific interrupts change the state of the jobs subsystem and are typically 
+ * handled by the scheduler's topic thread. 
  * 
- * Additionally, the AbstractPhaseScheduler class maintains a list of interrupted jobs.
- * All the jobs in this InterruptedList are always scheduled the next time the 
- * scheduler wakes up before the normal scheduling regime is executed.  This allows
- * interrupts to be serviced in a timely fashion. 
+ * In addition to handling each interrupt exactly once (or at least idempotently), the 
+ * other main design consideration is to integrate the new mechanism into the existing 
+ * codebase as seamlessly as possible.  This requirement means that Hibernate will still 
+ * be used where it exists, though new SQL tables will use Hibernate only to acquire a 
+ * session.
  * 
- * Asynchronous requests come into the jobs subsystem via the scheduler topic.  These
- * requests are usually triggered by an action taken by an end user (e.g., stop a job)
- * or an administrator (e.g., shutdown the jobs subsystem).  The topic thread subscribes
- * to the scheduler topic and is responsible for parsing, validating and acting upon
- * the request message.  Requests are well-defined subclasses of the AbstractQueueMessage
- * class and are represented as a JSON string when queued.
+ * ++++ Job-Specific Interrupts ++++
  * 
- * Once a message is validated, the topic thread determines how to process it.
- * Administrative requests that are not job-specific are handled by the topic thread 
- * itself, sometimes in cooperation with worker threads.  Job-specific requests are
- * handled by worker threads through the InterruptManager.
+ * Application interrupts to STOP, DELETE or PAUSE a job continue to be processed by 
+ * JobManager.  Under the previous Quartz-based design, an application interrupt resolved 
+ * to an interrupt to a Quartz job.  Under the new design, an application
+ * interrupt resolves to a database update, which is at some later time read by a 
+ * worker thread.  Worker threads poll the database at convenient points during their
+ * processing to check for a job-specific interrupt.  When a worker detects an interrupt
+ * for its job, the worker ceases processing the job and waits for the next available job.
+ *  
+ * The JobManager class integrates new and old code.  The kill() and hide() methods continue  
+ * to update a job's status and other fields in the jobs table when a job-specific interrupt
+ * is received.  They also cancel in-flight transfers as before.  What's new, however, 
+ * is the addition of a call to TopicMessageSender.sendJobMessage(message).  This call 
+ * places a durable message on the scheduler topic.  This topic is shared by all schedulers 
+ * for all phases.  
  * 
- * Once the topic thread determines that a worker thread needs to handle a message, the
- * topic thread publishes the message on the interrupt topic using one of the binding
- * keys listed above.  Depending on the circumstance, the topic thread may also issue
- * a thread interrupt directly to all targeted threads.  For example, after publishing
- * to the interrupt topic with the <queueName> binding key, the topic thread may choose
- * to interrupt all threads servicing that queue to wake up those that are blocked.
+ * The scheduler topic and its messages comprise the external interface to the new interrupt 
+ * mechanism.  When a job-specific interrupt message is placed on the topic, the topic 
+ * thread reads it and writes in interrupt record to the job_interrupts table.  The 
+ * interrupted job could be at any point in its processing.  Specifically, a job's status
+ * could be marked STOPPED or PAUSED and the job could be in one of the following runtime
+ * states:
  * 
- * The interrupt thread runs under the auspices of the InterruptManager and subscribes
- * to all messages published on the interrupt topic.  When the interrupt thread receives
- * a new message, it inserts that message into a concurrent hashmap maintained by the
- * InterruptManager.  The InterruptManager maintains a mapping of tenantId's to job
- * maps, where each job map maps job uuid to a message list.  
+ *  a. Not scheduled
+ *  b. On a worker queue
+ *  c. Executing in a worker thread
+ *  
+ * Not scheduled means a scheduler has not yet placed the job on a phase queue.  In this
+ * case, the job is finished and further processing will not occur.  The interrupt record
+ * for this job has an expiration time after which the Interrupt Clean Up thread will
+ * remove it from the jobS_interrupts table.
  * 
- * At frequent and convenient intervals, worker threads check the InterruptManager's
- * job map to discover any asynchronous messages targeting their jobs.  Any messages
- * found are process in the order they were received.
+ * If the job is queued or executing then a worker thread will eventually poll the 
+ * job_interrupts table look for interrupts for the job it's servicing.  When interrupts 
+ * are found, the worker services the interrupts in the order they were create (oldest 
+ * first).  Multiple interrupts to stop job processing are allowed, but once a job is 
+ * stopped no further interrupts have an effect. 
  * 
- * The correctness of the asynchronous interrupt mechanism depends on eliminating all
- * race conditions.  When worker thread is assigned a specific job (i.e., when the
- * AbstractPhaseWorker._job field is non-null), then any interrupt messages received
- * by that thread for that job can be acted upon by that thread.  Unfortunately,
- * when a job is not assigned to any worker thread, as is the case when a job  is queued, 
- * then job-specific interrupt messages cannot be immediately processed by any worker 
- * thread.  The mappings maintained by InterruptManager prevents race conditions from
- * causing messages to be lost.
+ * As an aside, the old and new code are not perfectly fused:  The old code could fail
+ * after changing a job's status in the database but before queuing an interrupt 
+ * message on the scheduler topic.  In this case, an interrupt could be lost.  The new
+ * design implements JobManager.safeUpdateStatus() to detect when a job's status is in  
+ * a finished state when an update is attempted.  If a finished state is detected, 
+ * safeUpdateState() disallows the status update and throws an exception.  This method
+ * replaces calls to JobManager.updateStatus() where a problematic asynchronous status 
+ * change could occur.  
  * 
- * The protocol used to avoid losing any interrupt messages is as follows:
- * 
- *      1. Topic thread conditionally updates the job status in jobs table to reflect 
- *         the message request.
- *      2. Topic thread publishes job-specific message to interrupt topic.
- *      3. InterruptManager reads message and puts it in appropriate job map.
- *      4. Topic thread adds the job to the scheduler's InterruptedList. 
- *      5. Worker currently or eventually assigned the job checks job map for messages.
- *      6. Worker processes the interrupt message.
- * 
- * Note that Step 1 is conditioned on the validity of the transition to the state request
- * in the message.  This step is important because after step 3, the database contains the
- * only persistent indication of the interrupt request. 
- * 
- *     TODO:  step 6 when state reverts from step 1 transition
- *            step 1 does other clean up work?  Maybe need intermediate states: STOP_PENDING, etc.
+ * ++++ Non Job-Specific Interrupts ++++ 
+ *  
+ * coming soon 
+ *  
  *  
  * @author rcardone
  */
@@ -202,13 +201,15 @@ public abstract class AbstractPhaseScheduler
     // The running set of job uuids that represent in one of this phase's
     // trigger states that have already been published to a RabbitMQ queue
     // by this phase's scheduler.  This set prevents a job from being published
-    // multiple time in the same stage.
+    // multiple times in the same stage.
     private final HashSet<String> _publishedJobs = new HashSet<>();
     
     // Monotonically increasing sequence number generator used as part of thread names.
     private static final AtomicInteger _threadSeqno = new AtomicInteger(0);
     
     // A thread that periodically removes expired interrupts from database.
+    // This thread is only created and started on the single STAGING scheduler
+    // that obtains a lease.
     private Thread _interruptCleanUpThread;
         
     // This phase's queuing artifacts.
@@ -1231,6 +1232,14 @@ public abstract class AbstractPhaseScheduler
     private boolean waitToAcquireLease(JobLeaseDao jobLeaseDao) 
      throws InterruptedException
     {
+        // If we lost the lease, shutdown the interrupt clean up thread.
+        // Get a local reference to the thread so it doesn't disappear
+        // underneath us.
+        Thread interruptCleanUpThread = _interruptCleanUpThread;
+        if (interruptCleanUpThread != null) 
+            try {interruptCleanUpThread.interrupt();}
+                catch (Exception e){}
+        
         // Calculate retry interval to be the average time a lease might
         // be held by a defunct scheduler.
         final int millis = (JobLeaseDao.LEASE_SECONDS / 2) * 1000;

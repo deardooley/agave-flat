@@ -15,7 +15,6 @@ import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.JobInterruptUtils;
 import org.iplantc.service.jobs.queue.actions.MonitoringAction;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
