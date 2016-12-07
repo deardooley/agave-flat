@@ -97,11 +97,12 @@ public class TopicMessageSender
                throw new JobException(msg, e);
             }
             
-            // Send the message to the job topic.
+            // Send the message to the job topic so that exactly one scheduler 
+            // reads the message.  The choice of scheduler is arbitrary.
             try {
                 // TODO: Publisher confirm?
                 topicChannel.basicPublish(QueueConstants.TOPIC_EXCHANGE_NAME, 
-                                          QueueConstants.TOPIC_ALL_ROUTING_KEY, 
+                                          QueueConstants.TOPIC_STAGING_ROUTING_KEY, 
                                           QueueConstants.PERSISTENT_JSON, 
                                           json.getBytes());
             } 
