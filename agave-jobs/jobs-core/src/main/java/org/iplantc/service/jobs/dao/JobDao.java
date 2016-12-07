@@ -21,8 +21,6 @@ import org.hibernate.Session;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.StaleStateException;
 import org.hibernate.UnresolvableObjectException;
-import org.hibernate.engine.SessionFactoryImplementor;
-import org.hibernate.impl.SessionImpl;
 import org.hibernate.transform.AliasToEntityMapResultTransformer;
 import org.hibernate.type.StandardBasicTypes;
 import org.iplantc.service.apps.util.ServiceUtils;

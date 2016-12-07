@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.hibernate.CacheMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.iplantc.service.common.persistence.HibernateUtil;
@@ -120,6 +121,8 @@ public final class JobInterruptDao {
             qry.setString("interrupt_type", interrupt.getInterruptType().name());
             qry.setTimestamp("created", interrupt.getCreated());
             qry.setTimestamp("expires_at", interrupt.getExpiresAt());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call.
             rows = qry.executeUpdate();
@@ -212,6 +215,8 @@ public final class JobInterruptDao {
             Query qry = session.createSQLQuery(sql);
             qry.setString("job_uuid", jobUuid);
             qry.setString("tenant_id", tenantId);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call and populate the model object.
             // (Yes, this is the tax for not using hibernate...)
@@ -298,6 +303,8 @@ public final class JobInterruptDao {
             Query qry = session.createSQLQuery(sql);
             qry.setLong("id", id);
             qry.setString("tenant_id", tenantId);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call.
             rows = qry.executeUpdate();
@@ -361,6 +368,8 @@ public final class JobInterruptDao {
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call and populate the model object.
             // (Yes, this is the tax for not using hibernate...)
@@ -431,6 +440,8 @@ public final class JobInterruptDao {
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
             qry.setTimestamp("curTS", curTS);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call and populate the model object.
             // (Yes, this is the tax for not using hibernate...)
@@ -544,6 +555,8 @@ public final class JobInterruptDao {
             qry.setTimestamp("expires_at", expiresAt);
             qry.setLong("id", id);
             qry.setString("tenant_id", tenantId);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call.
             rows = qry.executeUpdate();
@@ -597,6 +610,8 @@ public final class JobInterruptDao {
             // Release the lease.
             String sql = "delete from job_interrupts";
             Query qry = session.createSQLQuery(sql);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             rows = qry.executeUpdate();
             
             // Commit the transaction.

@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.hibernate.CacheMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.iplantc.service.common.persistence.HibernateUtil;
@@ -117,7 +118,10 @@ public final class JobLeaseDao
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
-            qry.setString("phase", _phase.name());
+            qry.setString("phase", _phase.name());                  
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+
             
             // Issue the call and populate the lease object.
             Object obj = qry.uniqueResult();
@@ -211,6 +215,8 @@ public final class JobLeaseDao
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
             qry.setString("phase", _phase.name());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call and populate the model object.
             // (Yes, this is the tax for not using hibernate...)
@@ -231,6 +237,8 @@ public final class JobLeaseDao
                 qry = session.createSQLQuery(sql);
                 qry.setTimestamp("lastdate", lastDate);
                 qry.setString("phase", _phase.name());
+                qry.setCacheable(false);
+                qry.setCacheMode(CacheMode.IGNORE);
                 int rows = qry.executeUpdate();
                 
                 // Sanity check.
@@ -296,6 +304,8 @@ public final class JobLeaseDao
             
             // Issue the call and populate the lease object.
             Query qry = session.createSQLQuery(sql);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             @SuppressWarnings("rawtypes")
             List qryResuts = qry.list();
             
@@ -346,6 +356,8 @@ public final class JobLeaseDao
                          "set last_updated = :lastdate, expires_at = NULL, lessee = NULL";
             Query qry = session.createSQLQuery(sql);
             qry.setTimestamp("lastdate", lastDate);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             rows = qry.executeUpdate();
             
             // Commit the transaction.
@@ -395,6 +407,8 @@ public final class JobLeaseDao
         qry.setTimestamp("expiredate", expireDate);
         qry.setString("lessee", _lessee);
         qry.setString("phase", _phase.name());
+        qry.setCacheable(false);
+        qry.setCacheMode(CacheMode.IGNORE);
         
         // Execute the update command and perform sanity check.
         int rows = qry.executeUpdate();

@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.hibernate.CacheMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.exception.ConstraintViolationException;
@@ -207,6 +208,8 @@ public final class JobQueueDao {
             qry.setString("filter", jobQueue.getFilter().trim());
             qry.setTimestamp("created", jobQueue.getCreated());
             qry.setTimestamp("last_updated", jobQueue.getLastUpdated());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call.
             rows = qry.executeUpdate();
@@ -345,6 +348,8 @@ public final class JobQueueDao {
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
             qry.setString("phase", phase.name());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call and populate the model object.
             // (Yes, this is the tax for not using hibernate...)
@@ -442,6 +447,8 @@ public final class JobQueueDao {
             Query qry = session.createSQLQuery(sql);
             qry.setString("tenant_id", tenantId.trim());
             if (phase != null) qry.setString("phase", phase.name());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call and populate the model object.
             // (Yes, this is the tax for not using hibernate...)
@@ -592,6 +599,8 @@ public final class JobQueueDao {
             qry.setString("name", name.trim());
             qry.setString("tenant_id", tenantId.trim());
             qry.setString("filter", filter.trim());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call.
             rows = qry.executeUpdate();
@@ -676,6 +685,8 @@ public final class JobQueueDao {
             Query qry = session.createSQLQuery(sql);
             qry.setString("selectorValue", selectorValue.trim());
             qry.setString("tenant_id", tenantId.trim());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call and populate the model object.
             // (Yes, this is the tax for not using hibernate...)
@@ -755,6 +766,8 @@ public final class JobQueueDao {
             Query qry = session.createSQLQuery(sql);
             qry.setString("selectorValue", selectorValue.trim());
             qry.setString("tenant_id", tenantId.trim());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call.
             rows = qry.executeUpdate();
@@ -844,6 +857,8 @@ public final class JobQueueDao {
             qry.setString("name", name.trim());
             qry.setString("tenant_id", tenantId.trim());
             qry.setInteger("value", value);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             
             // Issue the call.
             rows = qry.executeUpdate();
