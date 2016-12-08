@@ -26,6 +26,7 @@ import org.globus.ftp.Buffer;
 import org.globus.ftp.DataSink;
 import org.globus.ftp.DataSource;
 import org.globus.ftp.FTPClient;
+import org.globus.ftp.FeatureList;
 import org.globus.ftp.FileRandomIO;
 import org.globus.ftp.HostPort;
 import org.globus.ftp.HostPort6;
@@ -35,6 +36,7 @@ import org.globus.ftp.exception.ClientException;
 import org.globus.ftp.exception.FTPException;
 import org.globus.ftp.exception.FTPReplyParseException;
 import org.globus.ftp.exception.ServerException;
+import org.globus.ftp.exception.UnexpectedReplyCodeException;
 import org.globus.ftp.vanilla.Command;
 import org.globus.ftp.vanilla.FTPControlChannel;
 import org.globus.ftp.vanilla.FTPServerFacade;
@@ -70,6 +72,7 @@ public class FTP extends FTPClient implements RemoteDataClient
 	protected String password;
 	protected String homeDir;
 	protected String rootDir;
+	protected String systemType;
     protected static final int MAX_BUFFER_SIZE = 1048576;
     protected boolean bPassive = true;
     private Map<String, RemoteFileInfo> fileInfoCache = new ConcurrentHashMap<String, RemoteFileInfo>();
@@ -356,6 +359,78 @@ public class FTP extends FTPClient implements RemoteDataClient
 		}
 	}
 	
+	
+	/**
+	 * Fetches the system type from the server to determine proper 
+	 * flags to throw.
+	 * 
+	 * @return
+	 * @throws IOException
+	 * @throws ServerException
+	 */
+	public String getFTPSystemType() throws IOException, ServerException {
+		if (this.systemType != null) {
+            return this.systemType;
+        }
+
+        Reply systReply = null;
+        try {
+            systReply = controlChannel.execute(new Command("SYST"));
+
+            if (systReply.getCode() != 215) {
+                throw ServerException.embedUnexpectedReplyCodeException(
+                                  new UnexpectedReplyCodeException(systReply),
+                                  "Server refused returning system type");
+            }
+        } catch (FTPReplyParseException rpe) {
+            throw ServerException.embedFTPReplyParseException(rpe);
+        } catch (UnexpectedReplyCodeException urce) {
+            throw ServerException.embedUnexpectedReplyCodeException(
+                                urce,
+                                "Server refused returning system type");
+        }
+
+        this.systemType = systReply.getMessage();
+
+        return systemType;
+    }
+	
+	public void checkContentTypeUTF8() throws IOException, ServerException {
+		if (isFeatureSupported("UTF8")) {
+            
+			if (log.isDebugEnabled()) {
+            	log.debug("Setting UTF8 content type");
+            }
+            
+	        Reply systReply = null;
+	        try {
+	            systReply = controlChannel.execute(new Command("OPTS", "UTF8 ON"));
+	
+	            if (systReply.getCode() != 200) {
+	                throw ServerException.embedUnexpectedReplyCodeException(
+	                                  new UnexpectedReplyCodeException(systReply),
+	                                  "Server refused setting UTF8");
+	            }
+	        } catch (FTPReplyParseException rpe) {
+	            throw ServerException.embedFTPReplyParseException(rpe);
+	        } catch (UnexpectedReplyCodeException urce) {
+	            throw ServerException.embedUnexpectedReplyCodeException(
+	                                urce,
+	                                "Server refused setting UTF8");
+	        }
+		}
+	}
+	
+	/**
+	 * Checks whether the server type is a flavor of windows. If so, 
+	 * we should switch to using alternate flags on our listings.
+	 * @return
+	 * @throws IOException
+	 * @throws ServerException
+	 */
+	public boolean isWindowsSystem() throws IOException, ServerException {
+		return StringUtils.containsIgnoreCase(getFTPSystemType(), "windows");
+	}
 	
 
 	@Override
@@ -1060,8 +1135,9 @@ public class FTP extends FTPClient implements RemoteDataClient
 	{
 		try {
 			if (StringUtils.equalsIgnoreCase(username, ANONYMOUS_USER)) {
+				String resolvedPath = resolvePath(path);
 				Reply reply =
-		                controlChannel.exchange(new Command("MDTM", resolvePath(path)));
+		                controlChannel.exchange(new Command("CWD", resolvedPath));
 				return Reply.isPositiveCompletion(reply) || reply.getMessage().contains("not a plain file");
 			} else {
 				return super.exists(resolvePath(path));
@@ -1075,6 +1151,9 @@ public class FTP extends FTPClient implements RemoteDataClient
 		    throw new RemoteDataException(e.getMessage(), e);
 		} catch (IOException e) {
 			throw new RemoteDataException("Failed to connect to remote system.", e);
+		}
+		finally {
+			try {changeDir(resolvePath(""));} catch (Exception e) {}
 		}
 	}
 	
@@ -1114,7 +1193,11 @@ public class FTP extends FTPClient implements RemoteDataClient
 			
 			ByteArrayDataSink sink = new ByteArrayDataSink();
 	
-	        list("*", "-d", sink);
+			if (isWindowsSystem()) {
+				list("*", "-a", sink);
+			} else {
+				list("*", "-d", sink);
+			}
 	        
 	        ByteArrayOutputStream received = sink.getData();
 	
@@ -1509,20 +1592,24 @@ public class FTP extends FTPClient implements RemoteDataClient
 //			setActive(localServer.setPassive());
 			
 			changeDir(resolvedPath);
-				
+			
 			ByteArrayDataSink sink = new ByteArrayDataSink();
-
-	        List<RemoteFileInfo> listing = doLegacyLs(resolvedPath);
-
+			
+			if (isWindowsSystem()) {
+				list("*", "-a", sink);
+			} else {
+				list("*", "-d", sink);
+			}
+	        
 	        ByteArrayOutputStream received = sink.getData();
-
+	
 	        // transfer done. Data is in received stream.
 	        // convert it to a vector.
-
+	
 	        reader = new BufferedReader(new StringReader(received.toString()));
-
+        
 	        String line = null;
-
+	
 	        while ((line = reader.readLine()) != null) {
 	            line = line.trim();
 	            if(line.equals(""))
@@ -1532,12 +1619,47 @@ public class FTP extends FTPClient implements RemoteDataClient
 	            if (line.startsWith("total"))
 	                continue;
 	            RemoteFileInfo childInfo = new RemoteFileInfo(line);
-				if (StringUtils.equals(childInfo.getName(), ".") || 
-						StringUtils.equals(childInfo.getName(), FilenameUtils.getName(StringUtils.removeEnd(resolvedPath, "/")))) 
+				if (!StringUtils.equals(childInfo.getName(), ".") && 
+						!StringUtils.equals(childInfo.getName(), FilenameUtils.getName(StringUtils.removeEnd(resolvedPath, "/")))) 
 				{
-					fileInfo = childInfo;
+				    // add to cache since this file may have changed
+		            fileInfoCache.put(resolvedPath + "/" + childInfo.getName(), childInfo);
+		            return childInfo;
 				}
 	        }
+	        
+	        
+	        
+				
+//			ByteArrayDataSink sink = new ByteArrayDataSink();
+//
+//	        List<RemoteFileInfo> listing = doLegacyLs(resolvedPath);
+//	        
+//
+//	        ByteArrayOutputStream received = sink.getData();
+//
+//	        // transfer done. Data is in received stream.
+//	        // convert it to a vector.
+//
+//	        reader = new BufferedReader(new StringReader(received.toString()));
+//
+//	        String line = null;
+//
+//	        while ((line = reader.readLine()) != null) {
+//	            line = line.trim();
+//	            if(line.equals(""))
+//	            {
+//	                continue;
+//	            }
+//	            if (line.startsWith("total"))
+//	                continue;
+//	            RemoteFileInfo childInfo = new RemoteFileInfo(line);
+//				if (StringUtils.equals(childInfo.getName(), ".") || 
+//						StringUtils.equals(childInfo.getName(), FilenameUtils.getName(StringUtils.removeEnd(resolvedPath, "/")))) 
+//				{
+//					fileInfo = childInfo;
+//				}
+//	        }
 	        changeDir(resolvePath(""));
 			
 			return fileInfo;

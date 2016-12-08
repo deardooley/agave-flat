@@ -63,6 +63,8 @@ public class UuidCollectionImpl extends AbstractUuidCollection implements UuidCo
 	    	if (contentJson.hasNonNull("type")) {
 				try {
 					String stype = contentJson.get("type").asText();
+					// make uuid type case insensitive
+					stype = StringUtils.upperCase(stype);
 					type = UUIDType.getInstance(stype);
 				}
 				catch (UUIDException e) {

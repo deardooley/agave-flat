@@ -14,7 +14,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.tags.dao.TagDao;
 import org.iplantc.service.tags.events.TagEventProcessor;
-import org.iplantc.service.tags.exceptions.DuplicateTaggedResourceException;
 import org.iplantc.service.tags.exceptions.TagEventProcessingException;
 import org.iplantc.service.tags.exceptions.TagException;
 import org.iplantc.service.tags.exceptions.TagPermissionException;
