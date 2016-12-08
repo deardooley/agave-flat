@@ -71,6 +71,16 @@ CREATE TABLE IF NOT EXISTS `job_interrupts` (
     ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+# Create the published jobs table that tracks the jobs
+# already queue by a scheduler and should not be queued again.
+CREATE TABLE `job_published` (
+  `phase` ENUM('ARCHIVING','MONITORING','STAGING','SUBMITTING') NOT NULL,
+  `job_uuid` varchar(64) NOT NULL,
+  `created` datetime NOT NULL,
+  `creator` varchar(64) NOT NULL,
+  PRIMARY KEY (`phase`, `job_uuid`)
+) ENGINE=InnoDB;
+
 # Create the scheduler lease table that is used to limit
 # the number of active schedulers for each phase to 1.
 CREATE TABLE `job_leases` (

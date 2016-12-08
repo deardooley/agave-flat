@@ -36,7 +36,7 @@ public final class MonitoringScheduler
     }
 
     /* ********************************************************************** */
-    /*                             Public Methods                             */
+    /*                           Protected Methods                            */
     /* ********************************************************************** */
     /* ---------------------------------------------------------------------- */
     /* getPhaseTriggerStatus:                                                 */
@@ -51,4 +51,10 @@ public final class MonitoringScheduler
         }
         return _phaseTriggerStatuses;
     }
+
+    /* ---------------------------------------------------------------------- */
+    /* allowsRepublishing:                                                    */
+    /* ---------------------------------------------------------------------- */
+    @Override
+    protected boolean allowsRepublishing(){return true;}
 }

@@ -36,7 +36,7 @@ public final class SubmittingScheduler
     }
 
     /* ********************************************************************** */
-    /*                             Public Methods                             */
+    /*                            Protected Methods                           */
     /* ********************************************************************** */
     /* ---------------------------------------------------------------------- */
     /* getPhaseTriggerStatus:                                                 */
@@ -53,4 +53,10 @@ public final class SubmittingScheduler
         }
         return _phaseTriggerStatuses;
     }
+    
+    /* ---------------------------------------------------------------------- */
+    /* allowsRepublishing:                                                    */
+    /* ---------------------------------------------------------------------- */
+    @Override
+    protected boolean allowsRepublishing(){return false;}
 }

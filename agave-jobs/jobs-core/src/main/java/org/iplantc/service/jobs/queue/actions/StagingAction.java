@@ -95,7 +95,7 @@ public class StagingAction extends AbstractWorkerAction {
             String msg = "Safe status update failed for job " + job.getUuid() +
                          " (" + job.getName() + ") due to the job being in a finished state.";
             log.warn(msg, e);
-            return;
+            throw e;
         }
         
         // Get a well-formed map of user-supplied + default + hidden/required inputs for the job

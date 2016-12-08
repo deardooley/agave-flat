@@ -20,12 +20,14 @@ import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobInterruptDao;
 import org.iplantc.service.jobs.dao.JobLeaseDao;
+import org.iplantc.service.jobs.dao.JobPublishedDao;
 import org.iplantc.service.jobs.dao.JobQueueDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobQueueFilterException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobInterrupt;
+import org.iplantc.service.jobs.model.JobPublished;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
@@ -198,13 +200,7 @@ public abstract class AbstractPhaseScheduler
     // listed in priority order.
     private final HashMap<String,List<JobQueue>> _tenantQueues = new HashMap<>();
     
-    // The running set of job uuids that represent in one of this phase's
-    // trigger states that have already been published to a RabbitMQ queue
-    // by this phase's scheduler.  This set prevents a job from being published
-    // multiple times in the same stage.
-    private final HashSet<String> _publishedJobs = new HashSet<>();
-    
-    // Monotonically increasing sequence number generator used as part of thread names.
+   // Monotonically increasing sequence number generator used as part of thread names.
     private static final AtomicInteger _threadSeqno = new AtomicInteger(0);
     
     // A thread that periodically removes expired interrupts from database.
@@ -263,6 +259,21 @@ public abstract class AbstractPhaseScheduler
      * @return the trigger status for new work in this phase.
      */
     protected abstract List<JobStatusType> getPhaseTriggerStatuses();
+    
+    /* ---------------------------------------------------------------------- */
+    /* isFilteringPublishedJobs:                                              */
+    /* ---------------------------------------------------------------------- */
+    /** Each phase specifies if it allows jobs to be rescheduled multiple 
+     * times.  Scheduling involves placing a job on an appropriate queue.  Some
+     * phases expect that a job is published to its queue exactly one time, other
+     * phases republish the job until its status changes.
+     * 
+     * @return return false if republishing is prohibited (i.e., a job is 
+     *                expected to be queued once in the phase); true if the 
+     *                phase scheduler republishes the job until the job's
+     *                status changes.
+     */
+    protected abstract boolean allowsRepublishing();
     
     /* ********************************************************************** */
     /*                             Public Methods                             */
@@ -1120,7 +1131,7 @@ public abstract class AbstractPhaseScheduler
                 // method also maintains the published jobs set and filters the list
                 // of candidate jobs using that set.
                 List<Job> jobs = null;
-                try {jobs = getJobsReadyForPhase(_publishedJobs);}
+                try {jobs = getJobsReadyForPhase();}
                     catch (Exception e) 
                     {
                         String msg = _phaseType.name() + " scheduler database polling " +
@@ -1167,7 +1178,18 @@ public abstract class AbstractPhaseScheduler
                             toQueueableJSON(job).getBytes("UTF-8"));
                        
                         // Let's not publish this job to a queue more than once in this phase.
-                        _publishedJobs.add(job.getUuid());
+                        // NOTE: A failure between the last statement and this statement may
+                        //       cause a job to run multiple times. We don't have any kind of
+                        //       distributed transaction manager coordinating the database and queues.
+                        if (!allowsRepublishing())
+                            try {JobPublishedDao.publish(_phaseType, job.getUuid(), getSchedulerName());}
+                            catch (Exception e) {
+                                String msg = _phaseType.name() + " scheduler failed to insert " +
+                                    job.getName() + " (" + job.getUuid() + ") into published jobs table. " + 
+                                    "It is possible that this job will be processed multiple times by the " +
+                                    _phaseType.name() + " scheduler.";
+                                _log.error(msg, e);
+                            }
                     
                         // Tracing.
                         if (_log.isDebugEnabled()) {
@@ -1177,12 +1199,12 @@ public abstract class AbstractPhaseScheduler
                             _log.debug(msg);
                         }
                     }
-                    catch (IOException e) {
+                    catch (Exception e) {
                         // TODO: Probably need better failure remedy when publish fails.
                         String msg = _phaseType.name() + " scheduler failed to publish " +
                             job.getName() + " (" + job.getUuid() + ") to queue " + 
                             routingKey + ".  Retrying later.";
-                        _log.info(msg, e);
+                        _log.warn(msg, e);
                     }
                 }
             
@@ -1365,14 +1387,12 @@ public abstract class AbstractPhaseScheduler
     /** Query the database for jobs that execute in this phase.  Filter those
      * job using the published job set to avoid writing the same job more than
      * once to a queue for this phase.  This method also preens the published job
-     * set by removing jobs that have progress out of this phase. 
+     * set by removing jobs that have progressed out of this phase. 
      * 
-     * @param publishedJobs the set of jobs still in this phase that have already
-     *          been published to a queue.
      * @return the list of jobs that have yet to be published in this phase
      * @throws JobSchedulerException
      */
-    private List<Job> getJobsReadyForPhase(HashSet<String> publishedJobs)
+    private List<Job> getJobsReadyForPhase()
       throws JobSchedulerException
     {
         // Initialize result list.
@@ -1384,6 +1404,7 @@ public abstract class AbstractPhaseScheduler
             return jobs;
         }
         
+        // -------------------- Query Jobs ---------------------
         // Query all jobs that are ready for this state.
         try {jobs = JobDao.getByStatus(getPhaseTriggerStatuses());}
             catch (Exception e)
@@ -1393,20 +1414,46 @@ public abstract class AbstractPhaseScheduler
                 throw new JobSchedulerException(msg, e);
             }
         
-        // Maintain the published job set by removing obsolete jobs from the set.
-        // Obsolete job are those that are no longer in any of this phase's trigger
-        // states.  We do not need to guard against republishing jobs that progressed
-        // beyond this phase's purview, so we remove them from the publish job set.
-        //
+        // We're done if the phase reschedules the same job until
+        // its status changes.
+        if (allowsRepublishing()) return jobs;
+        
+        // -------------------- Filter Jobs --------------------
         // Put the job uuids in an easily searched set.
         HashSet<String> jobUuids = new HashSet<>((jobs.size() * 2) + 1);
         for (Job job : jobs)  jobUuids.add(job.getUuid());
             
-        // Remove uuids in the published set that are not in the current job set.
-        Iterator<String> publishedIt = publishedJobs.iterator();
-        while (publishedIt.hasNext()) {
-            String publishedUuid = publishedIt.next();
-            if (!jobUuids.contains(publishedUuid)) publishedIt.remove();
+        // Maintain the published job set by removing obsolete jobs from the set.
+        // Obsolete jobs are those that are no longer in any of this phase's trigger
+        // states.  We do not need to guard against republishing jobs that progressed
+        // beyond this phase's purview, so we remove them from the publish job set.
+        List<JobPublished> publishedJobs = null;
+        try {publishedJobs = JobPublishedDao.getPublishedJobs(_phaseType);}
+        catch (Exception e) {
+            String msg = _phaseType.name() + " scheduler unable to retrieve published job list.";
+            _log.error(msg, e);
+            throw new JobSchedulerException(msg, e);
+        }
+        
+        // Put the published job uuids in an easily searched set.
+        HashSet<String> publishedJobUuids = new HashSet<>((publishedJobs.size() * 2) + 1);
+        for (JobPublished jobPublished : publishedJobs) publishedJobUuids.add(jobPublished.getJobUuid());
+        
+        // Remove uuids in the published set those that are no longer in the current job set.
+        String publishedUuid = null;
+        try {
+            Iterator<String> publishedIt = publishedJobUuids.iterator();
+            while (publishedIt.hasNext()) {
+                publishedUuid = publishedIt.next();
+                if (!jobUuids.contains(publishedUuid))
+                    JobPublishedDao.deletePublishedJob(_phaseType, publishedUuid);
+            }
+        }
+        catch (Exception e) {
+            String msg = _phaseType.name() + " scheduler unable to delete published job " +
+                         publishedUuid + ".";
+            _log.error(msg, e);
+            throw new JobSchedulerException(msg, e);
         }
         
         // Remove jobs that have already been published to a RabbitMQ queue
@@ -1415,7 +1462,7 @@ public abstract class AbstractPhaseScheduler
         while (jobIt.hasNext()) {
             // Remove the job if it has been published.
             Job job = jobIt.next();
-            if (publishedJobs.contains(job.getUuid()))
+            if (publishedJobUuids.contains(job.getUuid()))
                 jobIt.remove();
         }
         

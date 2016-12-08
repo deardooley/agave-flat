@@ -36,7 +36,7 @@ public final class StagingScheduler
     }
 
     /* ********************************************************************** */
-    /*                             Public Methods                             */
+    /*                           Protected Methods                            */
     /* ********************************************************************** */
     /* ---------------------------------------------------------------------- */
     /* getPhaseTriggerStatus:                                                 */
@@ -53,4 +53,10 @@ public final class StagingScheduler
         }
         return _phaseTriggerStatuses;
     }
+    
+    /* ---------------------------------------------------------------------- */
+    /* allowsRepublishing:                                                    */
+    /* ---------------------------------------------------------------------- */
+    @Override
+    protected boolean allowsRepublishing(){return false;}
 }

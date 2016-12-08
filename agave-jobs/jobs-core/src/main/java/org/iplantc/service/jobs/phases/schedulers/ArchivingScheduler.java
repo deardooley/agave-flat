@@ -36,7 +36,7 @@ public final class ArchivingScheduler
     }
 
     /* ********************************************************************** */
-    /*                             Public Methods                             */
+    /*                           Protected Methods                            */
     /* ********************************************************************** */
     /* ---------------------------------------------------------------------- */
     /* getPhaseTriggerStatus:                                                 */
@@ -52,4 +52,10 @@ public final class ArchivingScheduler
         }
         return _phaseTriggerStatuses;
     }
+    
+    /* ---------------------------------------------------------------------- */
+    /* allowsRepublishing:                                                    */
+    /* ---------------------------------------------------------------------- */
+    @Override
+    protected boolean allowsRepublishing(){return false;}
 }

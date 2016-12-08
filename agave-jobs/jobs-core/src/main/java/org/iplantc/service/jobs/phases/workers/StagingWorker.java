@@ -198,7 +198,7 @@ public final class StagingWorker
             }
             catch (JobFinishedException e) {
                 if (_log.isDebugEnabled())
-                    _log.debug("Submission task for job " + _job.getUuid() + 
+                    _log.debug("Staging task for job " + _job.getUuid() + 
                                " forced to stop by a job interrupt.", e);
                 throw e;
             }

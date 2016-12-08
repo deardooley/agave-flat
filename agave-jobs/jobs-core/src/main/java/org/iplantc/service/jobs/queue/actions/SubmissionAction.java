@@ -64,6 +64,7 @@ public class SubmissionAction extends AbstractWorkerAction {
         {
             while (!submitted && attempts <= Settings.MAX_SUBMISSION_RETRIES)
             {
+                // Exceptions thrown from here propagate out (no retries). 
                 checkStopped();
                 
                 this.job.setRetries(attempts);
@@ -72,6 +73,7 @@ public class SubmissionAction extends AbstractWorkerAction {
                 
                 log.debug("Attempt " + attempts + " to submit job " + job.getUuid());
                 
+                // Exceptions thrown from here propagate out (no retries).
                 this.job = JobManager.safeUpdateStatus(this.job, JobStatusType.SUBMITTING, 
                                                        "Attempt " + attempts + " to submit job");
                 
