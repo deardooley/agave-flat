@@ -56,5 +56,5 @@ public final class MonitoringScheduler
     /* allowsRepublishing:                                                    */
     /* ---------------------------------------------------------------------- */
     @Override
-    protected boolean allowsRepublishing(){return true;}
+    public boolean allowsRepublishing(){return true;}
 }

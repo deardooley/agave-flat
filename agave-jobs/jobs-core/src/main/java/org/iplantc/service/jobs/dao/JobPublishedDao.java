@@ -1,5 +1,6 @@
 package org.iplantc.service.jobs.dao;
 
+import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -117,6 +118,85 @@ public final class JobPublishedDao {
         return rows;
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* hasPublishedJob:                                                       */
+    /* ---------------------------------------------------------------------- */
+    /** Determine if a job exists in the published table in the specified phase.
+     * 
+     * @param phase the phase in which the job is published
+     * @param jobUuid the job id
+     * @return true if the job exists in the phase, false otherwise
+     * @throws JobException on error
+     */
+    public static boolean hasPublishedJob(JobPhaseType phase, String jobUuid)
+     throws JobException
+    {
+        // ------------------------- Check Input -------------------------
+        // Null/empty checks.
+        if (phase == null) {
+            String msg = "Null job phase received.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        if (StringUtils.isBlank(jobUuid)) {
+            String msg = "No job uuid specified.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // ------------------------- Call SQL ----------------------------
+        boolean exists = true; // assume job in table
+        try
+        {
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Create the insert command.
+            String sql = "select count(*) from job_published " +
+                         "where phase = :phase " +
+                         "and job_uuid = :job_uuid";
+            
+            // Fill in the placeholders.           
+            Query qry = session.createSQLQuery(sql);
+            qry.setString("phase", phase.name());
+            qry.setString("job_uuid", jobUuid);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            
+            // Issue the call.
+            Object result = qry.uniqueResult();
+            if (result != null) {
+                int count = ((BigInteger)result).intValue();
+                if (count == 0) exists = false;
+            }
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to query existence of job published for phase " + 
+                         phase.name() + " and job " + jobUuid + ".";
+            _log.error(msg);
+            throw new JobException(msg, e);
+        }
+        finally {
+            try {HibernateUtil.commitTransaction();} 
+            catch (Exception e) 
+            {
+                String msg = "Unable to commit published job existence query for phase " + 
+                             phase.name() + " and job " + jobUuid + ".";
+                _log.error(msg);
+                throw new JobException(msg, e);
+            }
+        }
+        
+        // Return the number of rows affected.
+        return exists;
+    }
+    
     /* ---------------------------------------------------------------------- */
     /* getPublishedJobs:                                                      */
     /* ---------------------------------------------------------------------- */

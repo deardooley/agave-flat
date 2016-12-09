@@ -57,5 +57,5 @@ public final class ArchivingScheduler
     /* allowsRepublishing:                                                    */
     /* ---------------------------------------------------------------------- */
     @Override
-    protected boolean allowsRepublishing(){return false;}
+    public boolean allowsRepublishing(){return false;}
 }

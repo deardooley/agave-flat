@@ -58,5 +58,5 @@ public final class SubmittingScheduler
     /* allowsRepublishing:                                                    */
     /* ---------------------------------------------------------------------- */
     @Override
-    protected boolean allowsRepublishing(){return false;}
+    public boolean allowsRepublishing(){return false;}
 }

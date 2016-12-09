@@ -58,5 +58,5 @@ public final class StagingScheduler
     /* allowsRepublishing:                                                    */
     /* ---------------------------------------------------------------------- */
     @Override
-    protected boolean allowsRepublishing(){return false;}
+    public boolean allowsRepublishing(){return false;}
 }

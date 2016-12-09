@@ -89,11 +89,21 @@ public class JobPublishedDaoTest
                             "Unexpected number of published jobs for phase " + 
                               JobPhaseType.STAGING.name());
         
+        // Check for an individual job record's existence.
+        boolean exists = JobPublishedDao.hasPublishedJob(list1.get(0).getPhase(), 
+                                                         list1.get(0).getJobUuid());
+        Assert.assertTrue(exists, "Expected job record's existence.");
+        
         // Delete a published job for the first phase.
         int deleted = JobPublishedDao.deletePublishedJob(list1.get(0).getPhase(), 
                                                          list1.get(0).getJobUuid());
         Assert.assertEquals(deleted, 1, 
                 "Unable to delete job: " + AgaveStringUtils.toString(list1.get(0)));
+        
+        // Check for an individual job record's existence.
+        exists = JobPublishedDao.hasPublishedJob(list1.get(0).getPhase(), 
+                                                 list1.get(0).getJobUuid());
+        Assert.assertFalse(exists, "Expected job record's existence.");
         
         // Retrieve all published job records for the first phase.
         list1 = JobPublishedDao.getPublishedJobs(JobPhaseType.STAGING);
@@ -108,11 +118,21 @@ public class JobPublishedDaoTest
                             "Unexpected number of published jobs for phase " + 
                               JobPhaseType.ARCHIVING.name());
         
+        // Check for an individual job record's existence.
+        exists = JobPublishedDao.hasPublishedJob(list2.get(0).getPhase(), 
+                                                 list2.get(0).getJobUuid());
+        Assert.assertTrue(exists, "Expected job record's existence.");
+        
         // Delete a published job for the second phase.
         deleted = JobPublishedDao.deletePublishedJob(list2.get(0).getPhase(), 
                                                      list2.get(0).getJobUuid());
         Assert.assertEquals(deleted, 1, 
                 "Unable to delete job: " + AgaveStringUtils.toString(list2.get(0)));
+        
+        // Check for an individual job record's existence.
+        exists = JobPublishedDao.hasPublishedJob(list2.get(0).getPhase(), 
+                                                 list2.get(0).getJobUuid());
+        Assert.assertFalse(exists, "Expected job record's existence.");
         
         // Retrieve all published job records for the second phase.
         list2 = JobPublishedDao.getPublishedJobs(JobPhaseType.ARCHIVING);

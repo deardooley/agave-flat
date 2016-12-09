@@ -273,7 +273,7 @@ public abstract class AbstractPhaseScheduler
      *                phase scheduler republishes the job until the job's
      *                status changes.
      */
-    protected abstract boolean allowsRepublishing();
+    public abstract boolean allowsRepublishing();
     
     /* ********************************************************************** */
     /*                             Public Methods                             */
@@ -1178,9 +1178,10 @@ public abstract class AbstractPhaseScheduler
                             toQueueableJSON(job).getBytes("UTF-8"));
                        
                         // Let's not publish this job to a queue more than once in this phase.
-                        // NOTE: A failure between the last statement and this statement may
-                        //       cause a job to run multiple times. We don't have any kind of
-                        //       distributed transaction manager coordinating the database and queues.
+                        // NOTE: A failure between the last statement leaves information about this
+                        //       job in an inconsistent state.  The worker thread that eventually
+                        //       services this job can resolve the situation.  See 
+                        //       AbstractPhaseWorker.detectDuplicateJob() for details.
                         if (!allowsRepublishing())
                             try {JobPublishedDao.publish(_phaseType, job.getUuid(), getSchedulerName());}
                             catch (Exception e) {

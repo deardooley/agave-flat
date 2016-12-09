@@ -11,6 +11,7 @@ import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
+import org.iplantc.service.jobs.dao.JobPublishedDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
@@ -18,6 +19,7 @@ import org.iplantc.service.jobs.exceptions.QuotaViolationException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.JobQuotaCheck;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobPublished;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.JobInterruptUtils;
@@ -285,7 +287,6 @@ public abstract class AbstractPhaseWorker
             else {
                 // Reject this unreadable message so that
                 // it gets discarded or dead-lettered.
-                // TODO: Double check reject semantics
                 boolean requeue = false;
                 try {_jobChannel.basicReject(envelope.getDeliveryTag(), requeue);} 
                 catch (IOException e) {
@@ -401,6 +402,16 @@ public abstract class AbstractPhaseWorker
         // local to the tenant.  The calling method resets these values.
         TenancyHelper.setCurrentTenantId(job.getTenantId());
         TenancyHelper.setCurrentEndUser(job.getOwner());
+        
+        // Make sure we are not receiving a duplicate job request
+        // for phase they don't allow duplicate requests.
+        if (!_scheduler.allowsRepublishing())
+            if (detectDuplicateJob(job)) {
+                String msg = "Worker " + getName() + " detected duplicate job " +
+                             job.getUuid() + " (" + job.getName() + ")."; 
+            _log.error(msg);
+            return false;
+        }
         
         // Invoke the phase processor.
         boolean jobProcessed = true;
@@ -686,6 +697,55 @@ public abstract class AbstractPhaseWorker
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* detectDuplicateJob:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Detect whether a duplicate job was received.  Duplicate jobs can be 
+     * received if the scheduler fails after publishing a job to a queue but
+     * before writing the job to the job_published table.  In that case, the
+     * job may still be in a trigger state when a new or restarted scheduler
+     * begins processing.  If the scheduler sees the job, it will republish
+     * it not knowing that it was previously published.
+     * 
+     * This duplicate detection strategy mandates that worker to ignore jobs
+     * that are not tracked in the job_published table.  This strategy works
+     * in all possible situations, each of which is analyzed here:
+     * 
+     *  1. Nothing in the job record changed after the job was queued.
+     *     - The job request will be ignored and the scheduler will eventually
+     *       republish the job and insert the tracking record in the 
+     *       job_published table (unless another failure occurs).
+     *  2. The status of the job changes since it was queued.
+     *     - Since the job is not yet being processed by any worker, the only
+     *       status change possible is from an asynchronous request to stop, 
+     *       pause or delete the job.  After the worker ignores the job request,
+     *       the scheduler will not republish because the job is no longer
+     *       in a trigger state.  This is fine since the job is stopped.
+     * 
+     * @param job the job whose duplicate status
+     * @return true if a duplicate was detected, false otherwise
+     * @throws JobException on error
+     */
+    private boolean detectDuplicateJob(Job job)
+    {
+        // The default is to assume the worst since the job will eventually
+        // be requeued by the server if it's still in a trigger state.
+        boolean dup = true;
+        try {
+            // If the job is in the published table, its not a duplicate.
+            dup = !JobPublishedDao.hasPublishedJob(_scheduler.getPhaseType(), 
+                                                    job.getUuid());
+        }
+        catch (Exception e){
+            String msg = "Worker " + getName() + " unable to determine if job " +
+                    job.getUuid() + " (" + job.getName() + ") was already published."; 
+             _log.error(msg);
+        }
+
+        // False is the happy path result.
+        return dup;
+    }
+    
     /* ---------------------------------------------------------------------- */
     /* initJobChannel:                                                        */
     /* ---------------------------------------------------------------------- */
