@@ -1086,7 +1086,7 @@ public class JobManager {
      * @return
      * @throws JobException 
      */
-    public static boolean isJobDataFullyArchived(Job job) throws JobException
+    public static boolean isJobDataFullyArchived(Job job)
     {
         if (job.isArchiveOutput())
         {
@@ -1094,10 +1094,19 @@ public class JobManager {
                 return true;
             }
             else if (job.getStatus() == JobStatusType.FINISHED) {
-                for (JobEvent event: JobEventDao.getByJobId(job.getId())) {
-                    if (StringUtils.equalsIgnoreCase(event.getStatus(), JobStatusType.ARCHIVING_FINISHED.name())) {
-                        return true;
+                try {
+                    for (JobEvent event: JobEventDao.getByJobId(job.getId())) {
+                        if (StringUtils.equalsIgnoreCase(event.getStatus(), JobStatusType.ARCHIVING_FINISHED.name())) {
+                            return true;
+                        }
                     }
+                }
+                catch (Exception e)
+                {
+                    // Log, swallow the exception, and then quit.
+                    String msg = "Unable to access job events for job " + job.getId() + 
+                                 " with unique id " + job.getUuid() + ".";
+                    log.error(msg, e);
                 }
             }
         }
