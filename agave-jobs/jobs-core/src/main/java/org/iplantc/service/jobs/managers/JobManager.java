@@ -26,6 +26,7 @@ import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
+import org.iplantc.service.jobs.dao.JobEventDao;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
@@ -1080,11 +1081,12 @@ public class JobManager {
     /**
      * Determines whether the job has completed archiving and can thus
      * refer to the archive location for requests for its output data.
-     *
+     *  TODO: fix this shit
      * @param job
      * @return
+     * @throws JobException 
      */
-    public static boolean isJobDataFullyArchived(Job job)
+    public static boolean isJobDataFullyArchived(Job job) throws JobException
     {
         if (job.isArchiveOutput())
         {
@@ -1092,8 +1094,38 @@ public class JobManager {
                 return true;
             }
             else if (job.getStatus() == JobStatusType.FINISHED) {
-                for (JobEvent event: job.getEvents()) {
+                for (JobEvent event: JobEventDao.getByJobId(job.getId())) {
                     if (StringUtils.equalsIgnoreCase(event.getStatus(), JobStatusType.ARCHIVING_FINISHED.name())) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // anything else means the job failed, hasn't reached a point of
+        // archiving, is in process, or something happened.
+        return false;
+    }
+    
+    /**
+     * Determines whether the job ever began archiving
+     * @param job
+     * @return
+     * @throws JobException 
+     */
+    public static boolean isJobDataPartiallyArchived(Job job) throws JobException
+    {
+        if (job.isArchiveOutput())
+        {
+            if (job.getStatus() == JobStatusType.ARCHIVING || 
+            		job.getStatus() == JobStatusType.ARCHIVING_FINISHED || 
+            		job.getStatus() == JobStatusType.ARCHIVING_FAILED) {
+                return true;
+            }
+            else if (job.getStatus() == JobStatusType.FINISHED || 
+            		job.getStatus() == JobStatusType.FAILED) {
+                for (JobEvent event: JobEventDao.getByJobId(job.getId())) {
+                    if (StringUtils.equalsIgnoreCase(event.getStatus(), JobStatusType.ARCHIVING.name())) {
                         return true;
                     }
                 }

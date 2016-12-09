@@ -39,6 +39,7 @@ import org.iplantc.service.common.uri.UrlPathEscaper;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.jobs.Settings;
+import org.iplantc.service.jobs.dao.JobEventDao;
 import org.iplantc.service.jobs.exceptions.JobEventProcessingException;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.managers.JobEventProcessor;
@@ -130,7 +131,7 @@ public class Job {
 	private boolean				visible;		// Can a user see the job?
 	private Integer				version = 0;	// Entity version used for optimistic locking
 	private String				tenantId;		// current api tenant
-	private List<JobEvent>		events = new ArrayList<JobEvent>(); // complete history of events for this job
+//	private List<JobEvent>		events = new ArrayList<JobEvent>(); // complete history of events for this job
 	
 //	private Set<Notification>	notifications = new HashSet<Notification>(); // all notifications registered to this job
 	
@@ -546,17 +547,11 @@ public class Job {
 	 * Returns a list of job events in the history of this job.
 	 * 
 	 * @return
+	 * @throws JobException 
 	 */
-	@OneToMany(cascade = {CascadeType.ALL}, mappedBy = "job", fetch=FetchType.EAGER, orphanRemoval=true)
-	public List<JobEvent> getEvents() {
-		return events;
-	}
-	
-	/**
-	 * @param events
-	 */
-	public void setEvents(List<JobEvent> events) {
-		this.events = events;
+	@Transient
+	public List<JobEvent> getEvents() throws JobException {
+		return JobEventDao.getByJobId(getId());
 	}
 	
 	/**
@@ -564,10 +559,12 @@ public class Job {
 	 * be saved with the job when the job is persisted.
 	 * 
 	 * @param event
+	 * @throws JobException 
 	 */
-	public void addEvent(JobEvent event) {
+	public void addEvent(JobEvent event) throws JobException {
 		event.setJob(this);
-		this.events.add(event);
+		JobEventDao.persist(event);
+		
 		JobEventProcessor jep;
         try {
             jep = new JobEventProcessor(event);
@@ -659,7 +656,7 @@ public class Job {
 			}
 			else {
 				event.setDescription(event.getDescription() + " Event will be ignored because job has been deleted.");
-				this.events.add(event);
+				this.addEvent(event);
 			}
 		} else {
 //			log.debug("Ignoring status update to " + status + " with same message");

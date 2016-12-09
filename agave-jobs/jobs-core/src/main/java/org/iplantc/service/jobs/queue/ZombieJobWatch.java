@@ -16,6 +16,7 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.dao.JobDao;
+import org.iplantc.service.jobs.dao.JobEventDao;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.managers.JobManager;
@@ -275,11 +276,12 @@ public class ZombieJobWatch implements org.quartz.Job
 	 * 
 	 * @param job the job for which to cancel transfers
 	 * @param callingUsername the principal canceling transfers for the job
+	 * @throws JobException 
 	 */
-	private void cancelCurrentTransfers(Job job, String callingUsername) 
+	private void cancelCurrentTransfers(Job job, String callingUsername) throws JobException 
 	{	
 		// iterate over all job events
-    	for (JobEvent event: job.getEvents()) 
+    	for (JobEvent event: JobEventDao.getByJobId(job.getId())) 
 		{
     		// wherever a transfer task is found for an event, cancel it. This will 
     		// issue a single SQL update query to set {@link TransferTask#status} to 
