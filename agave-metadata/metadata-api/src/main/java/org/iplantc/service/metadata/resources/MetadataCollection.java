@@ -35,6 +35,8 @@ import org.iplantc.service.metadata.dao.MetadataPermissionDao;
 import org.iplantc.service.metadata.events.MetadataEventProcessor;
 import org.iplantc.service.metadata.exceptions.MetadataException;
 import org.iplantc.service.metadata.managers.MetadataPermissionManager;
+import org.iplantc.service.metadata.managers.MetadataRequestNotificationProcessor;
+import org.iplantc.service.metadata.managers.MetadataRequestPermissionProcessor;
 import org.iplantc.service.metadata.managers.MetadataSchemaPermissionManager;
 import org.iplantc.service.metadata.model.enumerations.MetadataEventType;
 import org.iplantc.service.notification.managers.NotificationManager;
@@ -210,11 +212,6 @@ public class MetadataCollection extends AgaveResource
                     query = ((BasicDBObject)JSON.parse(userQuery));
                     for (String key: query.keySet()) {
                         if (query.get(key) instanceof String) {
-//                        	if (!StringUtils.equalsIgnoreCase("owner", key) && !AuthorizationHelper.isTenantAdmin(username)) {
-//                    			throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, 
-//                    					"User does not have permission to perform ownership queries");
-//                    		}
-//                        	else 
                     		if (((String) query.get(key)).contains("*")) {
                                 try {
                                     Pattern regexPattern = Pattern.compile((String)query.getString(key), Pattern.LITERAL | Pattern.CASE_INSENSITIVE);
@@ -245,10 +242,6 @@ public class MetadataCollection extends AgaveResource
                 }
             }
             
-//            cursor = collection.find(query, new BasicDBObject("_id", false));
-//            int totalEntries = cursor.count();
-            
-//            log.debug(query.toString());
             cursor = collection.find(query, new BasicDBObject("_id", false))
             					.sort(new BasicDBObject("lastModified", -1))
             					.skip(offset)
@@ -263,13 +256,6 @@ public class MetadataCollection extends AgaveResource
             	// a white list of allowsed uuids
             	result = formatMetadataObject(result);
             	permittedResults.add(result);
-            	
-//            	pm = new MetadataPermissionManager((String)result.get("uuid"), (String)result.get("owner"));
-//                if (pm.canRead(username))
-//                {
-//                	result = formatMetadataObject(result);
-//                	permittedResults.add(result);
-//                }
             }
             
             
@@ -299,7 +285,7 @@ public class MetadataCollection extends AgaveResource
     {
     	AgaveLogServiceClient.log(METADATA02.name(), MetaCreate.name(), username, "", getRequest().getClientInfo().getUpstreamAddress());
     	
-    	DBCursor cursor = null;
+//    	DBCursor cursor = null;
 
     	try
     	{
@@ -314,11 +300,13 @@ public class MetadataCollection extends AgaveResource
 	        String schemaId = null;
 	        ObjectMapper mapper = new ObjectMapper();
 	        ArrayNode items = mapper.createArrayNode();
-
+	        ArrayNode permissions = mapper.createArrayNode();
+	        ArrayNode notifications = mapper.createArrayNode();
+	        
 	        try
 	        {
 	        	JsonNode jsonMetadata = super.getPostedEntityAsObjectNode(false);
-
+	        	
 	        	if (jsonMetadata.has("name") && jsonMetadata.get("name").isTextual()
 	            		&& !jsonMetadata.get("name").isNull()) {
 	                name = jsonMetadata.get("name").asText();
@@ -344,6 +332,26 @@ public class MetadataCollection extends AgaveResource
 	            	} else {
 	            		if (jsonMetadata.get("associationIds").isTextual())
 	            			items.add(jsonMetadata.get("associationIds").asText());
+	            	}
+	            }
+	            
+	            if (jsonMetadata.hasNonNull("notifications")) {
+	            	if (jsonMetadata.get("notifications").isArray()) {
+	            		notifications = (ArrayNode)jsonMetadata.get("notifications");
+	            	} else {
+	            		throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
+	            				"Invalid notifications value. notifications should be an "
+	            				+ "JSON array of notification objects.");
+	            	}
+	            }
+	            
+	            if (jsonMetadata.hasNonNull("permissions")) {
+	            	if (jsonMetadata.get("permissions").isArray()) {
+	            		permissions = (ArrayNode)jsonMetadata.get("permissions");
+	            	} else {
+	            		throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
+	            				"Invalid permissions value. permissions should be an "
+	            				+ "JSON array of permission objects.");
 	            	}
 	            }
 
@@ -396,10 +404,6 @@ public class MetadataCollection extends AgaveResource
 	                JsonNode jsonMetadataNode = factory.createParser(value).readValueAsTree();
 	                AgaveJsonValidator validator = AgaveJsonSchemaFactory.byDefault().getValidator();
 	                
-//	                JsonFactory factory = new ObjectMapper().getFactory();
-//	                JsonNode jsonSchemaNode = factory.createJsonParser(schema).readValueAsTree();
-//	                JsonNode jsonMetadataNode = factory.createJsonParser(value).readValueAsTree();
-//	                JsonValidator validator = JsonSchemaFactory.byDefault().getValidator();
 	                ProcessingReport report = validator.validate(jsonSchemaNode, jsonMetadataNode);
 	                if (!report.isSuccess())
 	                {
@@ -506,19 +510,23 @@ public class MetadataCollection extends AgaveResource
     		uuid = new AgaveUUID(UUIDType.METADATA).toString();
         	doc.put("uuid", uuid);
         	doc.append("created", timestamp);
-            collection.insert(doc);
-
-            MetadataPermissionManager pm = new MetadataPermissionManager(uuid, username);
-            pm.setPermission(username, "ALL");
-
-            eventProcessor.processContentEvent(uuid, MetadataEventType.CREATED, username, formatMetadataObject(doc).toString());
+        	collection.insert(doc);
+        	
+        	eventProcessor.processContentEvent(uuid, MetadataEventType.CREATED, username, formatMetadataObject(doc).toString());
             
-//            for (int i=0; i<items.size(); i++) {
-//                String aid = items.get(i).asText();
-//                
-////                NotificationManager.process(aid, "METADATA_CREATED", username);
-//            }
-
+        	// process any embedded notifications
+        	MetadataRequestNotificationProcessor notificationProcessor = new MetadataRequestNotificationProcessor(username, uuid);
+        	notificationProcessor.process(notifications);
+        	
+        	// add ownership permission to the requesting user
+        	MetadataPermissionManager pm = new MetadataPermissionManager(uuid, username);
+            pm.setPermission(username, "ALL");
+            
+            // add any  permission to the requesting user
+            MetadataRequestPermissionProcessor permissionProcessor = new MetadataRequestPermissionProcessor(username, uuid);
+            permissionProcessor.process(permissions);
+        	
+            
             getResponse().setStatus(Status.SUCCESS_CREATED);
 	        getResponse().setEntity(new IplantSuccessRepresentation(formatMetadataObject(doc).toString()));
 	        return;
@@ -537,7 +545,7 @@ public class MetadataCollection extends AgaveResource
                             "please contact the system administrators."));
         }
         finally {
-        	try { cursor.close(); } catch (Exception e1) {}
+//        	try { cursor.close(); } catch (Exception e1) {}
         }
     }
 

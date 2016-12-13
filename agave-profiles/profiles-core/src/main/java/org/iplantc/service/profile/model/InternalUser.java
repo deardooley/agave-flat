@@ -814,6 +814,7 @@ public class InternalUser extends Profile
 				.key("email").value(email)
 				.key("fax").value(fax)
 				.key("firstName").value(getFirstName())
+				.key("fullName").value(getFirstName() + " " + getLastName())
 				.key("gender").value(gender)
 				.key("institution").value(institution)
 				.key("lastName").value(getLastName())
