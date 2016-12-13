@@ -124,7 +124,7 @@ public class Tag  {
 	/**
 	 * The tags to which this uuid applies.
 	 */
-	@OneToMany(cascade = CascadeType.ALL)
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval=true)
 	@JsonProperty("associationIds")
 	@OptimisticLock(excluded = true)
     private List<TaggedResource> taggedResources = new ArrayList<TaggedResource>();
