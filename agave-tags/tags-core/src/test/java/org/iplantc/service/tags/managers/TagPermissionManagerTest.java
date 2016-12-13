@@ -1,4 +1,4 @@
-package org.iplantc.service.tags.manager;
+package org.iplantc.service.tags.managers;
 
 import org.iplantc.service.tags.AbstractTagTest;
 import org.iplantc.service.tags.TestDataHelper;

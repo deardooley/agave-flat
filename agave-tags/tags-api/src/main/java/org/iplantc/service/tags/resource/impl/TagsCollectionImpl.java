@@ -3,6 +3,7 @@
  */
 package org.iplantc.service.tags.resource.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +35,8 @@ import org.restlet.resource.ResourceException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.type.CollectionType;
 
 /**
  * @author dooley
@@ -62,10 +65,12 @@ public class TagsCollectionImpl extends AbstractTagCollection implements TagsCol
         	List<Tag> tags = dao.findMatching(getAuthenticatedUsername(), searchCriteria, getOffset(), getLimit());
 				
         	ObjectMapper mapper = new ObjectMapper();
-    		String json = mapper.writerWithType(new TypeReference<List<Tag>>() {})
-					.writeValueAsString(tags);
+//        	ArrayNode json = mapper.createArrayNode();
+//        	for(Tag tag: tags) {
+//        		json.add(mapper.readTree(tag.toJSON().toString()));
+//        	}
         	
-    		return Response.ok(new AgaveSuccessRepresentation(json.toString())).build();
+    		return Response.ok(new AgaveSuccessRepresentation(mapper.writeValueAsString(tags))).build();
             
         }
         catch (ResourceException e) {
@@ -94,7 +99,7 @@ public class TagsCollectionImpl extends AbstractTagCollection implements TagsCol
         	TagManager manager = new TagManager();
         	Tag tag = manager.addTagForUser(contentJson, getAuthenticatedUsername());
         	
-            return Response.ok().entity(new AgaveSuccessRepresentation(tag.toJSON())).build();
+            return Response.ok().entity(new AgaveSuccessRepresentation(tag.toJSON().toString())).build();
         }
         catch (TagException e) {
         	log.error(e);

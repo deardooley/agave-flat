@@ -7,7 +7,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-@Path("{entityId}/associationIds/{uuid}")
+@Path("{entityId}/associations/{uuid}")
 public interface TagResourceResource {
 
     @GET
