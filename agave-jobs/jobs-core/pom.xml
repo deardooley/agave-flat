@@ -75,5 +75,10 @@
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.statefulj</groupId>
+            <artifactId>statefulj-fsm-java7</artifactId>
+            <version>${statefulj.version}</version>
+        </dependency>
 	</dependencies>
 </project>

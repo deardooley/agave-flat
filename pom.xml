@@ -220,6 +220,7 @@
 	    <slf4j-api.version>1.6.1</slf4j-api.version>
 	    <slf4j-log4j12.version>1.6.1</slf4j-log4j12.version>
 	    <spring.version>3.2.0.RELEASE</spring.version>
+	    <statefulj.version>3.0</statefulj.version>
 	    <testng.version>6.9.12</testng.version>
 	    <twilio-java-sdk.version>3.4.1</twilio-java-sdk.version>
 	    <uuid.version>3.4.0</uuid.version>
