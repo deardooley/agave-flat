@@ -10,5 +10,10 @@ package org.iplantc.service.apps.model.enumerations;
  *
  */
 public enum SoftwareActionType {
-    PUBLISH, ENABLE, DISABLE, CLONE, ERASE;
+    PUBLISH, 
+    ENABLE, 
+    DISABLE, 
+    CLONE, 
+//    CANCEL, 
+    ERASE;
 }

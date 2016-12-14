@@ -21,6 +21,7 @@
         <property name="connection.autoReconnect">true</property>
         <property name="connection.autoReconnectForPools">true</property>
         <property name="connection.is-connection-validation-required">true</property>
+		<property name="javax.persistence.validation.mode">none</property>
 
 		<!-- configuration pool via c3p0-->
 		<property name="c3p0.acquire_increment">1</property>

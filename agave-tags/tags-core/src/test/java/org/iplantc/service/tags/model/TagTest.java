@@ -172,7 +172,7 @@ public class TagTest extends AbstractTagTest {
 	{
 		try 
 		{
-			ObjectNode json = (ObjectNode) new ObjectMapper().readTree(tag.toJSON());
+			ObjectNode json = (ObjectNode) new ObjectMapper().valueToTree(tag);
 			
 			Assert.assertTrue(json.get("_links").get("self").has("href"), "No hypermedia found in serialized response");
 			Assert.assertTrue(json.get("_links").has("permissions"), "No permissions reference found in serialized response");

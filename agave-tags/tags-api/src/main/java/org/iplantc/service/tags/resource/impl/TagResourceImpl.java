@@ -46,7 +46,7 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
         {
         	Tag tag = getResourceFromPathValue(entityId);
         	
-    		return Response.ok(new AgaveSuccessRepresentation(tag.toJSON())).build();
+    		return Response.ok(new AgaveSuccessRepresentation(tag.toJSON().toString())).build();
             
         }
         catch (ResourceException e) {
@@ -75,7 +75,7 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
         	TagManager manager = new TagManager();
         	manager.deleteUserTag(tag, getAuthenticatedUsername());
         	
-        	return Response.ok().entity(new AgaveSuccessRepresentation(tag.toJSON())).build();
+        	return Response.ok().entity(new AgaveSuccessRepresentation()).build();
         }
         catch (TagException e) {
         	log.error(e);
@@ -106,9 +106,9 @@ public class TagResourceImpl extends AbstractTagResource implements TagResource 
         	Tag tag = getResourceFromPathValue(entityId);
         	JsonNode json = getPostedContentAsJsonNode(input);  	
         	TagManager manager = new TagManager();
-        	Tag updatedTag = manager.updateTagAssociationId(tag, json, getAuthenticatedUsername());
+        	Tag updatedTag = manager.updateTag(tag, json, getAuthenticatedUsername());
         	
-        	return Response.ok(new AgaveSuccessRepresentation(updatedTag.toJSON())).build();
+        	return Response.ok(new AgaveSuccessRepresentation(updatedTag.toJSON().toString())).build();
             
         }
         catch (ResourceException e) {

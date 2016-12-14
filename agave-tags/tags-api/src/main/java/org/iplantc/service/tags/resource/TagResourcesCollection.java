@@ -11,7 +11,7 @@ import javax.ws.rs.core.Response;
 
 import org.restlet.representation.Representation;
 
-@Path("{entityId}/resources")
+@Path("{entityId}/associations")
 public interface TagResourcesCollection {
 
     @GET

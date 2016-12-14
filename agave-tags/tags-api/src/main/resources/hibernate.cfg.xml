@@ -17,7 +17,7 @@
         <property name="hibernate.connection.autocommit">false</property>
         <property name="hibernate.cache.use_second_level_cache">false</property>
         <!--<property name="hbm2ddl.auto">update</property>-->
-        <property name="hibernate.show_sql">true</property>
+        <!-- <property name="hibernate.show_sql">true</property> -->
         <property name="hibernate.query.substitutions">true 1, false 0</property>
         <property name="connection.autoReconnect">true</property> 
         <property name="connection.autoReconnectForPools">true</property> 

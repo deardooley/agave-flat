@@ -61,6 +61,7 @@ agave-systems/systems-core/src/test/resources/systems/storage/sftp-password-kbi.
 agave-systems/systems-core/src/test/resources/systems/storage/sftp-sshkeys-kbi.example.com.json
 compose/proxy/logs
 science-api-samples
+appendonly.aof
 
 # Developer specific files.
 config/testbed/compute-rc.yml

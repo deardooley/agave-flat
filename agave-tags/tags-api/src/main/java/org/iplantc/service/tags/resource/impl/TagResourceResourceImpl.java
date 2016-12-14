@@ -16,9 +16,12 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
 import org.iplantc.service.tags.exceptions.PermissionValidationException;
+import org.iplantc.service.tags.exceptions.TagException;
 import org.iplantc.service.tags.exceptions.TagPermissionException;
+import org.iplantc.service.tags.exceptions.UnknownTaggedResourceException;
 import org.iplantc.service.tags.managers.TagManager;
 import org.iplantc.service.tags.managers.TagPermissionManager;
+import org.iplantc.service.tags.managers.TaggedResourceManager;
 import org.iplantc.service.tags.model.Tag;
 import org.iplantc.service.tags.model.TagPermission;
 import org.iplantc.service.tags.model.TaggedResource;
@@ -39,7 +42,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
-@Path("{entityId}/associationIds/{uuid}")
+@Path("{entityId}/associations/{uuid}")
 public class TagResourceResourceImpl extends AbstractTagResource implements
 		TagResourceResource {
 
@@ -63,7 +66,7 @@ public class TagResourceResourceImpl extends AbstractTagResource implements
 			TaggedResource tr = tag.getTaggedResource(associatedUuid);
 
 			if (tr == null) {
-				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
+				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
 						"No resource found for the given tag with uuid "
 								+ associatedUuid);
 			} else {
@@ -102,23 +105,18 @@ public class TagResourceResourceImpl extends AbstractTagResource implements
 								+ tag.getUuid() + "");
 			} else {
 				try {
-					TagManager manager = new TagManager();
+					TaggedResourceManager manager = new TaggedResourceManager(tag);
 					ObjectMapper mapper = new ObjectMapper();
 
-					Tag updatedTag = manager.updateTagAssociationId(tag,
-							mapper.createArrayNode().add(associatedUuid),
-							getAuthenticatedUsername());
+					TaggedResource taggedResource = manager.addToTag(associatedUuid, getAuthenticatedUsername());
 
-					TaggedResource tr = updatedTag
-							.getTaggedResource(associatedUuid);
-					if (tr == null) {
+					if (taggedResource == null) {
 						throw new ResourceException(
 								Status.SERVER_ERROR_INTERNAL,
 								"Unable to locate tagged resource after tagging");
 					} else {
 						return Response.ok(
-								new AgaveSuccessRepresentation(mapper
-										.writeValueAsString(tr))).build();
+								new AgaveSuccessRepresentation(mapper.writeValueAsString(taggedResource))).build();
 					}
 				} catch (IllegalArgumentException iae) {
 					throw new ResourceException(
@@ -133,9 +131,10 @@ public class TagResourceResourceImpl extends AbstractTagResource implements
 		} catch (ResourceException e) {
 			throw e;
 		} catch (Exception e) {
-			log.error("Failed to updated permission", e);
+			log.error("Failed to tag resource", e);
 			throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-					"Failed to update permission.", e);
+					"Failed to tag resource. "
+					+ "If this problem persists, please contact your administrator.", e);
 		}
 	}
 
@@ -157,31 +156,17 @@ public class TagResourceResourceImpl extends AbstractTagResource implements
 						"User does not have permission to remove associated Id for tag "
 								+ tag.getUuid());
 			} else {
-				TagManager manager = new TagManager();
-				manager.deleteUserTagAssociatedId(tag, associatedUuid,
-						getAuthenticatedUsername());
+				TaggedResourceManager manager = new TaggedResourceManager(tag);
+				
+				manager.deleteFromTag(associatedUuid, getAuthenticatedUsername());
 			}
 
 			return Response.ok(new AgaveSuccessRepresentation()).build();
 
-		} catch (IllegalArgumentException iae) {
-			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-					"Invalid permission value. Valid values are: "
-							+ PermissionType.supportedValuesAsString());
-		} catch (TagPermissionException e) {
-			log.error(e);
-			throw new ResourceException(
-					Status.SERVER_ERROR_INTERNAL,
-					"Failed to remove "
-							+ associatedUuid
-							+ " from tag "
-							+ entityId
-							+ ". If this problem persists, please contact your administrator.");
-		} catch (PermissionValidationException e) {
-			throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-					e.getMessage());
+		} catch (UnknownTaggedResourceException e) {
+			throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, e.getMessage(), e);
 		} catch (Exception e) {
-			log.error("Failed to remove user permissions", e);
+			log.error("Failed to remove resource " + associatedUuid + " from tag " + entityId, e);
 			throw new ResourceException(
 					Status.SERVER_ERROR_INTERNAL,
 					"Failed to remove "

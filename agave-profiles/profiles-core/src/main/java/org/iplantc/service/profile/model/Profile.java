@@ -357,6 +357,7 @@ public class Profile {
 			js.object()
 				.key("username").value(this.username)
 				.key("email").value(this.email)
+				.key("fullName").value(this.firstName + " " + this.lastName)
 				.key("firstName").value(this.firstName)
 				.key("lastName").value(this.lastName)
 				.key("position").value(this.position)

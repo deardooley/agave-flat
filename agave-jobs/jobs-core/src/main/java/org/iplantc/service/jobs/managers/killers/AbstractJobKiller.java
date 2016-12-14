@@ -11,6 +11,7 @@ import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.remote.exceptions.RemoteExecutionException;
 import org.iplantc.service.systems.model.ExecutionSystem;
+import org.iplantc.service.systems.model.enumerations.SchedulerType;
 
 /**
  * Handles actual mechanics of killing a job. Implementing classes
@@ -64,7 +65,7 @@ public abstract class AbstractJobKiller implements JobKiller {
 				}
 			}
 			
-			if (StringUtils.isEmpty(result)) {
+			if (StringUtils.isEmpty(result) && getExecutionSystem().getScheduler() != SchedulerType.FORK) {
 				throw new RemoteExecutionException(result); 
 			}
 			else {

@@ -25,6 +25,10 @@ import org.iplantc.service.common.dao.TenantDao;
 import org.iplantc.service.common.exceptions.DependencyException;
 import org.iplantc.service.common.exceptions.DomainException;
 import org.iplantc.service.common.exceptions.PermissionException;
+import org.iplantc.service.common.messaging.DefaultMessageBody;
+import org.iplantc.service.common.messaging.Message;
+import org.iplantc.service.common.messaging.MessageClientFactory;
+import org.iplantc.service.common.messaging.MessageQueueClient;
 import org.iplantc.service.common.model.Tenant;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.util.HTMLizer;
@@ -34,6 +38,8 @@ import org.iplantc.service.io.model.FileEvent;
 import org.iplantc.service.io.model.LogicalFile;
 import org.iplantc.service.io.model.enumerations.FileEventType;
 import org.iplantc.service.io.model.enumerations.StagingTaskStatus;
+import org.iplantc.service.notification.queue.messaging.NotificationMessageBody;
+import org.iplantc.service.notification.queue.messaging.NotificationMessageContext;
 import org.iplantc.service.notification.util.EmailMessage;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
@@ -52,6 +58,8 @@ import org.iplantc.service.transfer.exceptions.TransferException;
 import org.iplantc.service.transfer.local.Local;
 import org.iplantc.service.transfer.model.TransferTask;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Files;
 
 /**
@@ -240,12 +248,42 @@ public class PublishAction extends AbstractWorkerAction<Software> {
                 publishedSoftware.setPubliclyAvailable(true);
                 publishedSoftware.setRevisionCount(latestRevision + 1);
                 
+                // TODO: This is where we could return a 201 to the user and offload the remaining 
+                // data staging and archiving to a worker process for improved resiliency and 
+                // greater visibility into the archiving process. 
+                
+                
                 // get handles to the destination public storage system
-                StorageSystem publishedSoftwareStorageSystem = new SystemManager().getDefaultStorageSystem();
                 sourceSoftwareDataClient = getSourceRemoteDataClient();
                 
                 // get handles to the original software storage system
+                StorageSystem publishedSoftwareStorageSystem = new SystemManager().getDefaultStorageSystem();
                 publishedSoftwareDataClient = getDestinationRemoteDataClient(publishedSoftwareStorageSystem);
+                
+                
+                // save the app
+                //SoftwareDao.persist(publishedSoftware);
+//                ObjectMapper mapper = new ObjectMapper();
+//                JsonNode json = mapper.createObjectNode()
+//                		.put("sourceAppId", super.getEntity().getUuid())
+//                		.put("sourceStorageSystem", super.getEntity().getStorageSystem().getSystemId())
+//                		.put("sourceDeploymentPath", super.getEntity().getDeploymentPath())
+//                		.putNull("tempDir");
+//                
+//                DefaultMessageBody<JsonNode> messageBody = new DefaultMessageBody<JsonNode>(
+//                		publishedSoftware.getUuid(), TenancyHelper.getCurrentEndUser(), publishedSoftware.getTenantId(),
+//						json);
+//
+//                MessageQueueClient client = MessageClientFactory.getMessageClient();
+//                client.push(org.iplantc.service.common.Settings.APPS_PUBLISHING_QUEUE,
+//                		org.iplantc.service.common.Settings.APPS_PUBLISHING_QUEUE,
+//                		messageBody.toJSON());
+//                
+//                getEventProcessor().processSoftwareContentEvent(
+//                		publishedSoftware, 
+//    		            SoftwareEventType.STAGING_QUEUED, 
+//    		            "Software assets from " + getEntity().getUniqueName() + " have been scheduled for publication with app.",
+//    		            getPublishingUsername());
                 
                 // pull the app assets and create a zip archive
                 File stagedDir = fetchSoftwareDeploymentPath(sourceSoftwareDataClient);

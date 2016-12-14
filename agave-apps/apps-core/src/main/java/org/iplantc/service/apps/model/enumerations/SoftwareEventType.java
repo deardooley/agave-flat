@@ -24,8 +24,12 @@ public enum SoftwareEventType {
     PERMISSION_REVOKE("One or more user permissions were revoked on this app"),
     PERMISSION_GRANT("One or more user permissions were granted on this app"),
     PUBLISHING_FAILED("A publishing operation failed for this app. This app will not be publicly available until publishing completes successfully."),
-    CLONING_FAILED("A cloning operation failed for this app.");
-
+//  STAGING_ASSETS("Assets for the app are being staged from the original app deployment path to the new deployment path."),
+//	STAGING_FAILED("Assets for the app failed to stage to the new deployment path."),
+//	STAGING_COMPLETED("Assets for the app completed staging to the new deployment path."),
+	CLONING_FAILED("A cloning operation failed for this app.");
+	
+	
     private String description;
     
     private SoftwareEventType(String description) {
@@ -51,7 +55,6 @@ public enum SoftwareEventType {
 //				this == CLONED || 
 				this == DELETED || 
 				this == RESTORED ||
-				this == DISABLED || 
 //				this == PUBLISHED ||
 				this == DISABLED);
 	}

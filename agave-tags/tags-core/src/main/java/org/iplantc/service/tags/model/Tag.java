@@ -124,7 +124,7 @@ public class Tag  {
 	/**
 	 * The tags to which this uuid applies.
 	 */
-	@OneToMany(cascade = CascadeType.ALL)
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval=true)
 	@JsonProperty("associationIds")
 	@OptimisticLock(excluded = true)
     private List<TaggedResource> taggedResources = new ArrayList<TaggedResource>();
@@ -260,15 +260,16 @@ public class Tag  {
      * Add a {@link TaggedResource} and associate with this tag.
      * @param resource
      */
-    public void addTaggedResource(TaggedResource resource) {
+    public boolean addTaggedResource(TaggedResource resource) {
     	for (TaggedResource taggedResource: this.taggedResources) {
     		if (StringUtils.equals(resource.getUuid(), taggedResource.getUuid())) {
     			// don't add duplicates
-    			return;
+    			return false;
     		}
     	}
         resource.setTag(this);
         this.taggedResources.add(resource);
+        return true;
     }
 
     /**
@@ -391,7 +392,7 @@ public class Tag  {
 	}
 
     @JsonValue
-    public String toJSON()
+    public JsonNode toJSON()
     {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode json = mapper.createObjectNode()
@@ -403,28 +404,28 @@ public class Tag  {
         for (TaggedResource taggedResource: getTaggedResources()) {
             resourceArray.add(taggedResource.getUuid());
             
-            AgaveUUID agaveUUID = null;
-            try {
-            	agaveUUID = new AgaveUUID(taggedResource.getUuid());
-            	
-                ObjectNode assocResource = mapper.createObjectNode();
-                assocResource.put("rel", taggedResource.getUuid());
-                assocResource.put("href", TenancyHelper.resolveURLToCurrentTenant(agaveUUID.getObjectReference()));
-                assocResource.put("title", agaveUUID.getResourceType().name().toLowerCase());
-                halResourceArray.add(assocResource);
-            }
-            catch (UUIDException e) {
-            	ObjectNode assocResource = mapper.createObjectNode();
-                assocResource.put("rel", taggedResource.getUuid());
-                assocResource.putNull("href");
-                if (agaveUUID != null) {
-                	assocResource.put("title", agaveUUID.getResourceType().name().toLowerCase());
-                }
-                halResourceArray.add(assocResource);
-            }
+//            AgaveUUID agaveUUID = null;
+//            try {
+//            	agaveUUID = new AgaveUUID(taggedResource.getUuid());
+//            	
+//                ObjectNode assocResource = mapper.createObjectNode();
+//                assocResource.put("rel", taggedResource.getUuid());
+//                assocResource.put("href", TenancyHelper.resolveURLToCurrentTenant(agaveUUID.getObjectReference()));
+//                assocResource.put("title", agaveUUID.getResourceType().name().toLowerCase());
+//                halResourceArray.add(assocResource);
+//            }
+//            catch (UUIDException e) {
+//            	ObjectNode assocResource = mapper.createObjectNode();
+//                assocResource.put("rel", taggedResource.getUuid());
+//                assocResource.putNull("href");
+//                if (agaveUUID != null) {
+//                	assocResource.put("title", agaveUUID.getResourceType().name().toLowerCase());
+//                }
+//                halResourceArray.add(assocResource);
+//            }
         }
         
-        json.put("associatedIds", resourceArray);
+        json.put("associationIds", resourceArray);
         
         
         json.put("lastUpdated", new DateTime(getLastUpdated()).toString())
@@ -433,8 +434,8 @@ public class Tag  {
         ObjectNode linksObject = mapper.createObjectNode();
         linksObject.put("self", (ObjectNode)mapper.createObjectNode()
             .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getUuid()));
-        linksObject.put("resources", (ObjectNode)mapper.createObjectNode()
-                .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getUuid() + "/associatedIds"));
+        linksObject.put("associationIds", (ObjectNode)mapper.createObjectNode()
+                .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getUuid() + "/associations"));
 //        linksObject.put("history", (ObjectNode)mapper.createObjectNode()
 //                .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_TAGS_SERVICE) + getUuid() + "/history"));
         linksObject.put("permissions", (ObjectNode)mapper.createObjectNode()
@@ -444,7 +445,7 @@ public class Tag  {
                 .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_PROFILE_SERVICE) + getOwner()));
         json.put("_links", linksObject);
         
-        return json.toString();
+        return json;
     }
     
     

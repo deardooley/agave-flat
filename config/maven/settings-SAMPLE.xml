@@ -462,6 +462,11 @@
 
 				<!-- ************************ Transforms service ********************* -->
 
+				<foundation.service.transforms>${foundation.base.url}/tags/v2</foundation.service.transforms>
+				
+				
+				<!-- ************************ Transforms service ********************* -->
+
 				<foundation.service.transforms>${foundation.base.url}/transforms/v2</foundation.service.transforms>
 				<foundation.service.transforms.max.tasks>2</foundation.service.transforms.max.tasks>
 				<foundation.service.transforms.file.path>/opt/tomcat/webapps/transforms/WEB-INF/classes/transforms.xml</foundation.service.transforms.file.path>

@@ -234,8 +234,9 @@ public class AbstractAgaveServerResource extends ServerResource {
 				RestletFileUpload fileUpload = new RestletFileUpload(new DiskFileItemFactory());
 				
 				List<FileItem> items;
+				
 				try {
-					items = fileUpload.parseRequest(org.restlet.Request.getCurrent());
+					items = fileUpload.parseRepresentation(input);
 				} catch (Exception e) {
 					throw new ResourceException(org.restlet.data.Status.SERVER_ERROR_INTERNAL,
 							"Failed to parse file upload. Please make sure you included "

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
 import org.hibernate.ObjectNotFoundException;
 import org.hibernate.Query;
@@ -30,6 +31,9 @@ import org.iplantc.service.tags.model.enumerations.PermissionType;
  */
 public class TagDao extends AbstractDao
 {
+	
+	private static final Logger log = Logger.getLogger(TagDao.class);
+	
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.common.persistence.AbstractDao#getSession()
 	 */
@@ -463,6 +467,7 @@ public class TagDao extends AbstractDao
 					.uniqueResult();
 			
 			session.flush();
+
 			return match != null;
 		}
 		catch (HibernateException ex)
@@ -501,7 +506,7 @@ public class TagDao extends AbstractDao
         {
             Session session = getSession();
             session.clear();
-            String hql = "FROM Tag t left join t.taggedResources taggedResource \n";
+            String hql = "SELECT t FROM Tag t left join t.taggedResources taggedResource \n";
             
             SearchTerm publicSearchTerm = null;
             for (SearchTerm searchTerm: searchCriteria.keySet()) {
@@ -515,7 +520,7 @@ public class TagDao extends AbstractDao
                     hql +=  " WHERE ( \n" +
                             "       t.owner = :owner OR \n" +
                             "       t.id in ( \n" + 
-                            "               SELECT tp.tag.id FROM TagPermission tp \n" +
+                            "               SELECT tp.entityId FROM TagPermission tp \n" +
                             "               WHERE tp.username = :owner AND tp.permission <> :none \n" +
                             "              ) \n" +
                             "      ) AND \n";
@@ -528,7 +533,7 @@ public class TagDao extends AbstractDao
                     hql +=  " WHERE ( \n" +
                             "       t.owner = :owner OR \n" +
                             "       t.id in ( \n" + 
-                            "               SELECT tp.tag.id FROM TagPermission tp \n" +
+                            "               SELECT tp.entityId FROM TagPermission tp \n" +
                             "               WHERE tp.username = :owner AND tp.permission <> :none \n" +
                             "              ) \n" +
                             "      ) AND \n";
@@ -565,7 +570,6 @@ public class TagDao extends AbstractDao
             String q = hql;
             
             Query query = session.createQuery(hql)
-                                 .setResultTransformer(Transformers.aliasToBean(Tag.class))
                                  .setString("tenantid", TenancyHelper.getCurrentTenantId());
             
             q = q.replaceAll(":tenantid", "'" + TenancyHelper.getCurrentTenantId() + "'");
@@ -605,7 +609,7 @@ public class TagDao extends AbstractDao
                 
             }
             
-//            log.debug(q);
+            log.debug(q);
             
             List<Tag> tags = query
                     .setFirstResult(offset)

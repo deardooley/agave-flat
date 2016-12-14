@@ -315,6 +315,21 @@ public class SoftwareResourceImpl extends AbstractSoftwareResource implements So
                     throw new PermissionException("Permission denied. You do not have permission to disable this app.");
                 }
             }
+//            else if (action == CANCEL) 
+//            {
+//            	logUsage(AgaveLogServiceClient.ActivityKeys.AppsCancel);
+//                
+//                if (ApplicationManager.isManageableByUser(software, getAuthenticatedUsername())) 
+//                {
+//                    software = ApplicationManager.interruptOperation(software, getAuthenticatedUsername());
+//                    
+//                    return Response.ok(new AgaveSuccessRepresentation(software.toJSON())).build();
+//                }
+//                else 
+//                {
+//                    throw new PermissionException("Permission denied. You do not have permission to cancel operations on this app.");
+//                }
+//            }
             else 
             {
                 throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
