@@ -19,11 +19,13 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.ObjectNotFoundException;
 import org.hibernate.Query;
+import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.StaleStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.hibernate.transform.AliasToEntityMapResultTransformer;
+import org.hibernate.transform.Transformers;
 import org.hibernate.type.StandardBasicTypes;
 import org.iplantc.service.apps.util.ServiceUtils;
 //import org.iplantc.service.common.dao.SearchTerm;
@@ -37,6 +39,8 @@ import org.iplantc.service.jobs.model.Job;
 //import org.iplantc.service.jobs.model.SummaryTenantUserJobActivity;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
+import org.iplantc.service.systems.model.RemoteSystem;
+import org.iplantc.service.systems.model.StorageSystem;
 import org.joda.time.DateTime;
 
 /**
@@ -1594,14 +1598,14 @@ public class JobDao
 		{
 			Session session = getSession();
 			session.clear();
-			String sql = " SELECT j FROM Job as j \n";
-					//"LEFT OUTER JOIN JobPermission as p ON j.id = p.jobId ";
+			String sql = "SELECT j.* FROM jobs j \n" +
+					" LEFT OUTER JOIN systems a ON j.archive_system = a.id \n";
 			if (!ServiceUtils.isAdmin(username)) {
 				
 				sql += " WHERE ( \n" +
 				    "       j.owner = :jobowner OR \n" +
 					"       j.id in ( \n" + 
-				    "               SELECT pm.jobId FROM JobPermission as pm \n" +
+				    "               SELECT pm.job_id FROM job_permissions as pm \n" +
 					"               WHERE pm.username = :jobowner AND pm.permission <> :none \n" +
 					"              ) \n" +
 					"      ) AND \n";
@@ -1609,7 +1613,7 @@ public class JobDao
 				sql += " WHERE ";
 			}
 			
-			sql +=  "        j.tenantId = :tenantid "; 
+			sql +=  "        j.tenant_id = :tenantid "; 
 			
 			for (SearchTerm searchTerm: searchCriteria.keySet()) 
 			{
@@ -1624,12 +1628,13 @@ public class JobDao
 				sql +=  "\n       AND j.visible = :visiblebydefault \n";
 			}
 			
-			sql +=	" ORDER BY j.lastUpdated DESC\n";
+			sql +=	" ORDER BY j.last_updated DESC\n";
 			
 			String q = sql;
 			//log.debug(q);
-			Query query = session.createQuery(sql)
-								 .setString("tenantid", TenancyHelper.getCurrentTenantId());
+			SQLQuery query = session.createSQLQuery(sql).addEntity("j", Job.class);
+//			query.setResultTransformer(Transformers.aliasToBean(Job.class));
+            query.setString("tenantid", TenancyHelper.getCurrentTenantId());
 			
 			q = StringUtils.replace(q, ":tenantid", "'" + TenancyHelper.getCurrentTenantId() + "'");
 			
@@ -1674,6 +1679,8 @@ public class JobDao
 			List<Job> jobs = query
 					.setFirstResult(offset)
 					.setMaxResults(limit)
+					.setCacheable(false)
+					.setCacheMode(CacheMode.IGNORE)
 					.list();
 
 			session.flush();

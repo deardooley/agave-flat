@@ -38,34 +38,36 @@ public class JobSearchFilter extends AgaveResourceSearchFilter
 	public Map<String, String> getSearchTermMappings()
 	{
 		if (searchTermMappings.isEmpty()) {
-			searchTermMappings.put("appid", "%ssoftwareName");
-			searchTermMappings.put("archive", "%sarchiveOutput");
-			searchTermMappings.put("archivepath", "%sarchivePath");
-			searchTermMappings.put("archivesystem", "%sarchiveSystem.systemId");
-			searchTermMappings.put("batchqueue", "%sbatchQueue");
+			searchTermMappings.put("appid", "%ssoftware_name");
+			searchTermMappings.put("archive", "%sarchive_output");
+			searchTermMappings.put("archivepath", "%sarchive_path");
+			searchTermMappings.put("archivesystem", "a.system_id ");
+			searchTermMappings.put("batchqueue", "%squeue_request");
+			searchTermMappings.put("charge", "%scharge");
 			searchTermMappings.put("created", "%screated");
-			searchTermMappings.put("endtime", "%sendTime");
-			searchTermMappings.put("executionsystem", "%ssystem");
+			searchTermMappings.put("endtime", "%send_time");
+			searchTermMappings.put("errormessage", "%serror_message");
+			searchTermMappings.put("executionsystem", "%sexecution_system");
 			searchTermMappings.put("id", "%suuid");
 			searchTermMappings.put("inputs", "%sinputs");
-			searchTermMappings.put("lastmodified", "%lastUpdated");
-			searchTermMappings.put("lastupdated", "%lastUpdated");
-			searchTermMappings.put("localid", "%slocalJobId");
-			searchTermMappings.put("maxruntime", "time_to_sec(%smaxRunTime)");
-			searchTermMappings.put("memorypernode", "%smemoryPerNode");
+			searchTermMappings.put("lastmodified", "%last_updated");
+			searchTermMappings.put("lastupdated", "%last_updated");
+			searchTermMappings.put("localid", "%sscheduler_job_id");
+			searchTermMappings.put("maxruntime", "time_to_sec(%srequested_time)");
+			searchTermMappings.put("memorypernode", "%smemory_request");
 			searchTermMappings.put("name", "%sname");
-			searchTermMappings.put("nodecount", "%snodeCount");
-			searchTermMappings.put("outputpath", "%soutputPath");
+			searchTermMappings.put("nodecount", "%snode_count");
+			searchTermMappings.put("outputpath", "%soutput_path");
 			searchTermMappings.put("owner", "%sowner");
 			searchTermMappings.put("parameters", "%sparameters");
-			searchTermMappings.put("processorspernode", "%sprocessorsPerNode");
+			searchTermMappings.put("processorspernode", "%sprocessor_count");
 			searchTermMappings.put("retries", "%sretries");
-			searchTermMappings.put("runtime", "%sstartTime is not null and (time_to_sec(%sendTime) - time_to_sec(%sstartTime))");
-			searchTermMappings.put("starttime", "%sstartTime");
+			searchTermMappings.put("runtime", "%sstart_time is not null and (time_to_sec(%send_time) - time_to_sec(%sstart_time))");
+			searchTermMappings.put("starttime", "%sstart_time");
 			searchTermMappings.put("status", "%sstatus");
-			searchTermMappings.put("submittime", "%ssubmitTime");
+			searchTermMappings.put("submittime", "%ssubmit_time");
 			searchTermMappings.put("visible", "%svisible");
-			searchTermMappings.put("walltime", "abs(time_to_sec(%sendTime) - time_to_sec(%screated))");
+			searchTermMappings.put("walltime", "abs(time_to_sec(%send_time) - time_to_sec(%screated))");
 		}
 		
 		return searchTermMappings;
@@ -83,7 +85,9 @@ public class JobSearchFilter extends AgaveResourceSearchFilter
 			searchTypeMappings.put("archivesystem", String.class);
 			searchTypeMappings.put("batchqueue", String.class);
 			searchTypeMappings.put("created", Date.class);
+			searchTypeMappings.put("charge", Double.class);
 			searchTypeMappings.put("endtime", Date.class);
+			searchTypeMappings.put("errormessage", String.class);
 			searchTypeMappings.put("executionsystem", String.class);
 			searchTypeMappings.put("id", String.class);
 			searchTypeMappings.put("inputs", String.class);

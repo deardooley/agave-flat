@@ -55,7 +55,7 @@ public class JobSearchTest  extends AbstractDaoTest {
 	}
 	
 	@DataProvider(name="searchJobsByDerivedRunTimeProvider")
-    public Object[][] searchJobsByDerivedRunTimeProvider() throws Exception
+    protected Object[][] searchJobsByDerivedRunTimeProvider() throws Exception
     {
         List<Object[]> searchCriteria = new ArrayList<Object[]>();
         
@@ -112,7 +112,7 @@ public class JobSearchTest  extends AbstractDaoTest {
     }
 	
 	@DataProvider(name="searchJobsByDerivedWallTimeProvider")
-    public Object[][] searchJobsByDerivedTimeProvider() throws Exception
+	protected Object[][] searchJobsByDerivedTimeProvider() throws Exception
     {
 	    List<Object[]> searchCriteria = new ArrayList<Object[]>();
         
@@ -144,7 +144,7 @@ public class JobSearchTest  extends AbstractDaoTest {
         return searchCriteria.toArray(new Object[][] {});
     }
 	
-	@Test(dataProvider="searchJobsByDerivedWallTimeProvider", enabled=false)
+	@Test(dataProvider="searchJobsByDerivedWallTimeProvider")
 	public void searchJobsByDerivedWallTime(JobStatusType status, String searchField, boolean shouldSucceed, String message) throws Exception
     {   
 	    Job job = createJob(status);
@@ -167,7 +167,7 @@ public class JobSearchTest  extends AbstractDaoTest {
     }
 	
 	@DataProvider(name="searchJobsProvider")
-	public Object[][] searchJobsProvider() throws Exception
+	protected Object[][] searchJobsProvider() throws Exception
 	{
 		Job job = createJob(JobStatusType.FINISHED);
 		return new Object[][] {
@@ -317,9 +317,15 @@ public class JobSearchTest  extends AbstractDaoTest {
 	    return testCases.toArray(new Object[][] {});
 	}
 	
-	@Test(dataProvider="dateSearchExpressionTestProvider")//, dependsOnMethods={"findMatchingCaseInsensitive"}, enabled=true)
+	@Test(dataProvider="dateSearchExpressionTestProvider", dependsOnMethods={"findMatchingCaseInsensitive"}, enabled=true)
 	public void dateSearchExpressionTest(String attribute, String dateFormattedString, boolean shouldSucceed) throws Exception
+//	@Test
+//	public void dateSearchExpressionTest() throws Exception
     {
+//		String attribute = "created.before";
+//		String dateFormattedString = "yesterday 10:43PM";
+//		boolean shouldSucceed = true;
+		
 	    Job job = createJob(JobStatusType.ARCHIVING);
 	    job.setCreated(new DateTime().minusYears(5).toDate());
         JobDao.persist(job);
