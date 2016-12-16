@@ -52,14 +52,10 @@ public class JobFSMUtilsTest
         result = JobFSMUtils.hasTransition(JobStatusType.HEARTBEAT, null);
         Assert.assertFalse(result, "Failed to identify an illegal transaction!");
         
-        boolean caughtException = false;
-        try {JobFSMUtils.hasTransition(JobStatusType.HEARTBEAT, JobStatusType.STAGING_INPUTS);}
-            catch (Exception e){caughtException = true;}
-        Assert.assertTrue(caughtException, "Failed throw exception on HEARTBEAT input!");
+        result = JobFSMUtils.hasTransition(JobStatusType.HEARTBEAT, JobStatusType.STAGING_INPUTS);
+        Assert.assertFalse(result, "Failed to identify an illegal HEARTBEAT state!");
 
-        caughtException = false;
-        try {JobFSMUtils.hasTransition(JobStatusType.STAGED, JobStatusType.HEARTBEAT);}
-            catch (Exception e){caughtException = true;}
-        Assert.assertTrue(caughtException, "Failed throw exception on HEARTBEAT input!");
+        result = JobFSMUtils.hasTransition(JobStatusType.STAGED, JobStatusType.HEARTBEAT);
+        Assert.assertFalse(result, "Failed to identify an illegal HEARTBEAT state!");
     }
 }

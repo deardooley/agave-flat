@@ -46,9 +46,10 @@ public final class JobFSMUtils
      * state has been defined.  We can only process one check at a time since
      * we use a single FSM for all validation.
      * 
-     * A runtime exception will be thrown if an unrecognized but non-null status 
-     * is passed in since this may represent a logic error in a new version of  
-     * the code.  Null parameters are tolerated and cause a false result.
+     * All runtime exceptions thrown by lower level routines are captured and
+     * returned as a false result.  IllegalArgumentExceptions may represent a 
+     * logic error in a new version of the code.  Null parameters are tolerated 
+     * and also cause a false result.
      * 
      * @param fromStatus the current job status
      * @param newState the proposed new job status
@@ -60,17 +61,23 @@ public final class JobFSMUtils
         // Garbage in, garbage out.
         if (fromStatus == null || toStatus == null) return false;
         
-        // Reset the current state in the state machine.
-        _persister.setCurrent(_entity, getJobFSMState(fromStatus));
+        // Return false on all exceptions.
+        try {
+            // Reset the current state in the state machine.
+            // Throws an IllegalArgumentException on unknown statuses.
+            _persister.setCurrent(_entity, getJobFSMState(fromStatus));
         
-        // Allow runtime exceptions to bleed through.
-        String eventName = getJobFSMEvent(toStatus).name();
+            // Allow runtime exceptions to bleed through.
+            // Throws an IllegalArgumentException on unknown statuses.
+            String eventName = getJobFSMEvent(toStatus).name();
         
-        // Attempt the transition to the new state.
-        try {_jsm.onEvent(_entity, eventName);}
-            catch (Exception e){return false;}
+            // Attempt the transition to the new state.
+            // Throws an IllegalStateException for undefined transitions.
+            _jsm.onEvent(_entity, eventName);
+        }
+        catch (Exception e){return false;}
         
-        // We found a transition from fromStatus to toStatus.
+        // We found a transition from "fromStatus" to "toStatus".
         return true;
     }
     
@@ -113,7 +120,7 @@ public final class JobFSMUtils
         // This should never happen, but there are statuses that are not FSM states.
         String msg = "Cannot associate any JobFSM state with job status " + status.name() + ".";
         _log.error(msg);
-        throw new IllegalStateException(msg);
+        throw new IllegalArgumentException(msg);
     }
     
     /* ---------------------------------------------------------------------- */
@@ -152,7 +159,7 @@ public final class JobFSMUtils
         // This should never happen, but there are statuses that are not FSM states.
         String msg = "Cannot associate any JobFSM event with job status " + status.name() + ".";
         _log.error(msg);
-        throw new IllegalStateException(msg);
+        throw new IllegalArgumentException(msg);
     }
     
     /* ---------------------------------------------------------------------- */

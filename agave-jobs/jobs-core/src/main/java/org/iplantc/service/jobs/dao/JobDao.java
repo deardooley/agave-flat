@@ -31,10 +31,12 @@ import org.iplantc.service.common.search.SearchTerm;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 //import org.iplantc.service.jobs.model.SummaryTenantJobActivity;
 //import org.iplantc.service.jobs.model.SummaryTenantUserJobActivity;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
+import org.iplantc.service.jobs.statemachine.JobFSMUtils;
 import org.joda.time.DateTime;
 
 /**
@@ -886,7 +888,7 @@ public class JobDao
 	 *       status is returned.  The caller does not need to complete the 
 	 *       transaction in this case.
 	 * 
-	 * @param job
+	 * @param job the job to lock
 	 * @return the current version of a job (open transaction) or 
 	 *         null (rolled back transaction) 
 	 */
@@ -935,6 +937,75 @@ public class JobDao
         return status;
     }
 	
+    /** Get the current status value of a job record and maintain an exclusive 
+     * lock on that record.  We begin a transaction, query a job by its primary
+     * key, and keep that transaction open when the method completes.  
+     * 
+     * The caller is responsible for committing or rolling back the transaction
+     * and if this requirement is not observed, bad things will happen.  To
+     * emphasize:
+     * 
+     *     THE CALLER MUST COMPLETE THE TRANSACTION BEGUN HERE
+     *     
+     * The session on which the transaction can be rolled back or committed is
+     * the threadlocal session managed by HibernateUtil.  Therefore, the 
+     * transaction can be completed by calling rollbackTransaction() or
+     * commitTransaction() on HibernateUtil on the SAME THREAD.  The usual case,
+     * however, is to call persistLockedJob(job) to update the job record to
+     * complete the transaction. 
+     * 
+     * NOTE: If the query fails, the transaction is rolled back and a null
+     *       status is returned.  The caller does not need to complete the 
+     *       transaction in this case.
+     * 
+     * @param jobUuid the unique identifier of the job to lock
+     * @return the current version of a job (open transaction) or 
+     *         null (rolled back transaction) 
+     */
+    public static JobStatusType lockJobForStatus(String jobUuid)
+    {
+        // Get the current version of a job record 
+        // and obtain an exclusive lock on that record.
+        JobStatusType status = null;
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+            
+            // Retrieve the current version of the job.
+            String sql = "select status from jobs " +
+                         "where uuid = :uuid FOR UPDATE";
+       
+            // Make the query and leave transaction open.          
+            String result = (String) session.createSQLQuery(sql)
+                            .setString("uuid", jobUuid)
+                            .uniqueResult();
+            
+            // Convert the result string.
+            if (result != null) {
+                try {status = JobStatusType.valueOf(result);}
+                catch (Exception e) {
+                    String msg = "Unable to convert " + result + " into a JobStatusType";
+                    log.error(msg, e);
+                    throw e;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to lock running job with UUID " + jobUuid + ").";
+            log.error(msg, e);
+        }
+        
+        // Return session with uncommitted transaction.
+        return status;
+    }
+    
 	/** Complete an existing transaction on the threadlocal session by
 	 * update the previously locked with lockJob(job).
 	 * 
@@ -1031,6 +1102,312 @@ public class JobDao
 		}
 	}
 
+	/** Perform an atomic update of all fields set in the parameter object.
+	 * All updates are performed in a single transaction.
+	 * 
+	 * If the status field is set, the update will continue only if the
+	 * transition from the current status as recorded in the database to
+	 * the new status in the parameter object is legal.  This method locks
+	 * the job record to read the current status, preventing concurrent
+	 * status updates from stepping on each other.
+	 * 
+	 * See the JobUpdateParameters class for guidance on how to add update 
+	 * support for other fields.  All fields in the parameter object 
+	 * should also have support in the createSetClause() and 
+	 * setUpdatePlaceholders() methods in this class.
+	 * 
+	 * @param jobUuid the unique identifier of the job to be updated
+	 * @param jobTenantId the tenant id of the job
+	 * @param parms the update fields and values
+	 */
+	public static int update(String jobUuid, String jobTenantId, 
+	                         JobUpdateParameters parms)
+	 throws JobException
+	{
+	    // ------------------- Check Input -------------------
+	    // Make sure we have a job.
+        if (jobUuid == null) {
+            String msg = "Null job UUID received.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+	    // Make sure we have a tenant.
+        if (jobTenantId == null) {
+            String msg = "Null tenant ID received.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+	    // Make sure field updates have been specified.
+	    if (parms == null) {
+	        String msg = "Null update parameter received.";
+	        log.error(msg);
+	        throw new JobException(msg);
+	    }
+	    
+        // -------------------- Permission Checks ------------
+        // We only allow users to create queues under their own tenant. 
+        String currentTenantId = TenancyHelper.getCurrentTenantId();
+        if (StringUtils.isBlank(currentTenantId)) {
+            String msg = "Unable to retrieve current tenant id.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        if (!jobTenantId.equals(currentTenantId)) {
+            String msg = "Unable to update job because " +
+                         "the current tenant id (" + currentTenantId + ") does not match " +
+                         "the job tenant id (" + jobTenantId + ").";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+	    
+	    // ------------------- Create Set Clause -------------
+        // Construct the set clause for the sql update statement.
+	    String setClause = createSetClause(parms);
+	    if (setClause == null) {
+            String msg = "No field values to update.";
+            log.error(msg);
+            throw new JobException(msg);
+	    }
+
+	    // ------------------- Get Session -------------------
+	    // Status changes require validation using the current status in the database
+	    // and require us to lock the job record until this transaction completes.
+	    // The lock method acquires the session for us and starts a transaction.
+	    Session session = null;
+	    if (parms.isStatusFlag()) {
+	        
+	        // A transaction is begun only if the lock method returns a non-null status.
+	        JobStatusType curStatus = lockJobForStatus(jobUuid);
+	        if (curStatus == null) {
+	            String msg = "Unable query job record for current status.";
+	            log.error(msg);
+	            throw new JobException(msg);
+	        }
+	        
+	        // Check if the status change is legal.
+	        if (!JobFSMUtils.hasTransition(curStatus, parms.getStatus())) {
+	            
+	            // Abort the update since the attempted status 
+	            // change is illegal, but first log the problem.
+	            String msg = "Invalid transition from " + curStatus.name() +
+	                         " to " + parms.getStatus() + " attempted.";
+	            log.error(msg);
+	            
+	            // Release the lock on the job record.
+	            try {HibernateUtil.rollbackTransaction();}
+	            catch (Exception e) {
+	                String msg2 = "Failure rolling back transaction on locked job record.";
+	                log.error(msg2, e);
+	            }
+	            
+	            // Throw our exception.
+	            throw new JobException(msg);
+	        }
+	        
+	        // Get the thread-local session in which the lock routine began our transaction.
+	        try {session = HibernateUtil.getSession();}
+	            catch (Exception e) {
+	                String msg = "Unable to retrieve thread-local session.";
+	                log.error(msg, e);
+	                throw new JobException(msg);
+	            }
+	    }
+	    else {
+	        try {
+	            // Get a hibernate session.
+	            session = HibernateUtil.getSession();
+	            session.clear();
+	            HibernateUtil.beginTransaction();
+	        }
+            catch (Exception e) {
+                String msg = "Unable to start transaction on thread-local session.";
+                log.error(msg, e);
+                throw new JobException(msg);
+            }
+	    }
+	    
+	    // ------------------- Issue Update ------------------
+	    // Note from this point on we must close the transaction before returning.
+	    int rows = 0;
+	    try {
+            // Release the lease.
+            String sql = "Update jobs " + setClause +
+                         " where uuid = :uuid and tenant_id = :tenantId";
+            Query qry = session.createSQLQuery(sql);
+            qry.setString("uuid", jobUuid);
+            qry.setString("tenantId", jobTenantId);
+            setUpdatePlaceholders(qry, parms);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            rows = qry.executeUpdate();
+            
+            // Sanity check.
+            if (rows == 0)
+            {
+                // We expected something to happen...
+                String msg = "Nothing updated for job " + jobUuid + " under tenant " + jobTenantId + ".";
+                log.warn(msg);
+            }
+	        
+            // End the transaction.
+            HibernateUtil.commitTransaction();
+	    }
+	    catch (Exception e) {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            // Log original problem.
+	        String msg = "Error updating job " + jobUuid + " for tenant " + jobTenantId + ".";
+	        log.error(msg, e);
+	        throw new JobException(msg, e);
+	    }
+	    
+	    // 0 or 1 row.
+	    return rows;
+	}
+	
+	/** Create the set clause with no padding for an sql update command given
+	 * a parameter object.  If no values are set, null is returned. 
+	 * 
+	 * @param parms object that specified at least one update value
+	 * @return the sql set clause with no leading or trailing space characters
+	 *             or null
+	 */
+	private static String createSetClause(JobUpdateParameters parms)
+	{
+	    // Initialize the set clause.
+	    final String initialClause = "set ";
+	    String clause = initialClause;
+	    
+	    // Fields are processed in alphabetic order for our benefit.
+	    //
+	    // The calling method and this method must agree and placeholder
+	    // names used inside of the constructed string.
+	    // ----- archivePath
+	    if (parms.isArchivePathFlag()) {
+	        if (!initialClause.equals(clause)) clause += ", ";
+	        clause += "archive_path = :archivePath";
+	    }
+	    
+	    // ----- created
+        if (parms.isCreatedFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "created = :created";
+        }
+        
+	    // ----- endTime
+        if (parms.isEndTimeFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "end_time = :endTime";
+        }
+        
+	    // ----- lastUpdated
+        if (parms.isLastUpdatedFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "last_updated = :lastUpdated";
+        }
+        
+	    // ----- localJobId
+        if (parms.isLocalJobIdFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "local_job_id = :localJobId";
+        }
+        
+	    // ----- retries
+        if (parms.isRetriesFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "retries = :retries";
+        }
+        
+	    // ----- startTime
+        if (parms.isStartTimeFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "start_time = :startTime";
+        }
+        
+	    // ----- status
+        if (parms.isStatusFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "status = :status";
+        }
+        
+	    // ----- submitTime
+        if (parms.isSubmitTimeFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "submit_time = :submitTime";
+        }
+        
+	    // ----- visible
+        if (parms.isVisible()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "visible = :visible";
+        }
+        
+	    // ----- workPath
+        if (parms.isWorkPathFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "work_path = :workPath";
+        }
+        
+	    // See if we found any fields to update.
+	    if (initialClause.equals(clause)) return null;
+	    return clause;
+	}
+	
+	/** Assign the placeholder variable in the update query with the values
+	 * in the parameter object.
+	 * 
+	 * @param qry the sql update statement
+	 * @param parms the parameters object containing the new values
+	 */
+	private static void setUpdatePlaceholders(Query qry, JobUpdateParameters parms)
+	{
+	    // ----- archivePath
+        if (parms.isArchivePathFlag()) 
+            qry.setString("archivePath", parms.getArchivePath());
+        
+        // ----- created
+        if (parms.isCreatedFlag()) 
+            qry.setTimestamp("created", parms.getCreated());
+        
+        // ----- endTime
+        if (parms.isEndTimeFlag()) 
+            qry.setTimestamp("endTime", parms.getEndTime());
+        
+        // ----- lastUpdated
+        if (parms.isLastUpdatedFlag()) 
+            qry.setTimestamp("lastUpdated", parms.getLastUpdated());
+        
+        // ----- localJobId
+        if (parms.isLocalJobIdFlag()) 
+            qry.setString("localJobId", parms.getLocalJobId());
+        
+        // ----- retries
+        if (parms.isRetriesFlag()) 
+            qry.setInteger("retries", parms.getRetries());
+        
+        // ----- startTime
+        if (parms.isStartTimeFlag()) 
+            qry.setTimestamp("startTime", parms.getStartTime());
+        
+        // ----- status
+        if (parms.isStatusFlag()) 
+            qry.setString("status", parms.getStatus().name());
+        
+        // ----- submitTime
+        if (parms.isSubmitTimeFlag()) 
+            qry.setTimestamp("submitTime", parms.getSubmitTime());
+        
+        // ----- visible
+        if (parms.isVisible()) 
+            qry.setBoolean("visible", parms.isVisible());
+        
+        // ----- workPath
+        if (parms.isWorkPathFlag()) 
+            qry.setString("workPath", parms.getWorkPath());
+	}
+	
 	/**
 	 * Deletes a job from the db.
 	 * @param job
