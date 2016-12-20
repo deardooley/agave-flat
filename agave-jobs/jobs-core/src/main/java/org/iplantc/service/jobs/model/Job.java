@@ -5,12 +5,10 @@ package org.iplantc.service.jobs.model;
 
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -20,7 +18,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -131,9 +128,6 @@ public class Job {
 	private boolean				visible;		// Can a user see the job?
 	private Integer				version = 0;	// Entity version used for optimistic locking
 	private String				tenantId;		// current api tenant
-//	private List<JobEvent>		events = new ArrayList<JobEvent>(); // complete history of events for this job
-	
-//	private Set<Notification>	notifications = new HashSet<Notification>(); // all notifications registered to this job
 	
 	public Job()
 	{
@@ -619,6 +613,21 @@ public class Job {
 		new NotificationDao().persist(notification);
 	}
 	
+	/** Initialize the status and message fields in a new job.  This method should 
+	 * never be called on a job that already exists in the database (use 
+	 * JobManager.updateStatus() or Job.update() for that).
+	 * 
+	 * @param status the initial job status
+	 * @param message the initial message associated with the status
+	 * @throws JobException if the message is null or too long
+	 */
+	@Transient
+	public void initStatus(JobStatusType status, String message) throws JobException
+	{
+        setStatus(status);
+        setErrorMessage(message);
+	}
+	
 	/**
 	 * Sets the job status and creates an job history event with 
 	 * the given status and message;
@@ -635,6 +644,8 @@ public class Job {
 	/**
 	 * Sets the job status and associates the job history event with 
 	 * the job;
+	 * 
+	 * TODO:   1. Delete this method and its overloaded public sibling.
 	 * 
 	 * @param status
 	 * @param message
@@ -656,7 +667,7 @@ public class Job {
 			}
 			else {
 				event.setDescription(event.getDescription() + " Event will be ignored because job has been deleted.");
-				this.addEvent(event);
+				JobEventDao.persist(event);
 			}
 		} else {
 //			log.debug("Ignoring status update to " + status + " with same message");

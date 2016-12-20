@@ -5,11 +5,9 @@ package org.iplantc.service.jobs.queue;
 
 import org.apache.log4j.Logger;
 import org.quartz.JobExecutionContext;
-import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.Trigger.CompletedExecutionInstruction;
-import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.TriggerListener;
 
 /**

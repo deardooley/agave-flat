@@ -5,6 +5,7 @@ package org.iplantc.service.jobs.dao;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,6 @@ import org.hibernate.UnresolvableObjectException;
 import org.hibernate.transform.AliasToEntityMapResultTransformer;
 import org.hibernate.type.StandardBasicTypes;
 import org.iplantc.service.apps.util.ServiceUtils;
-//import org.iplantc.service.common.dao.SearchTerm;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.search.SearchTerm;
@@ -32,8 +32,6 @@ import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
-//import org.iplantc.service.jobs.model.SummaryTenantJobActivity;
-//import org.iplantc.service.jobs.model.SummaryTenantUserJobActivity;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
 import org.iplantc.service.jobs.statemachine.JobFSMUtils;
@@ -1071,7 +1069,7 @@ public class JobDao
 //			log.debug(String.format("Job.created[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getCreated()), new DateTime().toString(), f.format(new Date())));
 //			log.debug(String.format("Job.lastUpdated(pre force timestamp)[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getLastUpdated()), new DateTime().toString(), f.format(new Date())));
 			
-			session.saveOrUpdate(job);
+			session.save(job);
 //			session.flush();
 		}
 		catch (UnresolvableObjectException ex) {
@@ -1103,7 +1101,12 @@ public class JobDao
 	}
 
 	/** Perform an atomic update of all fields set in the parameter object.
-	 * All updates are performed in a single transaction.
+	 * All updates are performed in a single transaction.  
+	 * 
+	 * NOTE: This method does not update an in-memory job object, so existing
+	 *       job objects outside of this method will not contain the latest
+	 *       values after the job in the database is updated.  Use JobDao.refresh() 
+	 *       if you need the latest database updates reflected in job objects. 
 	 * 
 	 * If the status field is set, the update will continue only if the
 	 * transition from the current status as recorded in the database to
@@ -1111,10 +1114,13 @@ public class JobDao
 	 * the job record to read the current status, preventing concurrent
 	 * status updates from stepping on each other.
 	 * 
+	 * If the lastUpdateTime has not been set, this method will set it in the 
+	 * parameter object before processing the object.  This modification of an
+	 * input variable is a side-effect of calling this method.
+	 * 
 	 * See the JobUpdateParameters class for guidance on how to add update 
-	 * support for other fields.  All fields in the parameter object 
-	 * should also have support in the createSetClause() and 
-	 * setUpdatePlaceholders() methods in this class.
+	 * support for new fields.  All fields in the parameter object are processed 
+	 * by the createSetClause() and setUpdatePlaceholders() methods.
 	 * 
 	 * @param jobUuid the unique identifier of the job to be updated
 	 * @param jobTenantId the tenant id of the job
@@ -1161,6 +1167,9 @@ public class JobDao
         }
 	    
 	    // ------------------- Create Set Clause -------------
+        // Assign last update time if it's not already set.
+        if (!parms.isLastUpdatedFlag()) parms.setLastUpdated(new Date());
+        
         // Construct the set clause for the sql update statement.
 	    String setClause = createSetClause(parms);
 	    if (setClause == null) {
@@ -1174,12 +1183,14 @@ public class JobDao
 	    // and require us to lock the job record until this transaction completes.
 	    // The lock method acquires the session for us and starts a transaction.
 	    Session session = null;
+	    
+	    // Both branches of this conditional statement set the session variable.
 	    if (parms.isStatusFlag()) {
 	        
 	        // A transaction is begun only if the lock method returns a non-null status.
 	        JobStatusType curStatus = lockJobForStatus(jobUuid);
 	        if (curStatus == null) {
-	            String msg = "Unable query job record for current status.";
+	            String msg = "Unable to query job record for current status.";
 	            log.error(msg);
 	            throw new JobException(msg);
 	        }
@@ -1230,7 +1241,7 @@ public class JobDao
 	    // Note from this point on we must close the transaction before returning.
 	    int rows = 0;
 	    try {
-            // Release the lease.
+            // Construct the update statement.
             String sql = "Update jobs " + setClause +
                          " where uuid = :uuid and tenant_id = :tenantId";
             Query qry = session.createSQLQuery(sql);
@@ -1302,6 +1313,12 @@ public class JobDao
             clause += "end_time = :endTime";
         }
         
+        // ----- errorMessage
+        if (parms.isErrorMessageFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "error_messsage = :errorMessage";
+        }
+        
 	    // ----- lastUpdated
         if (parms.isLastUpdatedFlag()) {
             if (!initialClause.equals(clause)) clause += ", ";
@@ -1330,6 +1347,12 @@ public class JobDao
         if (parms.isStatusFlag()) {
             if (!initialClause.equals(clause)) clause += ", ";
             clause += "status = :status";
+        }
+        
+        // ----- statusChecks
+        if (parms.isStatusChecksFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "status_checks = :statusChecks";
         }
         
 	    // ----- submitTime
@@ -1375,6 +1398,10 @@ public class JobDao
         if (parms.isEndTimeFlag()) 
             qry.setTimestamp("endTime", parms.getEndTime());
         
+        // ----- errorMessage
+        if (parms.isErrorMessageFlag()) 
+            qry.setString("errorMessage", parms.getErrorMessage());
+        
         // ----- lastUpdated
         if (parms.isLastUpdatedFlag()) 
             qry.setTimestamp("lastUpdated", parms.getLastUpdated());
@@ -1394,6 +1421,10 @@ public class JobDao
         // ----- status
         if (parms.isStatusFlag()) 
             qry.setString("status", parms.getStatus().name());
+        
+        // ----- statusChecks
+        if (parms.isStatusChecksFlag()) 
+            qry.setInteger("statusChecks", parms.getStatusChecks());
         
         // ----- submitTime
         if (parms.isSubmitTimeFlag()) 

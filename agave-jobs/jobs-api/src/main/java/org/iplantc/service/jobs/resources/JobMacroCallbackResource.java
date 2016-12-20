@@ -3,17 +3,16 @@
  */
 package org.iplantc.service.jobs.resources;
 
-import java.util.Date;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.iplantc.service.jobs.dao.JobDao;
-import org.iplantc.service.jobs.model.Job;
-import org.iplantc.service.jobs.model.JobEvent;
-import org.iplantc.service.jobs.model.enumerations.JobMacroType;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
+import org.iplantc.service.jobs.dao.JobDao;
+import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
+import org.iplantc.service.jobs.model.enumerations.JobMacroType;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
@@ -79,6 +78,9 @@ public class JobMacroCallbackResource extends AbstractJobResource
 			return new IplantErrorRepresentation("Invalid token.");
 		}
 		
+		// The HEARTBEAT macro type is used to update the job timestamp and is used
+		// by app developers just to keep aware of a job being alive.  The notification
+        // macro type is used on job status updates. 
 		JobMacroType macro;
 		try
 		{
@@ -116,21 +118,12 @@ public class JobMacroCallbackResource extends AbstractJobResource
 							Status.CLIENT_ERROR_BAD_REQUEST, "Job " + jobUuid + " is not running.");
 				}
 
-//				// the HEARTBEAT status is used to update the job timestamp and is used
-//				// by app developers just to keep aware of a job being alive.
-//				if (macro.equals(JobMacroType.HEARTBEAT)) 
-//				{
-//					// nothing to do. we update the job.lastUpdated timestamp on every macro call
-//				}
-//				else if (macro.equals(JobMacroType.NOTIFICATION)) 
-//				{
-					// notification will be sent on status update
-//					NotificationManager.process(job.getUuid(), job.getStatus().name(), job.getOwner());
-//				} 
-				
-				job.setLastUpdated(new Date());
+                // Update the lastUpdated timestamp on the job record.
+                JobDao.update(job.getUuid(), job.getTenantId(), new JobUpdateParameters());
+                JobDao.refresh(job);
+                
+				// Send an event.
 				job.addEvent(new JobEvent(macro.name(), macro.getDescription(), job.getOwner()));
-				JobDao.persist(job);
 				
 				getResponse().setStatus(Status.SUCCESS_ACCEPTED);
 				return new IplantSuccessRepresentation();

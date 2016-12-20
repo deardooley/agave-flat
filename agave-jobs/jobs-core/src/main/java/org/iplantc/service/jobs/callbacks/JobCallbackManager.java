@@ -24,6 +24,7 @@ import org.iplantc.service.jobs.managers.JobEventProcessor;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.systems.model.ExecutionSystem;
@@ -78,7 +79,8 @@ public class JobCallbackManager {
             
             // the HEARTBEAT status is used to update the job timestamp and is used
             // by app developers just to keep aware of a job being alive.
-            if (!job.isArchiveOutput() && (status == ARCHIVING || 
+            if (!job.isArchiveOutput() && 
+                   (status == ARCHIVING || 
                     status == ARCHIVING_FAILED || 
                     status == ARCHIVING_FINISHED)) 
             {
@@ -94,13 +96,17 @@ public class JobCallbackManager {
             }
             else
             {
-                // heartbeats need to set an event, but they do not udpate the job status.
+                // heartbeats need to set an event, but they do not update the job status.
                 if (status == HEARTBEAT) 
                 {
-                    log.debug("Job " + job.getUuid() + " received heartbeat notification.");
+                    if (log.isDebugEnabled())
+                        log.debug("Job " + job.getUuid() + " received heartbeat notification.");
                     JobEvent event = new JobEvent(HEARTBEAT, HEARTBEAT.getDescription(), job.getOwner());
                     job.addEvent(event);
-                    JobDao.persist(job);
+                    
+                    // Update the lastUpdated timestamp on the job record.
+                    JobDao.update(job.getUuid(), job.getTenantId(), new JobUpdateParameters());
+                    JobDao.refresh(job);
                     
                     status = job.getStatus();
                     message = job.getErrorMessage();
@@ -114,29 +120,34 @@ public class JobCallbackManager {
 //                        validator.run();
                     }
                     if (job.getStatus() == CLEANING_UP) {
-                        log.debug("Job " + job.getUuid() + " received notification identical to its current status.");
+                        if (log.isDebugEnabled())
+                            log.debug("Job " + job.getUuid() + " received notification identical to its current status.");
                         message = "Job receieved duplicate " + status.name() + " notification";
                     } else {
-                        log.debug("Job " + job.getUuid() + " received " + status.name() + " notification.");
+                        if (log.isDebugEnabled())
+                            log.debug("Job " + job.getUuid() + " received " + status.name() + " notification.");
                         message = CLEANING_UP.getDescription();
                     }
                     
                     job = JobManager.updateStatus(job, CLEANING_UP, message);
                     
                     if (!job.isArchiveOutput()) {
-                        log.debug("Job " + job.getUuid() + " will skip archiving at user request.");
+                        if (log.isDebugEnabled())
+                            log.debug("Job " + job.getUuid() + " will skip archiving at user request.");
                         status = JobStatusType.FINISHED;
                         message = "Job completed. Skipping archiving at user request.";
                     }
                 }
                 else if (job.getStatus() == status) 
                 {
-                    log.debug("Job " + job.getUuid() + " received notification identical to its current status.");
+                    if (log.isDebugEnabled())
+                        log.debug("Job " + job.getUuid() + " received notification identical to its current status.");
                     message = "Job receieved duplicate " + status.name() + " notification";
                 }
                 else 
                 {
-                    log.debug("Job " + job.getUuid() + " received " + status.name() + " notification.");
+                    if (log.isDebugEnabled())
+                        log.debug("Job " + job.getUuid() + " received " + status.name() + " notification.");
                     message = status.getDescription();
                 }
             
@@ -198,7 +209,8 @@ public class JobCallbackManager {
             // heartbeats need to set an event, but they do not update the job status.
             else if (status == HEARTBEAT) 
             {
-                log.debug("Job " + job.getUuid() + 
+                if (log.isDebugEnabled())
+                    log.debug("Job " + job.getUuid() + 
                 		" received custom runtime event notification for job " + 
                 		callback.getJob().getUuid());
                 
@@ -220,13 +232,15 @@ public class JobCallbackManager {
                 				" is reserved for internally generated events.");
                 	}
                 	else {
-	                	JobEvent event = new JobEvent(customEventName, 
-	                			"A custom runtime " + customEventName + " event was received for job " + 
-	                					job.getUuid(), job.getOwner());
-	                	event.setJob(job);
-	                	
-		                job.getEvents().add(event);
-		                JobDao.persist(job);
+	                	JobEvent event = 
+	                	   new JobEvent(customEventName, 
+	                	                "A custom runtime " + customEventName + " event was received for job " + job.getUuid(), 
+	                					job.getOwner());
+		                job.addEvent(event);
+		                
+	                    // Update the lastUpdated timestamp on the job record.
+	                    JobDao.update(job.getUuid(), job.getTenantId(), new JobUpdateParameters());
+	                    JobDao.refresh(job);
 		                
 		                JobEventProcessor eventProcessor;
 						try {
@@ -313,7 +327,8 @@ public class JobCallbackManager {
        // if the current local scheduler job id is empty, approve the update
        else if (StringUtils.isEmpty(callback.getJob().getLocalJobId()))
        {
-           log.debug("Job " + callback.getJob().getUuid() + " received notification of its local job id " 
+           if (log.isDebugEnabled())
+               log.debug("Job " + callback.getJob().getUuid() + " received notification of its local job id " 
                    + callback.getLocalSchedulerJobId());
            callback.getJob().setLocalJobId(callback.getLocalSchedulerJobId());
        } 

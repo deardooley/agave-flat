@@ -33,6 +33,7 @@ import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.WrapperTemplateAttributeVariableType;
 import org.iplantc.service.jobs.model.enumerations.WrapperTemplateStatusVariableType;
@@ -217,9 +218,10 @@ public abstract class AbstractJobLauncher implements JobLauncher
 			remoteWorkPath += job.getOwner() +
 					"/job-" + job.getUuid() + "-" + Slug.toSlug(job.getName());
 			
-			job.setWorkPath(remoteWorkPath);
-			
-			JobDao.persist(job);
+			JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+			jobUpdateParameters.setWorkPath(remoteWorkPath);
+			JobDao.update(job.getUuid(), job.getTenantId(), jobUpdateParameters);
+			JobDao.refresh(job);
         }
         
         tempAppDir = new File(FileUtils.getTempDirectory(), FilenameUtils.getName(job.getWorkPath()));
@@ -282,8 +284,6 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	    					null,
 	    					job.getOwner()));
 	    			
-	        		JobDao.persist(job);
-	        			        		
 	        		remoteSoftwareDataClient.get(software.getDeploymentPath(), tempAppDir.getAbsolutePath(), new RemoteTransferListener(transferTask));
 	        		
 	    			checkStopped();
@@ -297,7 +297,6 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	        		}
 	        		
 	        		checkStopped();
-                    
                     
 	        		if (software.isPubliclyAvailable()) {
 	    				// validate the checksum to make sure the app itself hasn't  changed
@@ -430,8 +429,6 @@ public abstract class AbstractJobLauncher implements JobLauncher
 					null, 
 					job.getOwner()));
 			
-			JobDao.persist(job);
-    		
 			// first time around we copy everything
 			if (job.getRetries() <= 0) {
 				remoteExecutionDataClient.put(tempAppDir.getAbsolutePath(), 

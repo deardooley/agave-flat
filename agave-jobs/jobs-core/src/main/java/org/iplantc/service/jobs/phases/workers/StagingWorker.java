@@ -14,6 +14,7 @@ import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.queue.actions.StagingAction;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
@@ -140,21 +141,25 @@ public final class StagingWorker
             // An exception here means the status could not be updated because the job 
             // has been stopped, which means we need to abort job processing.
             try {
-                _job = JobManager.safeUpdateStatus(_job, JobStatusType.PROCESSING_INPUTS, 
-                                                   "Attempt " + attempts + " to stage job inputs");
+                JobUpdateParameters jobUpdateParms = new JobUpdateParameters();
+                jobUpdateParms.setRetries(_job.getRetries());
+                _job = JobManager.updateStatus(_job, JobStatusType.PROCESSING_INPUTS, 
+                                               "Attempt " + attempts + " to stage job inputs", 
+                                               jobUpdateParms);
             }
             catch (JobFinishedException e) {
                 // Log the occurrence and stop all processing.
                 if (_log.isDebugEnabled()) {
-                    String msg = "Safe status update failed for job " + _job.getUuid() +
-                                 " (" + _job.getName() + ") due to the job being in a finished state.";
+                    String msg = "Unable to update status for job " + _job.getUuid() +
+                            " (" + _job.getName() + ") from " + _job.getStatus() +
+                            " to " + JobStatusType.PROCESSING_INPUTS.name() + ".";
                     _log.debug(msg, e);
                 }
                 return;
             }
             catch (JobException e) {
                 // Log the occurrence and stop all processing.
-                String msg = "Safe status update failed for job " + _job.getUuid() +
+                String msg = "Status update failed for job " + _job.getUuid() +
                              " (" + _job.getName() + ").";
                 _log.error(msg, e);
                 return;
@@ -181,8 +186,10 @@ public final class StagingWorker
                 if (!isJobStopped() || _job.getStatus() == JobStatusType.STAGED)
                 {       
                     staged = true;
-                    _job.setRetries(0);
-                    JobDao.persist(_job);
+                    JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+                    jobUpdateParameters.setRetries(0);
+                    JobDao.update(_job.getUuid(), _job.getTenantId(), jobUpdateParameters);
+                    JobDao.refresh(_job);
                 }
             }
             catch (StaleObjectStateException | UnresolvableObjectException e) {

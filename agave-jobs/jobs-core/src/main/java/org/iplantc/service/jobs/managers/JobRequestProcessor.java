@@ -5,7 +5,6 @@ package org.iplantc.service.jobs.managers;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -660,16 +659,21 @@ public class JobRequestProcessor {
             // persisting the job makes it available to the job queue
             // for submission
 		    DateTime created = new DateTime();
-		    job.setCreated(created.toDate());
-            JobDao.persist(job);
             job.setCreated(created.toDate());
-            job.setStatus(JobStatusType.PENDING, JobStatusType.PENDING.getDescription());
+            
+            // Only new jobs are persisted using Hibernate.
+            job.initStatus(JobStatusType.PENDING, JobStatusType.PENDING.getDescription());
             JobDao.persist(job);
+            
+            // Send the job creation event.
+            JobEvent event = new JobEvent(job, job.getStatus(), job.getErrorMessage(), job.getOwner());
+            job.addEvent(event);
 
             return job;
         }
         catch (Throwable e)
         {
+            
             throw new JobProcessingException(500, "Failed to submit the request to the job queue.", e);
         }
 	}

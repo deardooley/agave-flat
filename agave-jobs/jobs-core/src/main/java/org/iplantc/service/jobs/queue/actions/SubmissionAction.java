@@ -74,8 +74,8 @@ public class SubmissionAction extends AbstractWorkerAction {
                 log.debug("Attempt " + attempts + " to submit job " + job.getUuid());
                 
                 // Exceptions thrown from here propagate out (no retries).
-                this.job = JobManager.safeUpdateStatus(this.job, JobStatusType.SUBMITTING, 
-                                                       "Attempt " + attempts + " to submit job");
+                this.job = JobManager.updateStatus(this.job, JobStatusType.SUBMITTING, 
+                                                   "Attempt " + attempts + " to submit job");
                 
                 try 
                 {
@@ -94,7 +94,8 @@ public class SubmissionAction extends AbstractWorkerAction {
                 {
                     try
                     {
-                        log.debug("Failed to submit job " + getJob().getUuid() + " on " + getJob().getSystem() + 
+                        if (log.isDebugEnabled())
+                            log.debug("Failed to submit job " + getJob().getUuid() + " on " + getJob().getSystem() + 
                             ". Unable to connect to system.", e);
                         this.job = JobManager.updateStatus(getJob(), getJob().getStatus(), e.getMessage() + 
                             " The service was unable to connect to the target execution system " +
@@ -109,7 +110,8 @@ public class SubmissionAction extends AbstractWorkerAction {
                 {
                     try
                     {
-                        log.debug("One or more dependent systems for job " + getJob().getUuid() + " is currently unavailable. " + e.getMessage());
+                        if (log.isDebugEnabled())
+                            log.debug("One or more dependent systems for job " + getJob().getUuid() + " is currently unavailable. " + e.getMessage());
                         this.job = JobManager.updateStatus(getJob(), JobStatusType.STAGED, 
                             "Remote execution of  job " + getJob().getUuid() + " is current paused waiting for " + getJob().getSystem() + 
                             "to become available. If the system becomes available again within 7 days, this job " + 
@@ -124,7 +126,8 @@ public class SubmissionAction extends AbstractWorkerAction {
                 {
                     try
                     {
-                        log.debug("Software for job " + getJob().getUuid() + " is currently unavailable. " + e.getMessage());
+                        if (log.isDebugEnabled())
+                            log.debug("Software for job " + getJob().getUuid() + " is currently unavailable. " + e.getMessage());
                         this.job = JobManager.updateStatus(getJob(), JobStatusType.STAGED, 
                             "Remote execution of  job " + getJob().getUuid() + " is current paused waiting for " + job.getSoftwareName() + 
                             "to become available. If the app becomes available again within 7 days, this job " + 

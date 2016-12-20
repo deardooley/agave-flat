@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.channels.ClosedByInterruptException;
+import java.util.Date;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -22,9 +23,11 @@ import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.RemoteJobIDParsingException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
 import org.iplantc.service.jobs.exceptions.SoftwareUnavailableException;
+import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.launchers.parsers.RemoteJobIdParser;
 import org.iplantc.service.jobs.managers.launchers.parsers.RemoteJobIdParserFactory;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.scripts.CommandStripper;
 import org.iplantc.service.jobs.model.scripts.SubmitScript;
@@ -108,22 +111,31 @@ public class HPCLauncher extends AbstractJobLauncher
             
             String remoteJobId = submitJobToQueue();
             
-            job.setSubmitTime(new DateTime().toDate()); // Date job submitted to queue
-            job.setLastUpdated(new DateTime().toDate());  // Date job started by queue
-            job.setLocalJobId(remoteJobId);
+            // Set the job update parameters.
+            Date curDate = new DateTime().toDate();
+            JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+            jobUpdateParameters.setSubmitTime(curDate);
+            jobUpdateParameters.setLastUpdated(curDate);
+            jobUpdateParameters.setLocalJobId(remoteJobId);
             
             if (!job.getStatus().equals(JobStatusType.RUNNING)) {
-                String message = "Job successfully submitted to execution system as local id " + job.getLocalJobId();
+                
+                // Construct a message
+                String message;
 	            if (executionSystem.getExecutionType() == ExecutionType.HPC) {
 	            	message = "HPC job successfully placed into " + 
-	            			job.getBatchQueue() + " queue as local job " + job.getLocalJobId();
-	            } else if (executionSystem.getExecutionType() == ExecutionType.CLI) {
+	            		      job.getBatchQueue() + " queue as local job " + job.getLocalJobId();
+	            } 
+	            else if (executionSystem.getExecutionType() == ExecutionType.CLI) {
 	            	message = "CLI job successfully forked as process id " + job.getLocalJobId();
 	            }
+	            else {
+	                message = "Job successfully submitted to execution system as local id " + job.getLocalJobId();
+	            }
 	            
-	            log.debug(message.replaceFirst("job", "job " + job.getUuid()));
-	            
-	            job.setStatus(JobStatusType.QUEUED, message);
+	            // Save message in update parms object.
+	            if (log.isDebugEnabled()) log.debug(message.replaceFirst("job", "job " + job.getUuid()));
+	            jobUpdateParameters.setErrorMessage(message);
 	            
 	            //   Forked jobs start running right away. if they bomb out right after submission,
 	            // then they would stay in the queued state for the entire job runtime before being
@@ -132,16 +144,26 @@ public class HPCLauncher extends AbstractJobLauncher
 	            //   It's worth noting that the RUNNING status on valid jobs will still come through, 
 	            // but it will be ignored since the job state is already running. no harm no foul.  
 	            if (software.getExecutionType() == ExecutionType.CLI) {
-	            	job.setStatus(JobStatusType.RUNNING, message);
+	                jobUpdateParameters.setStatus(JobStatusType.RUNNING);
 	            }
+	            else {
+	                jobUpdateParameters.setStatus(JobStatusType.QUEUED);
+	            }
+	            
+	            // Write all updates to the database triggering events if necessary.
+	            job = JobManager.updateStatus(job, jobUpdateParameters.getStatus(), jobUpdateParameters);
             }
             else
             {
-                log.debug("Callback already received for job " + job.getUuid() 
-                        + " skipping duplicate status update.");    
+                if (log.isDebugEnabled())
+                    log.debug("Callback already received for job " + job.getUuid() 
+                        + " skipping duplicate status update.");
+                
+                // No status changes on this path.
+                JobDao.update(job.getUuid(), job.getTenantId(),jobUpdateParameters);
+                JobDao.refresh(job);
             }
             
-            JobDao.persist(job);
 		}
 		catch (ClosedByInterruptException | JobFinishedException e) {
             throw e;

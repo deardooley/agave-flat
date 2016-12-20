@@ -15,6 +15,7 @@ import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.queue.actions.ArchiveAction;
 import org.iplantc.service.systems.dao.SystemDao;
@@ -217,13 +218,14 @@ public final class ArchivingWorker
         // Update the status message and the status we were triggered by 
         // something other than ARCHIVING status (like CLEANING_UP).
         try {
-            _job = JobManager.safeUpdateStatus(_job, JobStatusType.ARCHIVING, "Beginning to archive output.");
+            _job = JobManager.updateStatus(_job, JobStatusType.ARCHIVING, "Beginning to archive output.");
         }
         catch (JobFinishedException e) {
             // Log the occurrence and stop all processing.
             if (_log.isDebugEnabled()) {
-                String msg = "Safe status update failed for job " + _job.getUuid() +
-                             " (" + _job.getName() + ") due to the job being in a finished state.";
+                String msg = "Unable to update status for job " + _job.getUuid() +
+                        " (" + _job.getName() + ") from " + _job.getStatus() +
+                        " to " + JobStatusType.ARCHIVING.name() + ".";
                 _log.warn(msg, e);
             }
             return;
@@ -247,14 +249,19 @@ public final class ArchivingWorker
 
             // Mark the job as archiving.
             // TODO: We have to check if the transition is valid (i.e., not stopped, etc.) 
-            try {_job = JobManager.safeUpdateStatus(_job, JobStatusType.ARCHIVING,
-                    "Attempt " + attempts + " to archive job output");
+            try {
+                // This updated message forces a database write.
+                JobUpdateParameters parms = new JobUpdateParameters();
+                parms.setRetries(_job.getRetries());
+                _job = JobManager.updateStatus(_job, JobStatusType.ARCHIVING,
+                    "Attempt " + attempts + " to archive job output", parms);
             }
             catch (JobFinishedException e) {
                 // Log the occurrence and stop all processing.
                 if (_log.isDebugEnabled()) {
-                    String msg = "Safe status update failed for job " + _job.getUuid() +
-                                 " (" + _job.getName() + ") due to the job being in a finished state.";
+                    String msg = "Unable to update status for job " + _job.getUuid() +
+                            " (" + _job.getName() + ") from " + _job.getStatus() +
+                            " to " + JobStatusType.ARCHIVING.name() + ".";
                     _log.warn(msg, e);
                 }
                 return;
@@ -284,10 +291,10 @@ public final class ArchivingWorker
                 }
 
                 if (!isJobStopped() || _job.getStatus() == JobStatusType.ARCHIVING_FINISHED ||
-                                    _job.getStatus() == JobStatusType.ARCHIVING_FAILED)
+                    _job.getStatus() == JobStatusType.ARCHIVING_FAILED)
                 {
                     archived = true;
-                    _log.debug("Finished archiving job " + _job.getUuid() + " output");
+                    if (_log.isDebugEnabled()) _log.debug("Finished archiving job " + _job.getUuid() + " output");
                     _job = JobManager.updateStatus(_job, JobStatusType.FINISHED);
                 }
             }

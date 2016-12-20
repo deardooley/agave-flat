@@ -22,6 +22,7 @@ import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.launchers.parsers.CondorJobIdParser;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.scripts.CommandStripper;
 import org.iplantc.service.jobs.model.scripts.CondorSubmitScript;
@@ -514,13 +515,15 @@ public class CondorLauncher  extends AbstractJobLauncher {
             // run condor_submit
             String condorJobId = submitJobToQueue();
             
-            job.setSubmitTime(new DateTime().toDate());   // Date job submitted to Condor
-            job.setLastUpdated(new DateTime().toDate());  // Date job started by Condor
-            job.setLocalJobId(condorJobId);
-            job.setStatus(JobStatusType.QUEUED, "Condor job successfully placed into queue");
-            
-            JobDao.persist(job);
-            
+            // Update job record.
+            Date curDate = new DateTime().toDate();
+            JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+            jobUpdateParameters.setSubmitTime(curDate);
+            jobUpdateParameters.setLastUpdated(curDate);
+            jobUpdateParameters.setLocalJobId(condorJobId);
+            job = JobManager.updateStatus(job, JobStatusType.QUEUED, 
+                                          "Condor job successfully placed into queue", 
+                                          jobUpdateParameters);
         }
         catch (ClosedByInterruptException | JobFinishedException e) {
             throw e;

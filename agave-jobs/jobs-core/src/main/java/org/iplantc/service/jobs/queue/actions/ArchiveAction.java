@@ -18,6 +18,7 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
@@ -132,7 +133,8 @@ public class ArchiveAction extends AbstractWorkerAction {
                 
                 if (jobFileList.isEmpty()) 
                 {
-                    log.debug("No archive file found for job " + getJob().getUuid() + " on system " + 
+                    if (log.isDebugEnabled())
+                        log.debug("No archive file found for job " + getJob().getUuid() + " on system " + 
                             executionSystem.getSystemId() + " at " + remoteAgaveIgnoreFile + 
                             ". Entire job directory will be archived.");
                     this.job = JobManager.updateStatus(getJob(), JobStatusType.ARCHIVING, 
@@ -146,7 +148,8 @@ public class ArchiveAction extends AbstractWorkerAction {
             }
             catch (Exception e)
             {
-                log.debug("Unable to parse archive file for job " + getJob().getUuid() + " on system " + 
+                if (log.isDebugEnabled())
+                    log.debug("Unable to parse archive file for job " + getJob().getUuid() + " on system " + 
                         executionSystem.getSystemId() + " at " + remoteAgaveIgnoreFile + 
                         ". Entire job directory will be archived.");
                 this.job = JobManager.updateStatus(getJob(), JobStatusType.ARCHIVING, 
@@ -183,7 +186,10 @@ public class ArchiveAction extends AbstractWorkerAction {
                 if (StringUtils.isEmpty(getJob().getArchivePath())) {
                     String defaultArchivePath = getJob().getOwner() + "/archive/jobs/job-" + getJob().getUuid();
                     getJob().setArchivePath(defaultArchivePath);
-                    JobDao.persist(getJob());
+                    JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+                    jobUpdateParameters.setArchivePath(defaultArchivePath);
+                    JobDao.update(getJob().getUuid(), getJob().getTenantId(), jobUpdateParameters);
+                    JobDao.refresh(getJob());
                 }
                 
                 if (!archiveDataClient.doesExist(getJob().getArchivePath())) {
@@ -214,8 +220,6 @@ public class ArchiveAction extends AbstractWorkerAction {
                     "Archiving " + rootTask.getSource() + " to " + rootTask.getDest(), 
                     rootTask, 
                     getJob().getOwner()));
-            
-            JobDao.persist(getJob());
             
             urlCopy = new URLCopy(executionDataClient, archiveDataClient);
             

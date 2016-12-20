@@ -18,6 +18,7 @@ import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.monitors.parsers.ForkJobMonitorResponseParser;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.remote.RemoteSubmissionClient;
@@ -72,7 +73,14 @@ public class ProcessMonitor extends AbstractJobMonitor
 					// increment the number of checks and lastupdated timestamp
 				    this.job.setLastUpdated(new DateTime().toDate());
 					this.job.setStatusChecks(this.job.getStatusChecks() + 1);
-		        	this.job = JobManager.updateStatus(this.job, this.job.getStatus(), this.job.getErrorMessage());
+					
+					// Save changed fields along with status.
+					JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+					jobUpdateParameters.setLastUpdated(this.job.getLastUpdated());
+					jobUpdateParameters.setStatusChecks(this.job.getStatusChecks());
+		        	this.job = JobManager.updateStatus(this.job, this.job.getStatus(), 
+		        	                                   this.job.getErrorMessage(),
+		        	                                   jobUpdateParameters);
 		        	
 					ExecutionSystem system = JobManager.getJobExecutionSystem(job);
 					
@@ -85,13 +93,15 @@ public class ProcessMonitor extends AbstractJobMonitor
 					String result = null;
 					try 
 					{
-						log.debug("Forking command " + queryCommand + " on " + 
+						if (log.isDebugEnabled())
+						    log.debug("Forking command " + queryCommand + " on " + 
 								remoteSubmissionClient.getHost() + ":" + remoteSubmissionClient.getPort() +
 								" for job " + job.getUuid());
 						
 						result = remoteSubmissionClient.runCommand(queryCommand);
 						
-						log.debug("Response for job " + job.getUuid() + " monitoring command was: " + result);
+						if (log.isDebugEnabled())
+						    log.debug("Response for job " + job.getUuid() + " monitoring command was: " + result);
 					}
 					catch (Throwable e)
 					{
@@ -118,13 +128,15 @@ public class ProcessMonitor extends AbstractJobMonitor
 									updateStatusOfFinishedJob();
 								}
 								else {
-									log.debug("Job " + job.getUuid() + " is still " + job.getStatus().name() + 
+								    if (log.isDebugEnabled())
+								        log.debug("Job " + job.getUuid() + " is still " + job.getStatus().name() + 
 		                                    " as local job id " + job.getLocalJobId() + " on " + job.getSystem());
 									this.job = JobManager.updateStatus(this.job, job.getStatus(), this.job.getErrorMessage());
 								}
 						    }
 							catch (RemoteJobMonitorResponseParsingException e) {
-								log.debug("Unrecognized response from status check for job " + this.job.getUuid() + ": " + result, e);
+							    if (log.isDebugEnabled())
+							        log.debug("Unrecognized response from status check for job " + this.job.getUuid() + ": " + result, e);
 								this.job = JobManager.updateStatus(this.job, job.getStatus(), this.job.getErrorMessage());
 							}
 							
@@ -163,12 +175,17 @@ public class ProcessMonitor extends AbstractJobMonitor
 	protected void updateStatusOfFinishedJob() throws JobException {
 		Date logDate = new DateTime().toDate();
 		this.job.setEndTime(logDate);
-		this.job = JobManager.updateStatus(this.job, JobStatusType.CLEANING_UP, "Job completion detected by process monitor.");
+		JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+		jobUpdateParameters.setEndTime(this.job.getEndTime());
+		this.job = JobManager.updateStatus(this.job, JobStatusType.CLEANING_UP, 
+		                                   "Job completion detected by process monitor.",
+		                                   jobUpdateParameters);
 
 		if (!this.job.isArchiveOutput()) {
 		    if (log.isDebugEnabled()) 
 		        log.debug("Job " + this.job.getUuid() + " will skip archiving at user request.");
-		    this.job = JobManager.updateStatus(this.job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
+		    this.job = JobManager.updateStatus(this.job, JobStatusType.FINISHED, 
+		                                       "Job completed. Skipping archiving at user request.");
 		    if (log.isDebugEnabled())
 		        log.debug("Job " + this.job.getUuid() + " finished.");
 		}

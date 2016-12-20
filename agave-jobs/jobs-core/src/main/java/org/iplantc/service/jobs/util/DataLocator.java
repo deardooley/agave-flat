@@ -19,6 +19,7 @@ import org.iplantc.service.jobs.exceptions.MissingDataException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.FileBean;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
@@ -137,10 +138,10 @@ public class DataLocator {
 									"/job-" + job.getUuid() + "-" + Slug.toSlug(job.getName());
 
 							job.setWorkPath(remoteWorkPath);
-
-							JobDao.persist(job);
-
-							//throw new RemoteDataException("No work directory specified for this job. Usually this occurs when a job failed during submission.");
+							JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+							jobUpdateParameters.setWorkPath(job.getWorkPath());
+							JobDao.update(job.getUuid(), job.getTenantId(), jobUpdateParameters);
+							JobDao.refresh(job);
 						}
 
 						remoteExecutionSystemDataClient.authenticate();

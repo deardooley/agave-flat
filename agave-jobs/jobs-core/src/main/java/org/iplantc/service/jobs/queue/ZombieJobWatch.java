@@ -133,7 +133,8 @@ public class ZombieJobWatch implements org.quartz.Job
 							"Job failed. Execution system is no longer present.");
 				}
 				
-				log.debug("Zombie reaper task is setting status of job " + job.getUuid() + 
+				if (log.isDebugEnabled())
+				    log.debug("Zombie reaper task is setting status of job " + job.getUuid() + 
 						" to " + job.getStatus() + " because the execution system " + 
 						job.getSystem() + " is no longer present.");
 			}
@@ -152,7 +153,8 @@ public class ZombieJobWatch implements org.quartz.Job
 							"Job failed. Archive system is no longer present.");
 				}
 				
-				log.debug("Zombie reaper task is setting status of job " + job.getUuid() + 
+				if (log.isDebugEnabled())
+				    log.debug("Zombie reaper task is setting status of job " + job.getUuid() + 
 						" to " + job.getStatus() + " because the archive system "
 						+ "is no longer present.");
 			}
@@ -161,7 +163,8 @@ public class ZombieJobWatch implements org.quartz.Job
 		    
 			if (!isFinished(job.getStatus()))
 			{	
-				log.debug("Zombie reaper task is rolling back status of job " + job.getUuid() + 
+			    if (log.isDebugEnabled())
+			        log.debug("Zombie reaper task is rolling back status of job " + job.getUuid() + 
 						" from " + job.getStatus() + " to " + rollbackJobStatus);
 				
 				if (rollbackJobStatus == CLEANING_UP) 
@@ -290,7 +293,8 @@ public class ZombieJobWatch implements org.quartz.Job
 			{
 				try 
 				{ 
-					log.debug("Zombie reaper task is cancelling transfer task " 
+				    if (log.isDebugEnabled())
+				        log.debug("Zombie reaper task is cancelling transfer task " 
 							+ event.getTransferTask().getUuid() + " for job " + job.getUuid());
         			
 					TransferTaskDao.cancelAllRelatedTransfers(event.getTransferTask().getId());
@@ -298,7 +302,8 @@ public class ZombieJobWatch implements org.quartz.Job
 					NotificationManager.process(event.getTransferTask().getUuid(), TransferTaskEventType.CANCELLED.name(), callingUsername, event.getTransferTask().toJSON());
 					
 				} catch (Throwable e) {
-					log.error("Failed to cancel transfer task " + 
+				    if (log.isDebugEnabled())
+				        log.error("Failed to cancel transfer task " + 
 							event.getTransferTask().getUuid() + " associated with job " + job.getUuid(), e);
 				}
 			}

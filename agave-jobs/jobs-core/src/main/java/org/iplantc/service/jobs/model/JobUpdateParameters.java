@@ -25,11 +25,13 @@ public class JobUpdateParameters
     private String              archivePath;
     private Date                created;
     private Date                endTime;
+    private String              errorMessage;
     private Date                lastUpdated;
     private String              localJobId;
     private Integer             retries;
     private Date                startTime;
     private JobStatusType       status;
+    private Integer             statusChecks;
     private Date                submitTime;
     private boolean             visible;
     private String              workPath;
@@ -38,11 +40,13 @@ public class JobUpdateParameters
     private boolean             archivePathFlag;
     private boolean             createdFlag;
     private boolean             endTimeFlag;
+    private boolean             errorMessageFlag;
     private boolean             lastUpdatedFlag;
     private boolean             localJobIdFlag;
     private boolean             retriesFlag;
     private boolean             startTimeFlag;
     private boolean             statusFlag;
+    private boolean             statusChecksFlag;
     private boolean             submitTimeFlag;
     private boolean             visibleFlag;
     private boolean             workPathFlag;
@@ -77,6 +81,15 @@ public class JobUpdateParameters
     {
         endTimeFlag = true;
         this.endTime = endTime;
+    }
+    public String getErrorMessage()
+    {
+        return errorMessage;
+    }
+    public void setErrorMessage(String errorMessage)
+    {
+        errorMessageFlag = true;
+        this.errorMessage = errorMessage;
     }
     public Date getLastUpdated()
     {
@@ -123,6 +136,15 @@ public class JobUpdateParameters
         statusFlag = true;
         this.status = status;
     }
+    public Integer getStatusChecks()
+    {
+        return statusChecks;
+    }
+    public void setStatusChecks(Integer statusChecks)
+    {
+        statusChecksFlag = true;
+        this.statusChecks = statusChecks;
+    }
     public Date getSubmitTime()
     {
         return submitTime;
@@ -167,6 +189,11 @@ public class JobUpdateParameters
         return endTimeFlag;
     }
 
+    public boolean isErrorMessageFlag()
+    {
+        return errorMessageFlag;
+    }
+
     public boolean isLastUpdatedFlag()
     {
         return lastUpdatedFlag;
@@ -190,6 +217,11 @@ public class JobUpdateParameters
     public boolean isStatusFlag()
     {
         return statusFlag;
+    }
+
+    public boolean isStatusChecksFlag()
+    {
+        return statusChecksFlag;
     }
 
     public boolean isSubmitTimeFlag()
@@ -226,6 +258,11 @@ public class JobUpdateParameters
         endTime = null;
         endTimeFlag = false;
     }
+    public void unsetErrorMessage()
+    {
+        errorMessage = null;
+        errorMessageFlag = false;
+    }
     public void unsetLastUpdated()
     {
         lastUpdated = null;
@@ -250,6 +287,11 @@ public class JobUpdateParameters
     {
         status = null;
         statusFlag = false;
+    }
+    public void unsetStatusChecks()
+    {
+        statusChecks = null;
+        statusChecksFlag = false;
     }
     public void unsetSubmitTime()
     {

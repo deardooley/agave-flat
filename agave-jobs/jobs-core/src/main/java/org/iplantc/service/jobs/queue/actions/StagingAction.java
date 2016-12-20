@@ -31,6 +31,7 @@ import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.JobPermissionManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.jobs.util.Slug;
@@ -89,11 +90,12 @@ public class StagingAction extends AbstractWorkerAction {
         // Mark the job as submitting and assign the _job field the updated content.
         // An exception here means the status could not be updated because the job 
         // has been stopped, which means we need to abort job processing.
-        try {JobManager.safeUpdateStatus(this.job, JobStatusType.PROCESSING_INPUTS);}
+        try {this.job = JobManager.updateStatus(this.job, JobStatusType.PROCESSING_INPUTS);}
         catch (Exception e) {
             // Log the occurrence and stop all processing.
-            String msg = "Safe status update failed for job " + job.getUuid() +
-                         " (" + job.getName() + ") due to the job being in a finished state.";
+            String msg = "Unable to update status for job " + job.getUuid() +
+                         " (" + job.getName() + ") from " + job.getStatus() +
+                         " to " + JobStatusType.PROCESSING_INPUTS.name() + ".";
             log.warn(msg, e);
             throw e;
         }
@@ -294,7 +296,6 @@ public class StagingAction extends AbstractWorkerAction {
                     }
                     
                     this.job.setWorkPath(remoteWorkPath);
-//                  this.job.setStatus(JobStatusType.STAGING_INPUTS, "Staging " + singleRawInputValue + " to remote job directory");
                     String destPath = remoteWorkPath;
                     
                     if (remoteExecutionDataClient.doesExist(destPath)) 
@@ -383,9 +384,11 @@ public class StagingAction extends AbstractWorkerAction {
                             rootTask, 
                             this.job.getOwner());
                     
-                    this.job.setStatus(JobStatusType.STAGING_INPUTS, event);
-                    this.job.setLastUpdated(new DateTime().toDate());
-                    JobDao.persist(this.job);
+                    // Collect all unsaved modifications to the job and write them 
+                    // to the database along with the status change.
+                    JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+                    jobUpdateParameters.setWorkPath(job.getWorkPath());
+                    job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, event, jobUpdateParameters);
                     
                     urlCopy = new URLCopy(remoteStorageDataClient, remoteExecutionDataClient);
                     

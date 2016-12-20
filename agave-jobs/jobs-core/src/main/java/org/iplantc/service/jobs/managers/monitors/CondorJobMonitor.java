@@ -27,6 +27,7 @@ import org.iplantc.service.jobs.managers.killers.JobKillerFactory;
 import org.iplantc.service.jobs.managers.monitors.parsers.CondorJobMonitorResponseParser;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.notification.managers.NotificationManager;
@@ -84,7 +85,16 @@ public class CondorJobMonitor extends AbstractJobMonitor
 					// increment the number of checks and lastupdated timestamp
 				    this.job.setLastUpdated(new DateTime().toDate());
 				    this.job.setStatusChecks(this.job.getStatusChecks() + 1);
-		        	this.job = JobManager.updateStatus(this.job, this.job.getStatus(), this.job.getErrorMessage());
+				    
+				    // Include all changes made to this point and issue a status update
+				    // even though the status hasn't changed.  A side effect of the status
+				    // update is the generation of an event.
+				    JobUpdateParameters jobUpdateParms = new JobUpdateParameters();
+				    jobUpdateParms.setLastUpdated(this.job.getLastUpdated());
+				    jobUpdateParms.setStatusChecks(this.job.getStatusChecks());
+		        	this.job = JobManager.updateStatus(this.job, this.job.getStatus(), 
+		        	                                   this.job.getErrorMessage(),
+		        	                                   jobUpdateParms);
 		        	
 		        	try {
 		        	    
@@ -308,16 +318,19 @@ public class CondorJobMonitor extends AbstractJobMonitor
         // once we do that, the ArchiveWatch will kick in and handle things.
         if (condorJobLogParser.isJobFinished())
         {
-            log.debug("Job " + job.getUuid() + " was found in a CLEANING_UP state on " + job.getSystem() + 
+            if (log.isDebugEnabled()) 
+                log.debug("Job " + job.getUuid() + " was found in a CLEANING_UP state on " + job.getSystem() + 
                     " based on its runtime log file. Updating status to CLEANING_UP.");
             
             this.job = JobManager.updateStatus(job, JobStatusType.CLEANING_UP, 
                     "Job completion detected by Condor monitor.");
             
             if (!this.job.isArchiveOutput()) {
-                log.debug("Job " + this.job.getUuid() + " will skip archiving at user request.");
+                if (log.isDebugEnabled()) 
+                    log.debug("Job " + this.job.getUuid() + " will skip archiving at user request.");
                 this.job = JobManager.updateStatus(this.job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
-                log.debug("Job " + this.job.getUuid() + " finished.");
+                if (log.isDebugEnabled()) 
+                    log.debug("Job " + this.job.getUuid() + " finished.");
             }
         } 
         // if the runtime log says it failed, we need to kill the job. we leave the assets
@@ -325,7 +338,8 @@ public class CondorJobMonitor extends AbstractJobMonitor
         // TODO: How to feed back the assets afterwards. may or may not reliably be there
         else if (condorJobLogParser.isJobFailed())
         {
-            log.debug("Job " + job.getUuid() + " was found in a FAILED state on " + job.getSystem() + 
+            if (log.isDebugEnabled()) 
+                log.debug("Job " + job.getUuid() + " was found in a FAILED state on " + job.getSystem() + 
                     " as local job id " + job.getLocalJobId() 
                     + " based on its runtime log file.");
             
@@ -334,9 +348,9 @@ public class CondorJobMonitor extends AbstractJobMonitor
         // nothing to see. timestamp was already updated. carry on.
         else 
         {
-            log.debug("Runtime file found for job " + job.getUuid() + ". Job remains " 
+            if (log.isDebugEnabled()) 
+                log.debug("Runtime file found for job " + job.getUuid() + ". Job remains " 
                     + job.getStatus() + " based on its runtime log file.");
-            // this.job = JobManager.updateStatus(job, job.getStatus());
         }
     }
     
@@ -397,12 +411,18 @@ public class CondorJobMonitor extends AbstractJobMonitor
             }
             else if (StringUtils.equals("4", result)) {
                 job.setEndTime(new DateTime().toDate());
-                this.job = JobManager.updateStatus(job, JobStatusType.CLEANING_UP, "Job completed, but no callback received");
-                log.debug("Job " + job.getUuid() + " was found in a state of CLEANING UP.");
+                JobUpdateParameters jobUpdateParms = new JobUpdateParameters();
+                jobUpdateParms.setEndTime(job.getEndTime());
+                this.job = JobManager.updateStatus(job, JobStatusType.CLEANING_UP, "Job completed, but no callback received",
+                                                   jobUpdateParms);
+                if (log.isDebugEnabled()) log.debug("Job " + job.getUuid() + " was found in a state of CLEANING UP.");
+                
                 if (!this.job.isArchiveOutput()) {
-                    log.debug("Job " + this.job.getUuid() + " will skip archiving at user request.");
+                    if (log.isDebugEnabled())
+                        log.debug("Job " + this.job.getUuid() + " will skip archiving at user request.");
                     this.job = JobManager.updateStatus(this.job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
-                    log.debug("Job " + this.job.getUuid() + " finished.");
+                    if (log.isDebugEnabled()) 
+                        log.debug("Job " + this.job.getUuid() + " finished.");
                 }
             }
             else if (StringUtils.equals("5", result)) {

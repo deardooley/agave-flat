@@ -10,6 +10,7 @@ import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.jobs.Settings;
+import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.RemoteJobFailureDetectedException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseException;
@@ -23,6 +24,7 @@ import org.iplantc.service.jobs.managers.monitors.parsers.JobMonitorResponsePars
 import org.iplantc.service.jobs.managers.monitors.parsers.JobMonitorResponseParserFactory;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
@@ -76,9 +78,11 @@ public class HPCMonitor extends AbstractJobMonitor {
 				}
 				else // otherwise, throw it in remotely
 				{
-					// increment the number of checks 
-				    this.job.setStatusChecks(job.getStatusChecks() + 1);
-		        	this.job = JobManager.updateStatus(job, job.getStatus(), job.getErrorMessage());
+					// increment the number of checks and update with event generation.
+				    job.setStatusChecks(job.getStatusChecks() + 1);
+				    JobUpdateParameters jobUpdateParms = new JobUpdateParameters();
+				    jobUpdateParms.setStatusChecks(job.getStatusChecks());
+				    JobManager.updateStatus(job, job.getStatus(), job.getErrorMessage(), jobUpdateParms);
 		        	
 					ExecutionSystem system = JobManager.getJobExecutionSystem(job);
 					
@@ -91,7 +95,8 @@ public class HPCMonitor extends AbstractJobMonitor {
 					String result = null;
 					try
 					{
-						log.debug("Forking command " + queryCommand + " on " + 
+					    if (log.isDebugEnabled())
+					        log.debug("Forking command " + queryCommand + " on " + 
 								remoteSubmissionClient.getHost() + ":" + remoteSubmissionClient.getPort() +
 								" for job " + job.getUuid());
 						
@@ -103,7 +108,8 @@ public class HPCMonitor extends AbstractJobMonitor {
 							String numericJobId = job.getNumericLocalJobId();
 							
 							if (StringUtils.isNotEmpty(numericJobId)) {
-								log.debug("Empty response found when checking remote execution system of agave job " 
+							    if (log.isDebugEnabled())
+							        log.debug("Empty response found when checking remote execution system of agave job " 
 										+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
 										+ ". Attempting to recheck with just the numeric job id " + numericJobId);
 								queryCommand = system.getScheduler().getBatchQueryCommand() + " " + numericJobId;
@@ -111,37 +117,43 @@ public class HPCMonitor extends AbstractJobMonitor {
 								result = remoteSubmissionClient.runCommand(queryCommand);
 							}
 							else {
-								log.debug("Empty response found when checking remote execution system of agave job " 
+							    if (log.isDebugEnabled())
+							        log.debug("Empty response found when checking remote execution system of agave job " 
 										+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
 										+ ". No numeric job id found in the batch job id for remtoe system. "
 										+ "No further attempt will be made.");
 							}
 						}
 						
-						log.debug("Response for job " + job.getUuid() + " monitoring command was: " + result);
+						if (log.isDebugEnabled())
+						    log.debug("Response for job " + job.getUuid() + " monitoring command was: " + result);
 					}
 					catch (Throwable e) {
+					    // Not sure why we update status here.
 					    this.job = JobManager.updateStatus(job, job.getStatus());
 						throw new RemoteJobMonitoringException("Failed to run job status query on " + system.getSystemId(), e);
 					}
 					
 					JobMonitorResponseParser responseParser = JobMonitorResponseParserFactory.getInstance(job);
-					// TODO: we need to actively pull the job state on teh remote machine and sync up here. 
+					// TODO: we need to actively pull the job state on the remote machine and sync up here. 
 					try {
 						// this isn't really a check for running, but rather not failed.
 						if (!responseParser.isJobRunning(result)) {
 							// job not found.
-						    log.debug("Job " + job.getUuid() + " no longer present on " + job.getSystem() + 
-						            " as local job id " + job.getLocalJobId() + ". Updating status to CLEANING_UP.");
+						    if (log.isDebugEnabled())
+						            log.debug("Job " + job.getUuid() + " no longer present on " + job.getSystem() + 
+						                      " as local job id " + job.getLocalJobId() + ". Updating status to CLEANING_UP.");
 						    Date logDate = new DateTime().toDate();// fetchEndDateFromLogFiles();
                             job.setEndTime(logDate);
+                            jobUpdateParms = new JobUpdateParameters();
+                            jobUpdateParms.setEndTime(job.getEndTime());
 							this.job = JobManager.updateStatus(job, JobStatusType.CLEANING_UP, 
-									"Job completion detected by batch scheduler monitor.");
+									"Job completion detected by batch scheduler monitor.", jobUpdateParms);
 							
 				            if (!job.isArchiveOutput()) {
-				                log.debug("Job " + job.getUuid() + " will skip archiving at user request.");
+				                if (log.isDebugEnabled()) log.debug("Job " + job.getUuid() + " will skip archiving at user request.");
 				                this.job = JobManager.updateStatus(job, JobStatusType.FINISHED, "Job completed. Skipping archiving at user request.");
-				                log.debug("Job " + job.getUuid() + " finished.");
+				                if (log.isDebugEnabled()) log.debug("Job " + job.getUuid() + " finished.");
 				            }
 						}
 						// TODO: this will give a false status update if the job is just queued. we don't hit that
@@ -150,8 +162,9 @@ public class HPCMonitor extends AbstractJobMonitor {
 						// accurate as it could be.
 						else if (!job.isRunning())
 						{	
-						    log.debug("Job " + job.getUuid() + " was found in a RUNNING state on " + job.getSystem() + 
-                                    " as local job id " + job.getLocalJobId() + ". Updating status to RUNNING.");
+						    if (log.isDebugEnabled())
+						        log.debug("Job " + job.getUuid() + " was found in a RUNNING state on " + job.getSystem() + 
+                                          " as local job id " + job.getLocalJobId() + ". Updating status to RUNNING.");
                             
 						    this.job = JobManager.updateStatus(job, JobStatusType.RUNNING, 
 									"Job status change to running detected by batch scheduler monitor.");
@@ -161,8 +174,9 @@ public class HPCMonitor extends AbstractJobMonitor {
 						// for accuracy.
 						else
 						{
-						    log.debug("Job " + job.getUuid() + " is still " + job.getStatus().name() + 
-                                    " as local job id " + job.getLocalJobId() + " on " + job.getSystem());
+						    if (log.isDebugEnabled())
+						        log.debug("Job " + job.getUuid() + " is still " + job.getStatus().name() + 
+                                          " as local job id " + job.getLocalJobId() + " on " + job.getSystem());
                             
 						    this.job = JobManager.updateStatus(job, job.getStatus(), job.getErrorMessage());
 						}
@@ -182,21 +196,24 @@ public class HPCMonitor extends AbstractJobMonitor {
                         		". The job will remain active until a terminal state is detected.");
 					}
 					catch (RemoteJobFailureDetectedException e) {
-						log.debug("Job " + job.getUuid() + " was found in an failed state on " + job.getSystem() + 
-                                " as local job id " + job.getLocalJobId() + ". " + e.getMessage());
+					    if (log.isDebugEnabled())
+					        log.debug("Job " + job.getUuid() + " was found in an failed state on " + job.getSystem() + 
+                                      " as local job id " + job.getLocalJobId() + ". " + e.getMessage());
 						JobStatusType nextStatus = job.isArchiveOutput() ? JobStatusType.CLEANING_UP : JobStatusType.FAILED;
 						this.job = JobManager.updateStatus(job, nextStatus, 
                         		"Job " + job.getUuid() + " was found in an failed state on " + job.getSystem() + 
                                 " as local job id " + job.getLocalJobId() + ". " + e.getMessage());
 					}
 					catch (RemoteJobUnrecoverableStateException e) {
-						log.debug("Job " + job.getUuid() + " was found in an unrecoverable state on " + job.getSystem() + 
-                                " as local job id " + job.getLocalJobId() + ". Updating status to FAILED.");
+					    if (log.isDebugEnabled())
+					        log.debug("Job " + job.getUuid() + " was found in an unrecoverable state on " + job.getSystem() + 
+                                      " as local job id " + job.getLocalJobId() + ". Updating status to FAILED.");
                         this.job = JobManager.updateStatus(job, JobStatusType.FAILED, 
 					            "Job failed to move out of system queue.");
 					}
 					catch (RemoteJobMonitorResponseParsingException e) {
-						log.debug("Unrecognized response from status check for job " + this.job.getUuid() + ": " + result, e);
+					    if (log.isDebugEnabled())
+					        log.debug("Unrecognized response from status check for job " + this.job.getUuid() + ": " + result, e);
 						this.job = JobManager.updateStatus(this.job, job.getStatus(), this.job.getErrorMessage());
 					}
 					catch (Exception e) {

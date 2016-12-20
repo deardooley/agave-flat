@@ -4,7 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.apps.exceptions.SoftwareException;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.jobs.Settings;
-import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobPermissionDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.Job;
@@ -103,7 +102,6 @@ public class JobPermissionManager {
 							"PERMISSION_REVOKE", 
 							"All permissions revoked for " + pem.getUsername(),
 							invokingUsername));
-					JobDao.persist(job);
 					
 					JobPermissionDao.delete(pem);
 					return;
@@ -124,7 +122,6 @@ public class JobPermissionManager {
 						"PERMISSION_GRANT", 
 						pem.getPermission().name() + " permission granted to " + username,
 						invokingUsername));
-				JobDao.persist(job);
 				
 				pem.setPermission(permissionType);
 				JobPermissionDao.persist(pem);
@@ -140,7 +137,6 @@ public class JobPermissionManager {
 				"PERMISSION_GRANT", 
 				permissionType.name() + " permission granted to " + username,
 				invokingUsername));
-		JobDao.persist(job);
 	}
 	
 	public void clearPermissions() throws JobException

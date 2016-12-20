@@ -22,20 +22,19 @@ import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwareInput;
 import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.apps.util.ServiceUtils;
-import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.util.TimeUtils;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobEventDao;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
-import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobProcessingException;
 import org.iplantc.service.jobs.exceptions.JobTerminationException;
 import org.iplantc.service.jobs.managers.killers.JobKiller;
 import org.iplantc.service.jobs.managers.killers.JobKillerFactory;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.TopicMessageSender;
@@ -116,7 +115,8 @@ public class JobManager {
 			throw new JobException("System " + system.getName() + " is not available for staging.");
 		}
 
-		log.debug("Cleaning up staging directory for failed job " + job.getUuid());
+		if (log.isDebugEnabled())
+		    log.debug("Cleaning up staging directory for failed job " + job.getUuid());
 		job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, "Cleaning up remote work directory.");
 
 		ExecutionSystem remoteExecutionSystem = null;
@@ -149,10 +149,12 @@ public class JobManager {
 			if (remoteExecutionDataClient.doesExist(remoteWorkPath))
 			{
 				remoteExecutionDataClient.delete(remoteWorkPath);
-				log.debug("Successfully deleted remote work directory " + remoteWorkPath + " for failed job " + job.getUuid());
+				if (log.isDebugEnabled())
+				    log.debug("Successfully deleted remote work directory " + remoteWorkPath + " for failed job " + job.getUuid());
 				job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, "Completed cleaning up remote work directory.");
 			} else {
-				log.debug("Skipping deleting remote work directory " + remoteWorkPath + " for failed job " + job.getUuid() + ". Directory not present.");
+			    if (log.isDebugEnabled())
+			        log.debug("Skipping deleting remote work directory " + remoteWorkPath + " for failed job " + job.getUuid() + ". Directory not present.");
 				job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, "Completed cleaning up remote work directory.");
 			}
 
@@ -329,16 +331,19 @@ public class JobManager {
 		try {
 			job = JobDao.getById(jobId);
 		
-			if (!job.isVisible()) {
+			if ((job != null) && !job.isVisible()) {
 				try {
-					job.setVisible(Boolean.TRUE);
+				    // Update visible flag.
+				    JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+				    jobUpdateParameters.setVisible(true);
+					JobDao.update(job.getUuid(), job.getTenantId(), jobUpdateParameters);
+					JobDao.refresh(job);
 					
+					// Add event to job.
 					job.addEvent(new JobEvent(
 							JobEventType.RESTORED.name(), 
 							"Job was restored by " + invokingUsername,
 							invokingUsername));
-					
-					JobDao.persist(job);
 					
 					return job;
 				}
@@ -375,17 +380,20 @@ public class JobManager {
         if (job.isVisible()) {
             
             // if the job isn't running, we can just flip the visibility flag and move on
-            if (!job.isRunning())
+            if ((job != null) && !job.isRunning())
             {
                 try {
-                    job.setVisible(Boolean.FALSE);
+                    // Update visible flag.
+                    JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+                    jobUpdateParameters.setVisible(false);
+                    JobDao.update(job.getUuid(), job.getTenantId(), jobUpdateParameters);
+                    JobDao.refresh(job);
                     
+                    // Add event to job.
                     job.addEvent(new JobEvent(
                             JobEventType.DELETED.name(), 
                             "Job was deleted by user " + invokingUsername,
                             invokingUsername));
-                    
-                    JobDao.persist(job);
                 }
                 catch (Throwable e) {
                     throw new JobException("Failed to update job " + job.getUuid() + ".", e);
@@ -416,19 +424,24 @@ public class JobManager {
                             " at user's request.", t);
                 }
                 finally {
-                    job.setVisible(Boolean.FALSE);
-                    job.setStatus(JobStatusType.STOPPED, "Job stopped by user " + invokingUsername);
+                    // Update visible flag and status.
+                    JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+                    jobUpdateParameters.setVisible(false);
+                    jobUpdateParameters.setStatus(JobStatusType.STOPPED);
+                    jobUpdateParameters.setErrorMessage("Job stopped by user " + invokingUsername);
                     
+                    // Update dates.
                     Date jobHiddenDate = new DateTime().toDate();
-                    job.setLastUpdated(jobHiddenDate);
-                    job.setEndTime(jobHiddenDate);
+                    jobUpdateParameters.setLastUpdated(jobHiddenDate);
+                    jobUpdateParameters.setEndTime(jobHiddenDate);
+                    JobDao.update(job.getUuid(), job.getTenantId(), jobUpdateParameters);
+                    JobDao.refresh(job);
                     
+                    // Add event to job.
                     job.addEvent(new JobEvent(
                             JobEventType.DELETED.name(), 
                             "Job was deleted by user " + invokingUsername,
                             invokingUsername));
-                    
-                    JobDao.persist(job);
                     
                     // Interrupt the worker thread that might be processing this job now.
                     StopJobMessage message = new StopJobMessage(job.getName(), job.getUuid(), job.getTenantId());
@@ -446,139 +459,166 @@ public class JobManager {
 	/**
 	 * Updates the status of a job, updates the timestamps as appropriate
 	 * based on the status, and writes a new JobEvent to the job's history.
+	 * 
+	 * If present, the optional extraUpdates object can contain updates to job fields
+	 * other than the status field.  These updates will be applied in the same 
+	 * transaction as the status update if that update is actually performed.  The
+	 * method's status parameter takes precedence over a status setting in the 
+	 * extraUpdates object.
 	 *
 	 * @param job
 	 * @param status
+	 * @param extraUpdates optional update parameters other than status
 	 * @throws JobException
 	 */
-	public static Job updateStatus(Job job, JobStatusType status)
+	public static Job updateStatus(Job job, JobStatusType status, JobUpdateParameters... extraUpdates)
 			throws JobException
 	{
-		return updateStatus(job, status, status.getDescription());
+		return updateStatus(job, status, status.getDescription(), extraUpdates);
 	}
+
+    /**
+     * Updates the status of a job, its timestamps, and writes a new
+     * JobEvent to the job's history with the given status and message.
+     *
+     * If present, the optional extraUpdates object can contain updates to job fields
+     * other than the status and errorMessage fields.  These updates will be applied in 
+     * the same transaction as the status update if that update is actually performed.  
+     * The method's status and error message parameters take precedence over settings of
+     * those field in the extraUpdates object.
+     *
+     * @param job
+     * @param status
+     * @param errorMessage
+     * @param extraUpdates optional update parameters other than status and errorMessage
+     * @return Updated job object
+     * @throws JobException
+     */
+    public static Job updateStatus(Job job, JobStatusType status, String errorMessage, 
+                                   JobUpdateParameters... extraUpdates)
+    throws JobException
+    {
+        // The called method determine if the event gets sent.
+        JobEvent event = new JobEvent(job, status, errorMessage, job.getOwner());
+        return updateStatus(job, status, event, extraUpdates);
+    }
 
 	/**
 	 * Updates the status of a job, its timestamps, and writes a new
 	 * JobEvent to the job's history with the given status and message.
 	 *
+     * If present, the optional extraUpdates object can contain updates to job fields
+     * other than the status field.  These updates will be applied in the same 
+     * transaction as the status update if that update is actually performed.  The
+     * method's status parameter takes precedence over a status setting in the 
+     * extraUpdates object; the event's description field takes precedence over
+     * an errorMessage setting in the extraUpdates object.
+     *
 	 * @param job
 	 * @param status
-	 * @param errorMessage
+	 * @param event
+	 * @param extraUpdates optional update parameters other than status and errorMessage
 	 * @return Updated job object
 	 * @throws JobException
 	 */
-	public static Job updateStatus(Job job, JobStatusType status, String errorMessage)
+	public static Job updateStatus(Job job, JobStatusType status, JobEvent event, 
+	                               JobUpdateParameters... extraUpdates)
 	throws JobException
 	{
-		job.setStatus(status, errorMessage);
-		assignStatusDates(job, status);
-
-		JobDao.persist(job, false);
-
+	    // ----------------- Initialize Parms ----------------------
+	    // Create a new parms object if the user did not provide one.
+        JobUpdateParameters parms;
+        if (extraUpdates.length > 0) parms = extraUpdates[0];
+          else parms = new JobUpdateParameters();
+        
+        // ----------------- Job Processing ------------------------ 
+	    // Determine if the status and message have changed on visible jobs.
+	    if (job.isVisible() &&
+	        ((status != job.getStatus()) ||
+	        !StringUtils.equals(job.getErrorMessage(), event.getDescription())))
+	    {
+	        // We only change the status on visible jobs 
+	        // when the status or message has changed.
+	        parms.setStatus(status);
+	        parms.setErrorMessage(event.getDescription());
+	    }
+	    else 
+	    {
+            // Avoid conflicting signals between explicit 
+            // and implicit method parameters when we do
+	        // not want the status or message updated. 
+            parms.unsetStatus();
+            parms.unsetErrorMessage();
+	    }
+	    
+        // Always update dates and timestamps without overwriting existing ones.
+        assignStatusDates(job, parms, status);
+        
+        // Write the job record and read it back.  If the status was changed
+        // and the transition is not legal, an exception will be thrown.
+        JobDao.update(job.getUuid(), job.getTenantId(), parms);
+        JobDao.refresh(job);  // Keep hibernate happy.
+        
+        // ----------------- Event Processing ---------------------- 
+        // Either process the event or simply record it 
+        // depending on whether the job is deleted.
+        if (job.isVisible()) job.addEvent(event);
+            else 
+            {
+                // Indicate that event is ignored before recording it.
+                event.setDescription(event.getDescription() + 
+                        " Event will be ignored because job has been deleted.");
+                JobEventDao.persist(event);
+            }
+	    
+        // Return updated job object.
 		return job;
 	}
-
-    /** Conditionally updates the status of a job, updates the timestamps as appropriate
-     * based on the status, and writes a new JobEvent to the job's history.  If the 
-     * specified transition is allowed, then the job will be updated.  If the specified 
-     * transition is not allowed, we throw an exception.  
-     *
-     * @param job
-     * @param status
-     * @throws JobException
-     */
-    public static Job safeUpdateStatus(Job job, JobStatusType status)
-            throws JobException, JobFinishedException
-    {
-        return safeUpdateStatus(job, status, status.getDescription());
-    }
-
-	/** Conditionally updates the status of a job, updates the timestamps as appropriate
-     * based on the status, and writes a new JobEvent to the job's history.  If the 
-     * specified transition is allowed, then the job will be updated.  If the specified 
-     * transition is not allowed, we throw an exception.  
-	 * 
-	 * @param job the job to be updated
-	 * @param status the new status
-	 * @param errorMessage the message saved with the status
-	 * @return the updated job if the status change is allowed
-	 * @throws JobException if the proposed status change is not valid
-	 */
-    public static Job safeUpdateStatus(Job job, JobStatusType status, String errorMessage)
-    throws JobException, JobFinishedException
-    {
-        // Get the current value of the job status from the database.
-        // Note: A non-null results obligates us to complete the
-        //       database transaction on this thread.
-        JobStatusType curStatus = JobDao.lockJobForStatus(job);
-        if (curStatus == null) {
-            String msg = "Unable to retrieve latest version of job " + 
-                         job.getUuid() + " (" + job.getName() + ").";
-            log.error(msg);
-            throw new JobException(msg);
-        }
-            
-        // Determine if the state transition is allowed.
-        if (JobStatusType.isFinished(curStatus))
-        {
-            // Rollback the locking transaction.
-            try {HibernateUtil.rollbackTransaction();}
-            catch (Exception e) {
-                String msg = "safeUpdateStatus transaction rollback failed for job " + 
-                             job.getUuid() + " (" + job.getName() + ").";
-                log.error(msg, e);
-            }
-            
-            // Note the incident.
-            String msg = "Cannot safely update the status of job " + 
-                         job.getUuid() + " (" + job.getName() + ") to " +
-                         status.name() + " from " + curStatus.name() + ".";
-            log.warn(msg);
-            throw new JobFinishedException(msg);
-        }
-        
-        // We can make the state transition
-        // and commit the transaction.
-        job.setStatus(status, errorMessage);
-        assignStatusDates(job, status);
-        JobDao.persistLockedJob(job); // transaction committed
-        
-        return job;
-    }
-    
+	
     /** Set various job date fields when changing status.  Date fields
-     * in the job are assigned based on the new status. 
+     * in the update parameter are assigned based on the new status and
+     * whether the job already has the field assigned.  If the job has
+     * a timestamp field assigned, this method will NOT attempt to update
+     * it to avoid overwriting a previously assigned value in the database. 
      * 
-     * @param job the job that is changing status
+     * @param job the job who timestamps are not to be overwritten or rewrittens
+     * @param jobParms the job update parameter specified how to update the job record
      * @param status the new status being assigned to the job
      */
-    private static void assignStatusDates(Job job, JobStatusType status)
+    private static void assignStatusDates(Job job, JobUpdateParameters jobParms, 
+                                          JobStatusType status)
     {
+        // Get current timestamp.
         Date date = new DateTime().toDate();
-        job.setLastUpdated(date);
-        if (status.equals(JobStatusType.QUEUED))
+        
+        // Make sure the lastUpdated time was always explicitly set.
+        if (!jobParms.isLastUpdatedFlag()) jobParms.setLastUpdated(date);
+        
+        // Determine if any of the other timestamps should be updated.
+        // Don't overwrite timestamps already in the unless explicitly
+        // set in the parameter object.
+        switch (status)
         {
-            if (job.getSubmitTime() == null) {
-                job.setSubmitTime(date);
-            }
-        }
-        else if (status.equals(JobStatusType.RUNNING))
-        {
-            if (job.getStartTime() == null) {
-                job.setStartTime(date);
-            }
-        }
-        else if (status.equals(JobStatusType.FINISHED)
-                || status.equals(JobStatusType.KILLED)
-                || status.equals(JobStatusType.STOPPED)
-                || status.equals(JobStatusType.FAILED))
-        {
-            if (job.getEndTime() == null) {
-                job.setEndTime(date);
-            }
-        }
-        else if (status.equals(JobStatusType.STAGED)) {
-            //
+            case QUEUED:
+                if ((job.getSubmitTime() == null) && !jobParms.isSubmitTimeFlag()) 
+                    jobParms.setSubmitTime(date);
+                break;
+                
+            case RUNNING:
+                if ((job.getStartTime() == null) && !jobParms.isStartTimeFlag())
+                    jobParms.setStartTime(date);
+                break;
+                
+            case FINISHED:
+            case KILLED:
+            case STOPPED:
+            case FAILED:
+                if ((job.getEndTime() == null) && !jobParms.isEndTimeFlag())
+                    jobParms.setEndTime(date);
+                break;
+                
+            default:
+                break;
         }
     }
     
@@ -603,8 +643,8 @@ public class JobManager {
 			throw new SystemUnavailableException("Job execution system " + executionSystem.getSystemId() + " is not available.");
 		}
 
-		log.debug("Beginning archive inputs for job " + job.getUuid() + " " + job.getName());
-//		JobManager.updateStatus(job, JobStatusType.ARCHIVING);
+		if (log.isDebugEnabled())
+		    log.debug("Beginning archive inputs for job " + job.getUuid() + " " + job.getName());
 
 		RemoteDataClient archiveDataClient = null;
 		RemoteDataClient executionDataClient = null;
@@ -665,16 +705,18 @@ public class JobManager {
 				}
 				else
 				{
-					log.debug("No archive file found for job " + job.getUuid() + " on system " +
+				    if (log.isDebugEnabled())
+				        log.debug("No archive file found for job " + job.getUuid() + " on system " +
 							executionSystem.getSystemId() + " at " + remoteArchiveFile +
 							". Entire job directory will be archived.");
-					JobManager.updateStatus(job, JobStatusType.ARCHIVING,
+					job = JobManager.updateStatus(job, JobStatusType.ARCHIVING,
 							"No archive file found. Entire job directory will be archived.");
 				}
 			}
 			catch (Exception e)
 			{
-				log.debug("Unable to parse archive file for job " + job.getUuid() + " on system " +
+			    if (log.isDebugEnabled())
+			        log.debug("Unable to parse archive file for job " + job.getUuid() + " on system " +
 						executionSystem.getSystemId() + " at " + remoteArchiveFile +
 						". Entire job directory will be archived.");
 				JobManager.updateStatus(job, JobStatusType.ARCHIVING,
@@ -745,13 +787,12 @@ public class JobManager {
 					null);
 			TransferTaskDao.persist(rootTask);
 
+			// Add an event to the job.
 			job.addEvent(new JobEvent(
 					job.getStatus(),
 					"Archiving " + rootTask.getSource() + " to " + rootTask.getDest(),
 					rootTask,
 					job.getOwner()));
-
-			JobDao.persist(job);
 
 			for (RemoteFileInfo outputFile: outputFiles)
 			{
@@ -811,11 +852,9 @@ public class JobManager {
 			// if it all worked as expected, then delete the job work directory
 			try
 			{
-//			    if (!skipCleanup) {
     				executionDataClient.delete(job.getWorkPath());
     			    JobManager.updateStatus(job, JobStatusType.ARCHIVING_FINISHED,
                             "Job archiving completed successfully.");
-//    			}
 			}
 			catch (Exception e) {
 				log.error("Archiving of job " + job.getUuid() + " completed, "
@@ -1168,10 +1207,8 @@ public class JobManager {
 			
 			JobEvent event = new JobEvent("RESET", "Job was manually reset to " + 
 					updatedJob.getStatus().name() + " by " + requestedBy, requestedBy);
-			event.setJob(updatedJob);
 			updatedJob.addEvent(event);
 			
-			JobDao.persist(updatedJob);
 			return updatedJob;
 		}
 		catch (JobException e) {

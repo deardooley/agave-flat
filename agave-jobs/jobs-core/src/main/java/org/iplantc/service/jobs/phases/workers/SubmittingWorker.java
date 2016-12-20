@@ -12,6 +12,7 @@ import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.queue.actions.SubmissionAction;
 
@@ -118,8 +119,10 @@ public final class SubmittingWorker
             if (!isJobStopped() || _job.getStatus() == JobStatusType.QUEUED || 
                 _job.getStatus() == JobStatusType.RUNNING)
             {       
-                _job.setRetries(0);
-                JobDao.persist(_job);
+                JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+                jobUpdateParameters.setRetries(0);
+                JobDao.update(_job.getUuid(), _job.getTenantId(), jobUpdateParameters);
+                JobDao.refresh(_job);
             }
         }
         catch (ClosedByInterruptException e) {
@@ -130,7 +133,6 @@ public final class SubmittingWorker
             try {
                 _job = JobManager.updateStatus(_job, JobStatusType.STAGED, 
                     "Job submission aborted due to worker shutdown. Job will be resubmitted automatically.");
-                JobDao.persist(_job);
             } catch (UnresolvableObjectException | JobException e1) {
                 _log.error("Failed to roll back job status when archive task was interrupted.", e1);
             }
