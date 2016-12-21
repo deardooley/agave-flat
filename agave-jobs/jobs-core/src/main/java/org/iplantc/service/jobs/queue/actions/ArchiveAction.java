@@ -188,8 +188,7 @@ public class ArchiveAction extends AbstractWorkerAction {
                     getJob().setArchivePath(defaultArchivePath);
                     JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
                     jobUpdateParameters.setArchivePath(defaultArchivePath);
-                    JobDao.update(getJob().getUuid(), getJob().getTenantId(), jobUpdateParameters);
-                    JobDao.refresh(getJob());
+                    JobDao.update(getJob(), jobUpdateParameters);
                 }
                 
                 if (!archiveDataClient.doesExist(getJob().getArchivePath())) {

@@ -160,8 +160,7 @@ public class HPCLauncher extends AbstractJobLauncher
                         + " skipping duplicate status update.");
                 
                 // No status changes on this path.
-                JobDao.update(job.getUuid(), job.getTenantId(),jobUpdateParameters);
-                JobDao.refresh(job);
+                JobDao.update(job,jobUpdateParameters);
             }
             
 		}

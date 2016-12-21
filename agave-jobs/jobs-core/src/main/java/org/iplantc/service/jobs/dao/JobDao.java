@@ -1100,6 +1100,30 @@ public class JobDao
 		}
 	}
 
+    /** Perform an atomic update of all fields set in the parameter object and
+     * refresh the job object to keep hibernate happy.  See the 3 parameter version
+     * of this method for details.
+     *  
+     * @param job a hibernate-managed job object
+     * @param parms the update fields and values
+     * @return the number of rows in the database affected (0 or 1)
+     */ 
+    public static int update(Job job, JobUpdateParameters parms)
+     throws JobException
+    {
+        // Make sure we have a job.
+        if (job == null) {
+            String msg = "Null job received.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Call the real update method and then refresh the job object.
+        int rows = update(job.getUuid(), job.getTenantId(), parms);
+        refresh(job);
+        return rows;
+    }
+            
 	/** Perform an atomic update of all fields set in the parameter object.
 	 * All updates are performed in a single transaction.  
 	 * 
@@ -1125,13 +1149,14 @@ public class JobDao
 	 * @param jobUuid the unique identifier of the job to be updated
 	 * @param jobTenantId the tenant id of the job
 	 * @param parms the update fields and values
+	 * @return the number of rows in the database affected (0 or 1)
 	 */
 	public static int update(String jobUuid, String jobTenantId, 
 	                         JobUpdateParameters parms)
 	 throws JobException
 	{
 	    // ------------------- Check Input -------------------
-	    // Make sure we have a job.
+	    // Make sure we have a job uuid.
         if (jobUuid == null) {
             String msg = "Null job UUID received.";
             log.error(msg);
@@ -1316,7 +1341,7 @@ public class JobDao
         // ----- errorMessage
         if (parms.isErrorMessageFlag()) {
             if (!initialClause.equals(clause)) clause += ", ";
-            clause += "error_messsage = :errorMessage";
+            clause += "error_message = :errorMessage";
         }
         
 	    // ----- lastUpdated

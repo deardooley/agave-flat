@@ -220,8 +220,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 			
 			JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
 			jobUpdateParameters.setWorkPath(remoteWorkPath);
-			JobDao.update(job.getUuid(), job.getTenantId(), jobUpdateParameters);
-			JobDao.refresh(job);
+			JobDao.update(job, jobUpdateParameters);
         }
         
         tempAppDir = new File(FileUtils.getTempDirectory(), FilenameUtils.getName(job.getWorkPath()));

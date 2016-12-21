@@ -105,8 +105,7 @@ public class JobCallbackManager {
                     job.addEvent(event);
                     
                     // Update the lastUpdated timestamp on the job record.
-                    JobDao.update(job.getUuid(), job.getTenantId(), new JobUpdateParameters());
-                    JobDao.refresh(job);
+                    JobDao.update(job, new JobUpdateParameters());
                     
                     status = job.getStatus();
                     message = job.getErrorMessage();
@@ -239,8 +238,7 @@ public class JobCallbackManager {
 		                job.addEvent(event);
 		                
 	                    // Update the lastUpdated timestamp on the job record.
-	                    JobDao.update(job.getUuid(), job.getTenantId(), new JobUpdateParameters());
-	                    JobDao.refresh(job);
+	                    JobDao.update(job, new JobUpdateParameters());
 		                
 		                JobEventProcessor eventProcessor;
 						try {

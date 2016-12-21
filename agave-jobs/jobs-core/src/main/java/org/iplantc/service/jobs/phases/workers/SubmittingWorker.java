@@ -121,8 +121,7 @@ public final class SubmittingWorker
             {       
                 JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
                 jobUpdateParameters.setRetries(0);
-                JobDao.update(_job.getUuid(), _job.getTenantId(), jobUpdateParameters);
-                JobDao.refresh(_job);
+                JobDao.update(_job, jobUpdateParameters);
             }
         }
         catch (ClosedByInterruptException e) {

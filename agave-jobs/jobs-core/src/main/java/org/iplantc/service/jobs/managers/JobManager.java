@@ -336,8 +336,7 @@ public class JobManager {
 				    // Update visible flag.
 				    JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
 				    jobUpdateParameters.setVisible(true);
-					JobDao.update(job.getUuid(), job.getTenantId(), jobUpdateParameters);
-					JobDao.refresh(job);
+					JobDao.update(job, jobUpdateParameters);
 					
 					// Add event to job.
 					job.addEvent(new JobEvent(
@@ -386,8 +385,7 @@ public class JobManager {
                     // Update visible flag.
                     JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
                     jobUpdateParameters.setVisible(false);
-                    JobDao.update(job.getUuid(), job.getTenantId(), jobUpdateParameters);
-                    JobDao.refresh(job);
+                    JobDao.update(job, jobUpdateParameters);
                     
                     // Add event to job.
                     job.addEvent(new JobEvent(
@@ -434,8 +432,7 @@ public class JobManager {
                     Date jobHiddenDate = new DateTime().toDate();
                     jobUpdateParameters.setLastUpdated(jobHiddenDate);
                     jobUpdateParameters.setEndTime(jobHiddenDate);
-                    JobDao.update(job.getUuid(), job.getTenantId(), jobUpdateParameters);
-                    JobDao.refresh(job);
+                    JobDao.update(job, jobUpdateParameters);
                     
                     // Add event to job.
                     job.addEvent(new JobEvent(
@@ -556,8 +553,7 @@ public class JobManager {
         
         // Write the job record and read it back.  If the status was changed
         // and the transition is not legal, an exception will be thrown.
-        JobDao.update(job.getUuid(), job.getTenantId(), parms);
-        JobDao.refresh(job);  // Keep hibernate happy.
+        JobDao.update(job, parms);
         
         // ----------------- Event Processing ---------------------- 
         // Either process the event or simply record it 

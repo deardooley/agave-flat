@@ -87,17 +87,20 @@ public class JobUpdateTest
         try {Thread.sleep(2000);} catch (Exception e){}
         
         // Values.
-        Date now = new Date();
-        String archivePath = "/archivePath";
-        String localJobId  = "myLocalJobId";
-        String workPath    = "/workPath";
-        int retries        = 27;
+        final Date now = new Date();
+        final String archivePath  = "/archivePath";
+        final String errorMessage = "This is an error message.";
+        final String localJobId   = "myLocalJobId";
+        final String workPath     = "/workPath";
+        final int retries         = 27;
+        final int statusChecks    = 38;
         
         // Populate parms object.
         JobUpdateParameters parms = new JobUpdateParameters();
         parms.setArchivePath(archivePath);
         parms.setCreated(now);
         parms.setEndTime(now);
+        parms.setErrorMessage(errorMessage);
         parms.setLastUpdated(now);
         parms.setLocalJobId(localJobId);
         parms.setRetries(retries);
@@ -105,6 +108,7 @@ public class JobUpdateTest
         parms.setSubmitTime(now);
         parms.setVisible(true);
         parms.setWorkPath(workPath);
+        parms.setStatusChecks(statusChecks);
        
         // Update the job.
         try {JobDao.update(JOB_UUID, TENANT_ID, parms);}
@@ -129,6 +133,7 @@ public class JobUpdateTest
         Assert.assertEquals(job.getArchivePath(), archivePath, "Unexpected archivePath value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getCreated().getTime()) <= 500, "Unexpected created value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getEndTime().getTime()) <= 500, "Unexpected endTime value.");
+        Assert.assertEquals(job.getErrorMessage(), errorMessage, "Unexpected errorMessage value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getLastUpdated().getTime()) <= 500, "Unexpected lastUpdated value.");
         Assert.assertEquals(job.getLocalJobId(), localJobId, "Unexpected localJobId value.");
         Assert.assertEquals(job.getRetries(), new Integer(retries), "Unexpected retries value.");
@@ -136,6 +141,7 @@ public class JobUpdateTest
         Assert.assertTrue(Math.abs(now.getTime() - job.getSubmitTime().getTime()) <= 500, "Unexpected submitTime value.");
         Assert.assertTrue(job.isVisible(), "Unexpected visible value.");
         Assert.assertEquals(job.getWorkPath(), workPath, "Unexpected workPath value.");
+        Assert.assertEquals(job.getStatusChecks(), new Integer(statusChecks), "Unexpected retries value.");
     }
 
     /* ---------------------------------------------------------------------- */
@@ -153,17 +159,20 @@ public class JobUpdateTest
         try {Thread.sleep(2000);} catch (Exception e){}
         
         // Values.
-        Date now = new Date();
-        String archivePath = "/archivePath";
-        String localJobId  = "myLocalJobId";
-        String workPath    = "/workPath";
-        int retries        = 27;
+        final Date now = new Date();
+        final String archivePath  = "/archivePath";
+        final String errorMessage = "This is an error message.";
+        final String localJobId   = "myLocalJobId";
+        final String workPath     = "/workPath";
+        final int retries         = 27;
+        final int statusChecks    = 38;
         
         // Populate parms object.
         JobUpdateParameters parms = new JobUpdateParameters();
         parms.setArchivePath(archivePath);
         parms.setCreated(now);
         parms.setEndTime(now);
+        parms.setErrorMessage(errorMessage);
         parms.setLastUpdated(now);
         parms.setLocalJobId(localJobId);
         parms.setRetries(retries);
@@ -172,6 +181,7 @@ public class JobUpdateTest
         parms.setVisible(true);
         parms.setWorkPath(workPath);
         parms.setStatus(JobStatusType.PROCESSING_INPUTS);
+        parms.setStatusChecks(statusChecks);
        
         // Update the job.
         try {JobDao.update(JOB_UUID, TENANT_ID, parms);}
@@ -196,6 +206,7 @@ public class JobUpdateTest
         Assert.assertEquals(job.getArchivePath(), archivePath, "Unexpected archivePath value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getCreated().getTime()) <= 500, "Unexpected created value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getEndTime().getTime()) <= 500, "Unexpected endTime value.");
+        Assert.assertEquals(job.getErrorMessage(), errorMessage, "Unexpected errorMessage value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getLastUpdated().getTime()) <= 500, "Unexpected lastUpdated value.");
         Assert.assertEquals(job.getLocalJobId(), localJobId, "Unexpected localJobId value.");
         Assert.assertEquals(job.getRetries(), new Integer(retries), "Unexpected retries value.");
@@ -204,6 +215,7 @@ public class JobUpdateTest
         Assert.assertTrue(job.isVisible(), "Unexpected visible value.");
         Assert.assertEquals(job.getWorkPath(), workPath, "Unexpected workPath value.");
         Assert.assertEquals(job.getStatus(), JobStatusType.PROCESSING_INPUTS, "Unexpected status value.");
+        Assert.assertEquals(job.getStatusChecks(), new Integer(statusChecks), "Unexpected retries value.");
     }
 
     /* ---------------------------------------------------------------------- */

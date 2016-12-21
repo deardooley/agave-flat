@@ -140,8 +140,7 @@ public class DataLocator {
 							job.setWorkPath(remoteWorkPath);
 							JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
 							jobUpdateParameters.setWorkPath(job.getWorkPath());
-							JobDao.update(job.getUuid(), job.getTenantId(), jobUpdateParameters);
-							JobDao.refresh(job);
+							JobDao.update(job, jobUpdateParameters);
 						}
 
 						remoteExecutionSystemDataClient.authenticate();
