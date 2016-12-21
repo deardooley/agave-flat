@@ -573,6 +573,43 @@ public abstract class AbstractPhaseWorker
     /*                            Protected Methods                           */
     /* ********************************************************************** */
     /* ---------------------------------------------------------------------- */
+    /* forceJobCompletion:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Move a job to some completed status as defined by JobStatusType.isFinished().
+     * This method is called in error conditions where job processing should be
+     * immediately terminated.
+     * 
+     * @param job the job whose status should be changed
+     * @param finalStatus one of the final statuses.
+     */
+    protected void forceJobCompletion(JobStatusType finalStatus, String finalMessage)
+    {
+        // This method should be called by our subclasses that have already
+        // assigned the _job field, but we check anyway.
+        if (_job == null) return;
+        
+        // This method only moves a job to a finished status.
+        if (!JobStatusType.isFinished(finalStatus))
+        {
+            String msg = "Invalid attempt to complete job " + _job.getUuid() +
+                         " (" + _job.getName() + ") status " + finalStatus.name() + ".";
+            _log.error(msg);
+            return;
+        }
+        
+        // Mark the job complete.
+        try {_job = JobManager.updateStatus(_job, finalStatus, finalMessage);}
+        catch (Exception e) {
+            // We can't catch a break.
+            String msg = "Unable to move job " + _job.getUuid() + " (" +
+                    _job.getName() + ") from status " + _job.getStatus().name() + 
+                    " to " + finalStatus.name() + 
+                    ".  The job will remain in a zombie state until cleaned up.";
+            _log.error(msg, e);
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* reset:                                                                 */
     /* ---------------------------------------------------------------------- */
     /** Reset all fields that are specific to a particular job.  This method
@@ -707,7 +744,7 @@ public abstract class AbstractPhaseWorker
      * begins processing.  If the scheduler sees the job, it will republish
      * it not knowing that it was previously published.
      * 
-     * This duplicate detection strategy mandates that worker to ignore jobs
+     * This duplicate detection strategy mandates that workers ignore jobs
      * that are not tracked in the job_published table.  This strategy works
      * in all possible situations, each of which is analyzed here:
      * 

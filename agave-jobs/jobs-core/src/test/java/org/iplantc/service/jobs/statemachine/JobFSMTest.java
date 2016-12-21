@@ -192,6 +192,11 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.Pending);
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.Staged.getName(), 
+                            "Transitioned to the wrong state!");
+        
+        _persister.setCurrent(_entity, JobFSMStates.Pending);
         state = _jsm.onEvent(_entity, JobFSMEvents.TO_STOPPED.name());
         Assert.assertEquals(state.getName(), JobFSMStates.Stopped.getName(), 
                             "Transitioned to the wrong state!");
@@ -239,11 +244,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_RUNNING.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_RUNNING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STAGED.name()); 
         
         _exceptionThrown = false;
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGING_INPUTS.name());}

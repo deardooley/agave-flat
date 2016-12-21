@@ -172,6 +172,7 @@ public final class JobFSMStates
         JobFSMStates.Pending.addTransition(JobFSMEvents.TO_PAUSED.name(), JobFSMStates.Paused);
         JobFSMStates.Pending.addTransition(JobFSMEvents.TO_PENDING.name(), JobFSMStates.Pending);
         JobFSMStates.Pending.addTransition(JobFSMEvents.TO_PROCESSING_INPUTS.name(), JobFSMStates.ProcessingInputs);
+        JobFSMStates.Pending.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged);
         JobFSMStates.Pending.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
                
         // ------ From ProcessingInputs

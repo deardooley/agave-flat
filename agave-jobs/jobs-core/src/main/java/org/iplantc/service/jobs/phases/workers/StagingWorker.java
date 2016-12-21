@@ -107,13 +107,27 @@ public final class StagingWorker
         // if the job doesn't need to be staged, just move on with things.
         if (JobManager.getJobInputMap(_job).isEmpty()) 
         {
-            _job = JobManager.updateStatus(_job, JobStatusType.STAGED, 
-                    "Skipping staging. No input data associated with this job.");
+            // Move the job past staging.
+            try {
+                _job = JobManager.updateStatus(_job, JobStatusType.STAGED, 
+                       "Skipping staging. No input data associated with this job.");
+            }
+            catch (Exception e) {
+                String msg = "Unable to move job " + _job.getUuid() + " (" +
+                             _job.getName() + ") to STAGED status.  Aborting job.";
+                _log.error(msg, e);
+                
+                // Try one more time to change job status.
+                forceJobCompletion(JobStatusType.FAILED, msg);
+                
+                // Rethrow original exception.
+                throw e;
+            }
             
             // This is not really an error, but we need to throw some exception
             // to signal that this phase's processing should end for this job.
             String msg = "Job " + _job.getName() + " (" + _job.getUuid() +
-                         ") has no associated input data.";
+                         ") has no associated input data.  Job status set to STAGED.";
             throw new JobWorkerException(msg);
         } 
     }
