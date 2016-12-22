@@ -28,6 +28,7 @@ public class JobUpdateParameters
     private String              errorMessage;
     private Date                lastUpdated;
     private String              localJobId;
+    private String              owner;
     private Integer             retries;
     private Date                startTime;
     private JobStatusType       status;
@@ -43,6 +44,7 @@ public class JobUpdateParameters
     private boolean             errorMessageFlag;
     private boolean             lastUpdatedFlag;
     private boolean             localJobIdFlag;
+    private boolean             ownerFlag;
     private boolean             retriesFlag;
     private boolean             startTimeFlag;
     private boolean             statusFlag;
@@ -108,6 +110,15 @@ public class JobUpdateParameters
     {
         localJobIdFlag = true;
         this.localJobId = localJobId;
+    }
+    public String getOwner()
+    {
+        return owner;
+    }
+    public void setOwner(String owner)
+    {
+        ownerFlag = true;
+        this.owner = owner;
     }
     public Integer getRetries()
     {
@@ -204,6 +215,11 @@ public class JobUpdateParameters
         return localJobIdFlag;
     }
 
+    public boolean isOwnerFlag()
+    {
+        return ownerFlag;
+    }
+
     public boolean isRetriesFlag()
     {
         return retriesFlag;
@@ -272,6 +288,11 @@ public class JobUpdateParameters
     {
         localJobId = null;
         localJobIdFlag = false;
+    }
+    public void unsetOwner()
+    {
+        owner = null;
+        ownerFlag = false;
     }
     public void unsetRetries()
     {

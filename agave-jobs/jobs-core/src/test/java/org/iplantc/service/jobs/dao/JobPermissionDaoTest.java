@@ -29,7 +29,6 @@ public class JobPermissionDaoTest extends AbstractDaoTest {
         SoftwareDao.persist(software);
 		clearJobs();
 		job = createJob(JobStatusType.PENDING);
-		JobDao.persist(job);
 		Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
 	}
 
@@ -69,7 +68,6 @@ public class JobPermissionDaoTest extends AbstractDaoTest {
 		Assert.assertNotNull(pem.getId(), "Job permission did not persist.");
 		
 		Job job2 = createJob(JobStatusType.PENDING);
-		JobDao.persist(job2);
 		Assert.assertNotNull(job2.getId(), "Failed to generate a job ID.");
 		
 		List<JobPermission> pems = JobPermissionDao.getByJobId(job.getId());

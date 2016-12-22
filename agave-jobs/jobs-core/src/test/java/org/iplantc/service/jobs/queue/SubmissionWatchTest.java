@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
 @Test(groups={"broken"})
 public class SubmissionWatchTest extends AbstractJobSubmissionTest 
 {
-    private static final Logger log = Logger.getLogger(StagingWatch.class);
+    private static final Logger log = Logger.getLogger(SubmissionWatchTest.class);
     
 //	protected static String LOCAL_TXT_FILE = "target/test-classes/transfer/test_upload.bin";
 	
@@ -136,51 +136,51 @@ public class SubmissionWatchTest extends AbstractJobSubmissionTest
         boolean actuallyThrewException = false;
         String exceptionMsg = message;
         
-        SubmissionWatch submissionWatch = new SubmissionWatch();
-        
-        try
-        {
-//          job.setArchivePath(job.getOwner() + "/archive/jobs/job-" + job.getUuid() + "-" + Slug.toSlug(job.getName()));
-//          
-//          JobDao.persist(job);
-//          
-            submissionWatch.setJob(job);
-            
-            submissionWatch.doExecute();
-            
-            job = submissionWatch.getJob();
-            
-            Assert.assertEquals(job.getStatus(), expectedStatus,
-                    "Job status did not match " + expectedStatus + " after submission");
-            
-            if (expectedStatus == JobStatusType.RUNNING || 
-                    expectedStatus == JobStatusType.QUEUED ) {
-                Assert.assertNotNull(job.getLocalJobId(),
-                        "Local job id was not obtained during submission");
-                Assert.assertTrue(job.getRetries() == 0,
-                        "Job should only submit once when it does not fail during submission");
-                Assert.assertNotNull(job.getSubmitTime(),
-                    "Job submit time was not updated during job submission");
-            } else {
-                Assert.assertNull(job.getLocalJobId(),
-                        "Local job id should be null if submission fails");
-                Assert.assertNull(job.getSubmitTime(),
-                    "Job submit time should not be updated if the job did not submit.");
-            }
-        }
-        catch (Exception e)
-        {
-            actuallyThrewException = true;
-            exceptionMsg = "Error placing job into queue on " + job.getSystem() + ": " + message;
-            if (actuallyThrewException != shouldThrowException) e.printStackTrace();
-            job = submissionWatch.getJob();
-        }
-        finally {
-            
-        }
-        
-        System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + actuallyThrewException);
-        Assert.assertTrue(actuallyThrewException == shouldThrowException, exceptionMsg);
+//        SubmissionWatch submissionWatch = new SubmissionWatch();
+//        
+//        try
+//        {
+////          job.setArchivePath(job.getOwner() + "/archive/jobs/job-" + job.getUuid() + "-" + Slug.toSlug(job.getName()));
+////          
+////          JobDao.persist(job);
+////          
+//            submissionWatch.setJob(job);
+//            
+//            submissionWatch.doExecute();
+//            
+//            job = submissionWatch.getJob();
+//            
+//            Assert.assertEquals(job.getStatus(), expectedStatus,
+//                    "Job status did not match " + expectedStatus + " after submission");
+//            
+//            if (expectedStatus == JobStatusType.RUNNING || 
+//                    expectedStatus == JobStatusType.QUEUED ) {
+//                Assert.assertNotNull(job.getLocalJobId(),
+//                        "Local job id was not obtained during submission");
+//                Assert.assertTrue(job.getRetries() == 0,
+//                        "Job should only submit once when it does not fail during submission");
+//                Assert.assertNotNull(job.getSubmitTime(),
+//                    "Job submit time was not updated during job submission");
+//            } else {
+//                Assert.assertNull(job.getLocalJobId(),
+//                        "Local job id should be null if submission fails");
+//                Assert.assertNull(job.getSubmitTime(),
+//                    "Job submit time should not be updated if the job did not submit.");
+//            }
+//        }
+//        catch (Exception e)
+//        {
+//            actuallyThrewException = true;
+//            exceptionMsg = "Error placing job into queue on " + job.getSystem() + ": " + message;
+//            if (actuallyThrewException != shouldThrowException) e.printStackTrace();
+//            job = submissionWatch.getJob();
+//        }
+//        finally {
+//            
+//        }
+//        
+//        System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + actuallyThrewException);
+//        Assert.assertTrue(actuallyThrewException == shouldThrowException, exceptionMsg);
         
         return job;
         
@@ -217,7 +217,7 @@ public class SubmissionWatchTest extends AbstractJobSubmissionTest
     throws Exception
     {
         try {
-            JobDao.persist(job);
+            JobDao.create(job);
             stageJobInputs(job);
             genericRemoteSubmissionTestCase(job, JobStatusType.QUEUED, message, shouldThrowException);
         }
@@ -267,7 +267,7 @@ public class SubmissionWatchTest extends AbstractJobSubmissionTest
                 {
                     job = createJob(JobStatusType.STAGED, software, SYSTEM_OWNER);
                     
-                    JobDao.persist(job);
+                    JobDao.create(job);
                     
                     job = genericRemoteSubmissionTestCase(job, JobStatusType.STAGED, 
                             "Job submission should stay in a STAGED state while the execution system is " 
@@ -328,7 +328,7 @@ public class SubmissionWatchTest extends AbstractJobSubmissionTest
                 {
                     job = createJob(JobStatusType.STAGED, software, SYSTEM_OWNER);
                     
-                    JobDao.persist(job);
+                    JobDao.create(job);
                     
                     job = genericRemoteSubmissionTestCase(job, JobStatusType.STAGED, 
                             "Job submission should stay in a STAGED state while the software deployment system is " 
@@ -367,7 +367,7 @@ public class SubmissionWatchTest extends AbstractJobSubmissionTest
         
             job = createJob(JobStatusType.STAGED, software, SYSTEM_OWNER);
             
-            JobDao.persist(job);
+            JobDao.create(job);
             
             job = genericRemoteSubmissionTestCase(job, JobStatusType.STAGED, 
                     "Job submission should fail when the application is not available", 
@@ -403,206 +403,207 @@ public class SubmissionWatchTest extends AbstractJobSubmissionTest
         return testCases.toArray(new Object[][] {});
     }
     
-	@Test (groups={"staging"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=false)
-    public void concurrentQueueTerminationTest(Software software, String message) 
-    throws Exception 
-    {
-	    clearJobs();
-        Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
-        
-        JobDetail jobDetail = newJob(SubmissionWatch.class)
-                .withIdentity("primary", "Submission")
-                .requestRecovery(true)
-                .storeDurably()
-                .build();
-        
-        sched.addJob(jobDetail, true);
-        
-        // start a block of worker processes to pull pre-staged file references
-        // from the db and apply the appropriate transforms to them.
-        for (int i = 0; i < 15; i++)
-        {
-            
-            Trigger trigger = newTrigger()
-                    .withIdentity("trigger"+i, "Submission")
-                    .startAt(new DateTime().plusSeconds(i).toDate())
-                    .withSchedule(simpleSchedule()
-                            .withMisfireHandlingInstructionIgnoreMisfires()
-                            .withIntervalInSeconds(2)
-                            .repeatForever())
-                    .forJob(jobDetail)
-                    .withPriority(5)
-                    .build();
-            
-            sched.scheduleJob(trigger);
-        }
-        
-        final AtomicInteger jobsComplete = new AtomicInteger(0);
-        sched.getListenerManager().addJobListener(
-                new JobListener() {
-
-                    @Override
-                    public String getName() {
-                        return "Unit Test Listener";
-                    }
-
-                    @Override
-                    public void jobToBeExecuted(JobExecutionContext context) {
-                        log.debug("working on a new job");                        
-                    }
-
-                    @Override
-                    public void jobExecutionVetoed(JobExecutionContext context) {
-                        // no idea here
-                    }
-
-                    @Override
-                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
-                        if (e == null) {
-                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
-                        } else {
-//                            log.error("Transfer failed",e);
-                        }
-                    }
-                    
-                }, KeyMatcher.keyEquals(jobDetail.getKey())
-            );
-        
-        
-        try 
-        {
-            for (int i=0;i<100;i++) {
-                Job testJob = createJob(JobStatusType.STAGED, software, SYSTEM_OWNER);
-                JobDao.persist(testJob);
-            }
-            
-            sched.start();
-            
-            log.debug("Sleeping to allow scheduler to run for a bit...");
-            try { Thread.sleep(3000); } catch (Exception e) {}
-            
-            log.debug("Resuming test run and pausing all staging triggers...");
-            sched.pauseAll();
-            log.debug("All triggers stopped. Interrupting executing jobs...");
-            
-            for (JobExecutionContext context: sched.getCurrentlyExecutingJobs()) {
-                log.debug("Interrupting job " + context.getJobDetail().getKey() + "...");
-                sched.interrupt(context.getJobDetail().getKey());
-                log.debug("Interrupt of job " + context.getJobDetail().getKey() + " complete.");
-            }
-            log.debug("Shutting down scheduler...");
-            sched.shutdown(true);
-            log.debug("Scheduler shut down...");
-            
-            for (Job job: JobDao.getAll())
-            {
-                Assert.assertTrue(job.getStatus() == JobStatusType.STAGED || job.getStatus() == JobStatusType.PENDING, 
-                        "Job status was not rolled back upon interrupt.");
-            }
-        } 
-        catch (Exception e) {
-            Assert.fail("Failed to stage job data due to unexpected error", e);
-        }
-        
-    }
+//	@Test (groups={"staging"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=false)
+//    public void concurrentQueueTerminationTest(Software software, String message) 
+//    throws Exception 
+//    {
+//	    clearJobs();
+//        Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
+//        
+//        JobDetail jobDetail = newJob(SubmissionWatch.class)
+//                .withIdentity("primary", "Submission")
+//                .requestRecovery(true)
+//                .storeDurably()
+//                .build();
+//        
+//        sched.addJob(jobDetail, true);
+//        
+//        // start a block of worker processes to pull pre-staged file references
+//        // from the db and apply the appropriate transforms to them.
+//        for (int i = 0; i < 15; i++)
+//        {
+//            
+//            Trigger trigger = newTrigger()
+//                    .withIdentity("trigger"+i, "Submission")
+//                    .startAt(new DateTime().plusSeconds(i).toDate())
+//                    .withSchedule(simpleSchedule()
+//                            .withMisfireHandlingInstructionIgnoreMisfires()
+//                            .withIntervalInSeconds(2)
+//                            .repeatForever())
+//                    .forJob(jobDetail)
+//                    .withPriority(5)
+//                    .build();
+//            
+//            sched.scheduleJob(trigger);
+//        }
+//        
+//        final AtomicInteger jobsComplete = new AtomicInteger(0);
+//        sched.getListenerManager().addJobListener(
+//                new JobListener() {
+//
+//                    @Override
+//                    public String getName() {
+//                        return "Unit Test Listener";
+//                    }
+//
+//                    @Override
+//                    public void jobToBeExecuted(JobExecutionContext context) {
+//                        log.debug("working on a new job");                        
+//                    }
+//
+//                    @Override
+//                    public void jobExecutionVetoed(JobExecutionContext context) {
+//                        // no idea here
+//                    }
+//
+//                    @Override
+//                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
+//                        if (e == null) {
+//                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
+//                        } else {
+////                            log.error("Transfer failed",e);
+//                        }
+//                    }
+//                    
+//                }, KeyMatcher.keyEquals(jobDetail.getKey())
+//            );
+//        
+//        
+//        try 
+//        {
+//            for (int i=0;i<100;i++) {
+//                Job testJob = createJob(JobStatusType.STAGED, software, SYSTEM_OWNER);
+//                JobDao.persist(testJob);
+//            }
+//            
+//            sched.start();
+//            
+//            log.debug("Sleeping to allow scheduler to run for a bit...");
+//            try { Thread.sleep(3000); } catch (Exception e) {}
+//            
+//            log.debug("Resuming test run and pausing all staging triggers...");
+//            sched.pauseAll();
+//            log.debug("All triggers stopped. Interrupting executing jobs...");
+//            
+//            for (JobExecutionContext context: sched.getCurrentlyExecutingJobs()) {
+//                log.debug("Interrupting job " + context.getJobDetail().getKey() + "...");
+//                sched.interrupt(context.getJobDetail().getKey());
+//                log.debug("Interrupt of job " + context.getJobDetail().getKey() + " complete.");
+//            }
+//            log.debug("Shutting down scheduler...");
+//            sched.shutdown(true);
+//            log.debug("Scheduler shut down...");
+//            
+//            for (Job job: JobDao.getAll())
+//            {
+//                Assert.assertTrue(job.getStatus() == JobStatusType.STAGED || job.getStatus() == JobStatusType.PENDING, 
+//                        "Job status was not rolled back upon interrupt.");
+//            }
+//        } 
+//        catch (Exception e) {
+//            Assert.fail("Failed to stage job data due to unexpected error", e);
+//        }
+//        
+//    }
 	
-	@Test (groups={"submission"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=true)
-    public void concurrentQueueThroughputTest(Software software, String message) 
-    throws Exception 
-    {
-        clearJobs();
-        Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
-        
-        JobDetail jobDetail = newJob(SubmissionWatch.class)
-                .withIdentity("primary", "Submission")
-                .requestRecovery(true)
-                .storeDurably()
-                .build();
-        
-        sched.addJob(jobDetail, true);
-        
-        // start a block of worker processes to pull pre-staged file references
-        // from the db and apply the appropriate transforms to them.
-        for (int i = 0; i < 15; i++)
-        {
-            
-            Trigger trigger = newTrigger()
-                    .withIdentity("trigger"+i, "Submission")
-                    .startAt(new DateTime().plusSeconds(i).toDate())
-                    .withSchedule(simpleSchedule()
-                            .withMisfireHandlingInstructionIgnoreMisfires()
-                            .withIntervalInSeconds(2)
-                            .repeatForever())
-                    .forJob(jobDetail)
-                    .withPriority(5)
-                    .build();
-            
-            sched.scheduleJob(trigger);
-        }
-        
-        final AtomicInteger jobsComplete = new AtomicInteger(0);
-        sched.getListenerManager().addJobListener(
-                new JobListener() {
-
-                    @Override
-                    public String getName() {
-                        return "Unit Test Listener";
-                    }
-
-                    @Override
-                    public void jobToBeExecuted(JobExecutionContext context) {
-                        log.debug("working on a new job " + context.getMergedJobDataMap().getString("uuid"));                        
-                    }
-
-                    @Override
-                    public void jobExecutionVetoed(JobExecutionContext context) {
-                        // no idea here
-                    }
-
-                    @Override
-                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
-                        if (e == null) {
-                            log.error("Completed job " + context.getMergedJobDataMap().getString("uuid") + 
-                            		". " + jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
-                        } else {
-                            log.error("Transfer failed",e);
-                        }
-                    }
-                    
-                }, KeyMatcher.keyEquals(jobDetail.getKey())
-            );
-        
-        
-        try 
-        {
-            int totalJobs = 100;
-            for (int i=0;i<totalJobs;i++) {
-                Job testJob = createJob(JobStatusType.STAGED, software, SYSTEM_OWNER);
-                JobDao.persist(testJob);
-            }
-            
-            log.debug("Starting scheduler and letting it rip...");
-            sched.start();
-            
-            while (jobsComplete.get() < 1.2*totalJobs);
-            
-            log.debug("Shutting down scheduler...");
-            sched.shutdown(true);
-            log.debug("Scheduler shut down...");
-            
-            for (Job job: JobDao.getAll())
-            {
-                Assert.assertTrue(job.getStatus() == JobStatusType.QUEUED 
-                        || job.getStatus() == JobStatusType.RUNNING
-                        || job.getStatus() == JobStatusType.FAILED,
-                        "Job status was not running or failed. Not all jobs were processed");
-            }
-        } 
-        catch (Exception e) {
-            Assert.fail("Failed to stage job data due to unexpected error", e);
-        }
-        
-    }
+//	@Test (groups={"submission"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=true)
+//    public void concurrentQueueThroughputTest(Software software, String message) 
+//    throws Exception 
+//    {
+//        clearJobs();
+//        Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
+//        
+//        JobDetail jobDetail = newJob(SubmissionWatch.class)
+//                .withIdentity("primary", "Submission")
+//                .requestRecovery(true)
+//                .storeDurably()
+//                .build();
+//        
+//        sched.addJob(jobDetail, true);
+//        
+//        // start a block of worker processes to pull pre-staged file references
+//        // from the db and apply the appropriate transforms to them.
+//        for (int i = 0; i < 15; i++)
+//        {
+//            
+//            Trigger trigger = newTrigger()
+//                    .withIdentity("trigger"+i, "Submission")
+//                    .startAt(new DateTime().plusSeconds(i).toDate())
+//                    .withSchedule(simpleSchedule()
+//                            .withMisfireHandlingInstructionIgnoreMisfires()
+//                            .withIntervalInSeconds(2)
+//                            .repeatForever())
+//                    .forJob(jobDetail)
+//                    .withPriority(5)
+//                    .build();
+//            
+//            sched.scheduleJob(trigger);
+//        }
+//        
+//        final AtomicInteger jobsComplete = new AtomicInteger(0);
+//        sched.getListenerManager().addJobListener(
+//                new JobListener() {
+//
+//                    @Override
+//                    public String getName() {
+//                        return "Unit Test Listener";
+//                    }
+//
+//                    @Override
+//                    public void jobToBeExecuted(JobExecutionContext context) {
+//                        log.debug("working on a new job " + context.getMergedJobDataMap().getString("uuid"));                        
+//                    }
+//
+//                    @Override
+//                    public void jobExecutionVetoed(JobExecutionContext context) {
+//                        // no idea here
+//                    }
+//
+//                    @Override
+//                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
+//                        if (e == null) {
+//                            log.error("Completed job " + context.getMergedJobDataMap().getString("uuid") + 
+//                            		". " + jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
+//                        } else {
+//                            log.error("Transfer failed",e);
+//                        }
+//                    }
+//                    
+//                }, KeyMatcher.keyEquals(jobDetail.getKey())
+//            );
+//        
+//        
+//        try 
+//        {
+//            int totalJobs = 100;
+//            for (int i=0;i<totalJobs;i++) {
+//                Job testJob = createJob(JobStatusType.STAGED, software, SYSTEM_OWNER);
+//                JobDao.persist(testJob);
+//            }
+//            
+//            log.debug("Starting scheduler and letting it rip...");
+//            sched.start();
+//            
+//            while (jobsComplete.get() < 1.2*totalJobs);
+//            
+//            log.debug("Shutting down scheduler...");
+//            sched.shutdown(true);
+//            log.debug("Scheduler shut down...");
+//            
+//            for (Job job: JobDao.getAll())
+//            {
+//                Assert.assertTrue(job.getStatus() == JobStatusType.QUEUED 
+//                        || job.getStatus() == JobStatusType.RUNNING
+//                        || job.getStatus() == JobStatusType.FAILED,
+//                        "Job status was not running or failed. Not all jobs were processed");
+//            }
+//        } 
+//        catch (Exception e) {
+//            Assert.fail("Failed to stage job data due to unexpected error", e);
+//        }
+//        
+//    }
+    
 //	
 //	@Test(enabled=true)
 //	public void testExistingJob() {

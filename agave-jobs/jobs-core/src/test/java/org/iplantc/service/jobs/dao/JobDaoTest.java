@@ -7,19 +7,19 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Hashtable;
 import java.util.List;
 
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(groups={"broken"})
@@ -58,7 +58,6 @@ public class JobDaoTest extends AbstractDaoTest {
 	public void persist() throws Exception
 	{
 		Job job = createJob(JobStatusType.PENDING);
-		JobDao.persist(job);
 		Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
 	}
 
@@ -66,7 +65,6 @@ public class JobDaoTest extends AbstractDaoTest {
 	public void delete() throws Exception
 	{
 		Job job = createJob(JobStatusType.PENDING);
-		JobDao.persist(job);
 		Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
 		long jobId = job.getId();
 		
@@ -86,7 +84,6 @@ public class JobDaoTest extends AbstractDaoTest {
 		for (JobStatusType status: JobStatusType.getActiveStatuses())
 		{	
 			Job testJob = createJob(status);
-			JobDao.persist(testJob);
 			Assert.assertNotNull(testJob.getId(), 
 					"Failed to persist active job " + status.name() + ".");
 			testActiveJobs.add(testJob);
@@ -97,7 +94,6 @@ public class JobDaoTest extends AbstractDaoTest {
 			if (!Arrays.asList(JobStatusType.getActiveStatuses()).contains(status))
 			{
 				Job testJob = createJob(status);
-				JobDao.persist(testJob);
 				Assert.assertNotNull(testJob.getId(), 
 						"Failed to persist inactive job " + status.name() + ".");
 				testInactiveJobs.add(testJob);
@@ -106,7 +102,11 @@ public class JobDaoTest extends AbstractDaoTest {
 		
 		otherUserJob = createJob(JobStatusType.RUNNING);
 		otherUserJob.setOwner(TEST_SHARED_OWNER);
-		JobDao.persist(otherUserJob);
+		
+		JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+		jobUpdateParameters.setOwner(otherUserJob.getOwner());
+		JobDao.update(otherUserJob, jobUpdateParameters);
+		
 		Assert.assertNotNull(otherUserJob.getId(), "Failed to persist other user job.");
 		
 		long userSystemJobCount = JobDao.countActiveUserJobsOnSystem(TEST_OWNER, otherUserJob.getSystem());
@@ -125,7 +125,6 @@ public class JobDaoTest extends AbstractDaoTest {
 		for (JobStatusType status: JobStatusType.getActiveStatuses())
 		{	
 			Job testJob = createJob(status);
-			JobDao.persist(testJob);
 			Assert.assertNotNull(testJob.getId(), 
 					"Failed to persist active job " + status.name() + ".");
 			testActiveJobs.add(testJob);
@@ -136,7 +135,6 @@ public class JobDaoTest extends AbstractDaoTest {
 			if (!Arrays.asList(JobStatusType.getActiveStatuses()).contains(status))
 			{
 				Job testJob = createJob(status);
-				JobDao.persist(testJob);
 				Assert.assertNotNull(testJob.getId(), 
 						"Failed to persist inactive job " + status.name() + ".");
 				testInactiveJobs.add(testJob);
@@ -145,7 +143,11 @@ public class JobDaoTest extends AbstractDaoTest {
 		
 		otherUserJob = createJob(JobStatusType.RUNNING);
 		otherUserJob.setOwner(TEST_SHARED_OWNER);
-		JobDao.persist(otherUserJob);
+		
+        JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+        jobUpdateParameters.setOwner(otherUserJob.getOwner());
+        JobDao.update(otherUserJob, jobUpdateParameters);
+        
 		Assert.assertNotNull(otherUserJob.getId(), "Failed to persist other user job.");
 		
 		long systemJobCount = JobDao.countActiveJobsOnSystem(otherUserJob.getSystem());
@@ -158,12 +160,7 @@ public class JobDaoTest extends AbstractDaoTest {
 	public void getById() throws Exception
 	{
 
-//		try {
-//			systemDao.persist(privateStorageSystem);
-//		} catch (Throwable e) { e.printStackTrace(); }
-//		
 		Job job = createJob(JobStatusType.PENDING);
-		JobDao.persist(job);
 		Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
 		
 		Job savedJob = JobDao.getById(job.getId());
@@ -175,7 +172,6 @@ public class JobDaoTest extends AbstractDaoTest {
 	public void getByUserAndId() throws Exception
 	{
 		Job job = createJob(JobStatusType.PENDING);
-		JobDao.persist(job);
 		Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
 		
 		Job savedJob = JobDao.getByUsernameAndId(job.getOwner(), job.getId());
@@ -187,20 +183,21 @@ public class JobDaoTest extends AbstractDaoTest {
 	public void getByUsernameAndStatus() throws Exception
 	{
 		Job job1 = createJob(JobStatusType.RUNNING);
-		JobDao.persist(job1);
 		Assert.assertNotNull(job1.getId(), "Failed to save job 1.");
 		
 		Job job2 = createJob(JobStatusType.RUNNING);
-		JobDao.persist(job2);
 		Assert.assertNotNull(job2.getId(), "Failed to save job 2.");
 		
 		Job job3 = createJob(JobStatusType.PENDING);
-		JobDao.persist(job3);
 		Assert.assertNotNull(job3.getId(), "Failed to save job 3.");
 		
 		Job job4 = createJob(JobStatusType.PENDING);
 		job4.setOwner(TEST_SHARED_OWNER);
-		JobDao.persist(job4);
+		
+	    JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+	    jobUpdateParameters.setOwner(job4.getOwner());
+	    JobDao.update(job4, jobUpdateParameters);
+	        
 		Assert.assertNotNull(job4.getId(), "Failed to save job 4.");
 		
 		List<Job> runningJobs = JobDao.getByUsernameAndStatus(TEST_OWNER, JobStatusType.RUNNING);
@@ -214,20 +211,21 @@ public class JobDaoTest extends AbstractDaoTest {
 	public void getNextQueuedJob() throws Exception
 	{
 		Job job1 = createJob(JobStatusType.PENDING);
-		JobDao.persist(job1);
 		Assert.assertNotNull(job1.getId(), "Failed to save job 1.");
 		
 		Job job2 = createJob(JobStatusType.PENDING);
-		JobDao.persist(job2);
 		Assert.assertNotNull(job2.getId(), "Failed to save job 2.");
 		
 		Job job3 = createJob(JobStatusType.RUNNING);
-		JobDao.persist(job3);
 		Assert.assertNotNull(job3.getId(), "Failed to save job 3.");
 		
 		Job job4 = createJob(JobStatusType.ARCHIVING_FINISHED);
 		job4.setOwner(TEST_SHARED_OWNER);
-		JobDao.persist(job4);
+		
+        JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+        jobUpdateParameters.setOwner(job4.getOwner());
+        JobDao.update(job4, jobUpdateParameters);
+            
 		Assert.assertNotNull(job4.getId(), "Failed to save job 4.");
 		
 		String nextRunningJob = JobDao.getNextQueuedJobUuid(JobStatusType.PENDING, 
@@ -246,14 +244,12 @@ public class JobDaoTest extends AbstractDaoTest {
 	{
 		Job job = createJob(JobStatusType.PENDING);
 		
-		JobDao.persist(job);
 		Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
 		
 		Assert.assertFalse(job.getEvents().isEmpty(), "Job event was not saved.");
 		Assert.assertTrue(job.getEvents().size() == 1, "Incorrect number of job events after saving");
 		
-		job.setStatus(JobStatusType.STAGED, JobStatusType.STAGED.getDescription());
-		JobDao.persist(job);
+		job = JobManager.updateStatus(job, JobStatusType.STAGED, JobStatusType.STAGED.getDescription());
 		
 		Assert.assertFalse(job.getEvents().isEmpty(), "Job event was not saved.");
 		Assert.assertTrue(job.getEvents().size() == 2, "Incorrect number of job events after adding status");

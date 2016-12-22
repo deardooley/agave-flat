@@ -161,150 +161,150 @@ public class ArchiveWatchTest extends AbstractJobSubmissionTest
 		return testData;
 	}
 	
-	@Test (groups={"archiving"}, dataProvider="testArchiveWatchProvider", enabled=true)
-	public void testArchiveWatch(Software software, File tmpArchiveFile, String message, boolean shouldThrowException) throws Exception
-	{
-		RemoteDataClient remoteDataClient = null;
-		
-		job = createJob(CLEANING_UP, software, SYSTEM_OWNER);
-		
-		// archive the job when it's done
-		try 
-		{
-			stageTestData(tmpArchiveFile.getAbsolutePath(), job);
-			
-			WorkerWatch archiveWatch = new ArchiveWatch();
-			archiveWatch.setJob(job);
-			archiveWatch.doExecute();
-			
-			job = JobDao.getById(job.getId());
-			Assert.assertEquals(job.getStatus(), JobStatusType.FINISHED, 
-					"Job status was not FINISHED after ArchiveWatch completed.");
-			
-			remoteDataClient = job.getArchiveSystem().getRemoteDataClient(job.getInternalUsername());
-			remoteDataClient.authenticate();
-			Assert.assertTrue(remoteDataClient.doesExist(job.getArchivePath()), 
-					"Archive folder does not exist on remote system.");
-			
-			String[] excludedFiles = FileUtils.readFileToString(tmpArchiveFile).split("\n");
-			
-			for (String localFile: excludedFiles) {
-				Assert.assertFalse(remoteDataClient.doesExist(job.getArchivePath() + "/" + localFile), 
-						"Excluded file was archived " + job.getArchivePath() + "/" + localFile);
-			}
-		} 
-		catch (Exception e) {
-			Assert.fail("Failed to archive job data to " + job.getArchiveSystem().getSystemId(), e);
-		} 
-		finally {
-			try { tmpArchiveFile.delete(); } catch (Exception e) {}
-			try { remoteDataClient.disconnect(); } catch (Exception e) {}
-		}
-	}
+//	@Test (groups={"archiving"}, dataProvider="testArchiveWatchProvider", enabled=true)
+//	public void testArchiveWatch(Software software, File tmpArchiveFile, String message, boolean shouldThrowException) throws Exception
+//	{
+//		RemoteDataClient remoteDataClient = null;
+//		
+//		job = createJob(CLEANING_UP, software, SYSTEM_OWNER);
+//		
+//		// archive the job when it's done
+//		try 
+//		{
+//			stageTestData(tmpArchiveFile.getAbsolutePath(), job);
+//			
+//			WorkerWatch archiveWatch = new ArchiveWatch();
+//			archiveWatch.setJob(job);
+//			archiveWatch.doExecute();
+//			
+//			job = JobDao.getById(job.getId());
+//			Assert.assertEquals(job.getStatus(), JobStatusType.FINISHED, 
+//					"Job status was not FINISHED after ArchiveWatch completed.");
+//			
+//			remoteDataClient = job.getArchiveSystem().getRemoteDataClient(job.getInternalUsername());
+//			remoteDataClient.authenticate();
+//			Assert.assertTrue(remoteDataClient.doesExist(job.getArchivePath()), 
+//					"Archive folder does not exist on remote system.");
+//			
+//			String[] excludedFiles = FileUtils.readFileToString(tmpArchiveFile).split("\n");
+//			
+//			for (String localFile: excludedFiles) {
+//				Assert.assertFalse(remoteDataClient.doesExist(job.getArchivePath() + "/" + localFile), 
+//						"Excluded file was archived " + job.getArchivePath() + "/" + localFile);
+//			}
+//		} 
+//		catch (Exception e) {
+//			Assert.fail("Failed to archive job data to " + job.getArchiveSystem().getSystemId(), e);
+//		} 
+//		finally {
+//			try { tmpArchiveFile.delete(); } catch (Exception e) {}
+//			try { remoteDataClient.disconnect(); } catch (Exception e) {}
+//		}
+//	}
 	
-	@Test (groups={"archiving"}, dataProvider="testArchiveWatchProvider")
-	public void concurrentQueueTerminationTest(Software software, File tmpArchiveFile, String message, boolean shouldThrowException) 
-	throws Exception 
-	{
-	    clearJobs();
-        Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
-        
-        JobDetail jobDetail = newJob(ArchiveWatch.class)
-                .withIdentity("primary", "Archiving")
-                .requestRecovery(true)
-                .storeDurably()
-                .build();
-        
-        sched.addJob(jobDetail, true);
-        
-        // start a block of worker processes to pull pre-staged file references
-        // from the db and apply the appropriate transforms to them.
-        for (int i = 0; i < 15; i++)
-        {
-            
-            Trigger trigger = newTrigger()
-                    .withIdentity("trigger"+i, "Archiving")
-                    .startAt(new DateTime().plusSeconds(i).toDate())
-                    .withSchedule(simpleSchedule()
-                            .withMisfireHandlingInstructionIgnoreMisfires()
-                            .withIntervalInSeconds(2)
-                            .repeatForever())
-                    .forJob(jobDetail)
-                    .withPriority(5)
-                    .build();
-            
-            sched.scheduleJob(trigger);
-        }
-        
-        final AtomicInteger jobsComplete = new AtomicInteger(0);
-        sched.getListenerManager().addJobListener(
-                new JobListener() {
-
-                    @Override
-                    public String getName() {
-                        return "Unit Test Listener";
-                    }
-
-                    @Override
-                    public void jobToBeExecuted(JobExecutionContext context) {
-                        log.debug("working on a new job");                        
-                    }
-
-                    @Override
-                    public void jobExecutionVetoed(JobExecutionContext context) {
-                        // no idea here
-                    }
-
-                    @Override
-                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
-                        if (e == null) {
-                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);
-                        } else {
-//                            log.error("Transfer failed",e);
-                        }
-                    }
-                    
-                }, KeyMatcher.keyEquals(jobDetail.getKey())
-            );
-        
-	    // archive the job when it's done
-        try 
-        {
-            for (int i=0;i<25;i++) {
-                Job job = createJob(CLEANING_UP, software, SYSTEM_OWNER);
-                stageTestData(tmpArchiveFile.getAbsolutePath(), job, true);
-            }
-            
-            sched.start();
-            
-            log.debug("Sleeping to allow scheduler to run for a bit...");
-            try { Thread.sleep(7000); } catch (Exception e) {}
-            
-            log.debug("Resuming test run and pausing all archiving triggers...");
-            sched.pauseAll();
-            log.debug("All triggers stopped. Interrupting executing jobs...");
-            
-            for (JobExecutionContext context: sched.getCurrentlyExecutingJobs()) {
-                log.debug("Interrupting job " + context.getJobDetail().getKey() + "...");
-                sched.interrupt(context.getJobDetail().getKey());
-                log.debug("Interrupt of job " + context.getJobDetail().getKey() + " complete.");
-            }
-            log.debug("Shutting down scheduler...");
-            sched.shutdown(false);
-            log.debug("Scheduler shut down...");
-            
-            for (Job job: JobDao.getAll())
-            {
-                Assert.assertTrue(job.getStatus() == JobStatusType.CLEANING_UP || job.getStatus() == JobStatusType.FINISHED, 
-                        "Job status was not rolled back upon interrupt.");
-            }
-        } 
-        catch (Exception e) {
-            Assert.fail("Failed to archive job data due to unexpected error", e);
-        } 
-        finally {
-            try { tmpArchiveFile.delete(); } catch (Exception e) {}
-        }
-        
-	}
+//	@Test (groups={"archiving"}, dataProvider="testArchiveWatchProvider")
+//	public void concurrentQueueTerminationTest(Software software, File tmpArchiveFile, String message, boolean shouldThrowException) 
+//	throws Exception 
+//	{
+//	    clearJobs();
+//        Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
+//        
+//        JobDetail jobDetail = newJob(ArchiveWatch.class)
+//                .withIdentity("primary", "Archiving")
+//                .requestRecovery(true)
+//                .storeDurably()
+//                .build();
+//        
+//        sched.addJob(jobDetail, true);
+//        
+//        // start a block of worker processes to pull pre-staged file references
+//        // from the db and apply the appropriate transforms to them.
+//        for (int i = 0; i < 15; i++)
+//        {
+//            
+//            Trigger trigger = newTrigger()
+//                    .withIdentity("trigger"+i, "Archiving")
+//                    .startAt(new DateTime().plusSeconds(i).toDate())
+//                    .withSchedule(simpleSchedule()
+//                            .withMisfireHandlingInstructionIgnoreMisfires()
+//                            .withIntervalInSeconds(2)
+//                            .repeatForever())
+//                    .forJob(jobDetail)
+//                    .withPriority(5)
+//                    .build();
+//            
+//            sched.scheduleJob(trigger);
+//        }
+//        
+//        final AtomicInteger jobsComplete = new AtomicInteger(0);
+//        sched.getListenerManager().addJobListener(
+//                new JobListener() {
+//
+//                    @Override
+//                    public String getName() {
+//                        return "Unit Test Listener";
+//                    }
+//
+//                    @Override
+//                    public void jobToBeExecuted(JobExecutionContext context) {
+//                        log.debug("working on a new job");                        
+//                    }
+//
+//                    @Override
+//                    public void jobExecutionVetoed(JobExecutionContext context) {
+//                        // no idea here
+//                    }
+//
+//                    @Override
+//                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
+//                        if (e == null) {
+//                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);
+//                        } else {
+////                            log.error("Transfer failed",e);
+//                        }
+//                    }
+//                    
+//                }, KeyMatcher.keyEquals(jobDetail.getKey())
+//            );
+//        
+//	    // archive the job when it's done
+//        try 
+//        {
+//            for (int i=0;i<25;i++) {
+//                Job job = createJob(CLEANING_UP, software, SYSTEM_OWNER);
+//                stageTestData(tmpArchiveFile.getAbsolutePath(), job, true);
+//            }
+//            
+//            sched.start();
+//            
+//            log.debug("Sleeping to allow scheduler to run for a bit...");
+//            try { Thread.sleep(7000); } catch (Exception e) {}
+//            
+//            log.debug("Resuming test run and pausing all archiving triggers...");
+//            sched.pauseAll();
+//            log.debug("All triggers stopped. Interrupting executing jobs...");
+//            
+//            for (JobExecutionContext context: sched.getCurrentlyExecutingJobs()) {
+//                log.debug("Interrupting job " + context.getJobDetail().getKey() + "...");
+//                sched.interrupt(context.getJobDetail().getKey());
+//                log.debug("Interrupt of job " + context.getJobDetail().getKey() + " complete.");
+//            }
+//            log.debug("Shutting down scheduler...");
+//            sched.shutdown(false);
+//            log.debug("Scheduler shut down...");
+//            
+//            for (Job job: JobDao.getAll())
+//            {
+//                Assert.assertTrue(job.getStatus() == JobStatusType.CLEANING_UP || job.getStatus() == JobStatusType.FINISHED, 
+//                        "Job status was not rolled back upon interrupt.");
+//            }
+//        } 
+//        catch (Exception e) {
+//            Assert.fail("Failed to archive job data due to unexpected error", e);
+//        } 
+//        finally {
+//            try { tmpArchiveFile.delete(); } catch (Exception e) {}
+//        }
+//        
+//	}
 }

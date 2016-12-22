@@ -494,9 +494,9 @@ public class DomainSetup extends AbstractDaoTest
         JobDaoTest jobDaoTest = new JobDaoTest();
         Job testJob = null;
         try {
-
+            // Create a new job but don't save to the database yet.
             jobDaoTest.software = SoftwareDao.get("wca-1.00");
-            testJob = jobDaoTest.createJob(JobStatusType.PENDING);
+            testJob = jobDaoTest.createJob(JobStatusType.PENDING, false);
             System.out.println();
         } catch (Exception e) {
             System.out.println("our Job creator jobDaoTest is failing for some reason");
@@ -518,7 +518,7 @@ public class DomainSetup extends AbstractDaoTest
         testJob.setCharge(Float.parseFloat("1001.5"));
 
         try {
-            JobDao.persist(testJob);
+            JobDao.create(testJob); // save the job here
         } catch (JobException e) {
             e.printStackTrace();
         }

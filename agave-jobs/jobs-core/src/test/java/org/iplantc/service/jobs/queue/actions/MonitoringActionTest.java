@@ -74,8 +74,6 @@ public class MonitoringActionTest extends AbstractJobSubmissionTest {
         
         try
         {
-            JobDao.persist(job, false);
-            
             long lastUpdated = job.getLastUpdated().getTime();
             int statusChecks = job.getStatusChecks();
             
@@ -191,7 +189,7 @@ public class MonitoringActionTest extends AbstractJobSubmissionTest {
     throws Exception
     {
         try {
-            JobDao.persist(job);
+            JobDao.create(job);
             genericRemoteMonitoringTestCase(job, JobStatusType.CLEANING_UP, message, shouldThrowException);
         }
         finally {
@@ -239,7 +237,7 @@ public class MonitoringActionTest extends AbstractJobSubmissionTest {
                     {
                         job = createJob(testStatus, software, SYSTEM_OWNER);
                         
-                        JobDao.persist(job);
+                        JobDao.create(job);
                         
                         job = genericRemoteMonitoringTestCase(job, testStatus, 
                                 "Monitored job should stay in a " + testStatus + " state while the execution system is " 
@@ -297,7 +295,7 @@ public class MonitoringActionTest extends AbstractJobSubmissionTest {
                 {
                     job = createJob(testStatus, software, SYSTEM_OWNER);
                     
-                    JobDao.persist(job);
+                    JobDao.create(job);
                     
                     job = genericRemoteMonitoringTestCase(job, testStatus, 
                             "Job submission should stay in a " + testStatus 

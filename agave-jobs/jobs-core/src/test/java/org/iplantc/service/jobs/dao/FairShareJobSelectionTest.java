@@ -213,13 +213,13 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                                 Job testJob = job.copy();
                                 testJob.setCreated(created);
                                 testJob.setLastUpdated(lastUpdated);
-                                testJob.setStatus(status, status.getDescription());
+                                testJob.initStatus(status, status.getDescription());
                                 testJob.setTenantId(tenantId);
                                 testJob.setOwner(tenantId + "@" + username);
                                 testJob.setSystem(tenantId + "-" + systemId);
                                 testJob.setLocalJobId(testJob.getUuid());
                                 testJob.setBatchQueue(queueName);
-                                JobDao.persist(testJob, false);
+                                JobDao.create(testJob, false);
 
                                 queueJobHits.put(testJob.getUuid(), 0);
                                 tenantJobHits.put(testJob.getUuid(), 0);
@@ -233,13 +233,13 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                                     Job decoyJob = job.copy();
                                     decoyJob.setCreated(created);
                                     decoyJob.setLastUpdated(lastUpdated);
-                                    decoyJob.setStatus(status, status.getDescription());
+                                    decoyJob.initStatus(status, status.getDescription());
                                     decoyJob.setTenantId(tenantId);
                                     decoyJob.setOwner(tenantId + "@" + username);
                                     decoyJob.setSystem(tenantId + "-" + systemId);
                                     decoyJob.setLocalJobId(decoyJob.getUuid());
                                     decoyJob.setBatchQueue(queueName);
-                                    JobDao.persist(decoyJob, false);
+                                    JobDao.create(decoyJob, false);
                                 }
                             }
 
@@ -363,13 +363,13 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                                 Job testJob = job.copy();
                                 testJob.setCreated(created);
                                 testJob.setLastUpdated(lastUpdated);
-                                testJob.setStatus(status, status.getDescription());
+                                testJob.initStatus(status, status.getDescription());
                                 testJob.setTenantId(tenantId);
                                 testJob.setOwner(tenantId + "@" + username);
                                 testJob.setSystem(tenantId + "-" + systemId);
                                 testJob.setLocalJobId(testJob.getUuid());
                                 testJob.setBatchQueue(queueName);
-                                JobDao.persist(testJob, false);
+                                JobDao.create(testJob, false);
 
                                 queueJobHits.put(testJob.getUuid(), 0);
                                 tenantJobHits.put(testJob.getUuid(), 0);
@@ -383,13 +383,13 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                                     Job decoyJob = job.copy();
                                     decoyJob.setCreated(created);
                                     decoyJob.setLastUpdated(lastUpdated);
-                                    decoyJob.setStatus(status, status.getDescription());
+                                    decoyJob.initStatus(status, status.getDescription());
                                     decoyJob.setTenantId(tenantId);
                                     decoyJob.setOwner(tenantId + "@" + username);
                                     decoyJob.setSystem(tenantId + "-" + systemId);
                                     decoyJob.setLocalJobId(decoyJob.getUuid());
                                     decoyJob.setBatchQueue(queueName);
-                                    JobDao.persist(decoyJob, false);
+                                    JobDao.create(decoyJob, false);
                                 }
                             }
 

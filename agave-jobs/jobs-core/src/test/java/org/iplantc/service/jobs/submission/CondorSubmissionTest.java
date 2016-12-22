@@ -2,47 +2,20 @@ package org.iplantc.service.jobs.submission;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
-import org.iplantc.service.apps.model.SoftwareInput;
-import org.iplantc.service.apps.model.SoftwareParameter;
-import org.iplantc.service.common.exceptions.PermissionException;
-import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.model.JSONTestDataUtil;
-import org.iplantc.service.jobs.model.Job;
-import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.queue.AbstractJobWatch;
-import org.iplantc.service.jobs.queue.ArchiveWatch;
-import org.iplantc.service.jobs.queue.MonitoringWatch;
-import org.iplantc.service.jobs.queue.StagingWatch;
-import org.iplantc.service.jobs.queue.SubmissionWatch;
-import org.iplantc.service.systems.dao.SystemDao;
-import org.iplantc.service.systems.exceptions.SystemArgumentException;
-import org.iplantc.service.systems.exceptions.SystemException;
 import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.StorageSystem;
 import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
-import org.iplantc.service.transfer.RemoteDataClient;
-import org.iplantc.service.transfer.RemoteDataClientFactory;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Tests end to end integration of a job submission by manually pushing
@@ -136,112 +109,112 @@ public class CondorSubmissionTest extends AbstractJobSubmissionTest
 		//FileUtils.deleteQuietly(workDir);
 	}
 	
-	@Test (groups={"submission"}, dataProvider="submitJobProvider")
-	public void submitJob(Software software, String message, boolean shouldThrowException) throws Exception
-	{
-		ObjectMapper mapper = new ObjectMapper();
-		
-		RemoteDataClient remoteDataClient = null;
-		
-		job = new Job();
-		job.setName( software.getExecutionSystem().getName() + " test");
-		job.setArchiveOutput(true);
-		job.setArchivePath("archive/job-1-"+System.currentTimeMillis());
-		job.setArchiveSystem(storageSystem);
-		job.setCreated(new Date());
-		job.setMemoryPerNode((double)4);
-		job.setOwner(software.getOwner());
-		job.setProcessorsPerNode((long)1);
-		job.setMaxRunTime("1:00:00");
-		job.setSoftwareName(software.getUniqueName());
-		job.setStatus(JobStatusType.PENDING, "Job accepted and queued for submission.");
-		job.setSystem(software.getExecutionSystem().getSystemId());
-		
-		//job.setWorkPath("iplant/job-1-open-science-grid-test/wc-1.00");
-		
-		ObjectNode jsonInputs = mapper.createObjectNode();
-		for(SoftwareInput input: software.getInputs()) {
-			jsonInputs.put(input.getKey(), input.getDefaultValueAsJsonArray());
-		}
-		job.setInputsAsJsonObject(jsonInputs);
-		
-		ObjectNode jsonParameters = mapper.createObjectNode();
-		for (SoftwareParameter parameter: software.getParameters()) {
-			jsonParameters.put(parameter.getKey(), parameter.getDefaultValueAsJsonArray());
-		}
-		job.setParametersAsJsonObject(jsonParameters);
-		
-		JobDao.persist(job);
-		
-		// set the localsystem id to the job system so it will run
-		//Settings.LOCAL_SYSTEM_ID = job.getSystem();
-		
-		// move data to the system
-		try 
-		{
-			StagingWatch stagingWatch = new StagingWatch();
-			stagingWatch.execute(null);
-			Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, 
-					"Job status was not STAGED after StagingWatch completed.");
-			
-			remoteDataClient = new SystemDao().findBySystemId(job.getSystem()).getRemoteDataClient(job.getInternalUsername());
-			remoteDataClient.authenticate();
-			Assert.assertTrue(remoteDataClient.doesExist(job.getWorkPath()), 
-					"Work folder does not exist on remote system. Staging failed.");
-		} 
-		catch (Exception e) {
-			Assert.fail("Failed to stage job input data to " + job.getSystem(), e);
-		}
-		finally {
-			try { remoteDataClient.disconnect(); } catch (Exception e) {}
-		}
-		
-		// submit the job after the data was staged
-		try 
-		{
-			SubmissionWatch submissionWatch = new SubmissionWatch();
-			submissionWatch.execute(null);
-			Assert.assertEquals(job.getStatus(), JobStatusType.QUEUED, 
-					"Job status was not QUEUED after SubmissionWatch completed.");
-		} 
-		catch (Exception e) {
-			Assert.fail("Failed to submit job to " + job.getSystem(), e);
-		}
-		
-		// monitor the job while it's running
-		try 
-		{
-			MonitoringWatch condorWatch = new MonitoringWatch();
-			condorWatch.execute(null);
-			Assert.assertEquals(job.getStatus(), JobStatusType.CLEANING_UP, 
-					"Job status was not CLEANING_UP after JobStatusWatch completed.");
-		} 
-		catch (Exception e) {
-			Assert.fail("Failed to stage job input data to " + job.getSystem(), e);
-		}
-		
-		// archive the job when it's done
-		try 
-		{
-			AbstractJobWatch archiveWatch = new ArchiveWatch();
-			archiveWatch.execute(null);
-			Assert.assertEquals(job.getStatus(), JobStatusType.FINISHED, 
-					"Job status was not FINISHED after ArchiveWatch completed.");
-			
-			remoteDataClient = job.getArchiveSystem().getRemoteDataClient(job.getInternalUsername());
-			remoteDataClient.authenticate();
-			Assert.assertTrue(remoteDataClient.doesExist(job.getArchivePath()), 
-					"Archive folder does not exist on remote system.");
-		} 
-		catch (Exception e) {
-			Assert.fail("Failed to archive job data to " + job.getArchiveSystem().getSystemId(), e);
-		} 
-		finally {
-			try { remoteDataClient.disconnect(); } catch (Exception e) {}
-		}
-		
-		
-	}
+//	@Test (groups={"submission"}, dataProvider="submitJobProvider")
+//	public void submitJob(Software software, String message, boolean shouldThrowException) throws Exception
+//	{
+//		ObjectMapper mapper = new ObjectMapper();
+//		
+//		RemoteDataClient remoteDataClient = null;
+//		
+//		job = new Job();
+//		job.setName( software.getExecutionSystem().getName() + " test");
+//		job.setArchiveOutput(true);
+//		job.setArchivePath("archive/job-1-"+System.currentTimeMillis());
+//		job.setArchiveSystem(storageSystem);
+//		job.setCreated(new Date());
+//		job.setMemoryPerNode((double)4);
+//		job.setOwner(software.getOwner());
+//		job.setProcessorsPerNode((long)1);
+//		job.setMaxRunTime("1:00:00");
+//		job.setSoftwareName(software.getUniqueName());
+//		job.setStatus(JobStatusType.PENDING, "Job accepted and queued for submission.");
+//		job.setSystem(software.getExecutionSystem().getSystemId());
+//		
+//		//job.setWorkPath("iplant/job-1-open-science-grid-test/wc-1.00");
+//		
+//		ObjectNode jsonInputs = mapper.createObjectNode();
+//		for(SoftwareInput input: software.getInputs()) {
+//			jsonInputs.put(input.getKey(), input.getDefaultValueAsJsonArray());
+//		}
+//		job.setInputsAsJsonObject(jsonInputs);
+//		
+//		ObjectNode jsonParameters = mapper.createObjectNode();
+//		for (SoftwareParameter parameter: software.getParameters()) {
+//			jsonParameters.put(parameter.getKey(), parameter.getDefaultValueAsJsonArray());
+//		}
+//		job.setParametersAsJsonObject(jsonParameters);
+//		
+//		JobDao.persist(job);
+//		
+//		// set the localsystem id to the job system so it will run
+//		//Settings.LOCAL_SYSTEM_ID = job.getSystem();
+//		
+//		// move data to the system
+//		try 
+//		{
+//			StagingWatch stagingWatch = new StagingWatch();
+//			stagingWatch.execute(null);
+//			Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, 
+//					"Job status was not STAGED after StagingWatch completed.");
+//			
+//			remoteDataClient = new SystemDao().findBySystemId(job.getSystem()).getRemoteDataClient(job.getInternalUsername());
+//			remoteDataClient.authenticate();
+//			Assert.assertTrue(remoteDataClient.doesExist(job.getWorkPath()), 
+//					"Work folder does not exist on remote system. Staging failed.");
+//		} 
+//		catch (Exception e) {
+//			Assert.fail("Failed to stage job input data to " + job.getSystem(), e);
+//		}
+//		finally {
+//			try { remoteDataClient.disconnect(); } catch (Exception e) {}
+//		}
+//		
+//		// submit the job after the data was staged
+//		try 
+//		{
+//			SubmissionWatch submissionWatch = new SubmissionWatch();
+//			submissionWatch.execute(null);
+//			Assert.assertEquals(job.getStatus(), JobStatusType.QUEUED, 
+//					"Job status was not QUEUED after SubmissionWatch completed.");
+//		} 
+//		catch (Exception e) {
+//			Assert.fail("Failed to submit job to " + job.getSystem(), e);
+//		}
+//		
+//		// monitor the job while it's running
+//		try 
+//		{
+//			MonitoringWatch condorWatch = new MonitoringWatch();
+//			condorWatch.execute(null);
+//			Assert.assertEquals(job.getStatus(), JobStatusType.CLEANING_UP, 
+//					"Job status was not CLEANING_UP after JobStatusWatch completed.");
+//		} 
+//		catch (Exception e) {
+//			Assert.fail("Failed to stage job input data to " + job.getSystem(), e);
+//		}
+//		
+//		// archive the job when it's done
+//		try 
+//		{
+//			AbstractJobWatch archiveWatch = new ArchiveWatch();
+//			archiveWatch.execute(null);
+//			Assert.assertEquals(job.getStatus(), JobStatusType.FINISHED, 
+//					"Job status was not FINISHED after ArchiveWatch completed.");
+//			
+//			remoteDataClient = job.getArchiveSystem().getRemoteDataClient(job.getInternalUsername());
+//			remoteDataClient.authenticate();
+//			Assert.assertTrue(remoteDataClient.doesExist(job.getArchivePath()), 
+//					"Archive folder does not exist on remote system.");
+//		} 
+//		catch (Exception e) {
+//			Assert.fail("Failed to archive job data to " + job.getArchiveSystem().getSystemId(), e);
+//		} 
+//		finally {
+//			try { remoteDataClient.disconnect(); } catch (Exception e) {}
+//		}
+//		
+//		
+//	}
 	
 
 //    /**

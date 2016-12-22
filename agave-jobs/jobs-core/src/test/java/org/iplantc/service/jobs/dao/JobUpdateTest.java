@@ -94,6 +94,7 @@ public class JobUpdateTest
         final String workPath     = "/workPath";
         final int retries         = 27;
         final int statusChecks    = 38;
+        final String owner        = "Bud";
         
         // Populate parms object.
         JobUpdateParameters parms = new JobUpdateParameters();
@@ -103,6 +104,7 @@ public class JobUpdateTest
         parms.setErrorMessage(errorMessage);
         parms.setLastUpdated(now);
         parms.setLocalJobId(localJobId);
+        parms.setOwner(owner);
         parms.setRetries(retries);
         parms.setStartTime(now);
         parms.setSubmitTime(now);
@@ -136,6 +138,7 @@ public class JobUpdateTest
         Assert.assertEquals(job.getErrorMessage(), errorMessage, "Unexpected errorMessage value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getLastUpdated().getTime()) <= 500, "Unexpected lastUpdated value.");
         Assert.assertEquals(job.getLocalJobId(), localJobId, "Unexpected localJobId value.");
+        Assert.assertEquals(job.getOwner(), owner, "Unexpected owner value.");
         Assert.assertEquals(job.getRetries(), new Integer(retries), "Unexpected retries value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getStartTime().getTime()) <= 500, "Unexpected startTime value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getSubmitTime().getTime()) <= 500, "Unexpected submitTime value.");
@@ -166,6 +169,7 @@ public class JobUpdateTest
         final String workPath     = "/workPath";
         final int retries         = 27;
         final int statusChecks    = 38;
+        final String owner        = "Bud";
         
         // Populate parms object.
         JobUpdateParameters parms = new JobUpdateParameters();
@@ -175,6 +179,7 @@ public class JobUpdateTest
         parms.setErrorMessage(errorMessage);
         parms.setLastUpdated(now);
         parms.setLocalJobId(localJobId);
+        parms.setOwner(owner);
         parms.setRetries(retries);
         parms.setStartTime(now);
         parms.setSubmitTime(now);
@@ -209,6 +214,7 @@ public class JobUpdateTest
         Assert.assertEquals(job.getErrorMessage(), errorMessage, "Unexpected errorMessage value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getLastUpdated().getTime()) <= 500, "Unexpected lastUpdated value.");
         Assert.assertEquals(job.getLocalJobId(), localJobId, "Unexpected localJobId value.");
+        Assert.assertEquals(job.getOwner(), owner, "Unexpected owner value.");
         Assert.assertEquals(job.getRetries(), new Integer(retries), "Unexpected retries value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getStartTime().getTime()) <= 500, "Unexpected startTime value.");
         Assert.assertTrue(Math.abs(now.getTime() - job.getSubmitTime().getTime()) <= 500, "Unexpected submitTime value.");

@@ -30,7 +30,6 @@ import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.notification.dao.NotificationAttemptDao;
 import org.iplantc.service.notification.dao.NotificationDao;
 import org.iplantc.service.notification.model.Notification;
 import org.iplantc.service.notification.model.enumerations.NotificationStatusType;
@@ -298,8 +297,7 @@ public class JobNotificationTest extends AbstractDaoTest
 	public void testJobSetStatusNotificationProcessed() throws Exception
 	{
 		Job job = createJob();
-		//NotificationQueueListener queueListener = new NotificationQueueListener();
-		job.setStatus(JobStatusType.QUEUED, JobStatusType.QUEUED.getDescription());
+		job = JobManager.updateStatus(job, JobStatusType.QUEUED, JobStatusType.QUEUED.getDescription());
 		Map<JobStatusType, String> nids = new HashMap<JobStatusType, String>();
 		NotificationDao nDao = new NotificationDao();
 		for(JobStatusType status: JobStatusType.values()) {
@@ -309,16 +307,12 @@ public class JobNotificationTest extends AbstractDaoTest
 			nids.put(status, notification.getUuid());
 		}
 		
-		JobDao.persist(job);
-		
 		for(JobStatusType status: JobStatusType.values()) 
 		{
 		    notificationProcessed.set(false);
 	        
 			// update job status
-			job.setStatus(status, "TEST: " + status.getDescription());
-			
-			JobDao.persist(job);
+			job = JobManager.updateStatus(job, status, "TEST: " + status.getDescription());
 			
 			// force the queue listener to fire. This should pull the job message off the queue and notifiy us
 			//queueListener.execute(null);
@@ -340,7 +334,7 @@ public class JobNotificationTest extends AbstractDaoTest
 	public void testJobManagerUpdateStatusNotificationProcessed() throws Exception
 	{
 		Job job = createJob();
-		job.setStatus(JobStatusType.PENDING, "We are just getting started");
+		job = JobManager.updateStatus(job, JobStatusType.PENDING, "We are just getting started");
 		Map<JobStatusType, String> nids = new HashMap<JobStatusType, String>();
 		NotificationDao nDao = new NotificationDao();
 		for(JobStatusType status: JobStatusType.values()) {
@@ -350,14 +344,12 @@ public class JobNotificationTest extends AbstractDaoTest
 			nids.put(status, notification.getUuid());
 		}
 		
-		JobDao.persist(job);
-		
 		for(JobStatusType status: JobStatusType.values()) 
 		{
 		    notificationProcessed.set(false);
             
             // update job status
-			JobManager.updateStatus(job, status);
+			job = JobManager.updateStatus(job, status);
 			
 			int i=0;
             while (!notificationProcessed.get() && i<3) {
@@ -377,8 +369,7 @@ public class JobNotificationTest extends AbstractDaoTest
 	public void testJobManagerUpdateStatusWithMessageEmailNotificationProcessed() throws Exception
 	{
 		Job job = createJob();
-		//NotificationQueueListener queueListener = new NotificationQueueListener();
-		job.setStatus(JobStatusType.PENDING, "We are just getting started");
+		job = JobManager.updateStatus(job, JobStatusType.PENDING, "We are just getting started");
 		Map<JobStatusType, String> nids = new HashMap<JobStatusType, String>();
 		NotificationDao nDao = new NotificationDao();
 		for(JobStatusType status: JobStatusType.values()) {
@@ -388,14 +379,12 @@ public class JobNotificationTest extends AbstractDaoTest
 			nids.put(status, notification.getUuid());
 		}
 		
-		JobDao.persist(job);
-		
 		for(JobStatusType status: JobStatusType.values()) 
 		{
 		    notificationProcessed.set(false);
             
             // update job status
-			JobManager.updateStatus(job, status, "TEST: " + status.getDescription());
+			job = JobManager.updateStatus(job, status, "TEST: " + status.getDescription());
 			
 			int i=0;
             while (!notificationProcessed.get() && i<3) {
@@ -415,8 +404,7 @@ public class JobNotificationTest extends AbstractDaoTest
 	public void testJobManagerUpdateStatusWithMessageURLNotificationProcessed() throws Exception
 	{
 		Job job = createJob();
-		//NotificationQueueListener queueListener = new NotificationQueueListener();
-		job.setStatus(JobStatusType.QUEUED, JobStatusType.QUEUED.getDescription());
+		job = JobManager.updateStatus(job, JobStatusType.QUEUED, JobStatusType.QUEUED.getDescription());
 		Map<JobStatusType, String> nids = new HashMap<JobStatusType, String>();
 		NotificationDao nDao = new NotificationDao();
 		for(JobStatusType status: JobStatusType.values()) {
@@ -426,14 +414,12 @@ public class JobNotificationTest extends AbstractDaoTest
 			nids.put(status, notification.getUuid());
 		}
 		
-		JobDao.persist(job);
-		
 		for(JobStatusType status: JobStatusType.values()) 
 		{
 		    notificationProcessed.set(false);
             
             // update job status
-			JobManager.updateStatus(job, status, "TEST: " + status.getDescription());
+			job = JobManager.updateStatus(job, status, "TEST: " + status.getDescription());
 			
 			int i=0;
             while (!notificationProcessed.get() && i<3) {
@@ -453,10 +439,7 @@ public class JobNotificationTest extends AbstractDaoTest
 	public void testJobManagerUpdateStatusWithWildcardEmailNotificationProcessed() throws Exception
 	{
 		Job job = createJob();
-		//NotificationQueueListener queueListener = new NotificationQueueListener();
-		job.setStatus(JobStatusType.PENDING, "We are just getting started");
-		
-		JobDao.persist(job);
+		job = JobManager.updateStatus(job, JobStatusType.PENDING, "We are just getting started");
 		
 		NotificationDao nDao = new NotificationDao();
 		
@@ -469,7 +452,7 @@ public class JobNotificationTest extends AbstractDaoTest
 		    notificationProcessed.set(false);
             
             // update job status
-			JobManager.updateStatus(job, status, "TEST: " + status.getDescription());
+			job = JobManager.updateStatus(job, status, "TEST: " + status.getDescription());
 			
 			int i=0;
             while (!notificationProcessed.get() && i<3) {
@@ -489,11 +472,7 @@ public class JobNotificationTest extends AbstractDaoTest
 	public void testJobManagerUpdateStatusWithWildcardURLNotificationProcessed() throws Exception
 	{
 		Job job = createJob();
-		//NotificationQueueListener queueListener = new NotificationQueueListener();
-		job.setStatus(JobStatusType.QUEUED, JobStatusType.QUEUED.getDescription());
-//		job.addNotification("*", TEST_NOTIFICATION_URL, true);
-		
-		JobDao.persist(job);
+		job = JobManager.updateStatus(job, JobStatusType.QUEUED, JobStatusType.QUEUED.getDescription());
 		
 		NotificationDao nDao = new NotificationDao();
 		
@@ -506,7 +485,7 @@ public class JobNotificationTest extends AbstractDaoTest
 		    notificationProcessed.set(false);
             
             // update job status
-			JobManager.updateStatus(job, status, "TEST: " + status.getDescription());
+			job = JobManager.updateStatus(job, status, "TEST: " + status.getDescription());
 			
 			int i=0;
             while (!notificationProcessed.get() && i<3) {

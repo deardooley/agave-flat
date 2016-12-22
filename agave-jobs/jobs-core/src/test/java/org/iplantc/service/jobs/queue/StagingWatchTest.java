@@ -68,7 +68,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @Test(groups={"broken"})
 public class StagingWatchTest extends AbstractJobSubmissionTest 
 {
-    private static final Logger log = Logger.getLogger(StagingWatch.class);
+    private static final Logger log = Logger.getLogger(StagingWatchTest.class);
     
 	protected static String LOCAL_TXT_FILE = "target/test-classes/transfer/test_upload.bin";
 	
@@ -232,7 +232,7 @@ public class StagingWatchTest extends AbstractJobSubmissionTest
         job.setMaxRunTime("00:10::00");
         job.setSoftwareName(software.getUniqueName());
         job.setSystem(software.getExecutionSystem().getSystemId());
-		job.setStatus(status, job.getErrorMessage());
+		job.initStatus(status, job.getErrorMessage());
 		job.setBatchQueue(software.getDefaultQueue());
 		
 		String remoteWorkPath = null;
@@ -308,38 +308,38 @@ public class StagingWatchTest extends AbstractJobSubmissionTest
 		return testCases.toArray(new Object[][] {});
 	}
 	
-	@Test(dataProvider="stageJobDataFromRegisteredSystemsProvider", enabled=false)
-	public void stageJobDataFromRegisteredSystems(Job job, String message)
-	{
-		RemoteDataClient remoteDataClient = null;
-		try 
-		{
-			JobDao.persist(job);
-			
-			StagingWatch watch = new StagingWatch();
-			Map<String, String[]> jobInputMap = JobManager.getJobInputMap(job);
-			watch.setJob(job);
-			watch.doExecute();
-			
-			job = JobDao.getById(job.getId());
-			Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, "Job status was not changed to staged after staging watch completed.");
-			ExecutionSystem executionSystem = (ExecutionSystem)systemDao.findBySystemId(job.getSystem()); 
-			remoteDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
-			remoteDataClient.authenticate();
-			String relativeWorkPath = remoteDataClient.resolvePath(executionSystem.getScratchDir());
-			relativeWorkPath = executionSystem.getScratchDir() + StringUtils.replaceOnce(job.getWorkPath(), relativeWorkPath, "/");
-			for (String inputKey: jobInputMap.keySet()) {
-				for (String inputUri: jobInputMap.get(inputKey)) {
-					URI uri = URI.create(inputUri);
-					Assert.assertTrue(remoteDataClient.doesExist(relativeWorkPath + File.separator + FilenameUtils.getName(uri.getPath())), message);
-				}
-			}
-		} catch (Exception e) {
-			Assert.fail(message, e);
-		} finally {
-			try { remoteDataClient.disconnect(); } catch (Exception e) {}
-		}
-	}
+//	@Test(dataProvider="stageJobDataFromRegisteredSystemsProvider", enabled=false)
+//	public void stageJobDataFromRegisteredSystems(Job job, String message)
+//	{
+//		RemoteDataClient remoteDataClient = null;
+//		try 
+//		{
+//			JobDao.persist(job);
+//			
+//			StagingWatch watch = new StagingWatch();
+//			Map<String, String[]> jobInputMap = JobManager.getJobInputMap(job);
+//			watch.setJob(job);
+//			watch.doExecute();
+//			
+//			job = JobDao.getById(job.getId());
+//			Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, "Job status was not changed to staged after staging watch completed.");
+//			ExecutionSystem executionSystem = (ExecutionSystem)systemDao.findBySystemId(job.getSystem()); 
+//			remoteDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
+//			remoteDataClient.authenticate();
+//			String relativeWorkPath = remoteDataClient.resolvePath(executionSystem.getScratchDir());
+//			relativeWorkPath = executionSystem.getScratchDir() + StringUtils.replaceOnce(job.getWorkPath(), relativeWorkPath, "/");
+//			for (String inputKey: jobInputMap.keySet()) {
+//				for (String inputUri: jobInputMap.get(inputKey)) {
+//					URI uri = URI.create(inputUri);
+//					Assert.assertTrue(remoteDataClient.doesExist(relativeWorkPath + File.separator + FilenameUtils.getName(uri.getPath())), message);
+//				}
+//			}
+//		} catch (Exception e) {
+//			Assert.fail(message, e);
+//		} finally {
+//			try { remoteDataClient.disconnect(); } catch (Exception e) {}
+//		}
+//	}
 	
 	public String createGenericUri(String systemId) throws Exception
 	{
@@ -394,44 +394,45 @@ public class StagingWatchTest extends AbstractJobSubmissionTest
 	}
 	
 //	@Test(dataProvider="stageJobDataFromGenericUriProvider", dependsOnMethods={"stageJobDataFromRegisteredSystems"})
-	@Test(dataProvider="stageJobDataFromGenericUriProvider", enabled=false)
-	public void stageJobDataFromGenericUri(Job job, boolean shouldFail, String message)
-	{
-		RemoteDataClient remoteDataClient = null;
-		try 
-		{
-			JobDao.persist(job);
-			
-			StagingWatch watch = new StagingWatch();
-			Map<String, String[]> jobInputMap = JobManager.getJobInputMap(job);
-			watch.setJob(job);
-			watch.doExecute();
-			
-			if (!shouldFail)
-			{
-				job = JobDao.getById(job.getId());
-				Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, "Job status was not changed to staged after staging watch completed.");
-				ExecutionSystem executionSystem = (ExecutionSystem)systemDao.findBySystemId(job.getSystem()); 
-				remoteDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
-				remoteDataClient.authenticate();
-				String relativeWorkPath = remoteDataClient.resolvePath(executionSystem.getScratchDir());
-				relativeWorkPath = executionSystem.getScratchDir() + StringUtils.replaceOnce(job.getWorkPath(), relativeWorkPath, "/");
-				for (String inputKey: jobInputMap.keySet()) {
-					for (String inputUri: jobInputMap.get(inputKey)) {
-						URI uri = URI.create(inputUri);
-						Assert.assertTrue(remoteDataClient.doesExist(relativeWorkPath + File.separator + FilenameUtils.getName(uri.getPath())), message);
-					}
-				}
-			} else {
-				Assert.assertNotNull(job.getErrorMessage(), message);
-			}
-		} catch (Exception e) {
-			Assert.assertNotNull(job.getErrorMessage(), message);
-			Assert.assertTrue(shouldFail, message);
-		} finally {
-			try { remoteDataClient.disconnect(); } catch (Exception e) {}
-		}
-	}
+
+//	@Test(dataProvider="stageJobDataFromGenericUriProvider", enabled=false)
+//	public void stageJobDataFromGenericUri(Job job, boolean shouldFail, String message)
+//	{
+//		RemoteDataClient remoteDataClient = null;
+//		try 
+//		{
+//			JobDao.persist(job);
+//			
+//			StagingWatch watch = new StagingWatch();
+//			Map<String, String[]> jobInputMap = JobManager.getJobInputMap(job);
+//			watch.setJob(job);
+//			watch.doExecute();
+//			
+//			if (!shouldFail)
+//			{
+//				job = JobDao.getById(job.getId());
+//				Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, "Job status was not changed to staged after staging watch completed.");
+//				ExecutionSystem executionSystem = (ExecutionSystem)systemDao.findBySystemId(job.getSystem()); 
+//				remoteDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
+//				remoteDataClient.authenticate();
+//				String relativeWorkPath = remoteDataClient.resolvePath(executionSystem.getScratchDir());
+//				relativeWorkPath = executionSystem.getScratchDir() + StringUtils.replaceOnce(job.getWorkPath(), relativeWorkPath, "/");
+//				for (String inputKey: jobInputMap.keySet()) {
+//					for (String inputUri: jobInputMap.get(inputKey)) {
+//						URI uri = URI.create(inputUri);
+//						Assert.assertTrue(remoteDataClient.doesExist(relativeWorkPath + File.separator + FilenameUtils.getName(uri.getPath())), message);
+//					}
+//				}
+//			} else {
+//				Assert.assertNotNull(job.getErrorMessage(), message);
+//			}
+//		} catch (Exception e) {
+//			Assert.assertNotNull(job.getErrorMessage(), message);
+//			Assert.assertTrue(shouldFail, message);
+//		} finally {
+//			try { remoteDataClient.disconnect(); } catch (Exception e) {}
+//		}
+//	}
 	
 	@DataProvider(name="concurrentQueueTerminationTestProvider")
     public Object[][] concurrentQueueTerminationTestProvider() throws JobException, JSONException
@@ -479,239 +480,239 @@ public class StagingWatchTest extends AbstractJobSubmissionTest
         return testCases.toArray(new Object[][] {});
     }
 	
-	@Test (groups={"staging"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=true)
-    public void concurrentQueueTerminationTest(Software software, String[] inputs, String message) 
-    throws Exception 
-    {
-	    clearJobs();
-	    StdSchedulerFactory factory = new StdSchedulerFactory();
-        factory.initialize(this.getClass().getClassLoader().getResourceAsStream("quartz-producer.properties"));
-        Scheduler producerScheduler = factory.getScheduler();
-        
-        factory = new StdSchedulerFactory();
-        factory.initialize(this.getClass().getClassLoader().getResourceAsStream("quartz-consumer.properties"));
-        Scheduler sched = factory.getScheduler();
-        
-        		
-        JobDetail jobDetail = newJob(StagingWatch.class)
-                .withIdentity("primary", "Staging")
-                .requestRecovery(true)
-                .storeDurably()
-                .build();
-        
-        producerScheduler.addJob(jobDetail, true);
-        
-        // start a block of worker processes to pull pre-staged file references
-        // from the db and apply the appropriate transforms to them.
-        for (int i = 0; i < 15; i++)
-        {
-            
-            Trigger trigger = newTrigger()
-                    .withIdentity("trigger"+i, "Staging")
-                    .startAt(new DateTime().plusSeconds(i).toDate())
-                    .withSchedule(simpleSchedule()
-                            .withMisfireHandlingInstructionIgnoreMisfires()
-                            .withIntervalInSeconds(2)
-                            .repeatForever())
-                    .forJob(jobDetail)
-                    .withPriority(5)
-                    .build();
-            
-            producerScheduler.scheduleJob(trigger);
-        }
-        
-        final AtomicInteger jobsComplete = new AtomicInteger(0);
-        sched.getListenerManager().addJobListener(
-                new JobListener() {
-
-                    @Override
-                    public String getName() {
-                        return "Unit Test Listener";
-                    }
-
-                    @Override
-                    public void jobToBeExecuted(JobExecutionContext context) {
-                        log.debug("working on a new job");                        
-                    }
-
-                    @Override
-                    public void jobExecutionVetoed(JobExecutionContext context) {
-                        // no idea here
-                    }
-
-                    @Override
-                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
-                        if (e == null) {
-                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
-                        } else {
-//                            log.error("Transfer failed",e);
-                        }
-                    }
-                    
-                }, GroupMatcher.jobGroupContains("Staging")
-            );
-        
-        try 
-        {
-        	sched.start();
-        	producerScheduler.start();
-        	
-            for (int i=0;i<100;i++) {
-                JobDao.persist(createJob(software, inputs));
-            }
-            
-            log.debug("Sleeping to allow scheduler to run for a bit...");
-            try { Thread.sleep(3000); } catch (Exception e) {}
-            
-            log.debug("Resuming test run and pausing all staging triggers...");
-            sched.pauseAll();
-            producerScheduler.pauseAll();
-            log.debug("All triggers stopped. Interrupting executing jobs...");
-            
-            for (JobExecutionContext context: sched.getCurrentlyExecutingJobs()) {
-                log.debug("Interrupting job " + context.getJobDetail().getKey() + "...");
-                sched.interrupt(context.getJobDetail().getKey());
-                log.debug("Interrupt of job " + context.getJobDetail().getKey() + " complete.");
-            }
-            log.debug("Shutting down consumer scheduler...");
-            sched.shutdown(true);
-            log.debug("...consumer schedule shut down.");
-            
-            log.debug("Shutting down producer scheduler...");
-            producerScheduler.shutdown(true);
-            log.debug("...producer schedule shut down.");
-            
-            
-            for (Job job: JobDao.getAll())
-            {
-                Assert.assertTrue(job.getStatus() == JobStatusType.STAGED 
-                        || job.getStatus() == JobStatusType.PENDING 
-                        || job.getStatus() == JobStatusType.FAILED, 
-                        "Job status was not rolled back upon interrupt.");
-            }
-        } 
-        catch (Exception e) {
-            Assert.fail("Failed to stage job data due to unexpected error", e);
-        }
-    }
+//	@Test (groups={"staging"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=true)
+//    public void concurrentQueueTerminationTest(Software software, String[] inputs, String message) 
+//    throws Exception 
+//    {
+//	    clearJobs();
+//	    StdSchedulerFactory factory = new StdSchedulerFactory();
+//        factory.initialize(this.getClass().getClassLoader().getResourceAsStream("quartz-producer.properties"));
+//        Scheduler producerScheduler = factory.getScheduler();
+//        
+//        factory = new StdSchedulerFactory();
+//        factory.initialize(this.getClass().getClassLoader().getResourceAsStream("quartz-consumer.properties"));
+//        Scheduler sched = factory.getScheduler();
+//        
+//        		
+//        JobDetail jobDetail = newJob(StagingWatch.class)
+//                .withIdentity("primary", "Staging")
+//                .requestRecovery(true)
+//                .storeDurably()
+//                .build();
+//        
+//        producerScheduler.addJob(jobDetail, true);
+//        
+//        // start a block of worker processes to pull pre-staged file references
+//        // from the db and apply the appropriate transforms to them.
+//        for (int i = 0; i < 15; i++)
+//        {
+//            
+//            Trigger trigger = newTrigger()
+//                    .withIdentity("trigger"+i, "Staging")
+//                    .startAt(new DateTime().plusSeconds(i).toDate())
+//                    .withSchedule(simpleSchedule()
+//                            .withMisfireHandlingInstructionIgnoreMisfires()
+//                            .withIntervalInSeconds(2)
+//                            .repeatForever())
+//                    .forJob(jobDetail)
+//                    .withPriority(5)
+//                    .build();
+//            
+//            producerScheduler.scheduleJob(trigger);
+//        }
+//        
+//        final AtomicInteger jobsComplete = new AtomicInteger(0);
+//        sched.getListenerManager().addJobListener(
+//                new JobListener() {
+//
+//                    @Override
+//                    public String getName() {
+//                        return "Unit Test Listener";
+//                    }
+//
+//                    @Override
+//                    public void jobToBeExecuted(JobExecutionContext context) {
+//                        log.debug("working on a new job");                        
+//                    }
+//
+//                    @Override
+//                    public void jobExecutionVetoed(JobExecutionContext context) {
+//                        // no idea here
+//                    }
+//
+//                    @Override
+//                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
+//                        if (e == null) {
+//                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
+//                        } else {
+////                            log.error("Transfer failed",e);
+//                        }
+//                    }
+//                    
+//                }, GroupMatcher.jobGroupContains("Staging")
+//            );
+//        
+//        try 
+//        {
+//        	sched.start();
+//        	producerScheduler.start();
+//        	
+//            for (int i=0;i<100;i++) {
+//                JobDao.persist(createJob(software, inputs));
+//            }
+//            
+//            log.debug("Sleeping to allow scheduler to run for a bit...");
+//            try { Thread.sleep(3000); } catch (Exception e) {}
+//            
+//            log.debug("Resuming test run and pausing all staging triggers...");
+//            sched.pauseAll();
+//            producerScheduler.pauseAll();
+//            log.debug("All triggers stopped. Interrupting executing jobs...");
+//            
+//            for (JobExecutionContext context: sched.getCurrentlyExecutingJobs()) {
+//                log.debug("Interrupting job " + context.getJobDetail().getKey() + "...");
+//                sched.interrupt(context.getJobDetail().getKey());
+//                log.debug("Interrupt of job " + context.getJobDetail().getKey() + " complete.");
+//            }
+//            log.debug("Shutting down consumer scheduler...");
+//            sched.shutdown(true);
+//            log.debug("...consumer schedule shut down.");
+//            
+//            log.debug("Shutting down producer scheduler...");
+//            producerScheduler.shutdown(true);
+//            log.debug("...producer schedule shut down.");
+//            
+//            
+//            for (Job job: JobDao.getAll())
+//            {
+//                Assert.assertTrue(job.getStatus() == JobStatusType.STAGED 
+//                        || job.getStatus() == JobStatusType.PENDING 
+//                        || job.getStatus() == JobStatusType.FAILED, 
+//                        "Job status was not rolled back upon interrupt.");
+//            }
+//        } 
+//        catch (Exception e) {
+//            Assert.fail("Failed to stage job data due to unexpected error", e);
+//        }
+//    }
 	
 	
-	@Test (groups={"staging"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=false)
-    public void concurrentQueueThrouputTest(Software software, String[] inputs, String message) 
-    throws Exception 
-    {
-        clearJobs();
-        StdSchedulerFactory factory = new StdSchedulerFactory();
-        factory.initialize(this.getClass().getClassLoader().getResourceAsStream("quartz-producer.properties"));
-        Scheduler producerScheduler = factory.getScheduler();
-        
-        factory = new StdSchedulerFactory();
-        factory.initialize(this.getClass().getClassLoader().getResourceAsStream("quartz-consumer.properties"));
-        Scheduler sched = factory.getScheduler();
-        
-        
-        // start a block of worker processes to pull pre-staged file references
-        // from the db and apply the appropriate transforms to them.
-        for (int i = 0; i < 15; i++)
-        {
-        	log.debug("Setting job and trigger " + i + " for Staging job group");
-            
-        	JobDetail jobDetail = newJob(StagingWatch.class)
-                    .withIdentity("staging-job-" + i, "Staging")
-                    .requestRecovery(true)
-                    .storeDurably()
-                    .build();
-        	
-            Trigger trigger = newTrigger()
-                    .withIdentity("trigger"+i, "Staging")
-                    .startAt(new DateTime().plusSeconds(i).toDate())
-                    .withSchedule(simpleSchedule()
-                            .withMisfireHandlingInstructionIgnoreMisfires()
-                            .withIntervalInSeconds(2)
-                            .repeatForever())
-                    .forJob(jobDetail)
-                    .withPriority(5)
-                    .build();
-            
-            producerScheduler.scheduleJob(jobDetail, trigger);
-        }
-        
-        final AtomicInteger jobsComplete = new AtomicInteger(0);
-        sched.getListenerManager().addJobListener(
-                new JobListener() {
-
-                    @Override
-                    public String getName() {
-                        return "Unit Test Listener";
-                    }
-
-                    @Override
-                    public void jobToBeExecuted(JobExecutionContext context) {
-                        log.debug("working on a new job");                        
-                    }
-
-                    @Override
-                    public void jobExecutionVetoed(JobExecutionContext context) {
-                        // no idea here
-                    }
-
-                    @Override
-                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
-                        if (e == null) {
-                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
-                        } else {
-//                            log.error("Transfer failed",e);
-                        }
-                    }
-                    
-                }, GroupMatcher.jobGroupContains("Staging")
-            );
-        
-        try 
-        {
-            int totalJobs = 10;
-            for (int i=0;i<totalJobs;i++) {
-                for (JobStatusType postStageStatus: JobStatusType.getActiveStatuses()) {
-                    Job decoyjob = createJob(postStageStatus, software, inputs);
-                    decoyjob.setName("decoy-"+decoyjob.getName());
-                    JobDao.persist(decoyjob);
-                }
-                
-                Job job = createJob(software, inputs);
-                JobDao.persist(job);
-                
-                // make sure all the job inputs are in place.
-                if (i == 0) {
-                    log.debug("Staging job input files to remote systems prior to starting scheduler...");
-                    super.stageJobInputs(job);
-                    log.debug("Completed staging inputs...");
-                }
-            }
-            
-            log.debug("Starting scheduler and letting it rip...");
-            
-            sched.start();
-            producerScheduler.start();
-            
-            while (jobsComplete.get() < totalJobs-1);
-            
-            log.debug("Shutting down scheduler...");
-            sched.shutdown(true);
-            log.debug("Scheduler shut down...");
-            
-            int processedCount = 0;
-            for (Job job: JobDao.getAll())
-            {
-                processedCount += (job.getStatus() == JobStatusType.STAGED || job.getStatus() == JobStatusType.FAILED) ? 1: 0;
-            }
-            
-            Assert.assertEquals(processedCount, totalJobs, 
-                    "Jobs were left unstaged.");
-        } 
-        catch (Exception e) {
-            Assert.fail("Failed to stage job data due to unexpected error", e);
-        }
-        
-    }
+//	@Test (groups={"staging"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=false)
+//    public void concurrentQueueThrouputTest(Software software, String[] inputs, String message) 
+//    throws Exception 
+//    {
+//        clearJobs();
+//        StdSchedulerFactory factory = new StdSchedulerFactory();
+//        factory.initialize(this.getClass().getClassLoader().getResourceAsStream("quartz-producer.properties"));
+//        Scheduler producerScheduler = factory.getScheduler();
+//        
+//        factory = new StdSchedulerFactory();
+//        factory.initialize(this.getClass().getClassLoader().getResourceAsStream("quartz-consumer.properties"));
+//        Scheduler sched = factory.getScheduler();
+//        
+//        
+//        // start a block of worker processes to pull pre-staged file references
+//        // from the db and apply the appropriate transforms to them.
+//        for (int i = 0; i < 15; i++)
+//        {
+//        	log.debug("Setting job and trigger " + i + " for Staging job group");
+//            
+//        	JobDetail jobDetail = newJob(StagingWatch.class)
+//                    .withIdentity("staging-job-" + i, "Staging")
+//                    .requestRecovery(true)
+//                    .storeDurably()
+//                    .build();
+//        	
+//            Trigger trigger = newTrigger()
+//                    .withIdentity("trigger"+i, "Staging")
+//                    .startAt(new DateTime().plusSeconds(i).toDate())
+//                    .withSchedule(simpleSchedule()
+//                            .withMisfireHandlingInstructionIgnoreMisfires()
+//                            .withIntervalInSeconds(2)
+//                            .repeatForever())
+//                    .forJob(jobDetail)
+//                    .withPriority(5)
+//                    .build();
+//            
+//            producerScheduler.scheduleJob(jobDetail, trigger);
+//        }
+//        
+//        final AtomicInteger jobsComplete = new AtomicInteger(0);
+//        sched.getListenerManager().addJobListener(
+//                new JobListener() {
+//
+//                    @Override
+//                    public String getName() {
+//                        return "Unit Test Listener";
+//                    }
+//
+//                    @Override
+//                    public void jobToBeExecuted(JobExecutionContext context) {
+//                        log.debug("working on a new job");                        
+//                    }
+//
+//                    @Override
+//                    public void jobExecutionVetoed(JobExecutionContext context) {
+//                        // no idea here
+//                    }
+//
+//                    @Override
+//                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
+//                        if (e == null) {
+//                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
+//                        } else {
+////                            log.error("Transfer failed",e);
+//                        }
+//                    }
+//                    
+//                }, GroupMatcher.jobGroupContains("Staging")
+//            );
+//        
+//        try 
+//        {
+//            int totalJobs = 10;
+//            for (int i=0;i<totalJobs;i++) {
+//                for (JobStatusType postStageStatus: JobStatusType.getActiveStatuses()) {
+//                    Job decoyjob = createJob(postStageStatus, software, inputs);
+//                    decoyjob.setName("decoy-"+decoyjob.getName());
+//                    JobDao.persist(decoyjob);
+//                }
+//                
+//                Job job = createJob(software, inputs);
+//                JobDao.persist(job);
+//                
+//                // make sure all the job inputs are in place.
+//                if (i == 0) {
+//                    log.debug("Staging job input files to remote systems prior to starting scheduler...");
+//                    super.stageJobInputs(job);
+//                    log.debug("Completed staging inputs...");
+//                }
+//            }
+//            
+//            log.debug("Starting scheduler and letting it rip...");
+//            
+//            sched.start();
+//            producerScheduler.start();
+//            
+//            while (jobsComplete.get() < totalJobs-1);
+//            
+//            log.debug("Shutting down scheduler...");
+//            sched.shutdown(true);
+//            log.debug("Scheduler shut down...");
+//            
+//            int processedCount = 0;
+//            for (Job job: JobDao.getAll())
+//            {
+//                processedCount += (job.getStatus() == JobStatusType.STAGED || job.getStatus() == JobStatusType.FAILED) ? 1: 0;
+//            }
+//            
+//            Assert.assertEquals(processedCount, totalJobs, 
+//                    "Jobs were left unstaged.");
+//        } 
+//        catch (Exception e) {
+//            Assert.fail("Failed to stage job data due to unexpected error", e);
+//        }
+//        
+//    }
 
 }

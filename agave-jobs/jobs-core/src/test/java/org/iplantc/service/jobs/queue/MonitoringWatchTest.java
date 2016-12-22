@@ -83,7 +83,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @Test(groups={"broken"})
 public class MonitoringWatchTest extends AbstractJobSubmissionTest 
 {
-    private static final Logger log = Logger.getLogger(StagingWatch.class);
+    private static final Logger log = Logger.getLogger(MonitoringWatchTest.class);
     
 	protected static String LOCAL_TXT_FILE = "target/test-classes/transfer/test_upload.bin";
 	
@@ -251,7 +251,7 @@ public class MonitoringWatchTest extends AbstractJobSubmissionTest
         job.setSoftwareName(software.getUniqueName());
         job.setSystem(software.getExecutionSystem().getSystemId());
         job.setBatchQueue(software.getDefaultQueue());
-		job.setStatus(status, status.getDescription());
+		job.initStatus(status, status.getDescription());
 		
 		String remoteWorkPath = null;
 		if (StringUtils.isEmpty(software.getExecutionSystem().getScratchDir())) {
@@ -329,38 +329,38 @@ public class MonitoringWatchTest extends AbstractJobSubmissionTest
 		return testCases.toArray(new Object[][] {});
 	}
 	
-	@Test(dataProvider="stageJobDataFromRegisteredSystemsProvider", enabled=false)
-	public void stageJobDataFromRegisteredSystems(Job job, String message)
-	{
-		RemoteDataClient remoteDataClient = null;
-		try 
-		{
-			JobDao.persist(job);
-			
-			StagingWatch watch = new StagingWatch();
-			Map<String, String[]> jobInputMap = JobManager.getJobInputMap(job);
-			watch.setJob(job);
-			watch.doExecute();
-			
-			job = JobDao.getById(job.getId());
-			Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, "Job status was not changed to staged after staging watch completed.");
-			ExecutionSystem executionSystem = (ExecutionSystem)systemDao.findBySystemId(job.getSystem()); 
-			remoteDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
-			remoteDataClient.authenticate();
-			String relativeWorkPath = remoteDataClient.resolvePath(executionSystem.getScratchDir());
-			relativeWorkPath = executionSystem.getScratchDir() + StringUtils.replaceOnce(job.getWorkPath(), relativeWorkPath, "/");
-			for (String inputKey: jobInputMap.keySet()) {
-				for (String inputUri: jobInputMap.get(inputKey)) {
-					URI uri = URI.create(inputUri);
-					Assert.assertTrue(remoteDataClient.doesExist(relativeWorkPath + File.separator + FilenameUtils.getName(uri.getPath())), message);
-				}
-			}
-		} catch (Exception e) {
-			Assert.fail(message, e);
-		} finally {
-			try { remoteDataClient.disconnect(); } catch (Exception e) {}
-		}
-	}
+//	@Test(dataProvider="stageJobDataFromRegisteredSystemsProvider", enabled=false)
+//	public void stageJobDataFromRegisteredSystems(Job job, String message)
+//	{
+//		RemoteDataClient remoteDataClient = null;
+//		try 
+//		{
+//			JobDao.persist(job);
+//			
+//			StagingWatch watch = new StagingWatch();
+//			Map<String, String[]> jobInputMap = JobManager.getJobInputMap(job);
+//			watch.setJob(job);
+//			watch.doExecute();
+//			
+//			job = JobDao.getById(job.getId());
+//			Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, "Job status was not changed to staged after staging watch completed.");
+//			ExecutionSystem executionSystem = (ExecutionSystem)systemDao.findBySystemId(job.getSystem()); 
+//			remoteDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
+//			remoteDataClient.authenticate();
+//			String relativeWorkPath = remoteDataClient.resolvePath(executionSystem.getScratchDir());
+//			relativeWorkPath = executionSystem.getScratchDir() + StringUtils.replaceOnce(job.getWorkPath(), relativeWorkPath, "/");
+//			for (String inputKey: jobInputMap.keySet()) {
+//				for (String inputUri: jobInputMap.get(inputKey)) {
+//					URI uri = URI.create(inputUri);
+//					Assert.assertTrue(remoteDataClient.doesExist(relativeWorkPath + File.separator + FilenameUtils.getName(uri.getPath())), message);
+//				}
+//			}
+//		} catch (Exception e) {
+//			Assert.fail(message, e);
+//		} finally {
+//			try { remoteDataClient.disconnect(); } catch (Exception e) {}
+//		}
+//	}
 	
 	public String createGenericUri(String systemId) throws Exception
 	{
@@ -415,44 +415,45 @@ public class MonitoringWatchTest extends AbstractJobSubmissionTest
 	}
 	
 //	@Test(dataProvider="stageJobDataFromGenericUriProvider", dependsOnMethods={"stageJobDataFromRegisteredSystems"})
-	@Test(dataProvider="stageJobDataFromGenericUriProvider", enabled=false)
-	public void stageJobDataFromGenericUri(Job job, boolean shouldFail, String message)
-	{
-		RemoteDataClient remoteDataClient = null;
-		try 
-		{
-			JobDao.persist(job);
-			
-			StagingWatch watch = new StagingWatch();
-			Map<String, String[]> jobInputMap = JobManager.getJobInputMap(job);
-			watch.setJob(job);
-			watch.doExecute();
-			
-			if (!shouldFail)
-			{
-				job = JobDao.getById(job.getId());
-				Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, "Job status was not changed to staged after staging watch completed.");
-				ExecutionSystem executionSystem = (ExecutionSystem)systemDao.findBySystemId(job.getSystem()); 
-				remoteDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
-				remoteDataClient.authenticate();
-				String relativeWorkPath = remoteDataClient.resolvePath(executionSystem.getScratchDir());
-				relativeWorkPath = executionSystem.getScratchDir() + StringUtils.replaceOnce(job.getWorkPath(), relativeWorkPath, "/");
-				for (String inputKey: jobInputMap.keySet()) {
-					for (String inputUri: jobInputMap.get(inputKey)) {
-						URI uri = URI.create(inputUri);
-						Assert.assertTrue(remoteDataClient.doesExist(relativeWorkPath + File.separator + FilenameUtils.getName(uri.getPath())), message);
-					}
-				}
-			} else {
-				Assert.assertNotNull(job.getErrorMessage(), message);
-			}
-		} catch (Exception e) {
-			Assert.assertNotNull(job.getErrorMessage(), message);
-			Assert.assertTrue(shouldFail, message);
-		} finally {
-			try { remoteDataClient.disconnect(); } catch (Exception e) {}
-		}
-	}
+
+//	@Test(dataProvider="stageJobDataFromGenericUriProvider", enabled=false)
+//	public void stageJobDataFromGenericUri(Job job, boolean shouldFail, String message)
+//	{
+//		RemoteDataClient remoteDataClient = null;
+//		try 
+//		{
+//			JobDao.persist(job);
+//			
+//			StagingWatch watch = new StagingWatch();
+//			Map<String, String[]> jobInputMap = JobManager.getJobInputMap(job);
+//			watch.setJob(job);
+//			watch.doExecute();
+//			
+//			if (!shouldFail)
+//			{
+//				job = JobDao.getById(job.getId());
+//				Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, "Job status was not changed to staged after staging watch completed.");
+//				ExecutionSystem executionSystem = (ExecutionSystem)systemDao.findBySystemId(job.getSystem()); 
+//				remoteDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
+//				remoteDataClient.authenticate();
+//				String relativeWorkPath = remoteDataClient.resolvePath(executionSystem.getScratchDir());
+//				relativeWorkPath = executionSystem.getScratchDir() + StringUtils.replaceOnce(job.getWorkPath(), relativeWorkPath, "/");
+//				for (String inputKey: jobInputMap.keySet()) {
+//					for (String inputUri: jobInputMap.get(inputKey)) {
+//						URI uri = URI.create(inputUri);
+//						Assert.assertTrue(remoteDataClient.doesExist(relativeWorkPath + File.separator + FilenameUtils.getName(uri.getPath())), message);
+//					}
+//				}
+//			} else {
+//				Assert.assertNotNull(job.getErrorMessage(), message);
+//			}
+//		} catch (Exception e) {
+//			Assert.assertNotNull(job.getErrorMessage(), message);
+//			Assert.assertTrue(shouldFail, message);
+//		} finally {
+//			try { remoteDataClient.disconnect(); } catch (Exception e) {}
+//		}
+//	}
 	
 	@DataProvider(name="concurrentQueueTerminationTestProvider")
     public Object[][] concurrentQueueTerminationTestProvider() throws JobException, JSONException
@@ -499,312 +500,312 @@ public class MonitoringWatchTest extends AbstractJobSubmissionTest
         return testCases.toArray(new Object[][] {});
     }
 	
-	@Test (groups={"staging"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=false)
-    public void concurrentQueueTerminationTest(Software software, String[] inputs, String message) 
-    throws Exception 
-    {
-	    clearJobs();
-	    Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
-        
-        JobDetail jobDetail = newJob(MonitoringWatch.class)
-                .withIdentity("primary", "Monitoring")
-                .requestRecovery(true)
-                .storeDurably()
-                .build();
-        
-        sched.addJob(jobDetail, true);
-        
-        // start a block of worker processes to pull pre-staged file references
-        // from the db and apply the appropriate transforms to them.
-        for (int i = 0; i < 15; i++)
-        {
-            
-            Trigger trigger = newTrigger()
-                    .withIdentity("trigger"+i, "Monitoring")
-                    .startAt(new DateTime().plusSeconds(i).toDate())
-                    .withSchedule(simpleSchedule()
-                            .withMisfireHandlingInstructionIgnoreMisfires()
-                            .withIntervalInMilliseconds(200)
-                            .repeatForever())
-                    .forJob(jobDetail)
-                    .withPriority(5)
-                    .build();
-            
-            sched.scheduleJob(trigger);
-        }
-        
-        final AtomicInteger jobsComplete = new AtomicInteger(0);
-        sched.getListenerManager().addJobListener(
-                new JobListener() {
-
-                    @Override
-                    public String getName() {
-                        return "Unit Test Listener";
-                    }
-
-                    @Override
-                    public void jobToBeExecuted(JobExecutionContext context) {
-                        log.debug("working on a new job");   
-                        String nextAvailableJobUuid;
-						try {
-							nextAvailableJobUuid = ((MonitoringWatch)context.getJobInstance()).selectNextAvailableJob();
-							if (nextAvailableJobUuid != null) {
-	                        	context.getMergedJobDataMap().put("uuid", nextAvailableJobUuid);
-	                        } else {
-	                        	log.debug("No job found ready for monitoring.");
-	                        }
-						} catch (JobException | SchedulerException e) {
-							log.error("Failed to query for the next job record.", e);
-						}
-                    }
-
-                    @Override
-                    public void jobExecutionVetoed(JobExecutionContext context) {
-                        // no idea here
-                    }
-
-                    @Override
-                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
-                        if (e == null) {
-                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
-                        } else {
+//	@Test (groups={"staging"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=false)
+//    public void concurrentQueueTerminationTest(Software software, String[] inputs, String message) 
+//    throws Exception 
+//    {
+//	    clearJobs();
+//	    Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
+//        
+//        JobDetail jobDetail = newJob(MonitoringWatch.class)
+//                .withIdentity("primary", "Monitoring")
+//                .requestRecovery(true)
+//                .storeDurably()
+//                .build();
+//        
+//        sched.addJob(jobDetail, true);
+//        
+//        // start a block of worker processes to pull pre-staged file references
+//        // from the db and apply the appropriate transforms to them.
+//        for (int i = 0; i < 15; i++)
+//        {
+//            
+//            Trigger trigger = newTrigger()
+//                    .withIdentity("trigger"+i, "Monitoring")
+//                    .startAt(new DateTime().plusSeconds(i).toDate())
+//                    .withSchedule(simpleSchedule()
+//                            .withMisfireHandlingInstructionIgnoreMisfires()
+//                            .withIntervalInMilliseconds(200)
+//                            .repeatForever())
+//                    .forJob(jobDetail)
+//                    .withPriority(5)
+//                    .build();
+//            
+//            sched.scheduleJob(trigger);
+//        }
+//        
+//        final AtomicInteger jobsComplete = new AtomicInteger(0);
+//        sched.getListenerManager().addJobListener(
+//                new JobListener() {
+//
+//                    @Override
+//                    public String getName() {
+//                        return "Unit Test Listener";
+//                    }
+//
+//                    @Override
+//                    public void jobToBeExecuted(JobExecutionContext context) {
+//                        log.debug("working on a new job");   
+//                        String nextAvailableJobUuid;
+//						try {
+//							nextAvailableJobUuid = ((MonitoringWatch)context.getJobInstance()).selectNextAvailableJob();
+//							if (nextAvailableJobUuid != null) {
+//	                        	context.getMergedJobDataMap().put("uuid", nextAvailableJobUuid);
+//	                        } else {
+//	                        	log.debug("No job found ready for monitoring.");
+//	                        }
+//						} catch (JobException | SchedulerException e) {
+//							log.error("Failed to query for the next job record.", e);
+//						}
+//                    }
+//
+//                    @Override
+//                    public void jobExecutionVetoed(JobExecutionContext context) {
+//                        // no idea here
+//                    }
+//
+//                    @Override
+//                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
+//                        if (e == null) {
+//                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
+//                        } else {
+////                            log.error("Transfer failed",e);
+//                        }
+//                    }
+//                    
+//                }, KeyMatcher.keyEquals(jobDetail.getKey())
+//            );
+//        
+//        try 
+//        {
+//            for (int i=0;i<100;i++) {
+//                JobDao.persist(createJob(software, inputs));
+//            }
+//            
+//            sched.start();
+//            
+//            log.debug("Sleeping to allow scheduler to run for a bit...");
+//            try { Thread.sleep(3000); } catch (Exception e) {}
+//            
+//            log.debug("Resuming test run and pausing all staging triggers...");
+//            sched.pauseAll();
+//            log.debug("All triggers stopped. Interrupting executing jobs...");
+//            
+//            for (JobExecutionContext context: sched.getCurrentlyExecutingJobs()) {
+//                log.debug("Interrupting job " + context.getJobDetail().getKey() + "...");
+//                sched.interrupt(context.getJobDetail().getKey());
+//                log.debug("Interrupt of job " + context.getJobDetail().getKey() + " complete.");
+//            }
+//            log.debug("Shutting down scheduler...");
+//            sched.shutdown(true);
+//            log.debug("Scheduler shut down...");
+//            
+//            for (Job job: JobDao.getAll())
+//            {
+//                Assert.assertTrue(job.getStatus() == JobStatusType.STAGED 
+//                        || job.getStatus() == JobStatusType.PENDING 
+//                        || job.getStatus() == JobStatusType.FAILED, 
+//                        "Job status was not rolled back upon interrupt.");
+//            }
+//        } 
+//        catch (Exception e) {
+//            Assert.fail("Failed to stage job data due to unexpected error", e);
+//        }
+//    }
+	
+	
+//	@Test (groups={"staging"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=true)
+//    public void concurrentQueueThrouputTest(Software software, String[] inputs, String message) 
+//    throws Exception 
+//    {
+//        clearJobs();
+//        Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
+//        
+//        
+////        class MockJobMonitor extends ProcessMonitor {
+////
+////			public MockJobMonitor(Job job) {
+////				super(job);
+////			}
+////			
+////			/* (non-Javadoc)
+////			 * @see org.iplantc.service.jobs.managers.monitors.JobMonitor#getRemoteSubmissionClient()
+////			 */
+////			@Override
+////			public RemoteSubmissionClient getRemoteSubmissionClient() 
+////			throws Exception 
+////			{
+////				RemoteSubmissionClient client = mock(RemoteSubmissionClient.class);
+////	    		when(client.runCommand(anyString())).thenReturn(null);
+////	    		return client;
+////			}
+////
+////			/* (non-Javadoc)
+////			 * @see org.iplantc.service.jobs.managers.monitors.JobMonitor#getRemoteDataClient()
+////			 */
+////			@SuppressWarnings("rawtypes")
+////			@Override
+////			public RemoteDataClient getAuthenticatedRemoteDataClient() 
+////			throws RemoteDataException, IOException, AuthenticationException, 
+////				SystemUnavailableException, RemoteCredentialException 
+////			{	
+////				RemoteDataClient remoteDataClient = mock(RemoteDataClient.class);
+////				when(remoteDataClient.doesExist(anyString())).thenReturn(false);
+////				doAnswer(new Answer() {
+////				     public Object answer(InvocationOnMock invocation) {
+////				    	 Object[] args = invocation.getArguments();
+////				    	 Mock mock = (Mock) invocation.getMock();
+////				    	 return null;
+////			    }})
+////			    .when(remoteDataClient).get(anyString(), anyString());
+////			}
+////        	
+////        }
+////        
+////        final MonitoringAction workerAction = mock(MonitoringAction.class);
+////        when(workerAction.getJobMonitor()).thenReturn();
+////        
+////        
+////        RemoteDataClient remoteDataClient = mock(RemoteDataClient.class);
+////		when(remoteDataClient.doesExist(anyString())).thenReturn(false);
+////		doAnswer(new Answer() {
+////		     public Object answer(InvocationOnMock invocation) {
+////		    	 Object[] args = invocation.getArguments();
+////		    	 Mock mock = (Mock) invocation.getMock();
+////		    	 return null;
+////	    }})
+////	    .when(remoteDataClient).get(anyString(), anyString());
+////		
+////        
+////		
+////		class MockMonitoringWatch extends MonitoringWatch {
+////        	
+////        	@Override
+////        	public Job getJob() {
+////        		Job j = super.getJob();
+////        		Job spyJob = spy(job);
+////        		return spyJob;
+////        		  
+////        	}
+////        }
+////        
+////        PowerMockito.mockStatic(JobManager.class, withSettings())
+////       
+//        
+//        JobDetail jobDetail = newJob(MonitoringWatch.class)
+//                .withIdentity("primary", "Monitoring")
+//                .requestRecovery(true)
+//                .storeDurably()
+//                .build();
+//        
+//        sched.addJob(jobDetail, true);
+//        
+//        // start a block of worker processes to pull pre-staged file references
+//        // from the db and apply the appropriate transforms to them.
+//        for (int i = 0; i < 15; i++)
+//        {
+//            
+//            Trigger trigger = newTrigger()
+//                    .withIdentity("trigger"+i, "Monitoring")
+//                    .startAt(new DateTime().plusSeconds(i).toDate())
+//                    .withSchedule(simpleSchedule()
+//                            .withMisfireHandlingInstructionIgnoreMisfires()
+//                            .withIntervalInMilliseconds(200)
+//                            .repeatForever())
+//                    .forJob(jobDetail)
+//                    .withPriority(5)
+//                    .build();
+//            
+//            sched.scheduleJob(trigger);
+//        }
+//        
+//        final AtomicInteger jobsComplete = new AtomicInteger(0);
+//        sched.getListenerManager().addJobListener(
+//                new JobListener() {
+//
+//                    @Override
+//                    public String getName() {
+//                        return "Unit Test Listener";
+//                    }
+//
+//                    @Override
+//                    public void jobToBeExecuted(JobExecutionContext context) {
+//                        log.debug("working on a new job");
+//                        String nextAvailableJobUuid;
+//						try {
+//							nextAvailableJobUuid = ((MonitoringWatch)context.getJobInstance()).selectNextAvailableJob();
+//							if (nextAvailableJobUuid != null) {
+//	                        	context.getMergedJobDataMap().put("uuid", nextAvailableJobUuid);
+//	                        } else {
+//	                        	log.debug("No job found ready for monitoring.");
+//	                        }
+//						} catch (JobException | SchedulerException e) {
+//							log.error("Failed to query for the next job record.", e);
+//						}
+//                    }
+//
+//                    @Override
+//                    public void jobExecutionVetoed(JobExecutionContext context) {
+//                        // no idea here
+//                    }
+//
+//                    @Override
+//                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
+//                        if (e == null) {
+//                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
+//                        } else {
 //                            log.error("Transfer failed",e);
-                        }
-                    }
-                    
-                }, KeyMatcher.keyEquals(jobDetail.getKey())
-            );
-        
-        try 
-        {
-            for (int i=0;i<100;i++) {
-                JobDao.persist(createJob(software, inputs));
-            }
-            
-            sched.start();
-            
-            log.debug("Sleeping to allow scheduler to run for a bit...");
-            try { Thread.sleep(3000); } catch (Exception e) {}
-            
-            log.debug("Resuming test run and pausing all staging triggers...");
-            sched.pauseAll();
-            log.debug("All triggers stopped. Interrupting executing jobs...");
-            
-            for (JobExecutionContext context: sched.getCurrentlyExecutingJobs()) {
-                log.debug("Interrupting job " + context.getJobDetail().getKey() + "...");
-                sched.interrupt(context.getJobDetail().getKey());
-                log.debug("Interrupt of job " + context.getJobDetail().getKey() + " complete.");
-            }
-            log.debug("Shutting down scheduler...");
-            sched.shutdown(true);
-            log.debug("Scheduler shut down...");
-            
-            for (Job job: JobDao.getAll())
-            {
-                Assert.assertTrue(job.getStatus() == JobStatusType.STAGED 
-                        || job.getStatus() == JobStatusType.PENDING 
-                        || job.getStatus() == JobStatusType.FAILED, 
-                        "Job status was not rolled back upon interrupt.");
-            }
-        } 
-        catch (Exception e) {
-            Assert.fail("Failed to stage job data due to unexpected error", e);
-        }
-    }
-	
-	
-	@Test (groups={"staging"}, dataProvider="concurrentQueueTerminationTestProvider", enabled=true)
-    public void concurrentQueueThrouputTest(Software software, String[] inputs, String message) 
-    throws Exception 
-    {
-        clearJobs();
-        Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
-        
-        
-//        class MockJobMonitor extends ProcessMonitor {
-//
-//			public MockJobMonitor(Job job) {
-//				super(job);
-//			}
-//			
-//			/* (non-Javadoc)
-//			 * @see org.iplantc.service.jobs.managers.monitors.JobMonitor#getRemoteSubmissionClient()
-//			 */
-//			@Override
-//			public RemoteSubmissionClient getRemoteSubmissionClient() 
-//			throws Exception 
-//			{
-//				RemoteSubmissionClient client = mock(RemoteSubmissionClient.class);
-//	    		when(client.runCommand(anyString())).thenReturn(null);
-//	    		return client;
-//			}
-//
-//			/* (non-Javadoc)
-//			 * @see org.iplantc.service.jobs.managers.monitors.JobMonitor#getRemoteDataClient()
-//			 */
-//			@SuppressWarnings("rawtypes")
-//			@Override
-//			public RemoteDataClient getAuthenticatedRemoteDataClient() 
-//			throws RemoteDataException, IOException, AuthenticationException, 
-//				SystemUnavailableException, RemoteCredentialException 
-//			{	
-//				RemoteDataClient remoteDataClient = mock(RemoteDataClient.class);
-//				when(remoteDataClient.doesExist(anyString())).thenReturn(false);
-//				doAnswer(new Answer() {
-//				     public Object answer(InvocationOnMock invocation) {
-//				    	 Object[] args = invocation.getArguments();
-//				    	 Mock mock = (Mock) invocation.getMock();
-//				    	 return null;
-//			    }})
-//			    .when(remoteDataClient).get(anyString(), anyString());
-//			}
-//        	
+//                        }
+//                    }
+//                    
+//                }, KeyMatcher.keyEquals(jobDetail.getKey())
+//            );
+//        
+//        try 
+//        {
+//            int totalJobs = 3;
+//            List<JobStatusType> activeStatuses = Arrays.asList(JobStatusType.RUNNING,JobStatusType.QUEUED,JobStatusType.PAUSED);
+//            for (int i=0;i<totalJobs;i++) {
+//                for (JobStatusType status: JobStatusType.values()) {
+//                    Job job = null;
+//                    if (activeStatuses.contains(status)) {
+//                        job = createJob(status, software, inputs);
+//                        JobDao.persist(job, false);
+//                        Job job2 = createJob(status, software, inputs);
+//                        job2.setArchiveOutput(false);
+//                        JobDao.persist(job2, false);
+//                    } else if (!JobStatusType.isFinished(status) ){
+//                        job = createJob(status, software, inputs);
+//                        job.setName("decoy-" + job.getName());
+//                        JobDao.persist(job, false);
+//                    }
+//                }
+//            }
+//            
+//            log.debug("Starting scheduler and letting it rip...");
+//            sched.start();
+//            
+//            while (jobsComplete.get() < 12*totalJobs);
+//            
+//            log.debug("Shutting down scheduler...");
+//            sched.shutdown(true);
+//            log.debug("Scheduler shut down...");
+//            
+//            int cleanCount = 0;
+//            for (Job job: JobDao.getAll())
+//            {
+//                cleanCount += (job.getStatus() == JobStatusType.CLEANING_UP) ? 1 : 0;
+//            }
+//            
+//            Assert.assertEquals(cleanCount, (2*activeStatuses.size()+1)  * totalJobs, 
+//                    "All archived jobs should be in state cleaning_up");
+//            
+//            
+//        } 
+//        catch (Exception e) {
+//            Assert.fail("Failed to monitor jobs due to unexpected error", e);
 //        }
 //        
-//        final MonitoringAction workerAction = mock(MonitoringAction.class);
-//        when(workerAction.getJobMonitor()).thenReturn();
-//        
-//        
-//        RemoteDataClient remoteDataClient = mock(RemoteDataClient.class);
-//		when(remoteDataClient.doesExist(anyString())).thenReturn(false);
-//		doAnswer(new Answer() {
-//		     public Object answer(InvocationOnMock invocation) {
-//		    	 Object[] args = invocation.getArguments();
-//		    	 Mock mock = (Mock) invocation.getMock();
-//		    	 return null;
-//	    }})
-//	    .when(remoteDataClient).get(anyString(), anyString());
-//		
-//        
-//		
-//		class MockMonitoringWatch extends MonitoringWatch {
-//        	
-//        	@Override
-//        	public Job getJob() {
-//        		Job j = super.getJob();
-//        		Job spyJob = spy(job);
-//        		return spyJob;
-//        		  
-//        	}
-//        }
-//        
-//        PowerMockito.mockStatic(JobManager.class, withSettings())
-//       
-        
-        JobDetail jobDetail = newJob(MonitoringWatch.class)
-                .withIdentity("primary", "Monitoring")
-                .requestRecovery(true)
-                .storeDurably()
-                .build();
-        
-        sched.addJob(jobDetail, true);
-        
-        // start a block of worker processes to pull pre-staged file references
-        // from the db and apply the appropriate transforms to them.
-        for (int i = 0; i < 15; i++)
-        {
-            
-            Trigger trigger = newTrigger()
-                    .withIdentity("trigger"+i, "Monitoring")
-                    .startAt(new DateTime().plusSeconds(i).toDate())
-                    .withSchedule(simpleSchedule()
-                            .withMisfireHandlingInstructionIgnoreMisfires()
-                            .withIntervalInMilliseconds(200)
-                            .repeatForever())
-                    .forJob(jobDetail)
-                    .withPriority(5)
-                    .build();
-            
-            sched.scheduleJob(trigger);
-        }
-        
-        final AtomicInteger jobsComplete = new AtomicInteger(0);
-        sched.getListenerManager().addJobListener(
-                new JobListener() {
-
-                    @Override
-                    public String getName() {
-                        return "Unit Test Listener";
-                    }
-
-                    @Override
-                    public void jobToBeExecuted(JobExecutionContext context) {
-                        log.debug("working on a new job");
-                        String nextAvailableJobUuid;
-						try {
-							nextAvailableJobUuid = ((MonitoringWatch)context.getJobInstance()).selectNextAvailableJob();
-							if (nextAvailableJobUuid != null) {
-	                        	context.getMergedJobDataMap().put("uuid", nextAvailableJobUuid);
-	                        } else {
-	                        	log.debug("No job found ready for monitoring.");
-	                        }
-						} catch (JobException | SchedulerException e) {
-							log.error("Failed to query for the next job record.", e);
-						}
-                    }
-
-                    @Override
-                    public void jobExecutionVetoed(JobExecutionContext context) {
-                        // no idea here
-                    }
-
-                    @Override
-                    public void jobWasExecuted(JobExecutionContext context, JobExecutionException e) {
-                        if (e == null) {
-                            log.error(jobsComplete.addAndGet(1) + "/100 Completed jobs ",e);;
-                        } else {
-                            log.error("Transfer failed",e);
-                        }
-                    }
-                    
-                }, KeyMatcher.keyEquals(jobDetail.getKey())
-            );
-        
-        try 
-        {
-            int totalJobs = 3;
-            List<JobStatusType> activeStatuses = Arrays.asList(JobStatusType.RUNNING,JobStatusType.QUEUED,JobStatusType.PAUSED);
-            for (int i=0;i<totalJobs;i++) {
-                for (JobStatusType status: JobStatusType.values()) {
-                    Job job = null;
-                    if (activeStatuses.contains(status)) {
-                        job = createJob(status, software, inputs);
-                        JobDao.persist(job, false);
-                        Job job2 = createJob(status, software, inputs);
-                        job2.setArchiveOutput(false);
-                        JobDao.persist(job2, false);
-                    } else if (!JobStatusType.isFinished(status) ){
-                        job = createJob(status, software, inputs);
-                        job.setName("decoy-" + job.getName());
-                        JobDao.persist(job, false);
-                    }
-                }
-            }
-            
-            log.debug("Starting scheduler and letting it rip...");
-            sched.start();
-            
-            while (jobsComplete.get() < 12*totalJobs);
-            
-            log.debug("Shutting down scheduler...");
-            sched.shutdown(true);
-            log.debug("Scheduler shut down...");
-            
-            int cleanCount = 0;
-            for (Job job: JobDao.getAll())
-            {
-                cleanCount += (job.getStatus() == JobStatusType.CLEANING_UP) ? 1 : 0;
-            }
-            
-            Assert.assertEquals(cleanCount, (2*activeStatuses.size()+1)  * totalJobs, 
-                    "All archived jobs should be in state cleaning_up");
-            
-            
-        } 
-        catch (Exception e) {
-            Assert.fail("Failed to monitor jobs due to unexpected error", e);
-        }
-        
-    }
+//    }
 
 }

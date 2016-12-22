@@ -45,7 +45,6 @@ public class JobEventDaoTest extends AbstractDaoTest
 	public Object[][] persistProvider() throws Exception 
 	{
 		Job job = createJob(JobStatusType.PENDING);
-		JobDao.persist(job);
 		
 		JobEvent eventNoJob = new JobEvent(JobStatusType.PENDING.name(), JobStatusType.PENDING.getDescription(), job.getOwner());
 		JobEvent eventWithJob = new JobEvent(job, JobStatusType.PENDING, JobStatusType.PENDING.getDescription(), job.getOwner());
@@ -82,7 +81,6 @@ public class JobEventDaoTest extends AbstractDaoTest
 		try 
 		{	
 			Job job1 = createJob(JobStatusType.PENDING);
-			JobDao.persist(job1);
 			
 			Assert.assertNotNull(job1.getId(), "Failed to generate a job 1 ID.");
 			
@@ -109,12 +107,10 @@ public class JobEventDaoTest extends AbstractDaoTest
 		try 
 		{
 			Job job1 = createJob(JobStatusType.PENDING);
-			JobDao.persist(job1);
 			
 			Assert.assertNotNull(job1.getId(), "Failed to generate a job 1 ID.");
 			
 			Job job2 = createJob(JobStatusType.PENDING);
-			JobDao.persist(job2);
 			
 			Assert.assertNotNull(job2.getId(), "Failed to generate a job 2 ID.");
 			
@@ -164,12 +160,10 @@ public class JobEventDaoTest extends AbstractDaoTest
 		try 
 		{
 			Job job1 = createJob(JobStatusType.PENDING);
-			JobDao.persist(job1);
 			
 			Assert.assertNotNull(job1.getId(), "Failed to generate a job 1 ID.");
 			
 			Job job2 = createJob(JobStatusType.PENDING);
-			JobDao.persist(job2);
 			
 			Assert.assertNotNull(job2.getId(), "Failed to generate a job 2 ID.");
 			
@@ -223,12 +217,10 @@ public class JobEventDaoTest extends AbstractDaoTest
 		try 
 		{
 			Job job1 = createJob(JobStatusType.PENDING);
-			JobDao.persist(job1);
 			
 			Assert.assertNotNull(job1.getId(), "Failed to generate a job 1 ID.");
 			
 			Job job2 = createJob(JobStatusType.PENDING);
-			JobDao.persist(job2);
 			
 			Assert.assertNotNull(job2.getId(), "Failed to generate a job 2 ID.");
 			
@@ -284,12 +276,10 @@ public class JobEventDaoTest extends AbstractDaoTest
 		try 
 		{
 			Job job1 = createJob(JobStatusType.PENDING);
-			JobDao.persist(job1);
 			
 			Assert.assertNotNull(job1.getId(), "Failed to generate a job 1 ID.");
 			
 			Job job2 = createJob(JobStatusType.PENDING);
-			JobDao.persist(job2);
 			
 			Assert.assertNotNull(job2.getId(), "Failed to generate a job 2 ID.");
 			

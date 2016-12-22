@@ -25,103 +25,103 @@ public class AgaveJobCleanupTriggerListenerTest {
 		jobFinished.set(false);
 	}
 	
-	@Test(groups={"broken"})
-	public void triggerCompleteDeletesJob() throws SchedulerException,
-			InterruptedException {
-		// Verify quartz jobs are deleted after firing.
-
-		Scheduler sched = null;
-		try {
-			
-			SchedulerFactory schedFact = new org.quartz.impl.StdSchedulerFactory(); 
-			sched = schedFact.getScheduler(); 
-			
-//			sched.getListenerManager().addTriggerListener(
-//	                new TriggerListener() {
+//	@Test(groups={"broken"})
+//	public void triggerCompleteDeletesJob() throws SchedulerException,
+//			InterruptedException {
+//		// Verify quartz jobs are deleted after firing.
 //
-//	                    @Override
-//	                    public String getName() {
-//	                        return "Unit Test Trigger Listener";
-//	                    }
-//
-//						@Override
-//						public void triggerFired(Trigger trigger,
-//								JobExecutionContext context) {
-//							log.debug("working on a new job");  
-//						}
-//
-//						@Override
-//						public boolean vetoJobExecution(Trigger trigger,
-//								JobExecutionContext context) {
-//							return false;
-//						}
-//
-//						@Override
-//						public void triggerMisfired(Trigger trigger) {
-//							log.debug("ignoring misfire event");  
-//						}
-//
-//						@Override
-//						public void triggerComplete(
-//								Trigger trigger,
-//								JobExecutionContext context,
-//								CompletedExecutionInstruction triggerInstructionCode) {
-//							jobFinished.set(true);
-//						}
-//	                    
-//	                }, EverythingMatcher.allTriggers()
-//	            );
+//		Scheduler sched = null;
+//		try {
 //			
-//			sched.getListenerManager().addJobListener(
-//					new AgaveJobCleanupListener(), EverythingMatcher.allJobs());
+//			SchedulerFactory schedFact = new org.quartz.impl.StdSchedulerFactory(); 
+//			sched = schedFact.getScheduler(); 
 //			
+////			sched.getListenerManager().addTriggerListener(
+////	                new TriggerListener() {
+////
+////	                    @Override
+////	                    public String getName() {
+////	                        return "Unit Test Trigger Listener";
+////	                    }
+////
+////						@Override
+////						public void triggerFired(Trigger trigger,
+////								JobExecutionContext context) {
+////							log.debug("working on a new job");  
+////						}
+////
+////						@Override
+////						public boolean vetoJobExecution(Trigger trigger,
+////								JobExecutionContext context) {
+////							return false;
+////						}
+////
+////						@Override
+////						public void triggerMisfired(Trigger trigger) {
+////							log.debug("ignoring misfire event");  
+////						}
+////
+////						@Override
+////						public void triggerComplete(
+////								Trigger trigger,
+////								JobExecutionContext context,
+////								CompletedExecutionInstruction triggerInstructionCode) {
+////							jobFinished.set(true);
+////						}
+////	                    
+////	                }, EverythingMatcher.allTriggers()
+////	            );
+////			
+////			sched.getListenerManager().addJobListener(
+////					new AgaveJobCleanupListener(), EverythingMatcher.allJobs());
+////			
+////			
+//			String jobUuid = "12345";
+//
+//			JobDetail jobDetail = org.quartz.JobBuilder.newJob(StagingWatch.class)
+//					.usingJobData("uuid", jobUuid)
+//					.withIdentity(jobUuid, "demoWorkers")
+//					.build();
+//
+//			SimpleTrigger trigger = (SimpleTrigger) newTrigger()
+//					.withIdentity(jobUuid, "demoWorkers")
+//					.build();
 //			
-			String jobUuid = "12345";
-
-			JobDetail jobDetail = org.quartz.JobBuilder.newJob(StagingWatch.class)
-					.usingJobData("uuid", jobUuid)
-					.withIdentity(jobUuid, "demoWorkers")
-					.build();
-
-			SimpleTrigger trigger = (SimpleTrigger) newTrigger()
-					.withIdentity(jobUuid, "demoWorkers")
-					.build();
-			
-			sched.scheduleJob(jobDetail, trigger);
-			sched.start();
-			
-			Thread.sleep(3000);
-			
-//			String summary = null;
-//			while (sched.getMetaData().getNumberOfJobsExecuted() == 0) {
-//				if (!StringUtils.equals(summary,  sched.getMetaData().getSummary())) {
-//					System.out.println(sched.getMetaData().getSummary());
-//					summary = sched.getMetaData().getSummary();
+//			sched.scheduleJob(jobDetail, trigger);
+//			sched.start();
+//			
+//			Thread.sleep(3000);
+//			
+////			String summary = null;
+////			while (sched.getMetaData().getNumberOfJobsExecuted() == 0) {
+////				if (!StringUtils.equals(summary,  sched.getMetaData().getSummary())) {
+////					System.out.println(sched.getMetaData().getSummary());
+////					summary = sched.getMetaData().getSummary();
+////				}
+////				//System.out.println(sched.getJobDetail(jobDetail.getKey()));
+////			};
+//			
+//			Assert.assertEquals(sched.getMetaData().getNumberOfJobsExecuted(), 1,
+//					"Incorrect number of jobs executed.");
+//
+//			Assert.assertFalse(sched.checkExists(jobDetail.getKey()),
+//					"Job should be deleted immediately after it fires.");
+//
+//			Assert.assertFalse(sched.checkExists(trigger.getKey()),
+//					"Trigger should be deleted immediately after it fires.");
+//		} finally {
+//			if (sched != null) {
+//				try {
+//					sched.clear();
+//					sched.shutdown(false);
+//				} catch (Exception e) {
+//					log.error(
+//							"Failed to shtudown and clear scheduler after test.",
+//							e);
 //				}
-//				//System.out.println(sched.getJobDetail(jobDetail.getKey()));
-//			};
-			
-			Assert.assertEquals(sched.getMetaData().getNumberOfJobsExecuted(), 1,
-					"Incorrect number of jobs executed.");
-
-			Assert.assertFalse(sched.checkExists(jobDetail.getKey()),
-					"Job should be deleted immediately after it fires.");
-
-			Assert.assertFalse(sched.checkExists(trigger.getKey()),
-					"Trigger should be deleted immediately after it fires.");
-		} finally {
-			if (sched != null) {
-				try {
-					sched.clear();
-					sched.shutdown(false);
-				} catch (Exception e) {
-					log.error(
-							"Failed to shtudown and clear scheduler after test.",
-							e);
-				}
-			}
-		}
-
-	}
+//			}
+//		}
+//
+//	}
 
 }

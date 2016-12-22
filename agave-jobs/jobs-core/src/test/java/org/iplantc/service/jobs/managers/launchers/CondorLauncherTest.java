@@ -1,6 +1,5 @@
 package org.iplantc.service.jobs.managers.launchers;
 
-import static org.iplantc.service.jobs.model.enumerations.WrapperTemplateStatusVariableType.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
@@ -8,15 +7,14 @@ import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
-import org.iplantc.service.apps.Settings;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwareInput;
 import org.iplantc.service.apps.model.SoftwareParameter;
-import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.WrapperTemplateAttributeVariableType;
 import org.iplantc.service.jobs.model.enumerations.WrapperTemplateStatusVariableType;
@@ -24,14 +22,10 @@ import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.jobs.submission.AbstractJobSubmissionTest;
 import org.iplantc.service.jobs.util.Slug;
 import org.iplantc.service.systems.dao.SystemDao;
-import org.iplantc.service.systems.exceptions.SystemException;
-import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.ExecutionSystem;
-import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.systems.model.StorageSystem;
 import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
 import org.iplantc.service.transfer.RemoteDataClient;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -244,7 +238,7 @@ public class CondorLauncherTest extends AbstractJobSubmissionTest
 		job.setProcessorsPerNode((long)1);
 		job.setMaxRunTime("1:00:00");
 		job.setSoftwareName(software.getUniqueName());
-		job.setStatus(JobStatusType.PENDING, job.getErrorMessage());
+		job.initStatus(JobStatusType.PENDING, job.getErrorMessage());
 		job.setSystem(software.getExecutionSystem().getSystemId());
 		job.setBatchQueue(software.getExecutionSystem().getDefaultQueue().getName());
 		
@@ -260,7 +254,7 @@ public class CondorLauncherTest extends AbstractJobSubmissionTest
 		}
 		job.setParametersAsJsonObject(jobParameters);
 		
-		JobDao.persist(job);
+		JobDao.create(job);
 		
 		String remoteWorkPath = null;
 		if (StringUtils.isEmpty(software.getExecutionSystem().getScratchDir())) {
@@ -274,9 +268,10 @@ public class CondorLauncherTest extends AbstractJobSubmissionTest
 					"/" + FilenameUtils.getName(software.getDeploymentPath());
 		}
 		
-		job.setWorkPath(remoteWorkPath);
-		
-		JobDao.persist(job);
+		// Update the job's workpath.
+		JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+		jobUpdateParameters.setWorkPath(remoteWorkPath);
+		JobDao.update(job, jobUpdateParameters);
 		
 		return job;
 	}

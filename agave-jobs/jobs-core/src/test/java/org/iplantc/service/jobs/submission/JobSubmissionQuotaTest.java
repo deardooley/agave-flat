@@ -140,7 +140,7 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 		job.setProcessorsPerNode((long)1);
 		job.setMaxRunTime("1:00");
 		job.setSoftwareName(software.getUniqueName());
-		job.setStatus(JobStatusType.STAGED, "Input data staged to execution system");
+		job.initStatus(JobStatusType.STAGED, "Input data staged to execution system");
 		job.setSystem(software.getExecutionSystem().getSystemId());
 		job.setUpdateToken("asodfuasodu2342asdfar23rsdafa");
 		job.setVisible(true);
@@ -155,7 +155,7 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 		try 
 		{
 			job = getDefaultJob();
-			JobDao.persist(job);
+			JobDao.create(job);
 			
 			// TODO: here we should only be checking that the exceptions 
 			
@@ -172,9 +172,7 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			submissionAction.run();
 		
 			PowerMockito.verifyStatic();
-			JobManager.updateStatus(job, JobStatusType.STAGED);
-			
-			job = JobDao.getById(job.getId());
+			job = JobManager.updateStatus(job, JobStatusType.STAGED);
 			
 			Assert.assertEquals(job.getStatus(), JobStatusType.STAGED, "Job status is still at staged when system unavailable.");
 			
@@ -211,12 +209,12 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			
 			for (int i=0; i<software.getExecutionSystem().getDefaultQueue().getMaxJobs(); i++) {
 				Job j = job.copy();
-				j.setStatus(JobStatusType.RUNNING, "Job began running");
+				j.initStatus(JobStatusType.RUNNING, "Job began running");
 				j.setSystem(job.getSystem());
-				JobDao.persist(j);
+				JobDao.create(j);
 			}
 			
-			JobDao.persist(job);
+			JobDao.create(job);
 			
 			IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
 			SubmissionAction submissionAction = new SubmissionAction(job, worker);
@@ -253,12 +251,12 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			ExecutionSystem executionSystem = software.getExecutionSystem();
 			for (int i=0; i<Math.ceil(executionSystem.getMaxSystemJobsPerUser() * 1.2); i++) {
 				Job j = job.copy();
-				j.setStatus(JobStatusType.RUNNING, "Job began running");
+				j.initStatus(JobStatusType.RUNNING, "Job began running");
 				j.setSystem(job.getSystem());
-				JobDao.persist(j);
+				JobDao.create(j);
 			}
 			
-			JobDao.persist(job);
+			JobDao.create(job);
 			
 			IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
 			SubmissionAction submissionAction = new SubmissionAction(job, worker);
@@ -291,7 +289,7 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 		{
 			job = getDefaultJob();
 			
-			job.setStatus(JobStatusType.RUNNING, "Job began running");
+			job.initStatus(JobStatusType.RUNNING, "Job began running");
 			
 			job.setName("test-test-2");
 			
@@ -300,9 +298,9 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			for (int i=0; i<queueQuota; i++) {
 				Job j = job.copy();
 				job.setOwner(SYSTEM_OWNER_SHARED);
-				j.setStatus(JobStatusType.RUNNING, "Job began running");
+				j.initStatus(JobStatusType.RUNNING, "Job began running");
 				j.setSystem(job.getSystem());
-				JobDao.persist(j);
+				JobDao.create(j);
 			}
 			
 			job.setName("test-user-2");
@@ -310,12 +308,12 @@ public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 			ExecutionSystem executionSystem = software.getExecutionSystem();
 			for (int i=0; i<Math.ceil(executionSystem.getMaxSystemJobsPerUser() * 1.2); i++) {
 				Job j = job.copy();
-				j.setStatus(JobStatusType.RUNNING, "Job began running");
+				j.initStatus(JobStatusType.RUNNING, "Job began running");
 				j.setSystem(job.getSystem());
-				JobDao.persist(j);
+				JobDao.create(j);
 			}
 			
-			JobDao.persist(job);
+			JobDao.create(job);
 			
 			IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
 			SubmissionAction submissionAction = new SubmissionAction(job, worker);

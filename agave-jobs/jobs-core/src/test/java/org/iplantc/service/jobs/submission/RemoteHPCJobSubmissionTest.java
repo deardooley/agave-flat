@@ -101,7 +101,7 @@ public class RemoteHPCJobSubmissionTest extends AbstractJobSubmissionTest
 		job.setProcessorsPerNode((long)1);
 		job.setMaxRunTime("1:00:00");
 		job.setSoftwareName(software.getUniqueName());
-		job.setStatus(JobStatusType.STAGED, "Job inputs staged to execution system");
+		job.initStatus(JobStatusType.STAGED, "Job inputs staged to execution system");
 		job.setSystem(software.getExecutionSystem().getSystemId());
 		
 		ObjectNode jobInputs = mapper.createObjectNode()

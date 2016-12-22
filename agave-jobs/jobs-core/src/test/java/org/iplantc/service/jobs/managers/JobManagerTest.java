@@ -1,56 +1,26 @@
 package org.iplantc.service.jobs.managers;
 
-import static org.iplantc.service.jobs.model.JSONTestDataUtil.TEST_EXECUTION_SYSTEM_FILE;
-import static org.iplantc.service.jobs.model.JSONTestDataUtil.TEST_OWNER;
-import static org.iplantc.service.jobs.model.JSONTestDataUtil.TEST_SOFTWARE_SYSTEM_FILE;
-import static org.mockito.Mockito.*;
-import static org.mockito.Matchers.*;
-
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.iplantc.service.apps.dao.SoftwareDao;
-import org.iplantc.service.apps.model.Software;
-import org.iplantc.service.apps.model.SoftwareInput;
-import org.iplantc.service.apps.model.SoftwareParameter;
-import org.iplantc.service.apps.model.SoftwareParameterEnumeratedValue;
-import org.iplantc.service.apps.model.enumerations.SoftwareParameterType;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.exceptions.MessagingException;
 import org.iplantc.service.common.messaging.Message;
 import org.iplantc.service.common.messaging.MessageClientFactory;
 import org.iplantc.service.common.messaging.MessageQueueClient;
-import org.iplantc.service.common.uuid.AgaveUUID;
-import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.jobs.dao.AbstractDaoTest;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobEventDao;
-import org.iplantc.service.jobs.exceptions.JobProcessingException;
-import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.notification.dao.NotificationDao;
 import org.iplantc.service.notification.model.Notification;
-import org.iplantc.service.systems.dao.SystemDao;
-import org.iplantc.service.systems.model.BatchQueue;
-import org.iplantc.service.systems.model.ExecutionSystem;
-import org.iplantc.service.systems.model.RemoteSystem;
-import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.mockito.Answers;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
@@ -60,11 +30,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.surftools.BeanstalkClientImpl.ClientImpl;
 
 @Test(groups={"broken"})
@@ -307,12 +274,11 @@ public class JobManagerTest extends AbstractDaoTest
 		List<Object[]> testCases = new ArrayList<Object[]>();
 	
 		for (JobStatusType status: JobStatusType.values()) {
-			Job job = createJob(status);
+			Job job = createJob(status, false); // don't save yet
 			job.setVisible(false);
-			JobDao.persist(job);
+			JobDao.create(job);
 			
-			job.setVisible(false);
-				testCases.add( new Object[]{ job, 
+			testCases.add( new Object[]{ job, 
 										false, 
 										"Restoring " + status.name() + " job should not throw exception"});
 		}
@@ -369,7 +335,6 @@ public class JobManagerTest extends AbstractDaoTest
 			NotificationDao notificationDao = new NotificationDao();
 		
 			job = createJob(jobStatus);
-			JobDao.persist(job);
 			
 			Notification notification = null;
 			if (!StringUtils.isEmpty(notificatonEvent)) {
@@ -377,7 +342,7 @@ public class JobManagerTest extends AbstractDaoTest
 				notificationDao.persist(notification);
 			}
 			
-			JobManager.updateStatus(job, newStatus);
+			job = JobManager.updateStatus(job, newStatus);
 			
 			// verify status update
 			Assert.assertEquals(job.getStatus(), newStatus,
@@ -497,7 +462,6 @@ public class JobManagerTest extends AbstractDaoTest
 			NotificationDao notificationDao = new NotificationDao();
 			
 			job = createJob(jobStatus);
-			JobDao.persist(job);
 			
 			Notification notification = null;
 			if (!StringUtils.isEmpty(notificatonEvent)) {

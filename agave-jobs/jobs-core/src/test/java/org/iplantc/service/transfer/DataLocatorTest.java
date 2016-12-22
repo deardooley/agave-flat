@@ -301,7 +301,7 @@ public class DataLocatorTest
 		job.setProcessorsPerNode((long)1);
 		job.setMaxRunTime("1:00:00");
 		job.setSoftwareName(software.getUniqueName());
-		job.setStatus(jobStatus, (String)null);
+		job.initStatus(jobStatus, (String)null);
 		job.setSystem(executionSystemId);
 
 		if (!JobStatusType.hasQueued(jobStatus) && !jobStatus.equals(JobStatusType.QUEUED)) {

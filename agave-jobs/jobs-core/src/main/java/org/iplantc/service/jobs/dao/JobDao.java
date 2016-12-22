@@ -1004,50 +1004,13 @@ public class JobDao
         return status;
     }
     
-	/** Complete an existing transaction on the threadlocal session by
-	 * update the previously locked with lockJob(job).
-	 * 
-	 * @param job the locked job
-	 * @throws JobException when unable to update the job
-	 */
-    public static void persistLockedJob(Job job) 
-    throws JobException
-    {
-        // Try to save the job using the existing transaction
-        // on the threadlocal session.
-        Session session = null;
-        try {
-            session = HibernateUtil.getSession();
-            session.saveOrUpdate(job);
-        }
-        catch (Exception e)
-        {
-            try
-            {
-                if (session != null && session.isOpen())
-                {
-                    HibernateUtil.rollbackTransaction();
-                    session.close();
-                }
-            }
-            catch (Exception e1) {}
-            
-            String msg = "Unable to save locked job " + job.getUuid() + 
-                         " (" + job.getName() + ").";
-            throw new JobException(msg,e);
-        }
-        finally {
-            try {HibernateUtil.commitTransaction(); } catch (Exception e) {}
-        }
-    }
-    
-	public static void persist(Job job) 
+	public static void create(Job job) 
 	throws JobException, UnresolvableObjectException 
 	{
-		persist(job, true);
+		create(job, true);
 	}
 	
-	public static void persist(Job job, boolean forceTimestamp) 
+	public static void create(Job job, boolean forceTimestamp) 
 	throws JobException, UnresolvableObjectException
 	{
 		if (job == null)
@@ -1356,6 +1319,12 @@ public class JobDao
             clause += "local_job_id = :localJobId";
         }
         
+        // ----- owner
+        if (parms.isOwnerFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "owner = :owner";
+        }
+        
 	    // ----- retries
         if (parms.isRetriesFlag()) {
             if (!initialClause.equals(clause)) clause += ", ";
@@ -1434,6 +1403,10 @@ public class JobDao
         // ----- localJobId
         if (parms.isLocalJobIdFlag()) 
             qry.setString("localJobId", parms.getLocalJobId());
+        
+        // ----- owner
+        if (parms.isOwnerFlag()) 
+            qry.setString("owner", parms.getOwner());
         
         // ----- retries
         if (parms.isRetriesFlag()) 

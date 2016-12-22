@@ -81,7 +81,7 @@ public class SubmissionActionTest extends AbstractJobSubmissionTest {
     throws Exception
     {
         try {
-            JobDao.persist(job);
+            JobDao.create(job);
             stageJobInputs(job);
             genericRemoteSubmissionTestCase(job, JobStatusType.QUEUED, message, shouldThrowException);
         }
@@ -131,7 +131,7 @@ public class SubmissionActionTest extends AbstractJobSubmissionTest {
                 {
                     job = createJob(JobStatusType.STAGED, software, SYSTEM_OWNER);
                     
-                    JobDao.persist(job);
+                    JobDao.create(job);
                     
                     job = genericRemoteSubmissionTestCase(job, JobStatusType.STAGED, 
                             "Job submission should stay in a STAGED state while the execution system is " 
@@ -190,7 +190,7 @@ public class SubmissionActionTest extends AbstractJobSubmissionTest {
                 {
                     job = createJob(JobStatusType.STAGED, software, SYSTEM_OWNER);
                     
-                    JobDao.persist(job);
+                    JobDao.create(job);
                     
                     job = genericRemoteSubmissionTestCase(job, JobStatusType.STAGED, 
                             "Job submission should stay in a STAGED state while the software deployment system is " 
@@ -229,7 +229,7 @@ public class SubmissionActionTest extends AbstractJobSubmissionTest {
         
             job = createJob(JobStatusType.STAGED, software, SYSTEM_OWNER);
             
-            JobDao.persist(job);
+            JobDao.create(job);
             
             job = genericRemoteSubmissionTestCase(job, JobStatusType.STAGED, 
                     "Job submission should fail when the application is not available", 

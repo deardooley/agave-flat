@@ -268,10 +268,12 @@ public class AbstractDaoTest
 	 * @param exeSystem
 	 * @param queue
 	 * @param username
+	 * @param save true means save new job in database, false means don't save
 	 * @return
 	 * @throws Exception
 	 */
-	public Job createJob(JobStatusType status, ExecutionSystem exeSystem, BatchQueue queue, String username)
+	public Job createJob(JobStatusType status, ExecutionSystem exeSystem, BatchQueue queue, String username,
+	                     boolean save)
     throws Exception 
 	{
 	    try {
@@ -313,7 +315,7 @@ public class AbstractDaoTest
             if (JobStatusType.isExecuting(status) || status == JobStatusType.CLEANING_UP) {
                 job.setLocalJobId("q." + System.currentTimeMillis());
                 job.setSchedulerJobId(job.getUuid());
-                job.setStatus(status, status.getDescription());
+                job.initStatus(status, status.getDescription());
                 
                 int minutesAgoJobWasSubmitted = RandomUtils.nextInt(minutesAgoJobWasCreated)+1;
                 int minutesAgoJobWasStarted = minutesAgoJobWasSubmitted + RandomUtils.nextInt(minutesAgoJobWasSubmitted);
@@ -327,7 +329,7 @@ public class AbstractDaoTest
             } else if (JobStatusType.isFinished(status) || JobStatusType.isArchived(status)) {
                 job.setLocalJobId("q." + System.currentTimeMillis());
                 job.setSchedulerJobId(job.getUuid());
-                job.setStatus(status, status.getDescription());
+                job.initStatus(status, status.getDescription());
                 
                 int minutesAgoJobWasSubmitted = RandomUtils.nextInt(minutesAgoJobWasCreated)+1;
                 int minutesAgoJobWasStarted = minutesAgoJobWasSubmitted + RandomUtils.nextInt(minutesAgoJobWasSubmitted);
@@ -365,8 +367,10 @@ public class AbstractDaoTest
                                 stagingTransferTask, 
                                 job.getOwner());
                         event.setCreated(stagingTime.toDate());
+                        event.setJob(job);
+                        JobEventDao.persist(event);
                         
-                        job.setStatus(JobStatusType.STAGING_INPUTS, event);
+                        job.initStatus(JobStatusType.STAGING_INPUTS, event.getDescription());
                     }
                 }
                 
@@ -409,15 +413,17 @@ public class AbstractDaoTest
                                 stagingTransferTask, 
                                 job.getOwner());
                         event.setCreated(stagingTime.toDate());
+                        event.setJob(job);
+                        JobEventDao.persist(event);
                         
-                        job.setStatus(JobStatusType.STAGING_INPUTS, event);
+                        job.initStatus(JobStatusType.STAGING_INPUTS, event.getDescription());
                     }
                 }
                 
-                job.setStatus(JobStatusType.STAGED, JobStatusType.STAGED.getDescription());
+                job.initStatus(JobStatusType.STAGED, JobStatusType.STAGED.getDescription());
                 job.setLocalJobId("q." + System.currentTimeMillis());
                 job.setSchedulerJobId(job.getUuid());
-                job.setStatus(status, status.getDescription());
+                job.initStatus(status, status.getDescription());
                 
                 job.setSubmitTime(stagingEnded.toDate());
                 job.setStartTime(startTime.toDate());
@@ -440,7 +446,8 @@ public class AbstractDaoTest
                         archivingTransferTask, 
                         job.getOwner());
                 event.setCreated(archiveTime.toDate());
-                job.setStatus(status, event);
+                event.setJob(job);
+                JobEventDao.persist(event);
                 
                 if (status != JobStatusType.ARCHIVING) {
                     JobEvent event2 = new JobEvent(
@@ -448,7 +455,8 @@ public class AbstractDaoTest
                             status.getDescription(),
                             job.getOwner());
                     event2.setCreated(archiveTime.toDate());
-                    job.setStatus(status, event2);
+                    event2.setJob(job);
+                    JobEventDao.persist(event2);
                 }
                 
                 job.setLastUpdated(archiveTime.toDate());
@@ -457,11 +465,14 @@ public class AbstractDaoTest
                 job.setEndTime(new Date());
             }
             else {
-                job.setStatus(status, status.getDescription());
+                job.initStatus(status, status.getDescription());
             }
             
-            log.debug("Adding job " + job.getId() + " - " + job.getUuid());
-            JobDao.persist(job, false);
+            // Only save the job in the database if instructed to do so.
+            if (save) {
+                log.debug("Adding job " + job.getId() + " - " + job.getUuid());
+                JobDao.create(job, false);
+            }
             
             return job;
 	    } catch (Exception e) {
@@ -469,20 +480,45 @@ public class AbstractDaoTest
 	        throw e;
 	    }
     }
-	
+	 
+	/** Convenience method that always saves the new job to the database.
+	 * 
+	 * @param status
+	 * @param exeSystem
+	 * @param queue
+	 * @param username
+	 * @return
+	 * @throws Exception
+	 */
+    public Job createJob(JobStatusType status, ExecutionSystem exeSystem, BatchQueue queue, String username)
+      throws Exception 
+    {
+        return createJob(status, exeSystem, queue, username, true);
+    }
+    
 	/**
 	 * Creates a {@link Job} delegating to the {@link #createJob(JobStatusType, ExecutionSystem, BatchQueue, String)} method.
 	 * 
 	 * @param status
+	 * @param save true means save new job in database, false means don't save
 	 * @return persisted job object
 	 * @throws Exception
 	 */
-	public Job createJob(JobStatusType status) throws Exception
+	public Job createJob(JobStatusType status, boolean save) throws Exception
 	{
 	    ExecutionSystem exeSystem = software.getExecutionSystem();
 	    String batchQueue = StringUtils.isEmpty(software.getDefaultQueue()) ? software.getExecutionSystem().getDefaultQueue().getName() : software.getDefaultQueue();
-	    return createJob(status, exeSystem, exeSystem.getQueue(batchQueue), TEST_OWNER);
+	    return createJob(status, exeSystem, exeSystem.getQueue(batchQueue), TEST_OWNER, save);
 	}
+	
+	/** Convenience method that always saves the new job to the database.
+	 * 
+	 * @param status
+	 * @return
+	 * @throws Exception
+	 */
+    public Job createJob(JobStatusType status) throws Exception	
+    {return createJob(status, true);}
 	
 	/**
 	 * Removes the current tenant id and end user from the current thread.

@@ -240,9 +240,9 @@ public class JobCallbackManagerTest extends AbstractDaoTest {
     public void processCallbackArchivingStatusFailsInNonArchivingJob(JobStatusType currentStatus, JobStatusType newStatus, String message) 
     throws Exception 
     {
-        Job job = createJob(currentStatus);
+        Job job = createJob(currentStatus, false); // don't save yet
         job.setArchiveOutput(false);
-        JobDao.persist(job);
+        JobDao.create(job);
         JobCallback callback = new JobCallback(job, newStatus);
         JobCallbackManager manager = new JobCallbackManager();
         
@@ -287,9 +287,9 @@ public class JobCallbackManagerTest extends AbstractDaoTest {
     public void processCallbackToNextNaturalStatusCreatesOrderedEventsInNonArchivingJob(JobStatusType currentStatus, JobStatusType newStatus, String message) 
     throws Exception 
     {
-        Job job = createJob(currentStatus);
+        Job job = createJob(currentStatus, false); // don't save yet
         job.setArchiveOutput(false);
-        JobDao.persist(job);
+        JobDao.create(job);
         JobCallback callback = new JobCallback(job, newStatus);
         JobCallbackManager manager = new JobCallbackManager();
         
@@ -416,9 +416,9 @@ public class JobCallbackManagerTest extends AbstractDaoTest {
     public void validateLocalSchedulerJobId(String newLocalSchedulerJobId, String currentLocalSchedulerJobId, String expectedLocalSchedulerJobId, boolean shouldThrowException, String message)
     throws Exception 
     {
-        Job job = createJob(QUEUED);
+        Job job = createJob(QUEUED, false); // don't save yet
         job.setLocalJobId(currentLocalSchedulerJobId);
-        JobDao.persist(job);
+        JobDao.create(job);
         
         JobCallback callback = new JobCallback(job, RUNNING);
         callback.setLocalSchedulerJobId(newLocalSchedulerJobId);
@@ -441,9 +441,9 @@ public class JobCallbackManagerTest extends AbstractDaoTest {
     public void processIgnoresTenancy()
     throws Exception 
     {
-        Job job = createJob(QUEUED);
+        Job job = createJob(QUEUED, false); // don't save yet
         job.setLocalJobId(null);
-        JobDao.persist(job);
+        JobDao.create(job);
         
         JobCallback callback = new JobCallback(job, RUNNING);
         callback.setLocalSchedulerJobId(DEFAULT_CALLBACK_TOKEN);

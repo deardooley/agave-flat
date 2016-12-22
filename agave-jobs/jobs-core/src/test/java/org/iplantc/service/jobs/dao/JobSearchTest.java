@@ -92,7 +92,6 @@ public class JobSearchTest  extends AbstractDaoTest {
     public void searchJobsByDerivedRunTime(JobStatusType status, String searchField, boolean shouldSucceed, String message) throws Exception
     {   
         Job job = createJob(status);
-        JobDao.persist(job);
         Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
         
         long endTime = (job.getEndTime() == null ? new Date().getTime() : job.getEndTime().getTime());
@@ -148,7 +147,6 @@ public class JobSearchTest  extends AbstractDaoTest {
 	public void searchJobsByDerivedWallTime(JobStatusType status, String searchField, boolean shouldSucceed, String message) throws Exception
     {   
 	    Job job = createJob(status);
-        JobDao.persist(job);
         Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
         
         long endTime = (job.getEndTime() == null ? new Date().getTime() : job.getEndTime().getTime());
@@ -196,7 +194,6 @@ public class JobSearchTest  extends AbstractDaoTest {
 	public void findMatching(String attribute, Object value) throws Exception
 	{
 		Job job = createJob(JobStatusType.FINISHED);
-		JobDao.persist(job);
 		Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
 		
 		Map<String, String> map = new HashMap<String, String>();
@@ -214,7 +211,6 @@ public class JobSearchTest  extends AbstractDaoTest {
 	    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 	    
         Job job = createJob(JobStatusType.FINISHED);
-        JobDao.persist(job);
         Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
         
         Map<String, String> map = new HashMap<String, String>();
@@ -256,7 +252,6 @@ public class JobSearchTest  extends AbstractDaoTest {
 	public void findMatchingCaseInsensitive(String attribute, Object value) throws Exception
 	{
 		Job job = createJob(JobStatusType.PENDING);
-		JobDao.persist(job);
 		Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
 		
 		Map<String, String> map = new HashMap<String, String>();
@@ -320,9 +315,9 @@ public class JobSearchTest  extends AbstractDaoTest {
 	@Test(dataProvider="dateSearchExpressionTestProvider")//, dependsOnMethods={"findMatchingCaseInsensitive"}, enabled=true)
 	public void dateSearchExpressionTest(String attribute, String dateFormattedString, boolean shouldSucceed) throws Exception
     {
-	    Job job = createJob(JobStatusType.ARCHIVING);
+	    Job job = createJob(JobStatusType.ARCHIVING, false); // don't save job yet
 	    job.setCreated(new DateTime().minusYears(5).toDate());
-        JobDao.persist(job);
+        JobDao.create(job);
         Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
         
         Map<String, String> map = new HashMap<String, String>();

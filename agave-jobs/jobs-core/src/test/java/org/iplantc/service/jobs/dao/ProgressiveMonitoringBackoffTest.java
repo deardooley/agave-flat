@@ -29,6 +29,7 @@ import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.ExecutionSystem;
@@ -174,12 +175,12 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 			{
 				if (!JobStatusType.isExecuting(status))
 				{
-					Job notExecutingJob = createJob(status);
+					Job notExecutingJob = createJob(status, false); // don't save yet
 					notExecutingJob.setCreated(dummyLastUpdated.toDate());
 					notExecutingJob.setLastUpdated(notExecutingJob.getCreated());
 					notExecutingJob.setStatusChecks(0);
 					
-					JobDao.persist(notExecutingJob, false);
+					JobDao.create(notExecutingJob, false);
 					Assert.assertNotNull(notExecutingJob.getId(), "Failed to persist test not running job");
 				}
 			}
@@ -224,21 +225,21 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 			{
 				if (!JobStatusType.isExecuting(status))
 				{
-					Job notExecutingJob = createJob(status);
+					Job notExecutingJob = createJob(status, false); // don't save yet
 					notExecutingJob.setCreated(dummyLastUpdated.toDate());
 					notExecutingJob.setLastUpdated(dummyLastUpdated.toDate());
 					notExecutingJob.setStatusChecks(0);
 					
-					JobDao.persist(notExecutingJob, false);
+					JobDao.create(notExecutingJob, false);
 					Assert.assertNotNull(notExecutingJob.getId(), "Failed to persist test not running job");
 				}
 			}
 			
-			Job executingJob = createJob(testStatus);
+			Job executingJob = createJob(testStatus, false); // don't save yet
 			executingJob.setCreated(dummyLastUpdated.toDate());
 			executingJob.setLastUpdated(dummyLastUpdated.plusDays(1).toDate());
 			executingJob.setStatusChecks(0);
-			JobDao.persist(executingJob, false);
+			JobDao.create(executingJob, false);
 			
 			String nextJobUuid = JobDao.getNextExecutingJobUuid(null, null, null);
 			Assert.assertNotNull(nextJobUuid, message);
@@ -282,11 +283,11 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 		Job executingJob;
 		try 
 		{	
-			executingJob = createJob(JobStatusType.QUEUED);
+			executingJob = createJob(JobStatusType.QUEUED, false); // don't save yets
 			executingJob.setCreated(lastUpdated.minusSeconds(30).toDate());
 			executingJob.setLastUpdated(lastUpdated.toDate());
 			executingJob.setStatusChecks(numberOfChecks);
-			JobDao.persist(executingJob, false);
+			JobDao.create(executingJob, false);
 			Assert.assertNotNull(executingJob.getId(), "Failed to persist test job");
 			
 			String nextJob = JobDao.getNextExecutingJobUuid(null, null, null);
@@ -332,11 +333,11 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
         {   
             for (JobStatusType testStatus: new JobStatusType[]{QUEUED, RUNNING, PAUSED})
             {
-                executingJob = createJob(testStatus);
+                executingJob = createJob(testStatus, false); // don't save yet
                 executingJob.setCreated(lastUpdated.minusSeconds(30).toDate());
                 executingJob.setLastUpdated(lastUpdated.toDate());
                 executingJob.setStatusChecks(numberOfChecks);
-                JobDao.persist(executingJob, false);
+                JobDao.create(executingJob, false);
             
                 Assert.assertNotNull(executingJob.getId(), "Failed to persist test job");
                 
@@ -391,13 +392,13 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                                 Job testJob = job.copy();
                                 testJob.setCreated(created);
                                 testJob.setLastUpdated(lastUpdated);
-                                testJob.setStatus(status, status.getDescription());
+                                testJob.initStatus(status, status.getDescription());
                                 testJob.setTenantId(tenantId);
                                 testJob.setOwner(tenantId + "@" + username);
                                 testJob.setSystem(tenantId + "-" + systemId);
                                 testJob.setLocalJobId(testJob.getUuid());
                                 testJob.setBatchQueue(queueName);
-                                JobDao.persist(testJob, false);
+                                JobDao.create(testJob, false);
                             
                                 queueJobHits.put(testJob.getUuid(), 0);
                                 tenantJobHits.put(testJob.getUuid(), 0);
@@ -481,13 +482,13 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                                 Job testJob = job.copy();
                                 testJob.setCreated(created);
                                 testJob.setLastUpdated(lastUpdated);
-                                testJob.setStatus(status, status.getDescription());
+                                testJob.initStatus(status, status.getDescription());
                                 testJob.setTenantId(tenantId);
                                 testJob.setOwner(tenantId + "@" + username);
                                 testJob.setSystem(tenantId + "-" + systemId);
                                 testJob.setLocalJobId(testJob.getUuid());
                                 testJob.setBatchQueue(queueName);
-                                JobDao.persist(testJob, false);
+                                JobDao.create(testJob, false);
                             
                                 queueJobHits.put(testJob.getUuid(), 0);
                                 tenantJobHits.put(testJob.getUuid(), 0);
@@ -502,13 +503,13 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                                     Job decoyJob = job.copy();
                                     decoyJob.setCreated(created);
                                     decoyJob.setLastUpdated(lastUpdated);
-                                    decoyJob.setStatus(status, status.getDescription());
+                                    decoyJob.initStatus(status, status.getDescription());
                                     decoyJob.setTenantId(tenantId);
                                     decoyJob.setOwner(tenantId + "@" + username);
                                     decoyJob.setSystem(tenantId + "-" + systemId);
                                     decoyJob.setLocalJobId(decoyJob.getUuid());
                                     decoyJob.setBatchQueue(queueName);
-                                    JobDao.persist(decoyJob, false);
+                                    JobDao.create(decoyJob, false);
                                 }
                             }
                             
@@ -599,13 +600,13 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                                 Job testJob = job.copy();
                                 testJob.setCreated(created);
                                 testJob.setLastUpdated(lastUpdated);
-                                testJob.setStatus(status, status.getDescription());
+                                testJob.initStatus(status, status.getDescription());
                                 testJob.setTenantId(tenantId);
                                 testJob.setOwner(tenantId + "@" + username);
                                 testJob.setSystem(tenantId + "-" + systemId);
                                 testJob.setLocalJobId(testJob.getUuid());
                                 testJob.setBatchQueue(queueName);
-                                JobDao.persist(testJob, false);
+                                JobDao.create(testJob, false);
                             
                                 queueJobHits.put(testJob.getUuid(), 0);
                                 tenantJobHits.put(testJob.getUuid(), 0);
@@ -620,13 +621,13 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                                     Job decoyJob = job.copy();
                                     decoyJob.setCreated(created);
                                     decoyJob.setLastUpdated(lastUpdated);
-                                    decoyJob.setStatus(status, status.getDescription());
+                                    decoyJob.initStatus(status, status.getDescription());
                                     decoyJob.setTenantId(tenantId);
                                     decoyJob.setOwner(tenantId + "@" + username);
                                     decoyJob.setSystem(tenantId + "-" + systemId);
                                     decoyJob.setLocalJobId(decoyJob.getUuid());
                                     decoyJob.setBatchQueue(queueName);
-                                    JobDao.persist(decoyJob, false);
+                                    JobDao.create(decoyJob, false);
                                 }
                             }
                             
@@ -823,13 +824,13 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                                 Job testJob = job.copy();
                                 testJob.setCreated(created);
                                 testJob.setLastUpdated(lastUpdated);
-                                testJob.setStatus(status, status.getDescription());
+                                testJob.initStatus(status, status.getDescription());
                                 testJob.setTenantId(tenantId);
                                 testJob.setOwner(tenantId + "@" + username);
                                 testJob.setSystem(tenantId + "-" + systemId);
                                 testJob.setLocalJobId(testJob.getUuid());
                                 testJob.setBatchQueue(queueName);
-                                JobDao.persist(testJob, false);
+                                JobDao.create(testJob, false);
                             
                                 queueJobHits.put(testJob.getUuid(), 0);
                                 tenantJobHits.put(testJob.getUuid(), 0);
@@ -844,13 +845,13 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                                     Job decoyJob = job.copy();
                                     decoyJob.setCreated(created);
                                     decoyJob.setLastUpdated(lastUpdated);
-                                    decoyJob.setStatus(status, status.getDescription());
+                                    decoyJob.initStatus(status, status.getDescription());
                                     decoyJob.setTenantId(tenantId);
                                     decoyJob.setOwner(tenantId + "@" + username);
                                     decoyJob.setSystem(tenantId + "-" + systemId);
                                     decoyJob.setLocalJobId(decoyJob.getUuid());
                                     decoyJob.setBatchQueue(queueName);
-                                    JobDao.persist(decoyJob, false);
+                                    JobDao.create(decoyJob, false);
                                 }
                             }
                             
@@ -1008,11 +1009,11 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 		DateTime dummyLastUpdated = new DateTime();
 		dummyLastUpdated = dummyLastUpdated.minusDays(2);
 		
-		Job executingJob = createJob(JobStatusType.QUEUED);
+		Job executingJob = createJob(JobStatusType.QUEUED, false); // don't save yet
 		executingJob.setCreated(dummyLastUpdated.minusSeconds(30).toDate());
 		executingJob.setLastUpdated(dummyLastUpdated.toDate());
 		executingJob.setStatusChecks(0);
-		JobDao.persist(executingJob, false);
+		JobDao.create(executingJob, false);
 		Assert.assertNotNull(executingJob.getId(), "Failed to persist test job");
 		
 		int threadCount = 500;
@@ -1028,7 +1029,10 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                     
                 	job.setRetries(job.getRetries()+1);
                 	//(JobStatusType.RUNNING, "Updating from the future");
-                	JobDao.persist(job, false);
+                	JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+                	jobUpdateParameters.setRetries(job.getRetries());
+                	jobUpdateParameters.setLastUpdated(job.getLastUpdated());
+                	JobDao.update(job, jobUpdateParameters);
                     return null;
                 }
             };

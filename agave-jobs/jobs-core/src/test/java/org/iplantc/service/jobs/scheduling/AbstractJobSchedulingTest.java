@@ -22,6 +22,7 @@ import org.iplantc.service.apps.model.SoftwareInput;
 import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.jobs.dao.AbstractDaoTest;
 import org.iplantc.service.jobs.dao.JobDao;
+import org.iplantc.service.jobs.dao.JobEventDao;
 import org.iplantc.service.jobs.dao.TaskDistributor;
 import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.jobs.model.Job;
@@ -254,7 +255,7 @@ public class AbstractJobSchedulingTest extends AbstractDaoTest
 		if (JobStatusType.isExecuting(status) || status == JobStatusType.CLEANING_UP) {
 			job.setLocalJobId("q." + System.currentTimeMillis());
 			job.setSchedulerJobId(job.getUuid());
-			job.setStatus(status, status.getDescription());
+			job.initStatus(status, status.getDescription());
 			
 			int minutesAgoJobWasSubmitted = RandomUtils.nextInt(minutesAgoJobWasCreated)+1;
 			int minutesAgoJobWasStarted = minutesAgoJobWasSubmitted + RandomUtils.nextInt(minutesAgoJobWasSubmitted);
@@ -268,7 +269,7 @@ public class AbstractJobSchedulingTest extends AbstractDaoTest
 		} else if (JobStatusType.isFinished(status) || JobStatusType.isArchived(status)) {
 			job.setLocalJobId("q." + System.currentTimeMillis());
 			job.setSchedulerJobId(job.getUuid());
-			job.setStatus(status, status.getDescription());
+			job.initStatus(status, status.getDescription());
 			
 			int minutesAgoJobWasSubmitted = RandomUtils.nextInt(minutesAgoJobWasCreated)+1;
 			int minutesAgoJobWasStarted = minutesAgoJobWasSubmitted + RandomUtils.nextInt(minutesAgoJobWasSubmitted);
@@ -306,8 +307,10 @@ public class AbstractJobSchedulingTest extends AbstractDaoTest
 							stagingTransferTask, 
 							job.getOwner());
 					event.setCreated(stagingTime.toDate());
+					event.setJob(job);
+					JobEventDao.persist(event);
 					
-					job.setStatus(JobStatusType.STAGING_INPUTS, event);
+					job.initStatus(JobStatusType.STAGING_INPUTS, event.getDescription());
 				}
 			}
 			
@@ -348,15 +351,17 @@ public class AbstractJobSchedulingTest extends AbstractDaoTest
 							stagingTransferTask, 
 							job.getOwner());
 					event.setCreated(stagingTime.toDate());
+                    event.setJob(job);
+                    JobEventDao.persist(event);
 					
-					job.setStatus(JobStatusType.STAGING_INPUTS, event);
+					job.initStatus(JobStatusType.STAGING_INPUTS, event.getDescription());
 				}
 			}
 			
-			job.setStatus(JobStatusType.STAGED, JobStatusType.STAGED.getDescription());
+			job.initStatus(JobStatusType.STAGED, JobStatusType.STAGED.getDescription());
 			job.setLocalJobId("q." + System.currentTimeMillis());
 			job.setSchedulerJobId(job.getUuid());
-			job.setStatus(status, status.getDescription());
+			job.initStatus(status, status.getDescription());
 			
 			job.setSubmitTime(stagingEnded.toDate());
 			job.setStartTime(startTime.toDate());
@@ -379,16 +384,19 @@ public class AbstractJobSchedulingTest extends AbstractDaoTest
 					archivingTransferTask, 
 					job.getOwner());
 			event.setCreated(archiveTime.toDate());
-			job.setStatus(status, event);
+            event.setJob(job);
+            JobEventDao.persist(event);
+            
+			job.initStatus(status, event.getDescription());
 			
 			job.setLastUpdated(archiveTime.toDate());
 		}
 		else {
-		    job.setStatus(status, status.getDescription());
+		    job.initStatus(status, status.getDescription());
 		}
 		
 		log.debug("Adding job " + job.getId() + " - " + job.getUuid());
-		JobDao.persist(job, false);
+		JobDao.create(job, false);
 		
 		return job;
 	}

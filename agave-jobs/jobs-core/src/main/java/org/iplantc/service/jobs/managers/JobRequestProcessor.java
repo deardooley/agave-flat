@@ -663,7 +663,7 @@ public class JobRequestProcessor {
             
             // Only new jobs are persisted using Hibernate.
             job.initStatus(JobStatusType.PENDING, JobStatusType.PENDING.getDescription());
-            JobDao.persist(job);
+            JobDao.create(job);
             
             // Send the job creation event.
             JobEvent event = new JobEvent(job, job.getStatus(), job.getErrorMessage(), job.getOwner());
