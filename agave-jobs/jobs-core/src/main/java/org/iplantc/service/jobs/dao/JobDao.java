@@ -1004,12 +1004,25 @@ public class JobDao
         return status;
     }
     
+    /** Use this method insert new job records into the database.
+     * 
+     * @param job the new job
+     * @throws JobException
+     * @throws UnresolvableObjectException
+     */
 	public static void create(Job job) 
 	throws JobException, UnresolvableObjectException 
 	{
 		create(job, true);
 	}
 	
+    /** Use this method insert new job records into the database.
+     * 
+     * @param job the new job
+     * @param forceTimestamp true to assign current time to lastUpated field
+     * @throws JobException
+     * @throws UnresolvableObjectException
+     */
 	public static void create(Job job, boolean forceTimestamp) 
 	throws JobException, UnresolvableObjectException
 	{
@@ -1032,8 +1045,8 @@ public class JobDao
 //			log.debug(String.format("Job.created[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getCreated()), new DateTime().toString(), f.format(new Date())));
 //			log.debug(String.format("Job.lastUpdated(pre force timestamp)[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getLastUpdated()), new DateTime().toString(), f.format(new Date())));
 			
+			// Use the update() method in this class for updates.
 			session.save(job);
-//			session.flush();
 		}
 		catch (UnresolvableObjectException ex) {
 //		    throw ex;
