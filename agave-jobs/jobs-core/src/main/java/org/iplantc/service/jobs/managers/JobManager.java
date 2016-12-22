@@ -504,6 +504,13 @@ public class JobManager {
 	 * Updates the status of a job, its timestamps, and writes a new
 	 * JobEvent to the job's history with the given status and message.
 	 *
+     * This method and JobDao.update() comprise the two ways that status updates
+     * can be safely performed.  This method calls JobManager.update(), which  
+     * is ultimately responsible for validating status changes and locking
+     * the job record during status transitions.  Use this method if you require 
+     * visibility and event processing; use JobDao.update() if you only need
+     * to update a job record.
+     *   
      * If present, the optional extraUpdates object can contain updates to job fields
      * other than the status field.  These updates will be applied in the same 
      * transaction as the status update if that update is actually performed.  The

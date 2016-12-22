@@ -1088,12 +1088,20 @@ public class JobDao
     }
             
 	/** Perform an atomic update of all fields set in the parameter object.
-	 * All updates are performed in a single transaction.  
+	 * All updates are performed in a single transaction.
+	 * 
+	 * This method and JobManager.updateStatus() comprise the two ways that status
+	 * updates can be safely performed.  This method is called by JobManager.updateStatus() 
+	 * and is ultimately responsible for validating status changes and locking
+	 * the job record during status transitions.  Use this method if you only need
+	 * to update a job record, use JobManager.updateStatus() if you also require 
+	 * visibility and event processing.  
 	 * 
 	 * NOTE: This method does not update an in-memory job object, so existing
 	 *       job objects outside of this method will not contain the latest
 	 *       values after the job in the database is updated.  Use JobDao.refresh() 
-	 *       if you need the latest database updates reflected in job objects. 
+	 *       or the overloaded version of this method if you need the latest 
+	 *       database updates reflected in job objects. 
 	 * 
 	 * If the status field is set, the update will continue only if the
 	 * transition from the current status as recorded in the database to
