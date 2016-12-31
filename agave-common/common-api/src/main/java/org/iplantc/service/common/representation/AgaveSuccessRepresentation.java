@@ -3,6 +3,8 @@
  */
 package org.iplantc.service.common.representation;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 
 
 /**
@@ -16,18 +18,27 @@ public class AgaveSuccessRepresentation extends AgaveRepresentation {
      */
     public AgaveSuccessRepresentation()
     {
-        this(null, null);
+        this(null, (JsonNode)null);
     }
     
     /**
      * Create success representation with the JSON response
-     * @param jsonObject serialized response object
+     * @param json serialized response object
      */
     public AgaveSuccessRepresentation(String json)
     {
         this(null, json);
     }
 
+    /**
+     * Create success representation with the JSON response
+     * @param jsonNode response object as a serialized node
+     */
+    public AgaveSuccessRepresentation(JsonNode jsonNode)
+    {
+        this(null, jsonNode);
+    }
+    
     /**
      * Create success representation with the message and JSON response
      * @param message
@@ -38,31 +49,13 @@ public class AgaveSuccessRepresentation extends AgaveRepresentation {
         super("success", message, json);
     }
     
-//	/**
-//	 * @param prettyPrint
-//	 * @deprecated formatting is pulled from query string dynamically now
-//	 */
-//	public AgaveSuccessRepresentation(boolean prettyPrint)
-//	{
-//		this(null, "{}", prettyPrint);
-//	}
-//	/**
-//	 * @param jsonObject
-//	 * @deprecated formatting is pulled from query string dynamically now
-//	 */
-//	public AgaveSuccessRepresentation(String json, boolean prettyPrint)
-//	{
-//		this(null, json, prettyPrint);
-//	}
-//
-//	/**
-//	 * @param message
-//	 * @param json
-//	 * @param prettyPrint
-//	 * @deprecated formatting is pulled from query string dynamically now
-//	 */
-//	public AgaveSuccessRepresentation(String message, String json, boolean prettyPrint)
-//	{
-//		super("success", message, json, prettyPrint);
-//	}
+    /**
+     * Create success representation with the message and JSON response
+     * @param message
+     * @param json serialized response object
+     */
+    public AgaveSuccessRepresentation(String message, JsonNode jsonNode)
+    {
+        super("success", message, jsonNode);
+    }
 }

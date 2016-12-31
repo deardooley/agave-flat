@@ -50,8 +50,8 @@ public class JobSearchFilter extends AgaveResourceSearchFilter
 			searchTermMappings.put("executionsystem", "%sexecution_system");
 			searchTermMappings.put("id", "%suuid");
 			searchTermMappings.put("inputs", "%sinputs");
-			searchTermMappings.put("lastmodified", "%last_updated");
-			searchTermMappings.put("lastupdated", "%last_updated");
+			searchTermMappings.put("lastmodified", "%slast_updated");
+			searchTermMappings.put("lastupdated", "%slast_updated");
 			searchTermMappings.put("localid", "%sscheduler_job_id");
 			searchTermMappings.put("maxruntime", "time_to_sec(%srequested_time)");
 			searchTermMappings.put("memorypernode", "%smemory_request");
@@ -62,12 +62,12 @@ public class JobSearchFilter extends AgaveResourceSearchFilter
 			searchTermMappings.put("parameters", "%sparameters");
 			searchTermMappings.put("processorspernode", "%sprocessor_count");
 			searchTermMappings.put("retries", "%sretries");
-			searchTermMappings.put("runtime", "%sstart_time is not null and (time_to_sec(%send_time) - time_to_sec(%sstart_time))");
+			searchTermMappings.put("runtime", "%sstart_time is not null and (unix_timestamp(DATE(DATE_FORMAT(%send_time,'%Y-%m-%d %H:%i:%s'))) - unix_timestamp(DATE(DATE_FORMAT(%sstart_time,'%Y-%m-%d %H:%i:%s'))))");
 			searchTermMappings.put("starttime", "%sstart_time");
 			searchTermMappings.put("status", "%sstatus");
 			searchTermMappings.put("submittime", "%ssubmit_time");
 			searchTermMappings.put("visible", "%svisible");
-			searchTermMappings.put("walltime", "abs(time_to_sec(%send_time) - time_to_sec(%screated))");
+			searchTermMappings.put("walltime", "abs(unix_timestamp(DATE(DATE_FORMAT(%send_time,'%Y-%m-%d %H:%i:%s'))) - unix_timestamp(DATE(DATE_FORMAT(%screated,'%Y-%m-%d %H:%i:%s'))))");
 		}
 		
 		return searchTermMappings;

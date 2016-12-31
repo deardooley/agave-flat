@@ -321,7 +321,6 @@ public class StringToTime extends Date {
 					Matcher m = paf.matches(trimmed);
 					if (m.matches()) {
 						Long time = paf.parse(trimmed, now, m);
-						//System.out.println(String.format("[%s] triggered format [%s]: %s", dateTimeString, paf.f, new Date(time)));
 						if (log.isDebugEnabled())
 							log.debug(String.format("[%s] triggered format [%s]: %s", dateTimeString, paf.f, new Date(time)));
 						return time;

@@ -34,58 +34,59 @@ public abstract class AgaveRepresentation extends StringRepresentation {
 	private Boolean prettyPrint = null;
 	
 	/**
-	 * Formats the reponse from iplant api calls into a json object with
-	 * attributes status, message, and result where result contains the
-	 * json output of the call.
+	 * Constructor for legacy services building their JSON responses
+	 * as {@link String} values. 
 	 * 
-	 * @param jsonArray
+	 * @deprecated
+	 * @see {@link #AgaveRepresentation(String, String, JsonNode)
+	 * @param status
+	 * @param message
+	 * @param json
 	 */
 	protected AgaveRepresentation(String status, String message, String json) 
 	{	
 		super("", MediaType.APPLICATION_JSON, null, CharacterSet.UTF_8);
 		
-		try
-		{
-			DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
+		setText(formatResponse(status, message, json));
+	}
+
+	/**
+	 * Default constructor for services generating {@link JsonNode} naked 
+	 * responses. This saves a couple serialization and deserialization steps
+	 * along the say, which reduces load on the server, memory utilization, 
+	 * and processing time. 
+	 * 
+	 * @param status
+	 * @param message
+	 * @param json
+	 */
+	protected AgaveRepresentation(String status, String message, JsonNode jsonNode) 
+	{	
+		super("", MediaType.APPLICATION_JSON, null, CharacterSet.UTF_8);
+		
+		setText(formatResponse(status, message, jsonNode));
+	}
+	
+	/**
+	 * Formats the response both successful and unsuccessful calls into a 
+	 * JSON wrapper object with attributes status, message, and result 
+	 * where result contains the JSON output of the call.
+	 * 
+	 * @param status
+	 * @param message
+	 * @param json
+	 */
+	protected String formatResponse(String status, String message, String json) {
+		try {
+			ObjectMapper mapper = new ObjectMapper();
             
-            ObjectMapper mapper = new ObjectMapper();
+            JsonNode jsonNode = mapper.readTree(json);
 			
-			if (isNaked()) 
-			{
-			    if (Response.getCurrent().getStatus() == Status.SUCCESS_NO_CONTENT || StringUtils.isEmpty(json)) {
-			       setText(null);
-			    } else {
-//			        if (isPrettyPrint()) {
-//			            JsonNode jsonTree = mapper.readTree(json);
-//			            setText(mapper.writer(pp).writeValueAsString(jsonTree));
-//		            } else {
-//		                setText(json);
-//		            }
-			    	setText(filterOutput(json));
-			    }
-			}
-			else 
-			{
-    			ObjectNode jsonWrapper = mapper.createObjectNode()
-    				.put("status", status)
-    				.put("message", message)
-    				.put("version", Settings.SERVICE_VERSION);
-    			
-    			if (!StringUtils.isEmpty(json)) {
-    				jsonWrapper.set("result", mapper.readTree(filterOutput(json)));
-    			}
-    			
-    			if (isPrettyPrint()) {
-    			    setText(mapper.writer(pp).writeValueAsString(jsonWrapper));
-    			} else {
-    				setText(jsonWrapper.toString());
-    			}
-			}
-		} 
-		catch (Exception e)
-		{
-		    if (isNaked()) {
-		        setText(json);
+            return formatResponse(status, message, jsonNode);
+		}
+		catch (Exception e) {
+			if (isNaked()) {
+		        return json;
 		    }
 		    else
 		    {
@@ -102,7 +103,78 @@ public abstract class AgaveRepresentation extends StringRepresentation {
     			builder.append("\"message\":\"" + message + "\",");
     			builder.append("\"version\":\"" + Settings.SERVICE_VERSION + "\",");
     			builder.append("\"result\":" + json + "}");
-    			setText(builder.toString());
+    			return builder.toString();
+		    }
+		}
+	}
+
+	/**
+	 * Formats the response both successful and unsuccessful calls into a 
+	 * JSON wrapper object with attributes status, message, and result 
+	 * where result contains the JSON output of the call.
+	 * 
+	 * @param status
+	 * @param message
+	 * @param jsonNode
+	 */
+	protected String formatResponse(String status, String message, JsonNode jsonNode) {
+		try
+		{
+			DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
+            
+            ObjectMapper mapper = new ObjectMapper();
+			
+			if (isNaked()) 
+			{
+			    if (Response.getCurrent().getStatus() == Status.SUCCESS_NO_CONTENT || jsonNode == null) {
+			       return null;
+			    } else {
+			    	if (isPrettyPrint()) {
+	    			    return mapper.writer(pp).writeValueAsString(filterOutput(jsonNode));
+	    			} else {
+	    				return filterOutput(jsonNode).toString();
+	    			}
+			    }
+			}
+			else 
+			{
+    			ObjectNode jsonWrapper = mapper.createObjectNode()
+    				.put("status", status)
+    				.put("message", message)
+    				.put("version", Settings.SERVICE_VERSION);
+    			
+    			if (jsonNode != null) {
+    				jsonWrapper.set("result", filterOutput(jsonNode));
+    			}
+    			
+    			if (isPrettyPrint()) {
+    			    return mapper.writer(pp).writeValueAsString(jsonWrapper);
+    			} else {
+    				return jsonWrapper.toString();
+    			}
+			}
+		} 
+		catch (Exception e)
+		{
+		    if (isNaked()) {
+		        return jsonNode.toString();
+		    }
+		    else
+		    {
+    			status = status.replaceAll("\"", "\\\"");
+    			
+    			if (message == null) {
+    				message = "";
+    			} else {
+    				message = message.replaceAll("\"", "\\\"");
+    			}
+    			
+    			StringBuilder builder = new StringBuilder();
+    			builder.append("{\"status\":\"" + status + "\",");
+    			builder.append("\"message\":\"" + message + "\",");
+    			builder.append("\"version\":\"" + Settings.SERVICE_VERSION + "\",");
+    			builder.append("\"result\":" + jsonNode.toString() + "}");
+    			return builder.toString();
 		    }
 		}
 	}
@@ -163,20 +235,19 @@ public abstract class AgaveRepresentation extends StringRepresentation {
 	}
 	
 	/**
-	 * Applies user-supplied path filters to the response json with optional
-	 * pretty printing.
+	 * Applies user-supplied path filters to the response json 
 	 * 
-	 * @param serializedResponse
-	 * @return
+	 * @param nakedJsonResponse
+	 * @return the properly filetered response
 	 * @throws IOException
 	 */
-	public String filterOutput(String serializedResponse) throws IOException {
+	public JsonNode filterOutput(JsonNode nakedJsonResponse) throws IOException {
 		String[] sFilters = getJsonPathFilters();
 		try {
 			return new JsonPropertyFilter().getFilteredContent(
-					serializedResponse, sFilters, isPrettyPrint());
+					nakedJsonResponse, sFilters);
 		} catch (Exception e) {
-			return serializedResponse;
+			return nakedJsonResponse;
 		}
 	}
 }

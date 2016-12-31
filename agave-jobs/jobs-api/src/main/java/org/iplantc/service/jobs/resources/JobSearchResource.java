@@ -16,6 +16,8 @@ import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.dto.JobDTO;
+import org.iplantc.service.jobs.model.views.View;
 import org.iplantc.service.jobs.search.JobSearchFilter;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
@@ -25,6 +27,8 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Class to handle job listings for the authenticated user.
@@ -97,16 +101,23 @@ public class JobSearchResource extends AbstractJobResource {
 	{
 		try
 		{
-			String json = "";
+			List<JobDTO> jobs = JobDao.findMatching(username, new JobSearchFilter().filterCriteria(queryParameters), offset, limit);
+//			String json = "";
+//			for (int i=offset; i< Math.min((limit+offset), jobs.size()); i++)
+//			{
+//				json += "," + jobs.get(i).toJSON();
+//			}
+//			if (json.startsWith(","))
+//				json = json.substring(1);
+//			return new IplantSuccessRepresentation("[" + json + "]");
 			
-			List<Job> jobs = JobDao.findMatching(username, new JobSearchFilter().filterCriteria(queryParameters));
-			for (int i=offset; i< Math.min((limit+offset), jobs.size()); i++)
-			{
-				json += "," + jobs.get(i).toJSON();
+			ObjectMapper mapper = new ObjectMapper();
+			if (hasJsonPathFilters()) {
+				return new IplantSuccessRepresentation(mapper.writeValueAsString(jobs));
 			}
-			if (json.startsWith(","))
-				json = json.substring(1);
-			return new IplantSuccessRepresentation("[" + json + "]");
+			else {
+				return new IplantSuccessRepresentation(mapper.writerWithView(View.Summary.class).writeValueAsString(jobs));
+			}
 		}
 		catch (Exception e)
 		{

@@ -42,6 +42,7 @@ import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobEventProcessingException;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.managers.JobEventProcessor;
+import org.iplantc.service.jobs.model.dto.JobDTO;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.util.ServiceUtils;
 import org.iplantc.service.jobs.util.Slug;
@@ -136,8 +137,8 @@ public class Job {
 	
 	public Job()
 	{
-		created = new DateTime().toDate();
-		lastUpdated = created;
+		setCreated(new DateTime().toDate());
+		setLastUpdated(this.created);
 		updateToken = UUID.randomUUID().toString();
 		nodeCount = new Long(1);
 		processorsPerNode = new Long(1);
@@ -1008,7 +1009,7 @@ public class Job {
 	 */
 	public void setSubmitTime(Date submitTime)
 	{
-		this.submitTime = submitTime;
+		this.submitTime = submitTime == null ? null : new DateTime(submitTime).withMillisOfSecond(0).toDate();
 	}
 
 	/**
@@ -1044,7 +1045,7 @@ public class Job {
 	 */
 	public void setStartTime(Date startTime)
 	{
-		this.startTime = startTime;
+		this.startTime = startTime == null ? startTime : new DateTime(startTime).withMillisOfSecond(0).toDate();
 	}
 
 	/**
@@ -1063,7 +1064,7 @@ public class Job {
 	 */
 	public void setEndTime(Date endTime)
 	{
-		this.endTime = endTime;
+		this.endTime = endTime == null ? null : new DateTime(endTime).withMillisOfSecond(0).toDate();
 	}
 
 	/**
@@ -1105,7 +1106,7 @@ public class Job {
 	 */
 	public void setLastUpdated(Date lastUpdated)
 	{
-		this.lastUpdated = lastUpdated;
+		this.lastUpdated = new DateTime(lastUpdated).withMillisOfSecond(0).toDate();
 	}
 
 	/**
@@ -1114,7 +1115,7 @@ public class Job {
 	 */
 	public void setCreated(Date created)
 	{
-		this.created = created;
+		this.created = new DateTime(created).withMillisOfSecond(0).toDate();
 	}
 
 	/**
@@ -1251,15 +1252,16 @@ public class Job {
 	@Transient
 	public boolean equals(Object o)
 	{
-		if (o instanceof Job)
-		{
+		if (o instanceof Job) {
 			return ( name.equals( ( (Job) o ).name)
 					&& owner.equals( ( (Job) o ).owner)
 					&& updateToken.equals( ( (Job) o ).updateToken) 
 					&& softwareName.equals( ( (Job) o ).softwareName) );
 		}
-		else
-		{
+		else if (o instanceof JobDTO) {
+			return uuid.equals( ( (JobDTO) o ).getUuid());
+		} 
+		else {
 			return false;
 		}
 	}
@@ -1269,32 +1271,32 @@ public class Job {
 	private ObjectNode getHypermedia() {
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode linksObject = mapper.createObjectNode();
-		linksObject.put("self", (ObjectNode)mapper.createObjectNode()
+		linksObject.set("self", (ObjectNode)mapper.createObjectNode()
     		.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, getTenantId()) + getUuid()));
-		linksObject.put("app", mapper.createObjectNode()
+		linksObject.set("app", mapper.createObjectNode()
     		.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_APPS_SERVICE, getTenantId()) + getSoftwareName()));
-		linksObject.put("executionSystem", mapper.createObjectNode()
+		linksObject.set("executionSystem", mapper.createObjectNode()
     		.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_SYSTEM_SERVICE, getTenantId()) + getSystem()));
-		linksObject.put("archiveSystem", mapper.createObjectNode()
+		linksObject.set("archiveSystem", mapper.createObjectNode()
         		.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_SYSTEM_SERVICE, getTenantId()) + 
         				(isArchiveOutput() ? getArchiveSystem().getSystemId() : getSystem())));
 		
-		linksObject.put("archiveData", mapper.createObjectNode()
+		linksObject.set("archiveData", mapper.createObjectNode()
     		.put("href", getArchiveUrl()));
     	
-		linksObject.put("owner", mapper.createObjectNode()
+		linksObject.set("owner", mapper.createObjectNode()
 			.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_PROFILE_SERVICE, getTenantId()) + owner));
-		linksObject.put("permissions", mapper.createObjectNode()
+		linksObject.set("permissions", mapper.createObjectNode()
     		.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, getTenantId()) + uuid + "/pems"));
-        linksObject.put("history", mapper.createObjectNode()
+        linksObject.set("history", mapper.createObjectNode()
 			.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, getTenantId()) + uuid + "/history"));
-	    linksObject.put("metadata", mapper.createObjectNode()
+	    linksObject.set("metadata", mapper.createObjectNode()
 			.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_METADATA_SERVICE, getTenantId()) + "data/?q=" + URLEncoder.encode("{\"associationIds\":\"" + uuid + "\"}")));
-		linksObject.put("notifications", mapper.createObjectNode()
+		linksObject.set("notifications", mapper.createObjectNode()
 			.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_NOTIFICATION_SERVICE, getTenantId()) + "?associatedUuid=" + uuid));
 		
     	if (!StringUtils.isEmpty(internalUsername)) {
-    		linksObject.put("internalUser", mapper.createObjectNode()
+    		linksObject.set("internalUser", mapper.createObjectNode()
     			.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_PROFILE_SERVICE, getTenantId()) + getOwner() + "/users/" + internalUsername));
     	}
     	
@@ -1578,6 +1580,16 @@ public class Job {
 		json.set("_links", hypermedia);
 	    	
 		return json.toString();
+	}
+	
+	/**
+	 * Equality check for collection existence checks when marshalling between {@link Job} and 
+	 * {@link JobDTO} objects.
+	 * @param dto a marshalled version of a {@link Job} object.
+	 * @return true if the uuid match. false otherwise.
+	 */
+	public boolean equals(JobDTO dto) {
+		return (dto != null && StringUtils.equals(getUuid(), dto.getUuid()));
 	}
 }
 

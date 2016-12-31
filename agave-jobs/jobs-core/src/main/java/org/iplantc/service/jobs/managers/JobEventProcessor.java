@@ -142,8 +142,8 @@ public class JobEventProcessor {
     	{
             executionSystem = JobManager.getJobExecutionSystem(getEvent().getJob());
             
-            jsonContent.put("job", jsonJob);
-        	jsonContent.put("system", mapper.readTree(executionSystem.toJSON()));
+            jsonContent.set("job", jsonJob);
+        	jsonContent.set("system", mapper.readTree(executionSystem.toJSON()));
         
     		NotificationManager.process(executionSystem.getUuid(), eventName, getEvent().getCreatedBy(), jsonContent.toString());
     		
