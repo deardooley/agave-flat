@@ -53,17 +53,26 @@ public class DataLocator {
 	 * @return
 	 * @throws RemoteDataException
 	 * @throws SystemUnavailableException
+	 * @throws JobException 
 	 */
-	public RemoteSystem findOutputSystemForJobData() throws RemoteDataException, SystemUnavailableException
+	public RemoteSystem findOutputSystemForJobData() throws RemoteDataException, SystemUnavailableException, JobException
 	{
-	    if (!JobManager.isJobDataFullyArchived(job))
-		{
-		    // get files from remote system...if they have job access, they should have system access
-		    return JobManager.getJobExecutionSystem(job);
+		// if the job was archived, we need to figure out where the data might be
+		if (job.isArchiveOutput()) {
+			// fully archived jobs should refer to the archive system.
+			if (JobManager.isJobDataFullyArchived(job)) {
+				return job.getArchiveSystem();
+			}
+			// otherwise partially archived jobs should default to the execution system
+			// since that's where the data would be
+			else {
+				return JobManager.getJobExecutionSystem(job);
+			}
 		}
-		else
-		{
-			return job.getArchiveSystem();
+		// otherwise, we go to the execution system since it's the only place
+		// the data could be.
+		else {
+			return JobManager.getJobExecutionSystem(job);
 		}
 	}
 

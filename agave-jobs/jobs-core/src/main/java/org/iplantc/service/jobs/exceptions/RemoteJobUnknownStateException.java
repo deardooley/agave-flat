@@ -27,6 +27,7 @@ public class RemoteJobUnknownStateException extends RemoteJobUnrecoverableStateE
 	 */
 	public RemoteJobUnknownStateException(String jobState, String message) {
 		super(message);
+		setJobState(jobState);
 	}
 
 	/**
@@ -34,6 +35,7 @@ public class RemoteJobUnknownStateException extends RemoteJobUnrecoverableStateE
 	 */
 	public RemoteJobUnknownStateException(String jobState, Throwable cause) {
 		super(cause);
+		setJobState(jobState);
 	}
 
 	/**
@@ -42,6 +44,7 @@ public class RemoteJobUnknownStateException extends RemoteJobUnrecoverableStateE
 	 */
 	public RemoteJobUnknownStateException(String jobState, String message, Throwable cause) {
 		super(message, cause);
+		setJobState(jobState);
 	}
 
 	/**
@@ -54,6 +57,7 @@ public class RemoteJobUnknownStateException extends RemoteJobUnrecoverableStateE
 			Throwable cause, boolean enableSuppression,
 			boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
+		setJobState(jobState);
 	}
 
 	/**

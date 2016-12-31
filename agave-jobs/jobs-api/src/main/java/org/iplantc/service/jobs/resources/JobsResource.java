@@ -19,6 +19,8 @@ import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobProcessingException;
 import org.iplantc.service.jobs.managers.JobRequestProcessor;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.dto.JobDTO;
+import org.iplantc.service.jobs.model.views.View;
 import org.iplantc.service.jobs.search.JobSearchFilter;
 import org.iplantc.service.notification.util.EntityWithNotificationReferenceSerializer;
 import org.joda.time.DateTime;
@@ -91,59 +93,64 @@ public class JobsResource extends AbstractJobResource {
 
 		try
 		{
-			List<Job> jobs = null;
-
 			Map<SearchTerm, Object> queryParameters = getQueryParameters();
 
 			if (queryParameters.isEmpty()) {
-				jobs = JobDao.getByUsername(username, offset, limit);
-			} else {
-				jobs = JobDao.findMatching(username, queryParameters, offset, limit);
-			}
-			
-			if (hasJsonPathFilters()) {
-				ObjectMapper mapper = new ObjectMapper();
-				ArrayNode json = mapper.createArrayNode();
-			
-				for(Job job: jobs)
-				{
-					json.add(mapper.readTree(job.toJSON()));
-				}
+				List<Job> jobs = JobDao.getByUsername(username, offset, limit);
+				if (hasJsonPathFilters()) {
+					ObjectMapper mapper = new ObjectMapper();
+					ArrayNode json = mapper.createArrayNode();
 				
-				return new IplantSuccessRepresentation(json.toString());
-			}
-			else {
-				JSONWriter writer = new JSONStringer();
-				writer.array();
-	
-				for(Job job: jobs)
-				{
-	//				Job job = jobs.get(i);
-					writer.object()
-						.key("id").value(job.getUuid())
-						.key("name").value(job.getName())
-						.key("owner").value(job.getOwner())
-						.key("executionSystem").value(job.getSystem())
-						.key("appId").value(job.getSoftwareName())
-						.key("created").value(new DateTime(job.getCreated()).toString())
-						.key("status").value(job.getStatus())
-						.key("startTime").value(job.getStartTime() == null ? null : new DateTime(job.getStartTime()).toString())
-						.key("endTime").value(job.getEndTime() == null ? null : new DateTime(job.getEndTime()).toString())
-						.key("_links").object()
-				        	.key("self").object()
-				        		.key("href").value(TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE) + job.getUuid())
-					        .endObject()
-					        .key("archiveData").object()
-			        			.key("href").value(TenancyHelper.resolveURLToCurrentTenant(job.getArchiveUrl()))
-					        .endObject()
-				       .endObject()
-			        .endObject();
+					for(Job job: jobs)
+					{
+						json.add(mapper.readTree(job.toJSON()));
+					}
+					
+					return new IplantSuccessRepresentation(json.toString());
 				}
-	
-				writer.endArray();
-	
-				return new IplantSuccessRepresentation(writer.toString());
-			}
+				else {
+					JSONWriter writer = new JSONStringer();
+					writer.array();
+		
+					for(Job job: jobs)
+					{
+		//				Job job = jobs.get(i);
+						writer.object()
+							.key("id").value(job.getUuid())
+							.key("name").value(job.getName())
+							.key("owner").value(job.getOwner())
+							.key("executionSystem").value(job.getSystem())
+							.key("appId").value(job.getSoftwareName())
+							.key("created").value(new DateTime(job.getCreated()).toString())
+							.key("status").value(job.getStatus())
+							.key("startTime").value(job.getStartTime() == null ? null : new DateTime(job.getStartTime()).toString())
+							.key("endTime").value(job.getEndTime() == null ? null : new DateTime(job.getEndTime()).toString())
+							.key("_links").object()
+					        	.key("self").object()
+					        		.key("href").value(TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE) + job.getUuid())
+						        .endObject()
+						        .key("archiveData").object()
+				        			.key("href").value(TenancyHelper.resolveURLToCurrentTenant(job.getArchiveUrl()))
+						        .endObject()
+					       .endObject()
+				        .endObject();
+					}
+		
+					writer.endArray();
+		
+					return new IplantSuccessRepresentation(writer.toString());
+				}
+			} 
+			else {
+				List<JobDTO> jobs = JobDao.findMatching(username, queryParameters, offset, limit);
+				ObjectMapper mapper = new ObjectMapper();
+				if (hasJsonPathFilters()) {
+					return new IplantSuccessRepresentation(mapper.writeValueAsString(jobs));
+				}
+				else {
+					return new IplantSuccessRepresentation(mapper.writerWithView(View.Summary.class).writeValueAsString(jobs));
+				}
+			}	
 		}
 		catch (HibernateException e) {
 				log.error("Failed to fetch job listings from db.", e);
