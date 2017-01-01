@@ -415,7 +415,7 @@ public class BatchQueueDao extends AbstractDao {
             q = q.replace(":systemId", systemId.toString());
 
             for (SearchTerm searchTerm : searchCriteria.keySet()) {
-                if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN) {
+                if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN || searchTerm.getOperator() == SearchTerm.Operator.ON) {
                     List<String> formattedDates = (List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm));
                     for(int i=0;i<formattedDates.size(); i++) {
                         query.setString(searchTerm.getSafeSearchField()+i, formattedDates.get(i));

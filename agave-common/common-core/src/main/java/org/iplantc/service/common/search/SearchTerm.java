@@ -29,7 +29,7 @@ public class SearchTerm implements Comparable<SearchTerm>
 	 */
 	public enum Operator {
 		EQ("%s = :%s"), 
-		ON("%s like :%s"),
+		ON("%s between :%s0 and :%s1"),
 		NEQ("%s <> :%s"),
 		LT("%s < :%s"),
 		BEFORE("%s < :%s"),
@@ -97,7 +97,7 @@ public class SearchTerm implements Comparable<SearchTerm>
 		public Object applyWildcards(Object searchValue) {
 			if (searchValue == null) {
 				searchValue = "";
-			} else if (searchValue instanceof List) {
+			} else if (searchValue instanceof List && this != ON) {
 			    if (this == BETWEEN) {
 			    	// single term 
 			        List<String> dates = new ArrayList<String>();
@@ -118,7 +118,10 @@ public class SearchTerm implements Comparable<SearchTerm>
 			    }
 			} else if (searchValue instanceof Date) {
 				if (this == ON) {
-			        return new SimpleDateFormat("YYYY-MM-dd%").format((Date)searchValue);
+					List<String> dates = new ArrayList<String>();
+			        dates.add(new SimpleDateFormat("YYYY-MM-dd 00:00:00").format((Date)searchValue));
+			        dates.add(new SimpleDateFormat("YYYY-MM-dd 23:59:59").format((Date)searchValue));
+			        return dates;
 			    } 
 			    else if (this == GT || this == LTE || this == AFTER) {
 			    	return new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.999999").format((Date)searchValue);
@@ -368,12 +371,11 @@ public class SearchTerm implements Comparable<SearchTerm>
 //			        prefixedMappedfield, 
 //			        "%Y-%m-%d %H:%i:%s",
 			        getSafeSearchField());
-//		} else if (this.operator == Operator.ON) {
-//		    return String.format(operator.getTemplate(), 
-//                    prefixedMappedfield,
-//                    "%Y-%m-%d",
-//                    getSafeSearchField(),
-//                    "%Y-%m-%d");
+		} else if (this.operator == Operator.ON) {
+		    return String.format(operator.getTemplate(), 
+                    prefixedMappedfield,
+                    getSafeSearchField(),
+                    getSafeSearchField());
 //		} else if (this.operator == Operator.BEFORE || this.operator == Operator.AFTER) {
 //            return String.format(operator.getTemplate(), 
 //                    prefixedMappedfield, "%Y-%m-%d %H:%i:%s", getSafeSearchField());

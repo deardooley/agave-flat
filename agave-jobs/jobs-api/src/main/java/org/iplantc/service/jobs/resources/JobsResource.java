@@ -20,9 +20,8 @@ import org.iplantc.service.jobs.exceptions.JobProcessingException;
 import org.iplantc.service.jobs.managers.JobRequestProcessor;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.dto.JobDTO;
-import org.iplantc.service.jobs.model.views.View;
+import org.iplantc.service.jobs.model.dto.JobDTOSummaryFilter;
 import org.iplantc.service.jobs.search.JobSearchFilter;
-import org.iplantc.service.notification.util.EntityWithNotificationReferenceSerializer;
 import org.joda.time.DateTime;
 import org.json.JSONStringer;
 import org.json.JSONWriter;
@@ -38,8 +37,8 @@ import org.restlet.resource.Variant;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
 /**
  * The JobResource object enables HTTP GET and POST actions on contrast jobs.
@@ -145,10 +144,39 @@ public class JobsResource extends AbstractJobResource {
 				List<JobDTO> jobs = JobDao.findMatching(username, queryParameters, offset, limit);
 				ObjectMapper mapper = new ObjectMapper();
 				if (hasJsonPathFilters()) {
+//					return new IplantSuccessRepresentation(mapper.valueToTree(jobs));
 					return new IplantSuccessRepresentation(mapper.writeValueAsString(jobs));
 				}
 				else {
-					return new IplantSuccessRepresentation(mapper.writerWithView(View.Summary.class).writeValueAsString(jobs));
+					JSONWriter writer = new JSONStringer();
+					writer.array();
+					
+					for(JobDTO job: jobs)
+					{
+		//				Job job = jobs.get(i);
+						writer.object()
+							.key("id").value(job.getUuid())
+							.key("name").value(job.getName())
+							.key("owner").value(job.getOwner())
+							.key("executionSystem").value(job.getExecution_system())
+							.key("appId").value(job.getSoftware_name())
+							.key("created").value(new DateTime(job.getCreated()).toString())
+							.key("status").value(job.getStatus())
+							.key("startTime").value(job.getStart_time() == null ? null : new DateTime(job.getStart_time()).toString())
+							.key("endTime").value(job.getEnd_time() == null ? null : new DateTime(job.getEnd_time()).toString())
+							.key("_links").object()
+					        	.key("self").object()
+					        		.key("href").value(TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE) + job.getUuid())
+						        .endObject()
+						        .key("archiveData").object()
+				        			.key("href").value(TenancyHelper.resolveURLToCurrentTenant(job.getArchiveUrl()))
+						        .endObject()
+					       .endObject()
+				        .endObject();
+					}
+		
+					writer.endArray();
+					return new IplantSuccessRepresentation(writer.toString());
 				}
 			}	
 		}

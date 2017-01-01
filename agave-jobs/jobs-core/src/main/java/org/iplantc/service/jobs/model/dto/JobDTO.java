@@ -4,6 +4,7 @@
 package org.iplantc.service.jobs.model.dto;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.util.Date;
@@ -67,25 +68,30 @@ public class JobDTO {
 	 * Whether the job should be archived after code execution completes.
 	 */
 	@JsonIgnore
-	private Byte				archive_output;	
+	@JsonProperty("archive")
+	@JsonView(View.Full.class)
+	private boolean				archive_output;	
 	
 	/**
 	 * The path to the archived job {@link #work_path} on the {@link #archive_system}
 	 */
 	@JsonProperty("archivePath")
+	@JsonView(View.Full.class)
 	private String				archive_path;
 	
 	/**
 	 * {@link RemoteSystem} to which the job {@link #work_path} will be transferred.
 	 */
 	@JsonProperty("archiveSystem")
+	@JsonView(View.Full.class)
 	private String				archive_system;	
 	
 	/**
 	 * Charge for this job against the user's allocation
 	 */
 	@JsonProperty("charge")
-	private Float				charge;			
+	@JsonView(View.Full.class)
+	private double				charge;			
 	
 	/**
 	 * Job creation timestampe
@@ -105,6 +111,7 @@ public class JobDTO {
 	 * Current status message for the job 
 	 */
 	@JsonProperty("message")
+	@JsonView(View.Full.class)
 	private String				error_message;
 	
 	/**
@@ -118,6 +125,7 @@ public class JobDTO {
 	 * {@link ObjectNode} encoded list of {@link JobInput}s
 	 */
 	@JsonProperty("inputs")
+	@JsonView(View.Full.class)
 	private String				inputs;
 	
 	/**
@@ -125,12 +133,14 @@ public class JobDTO {
 	 * this job will be attributed.  
 	 */
 	@JsonProperty("internalUsername")
+	@JsonView(View.Full.class)
 	private String				internal_username;
 	
 	/**
 	 * Last modified timestamp 
 	 */
 	@JsonProperty("lastUpdated")
+	@JsonView(View.Full.class)
 	private Date				last_updated;	
  
 	/**
@@ -138,6 +148,7 @@ public class JobDTO {
 	 * remote system.
 	 */
 	@JsonProperty("localJobId")
+	@JsonView(View.Full.class)
 	private String				local_job_id;
 	
 	/**
@@ -145,13 +156,15 @@ public class JobDTO {
 	 * should run.
 	 */
 	@JsonProperty("maxRunTime")
+	@JsonView(View.Full.class)
 	private String				requested_time;
 	
 	/**
 	 * Requested memory per node for the job.
 	 */
 	@JsonProperty("memoryPerNode")
-	private Double				memory_request;	
+	@JsonView(View.Full.class)
+	private double				memory_request;	
 	
 	/**
 	 * A freeform name for the job.
@@ -164,7 +177,8 @@ public class JobDTO {
 	 * Requested total number of nodes needed to run this job.
 	 */
 	@JsonProperty("nodeCount")
-	private Integer				node_count;		
+	@JsonView(View.Full.class)
+	private int					node_count;		
 	
 	/**
 	 * The principal to whom this job is attributed.
@@ -177,26 +191,30 @@ public class JobDTO {
 	 * {@link ObjectNode} encoded list of {@link JobParameter}s
 	 */
 	@JsonProperty("parameters")
+	@JsonView(View.Full.class)
 	private String				parameters;
 	
 	/**
 	 * Requested number of processors per node needed to run this job.
 	 */
 	@JsonProperty("processorsPerNode")
-	private Long				processor_count; 
+	@JsonView(View.Full.class)
+	private int					processor_count; 
 	
 	/**
 	 * {@link BatchQueue#getEffectiveMappedName()} of the queue to which the 
 	 * job was submitted.
 	 */
 	@JsonProperty("batchQueue")
+	@JsonView(View.Full.class)
 	private String				queue_request;
 	
 	/**
 	 * Number of retries for this job
 	 */
 	@JsonProperty("retries")
-	private Integer				retries;
+	@JsonView(View.Full.class)
+	private int					retries;
 
 	/**
 	 * Serialized {@link JobStatusType} value of the job status.
@@ -208,14 +226,16 @@ public class JobDTO {
 	/**
 	 * The number of times this job has been actively checked.
 	 */
-	@JsonProperty("statusChecks")
-	private Integer				status_checks; 	
+//	@JsonProperty("statusChecks")
+	@JsonIgnore
+	private int				status_checks; 	
 	
 	/**
 	 * Optional id given by a metascheduler if the job is managed by 
 	 * something other than a batch scheduler on a remote system.
 	 */
 	@JsonProperty("schedulerJobId")
+	@JsonView(View.Full.class)
 	private String				scheduler_job_id; 
 	
 	/**
@@ -229,12 +249,14 @@ public class JobDTO {
 	 * Job submitted to remote system for execution timestamp
 	 */
 	@JsonProperty("submitTime")
+	@JsonView(View.Full.class)
 	private Date				submit_time;		
 	
 	/**
 	 * {@link Tenant#getCode} to which this job is bound.
 	 */
-	@JsonProperty("tenantId")
+//	@JsonProperty("tenantId")
+	@JsonIgnore
 	private String				tenant_id;
 	
 	/**
@@ -245,30 +267,32 @@ public class JobDTO {
 	private String				update_token;	
 	
 	@JsonIgnore
-	private Integer				optlock;
+	private int					optlock;
 	/**
 	 * Optimistic locking column for the job
 	 */
-	@JsonProperty("version")
-	private Integer				version;
+//	@JsonProperty("version")
+	@JsonIgnore
+	private BigInteger			version;
 	
 	/**
 	 * Whether this job has been hidden from view 
 	 * aka "deleted"
 	 */
 	@JsonIgnore
-	private Byte				visible;
+	private Boolean				visible;
 	
 	/**
 	 * The path to the job work directory on the {@link #execution_system} 
 	 */
 	@JsonProperty("workPath")
+	@JsonView(View.Full.class)
 	private String				work_path;
 	
 	public JobDTO() {
 		status = JobStatusType.PENDING.name();
 		status_checks = 0;
-		setVisible((byte)1);
+		setVisible(true);
 				
 	}
 	
@@ -362,7 +386,7 @@ public class JobDTO {
 	@JsonIgnore
 	public String getArchiveUrl() 
 	{
-		if (isFinished() && isArchive()) {
+		if (isFinished() && isArchive_output()) {
 			return TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_IO_SERVICE, tenant_id) + 
 					"listings/system/" + archive_system + "/" + UrlPathEscaper.escape(archive_path);
 		} else {
@@ -374,7 +398,7 @@ public class JobDTO {
 	@Transient
 	public String getArchiveCanonicalUrl() 
 	{
-		if (isFinished() && isArchive()) {
+		if (isFinished() && isArchive_output()) {
 			return TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_IO_SERVICE, tenant_id) + 
 					"listings/system/" + archive_system + "/" + UrlPathEscaper.escape(archive_path);
 		} else {
@@ -383,8 +407,10 @@ public class JobDTO {
 		}
 	}
 	
-	@Transient
-	@JsonIgnore
+//	@Transient
+//	@JsonIgnore
+	@JsonProperty("_links")
+	@JsonView(View.Full.class)
 	private ObjectNode getFullHypermedia() {
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode linksObject = mapper.createObjectNode();
@@ -396,7 +422,7 @@ public class JobDTO {
     		.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_SYSTEM_SERVICE, tenant_id) + execution_system));
 		linksObject.set("archiveSystem", mapper.createObjectNode()
         		.put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_SYSTEM_SERVICE, tenant_id) + 
-        				(isArchive() ? archive_system : execution_system)));
+        				(isArchive_output() ? archive_system : execution_system)));
 		
 		linksObject.set("archiveData", mapper.createObjectNode()
     		.put("href", getArchiveUrl()));
@@ -448,12 +474,12 @@ public class JobDTO {
 			.put("processorsPerNode", processor_count)
 			.put("memoryPerNode", memory_request)
 			.put("maxRunTime", requested_time)
-			.put("archive", isArchive())
+			.put("archive", isArchive_output())
 			.put("retries", retries)
 			.put("localId", local_job_id)
 			.put("created", new DateTime(created).toString());
 			
-		if (isArchive())
+		if (isArchive_output())
 		{
 			json.put("archivePath", archive_path);
 			json.put("archiveSystem", archive_system);
@@ -494,8 +520,8 @@ public class JobDTO {
 	/**
 	 * @param id the id to set
 	 */
-	public void setId(BigInteger id) {
-		this.id = id == null ? 0 : id.longValue();
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	/**
@@ -527,41 +553,17 @@ public class JobDTO {
 	}
 	
 	/**
-	 * @return
-	 */
-	@JsonIgnore
-	private Byte getArchive_output() {
-		return archive_output;
-	}
-
-	/**
 	 * @return the archive_output
 	 */
-	@Transient
-	@JsonProperty("archiveOutput")
-	public boolean isArchive() {
-		return archive_output.intValue() == 1;
+	public Boolean isArchive_output() {
+		return archive_output;
 	}
 	
 	/**
 	 * @param archive_output the archive_output to set
 	 */
-	public void setArchive_output(Byte archive_output) {
-		this.archive_output = archive_output.intValue() == 1 ? (byte)1 : (byte)0;
-	}
-
-	/**
-	 * @param archive_output the archive_output to set
-	 */
-	public void setArchive_output(boolean archive_output) {
-		this.archive_output = archive_output ? (byte)1 : (byte)0;
-	}
-	
-	/**
-	 * @param archive_output the archive_output to set
-	 */
-	public void setArchive_output(int archive_output) {
-		setArchive_output(archive_output == 1);
+	public void setArchive_output(Boolean archive_output) {
+		this.archive_output = (archive_output != null && archive_output);
 	}
 	
 	/**
@@ -595,15 +597,15 @@ public class JobDTO {
 	/**
 	 * @return the charge
 	 */
-	public Float getCharge() {
+	public double getCharge() {
 		return charge;
 	}
 
 	/**
 	 * @param charge the charge to set
 	 */
-	public void setCharge(Float charge) {
-		this.charge = charge;
+	public void setCharge(Double charge) {
+		this.charge = charge == null ? 0 : charge.doubleValue();
 	}
 
 	/**
@@ -735,7 +737,7 @@ public class JobDTO {
 	/**
 	 * @return the memory_request
 	 */
-	public Double getMemory_request() {
+	public double getMemory_request() {
 		return memory_request;
 	}
 
@@ -743,7 +745,7 @@ public class JobDTO {
 	 * @param memory_request the memory_request to set
 	 */
 	public void setMemory_request(Double memory_request) {
-		this.memory_request = memory_request;
+		this.memory_request = memory_request == null ? 0 : memory_request.doubleValue();
 	}
 
 	/**
@@ -763,14 +765,14 @@ public class JobDTO {
 	/**
 	 * @return the node_count
 	 */
-	public Integer getNode_count() {
+	public long getNode_count() {
 		return node_count;
 	}
 
 	/**
 	 * @param node_count the node_count to set
 	 */
-	public void setNode_count(BigInteger node_count) {
+	public void setNode_count(Integer node_count) {
 		this.node_count = node_count == null ? 0 : node_count.intValue();
 	}
 
@@ -805,15 +807,15 @@ public class JobDTO {
 	/**
 	 * @return the processor_count
 	 */
-	public Long getProcessor_count() {
+	public long getProcessor_count() {
 		return processor_count;
 	}
 
 	/**
 	 * @param processor_count the processor_count to set
 	 */
-	public void setProcessor_count(BigInteger processor_count) {
-		this.processor_count = processor_count == null ? 0 : processor_count.longValue();
+	public void setProcessor_count(Integer processor_count) {
+		this.processor_count = processor_count == null ? 0 : processor_count.intValue();
 	}
 
 	/**
@@ -833,7 +835,7 @@ public class JobDTO {
 	/**
 	 * @return the retries
 	 */
-	public Integer getRetries() {
+	public int getRetries() {
 		return retries;
 	}
 
@@ -841,7 +843,7 @@ public class JobDTO {
 	 * @param retries the retries to set
 	 */
 	public void setRetries(Integer retries) {
-		this.retries = retries;
+		this.retries = retries == null ? 0 : retries.intValue();
 	}
 
 	/**
@@ -861,7 +863,7 @@ public class JobDTO {
 	/**
 	 * @return the status_checks
 	 */
-	public Integer getStatus_checks() {
+	public int getStatus_checks() {
 		return status_checks;
 	}
 
@@ -869,7 +871,7 @@ public class JobDTO {
 	 * @param status_checks the status_checks to set
 	 */
 	public void setStatus_checks(Integer status_checks) {
-		this.status_checks = status_checks;
+		this.status_checks = status_checks == null ? 0 : status_checks.intValue();
 	}
 
 	/**
@@ -945,7 +947,7 @@ public class JobDTO {
 	/**
 	 * @return the version
 	 */
-	public Integer getVersion() {
+	public BigInteger getVersion() {
 		return version;
 	}
 
@@ -953,7 +955,7 @@ public class JobDTO {
 	 * @param version the version to set
 	 */
 	public void setVersion(BigInteger version) {
-		this.version = version == null ? 0 : version.intValue();
+		this.version = version;
 	}
 
 	/**
@@ -961,32 +963,23 @@ public class JobDTO {
 	 */
 	@Transient
 	@JsonProperty("visible")
-	public boolean isJobVisible() {
-		return visible.intValue() == 1;
+	public boolean isVisible() {
+		return visible;
 	}
-	
 	
 	/**
 	 * @return
 	 */
 	@JsonIgnore
-	private Byte getVisible() {
+	private boolean getVisible() {
 		return visible;
 	}
 	
 	/**
 	 * @param visible the visible to set
 	 */
-	public void setVisible(Byte visible) {
-		this.visible = visible.intValue() == 1 ? (byte)1 : (byte)0;
-	}
-
-	/**
-	 * @param visible the visible to set
-	 */
-	@Transient
-	public void setJobVisible(boolean visible) {
-		this.visible = visible ? (byte)1 : (byte)0;
+	public void setVisible(Boolean visible) {
+		this.visible = (visible != null && visible);
 	}
 
 	/**

@@ -66,7 +66,7 @@ public abstract class AgaveResourceSearchFilter {
             
             // adjust data queries to make LT and GT equivalent to BEFORE and AFTER
             if (getSearchTypeMappings().get(searchTerm.getSearchField()) == Date.class) {
-                if (searchTerm.getOperator() == SearchTerm.Operator.EQ) {
+            	if (searchTerm.getOperator() == SearchTerm.Operator.EQ) {
                 	searchTerm.setOperator(SearchTerm.Operator.BETWEEN);
                 }
                 else if (searchTerm.getOperator() == SearchTerm.Operator.LT) {

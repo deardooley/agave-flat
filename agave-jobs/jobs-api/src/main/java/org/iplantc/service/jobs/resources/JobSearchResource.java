@@ -12,13 +12,18 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
+import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
+import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.dto.JobDTO;
 import org.iplantc.service.jobs.model.views.View;
 import org.iplantc.service.jobs.search.JobSearchFilter;
+import org.joda.time.DateTime;
+import org.json.JSONStringer;
+import org.json.JSONWriter;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
@@ -102,21 +107,41 @@ public class JobSearchResource extends AbstractJobResource {
 		try
 		{
 			List<JobDTO> jobs = JobDao.findMatching(username, new JobSearchFilter().filterCriteria(queryParameters), offset, limit);
-//			String json = "";
-//			for (int i=offset; i< Math.min((limit+offset), jobs.size()); i++)
-//			{
-//				json += "," + jobs.get(i).toJSON();
-//			}
-//			if (json.startsWith(","))
-//				json = json.substring(1);
-//			return new IplantSuccessRepresentation("[" + json + "]");
 			
 			ObjectMapper mapper = new ObjectMapper();
 			if (hasJsonPathFilters()) {
 				return new IplantSuccessRepresentation(mapper.writeValueAsString(jobs));
 			}
 			else {
-				return new IplantSuccessRepresentation(mapper.writerWithView(View.Summary.class).writeValueAsString(jobs));
+				JSONWriter writer = new JSONStringer();
+				writer.array();
+				
+				for(JobDTO job: jobs)
+				{
+	//				Job job = jobs.get(i);
+					writer.object()
+						.key("id").value(job.getUuid())
+						.key("name").value(job.getName())
+						.key("owner").value(job.getOwner())
+						.key("executionSystem").value(job.getExecution_system())
+						.key("appId").value(job.getSoftware_name())
+						.key("created").value(new DateTime(job.getCreated()).toString())
+						.key("status").value(job.getStatus())
+						.key("startTime").value(job.getStart_time() == null ? null : new DateTime(job.getStart_time()).toString())
+						.key("endTime").value(job.getEnd_time() == null ? null : new DateTime(job.getEnd_time()).toString())
+						.key("_links").object()
+				        	.key("self").object()
+				        		.key("href").value(TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE) + job.getUuid())
+					        .endObject()
+					        .key("archiveData").object()
+			        			.key("href").value(TenancyHelper.resolveURLToCurrentTenant(job.getArchiveUrl()))
+					        .endObject()
+				       .endObject()
+			        .endObject();
+				}
+	
+				writer.endArray();
+				return new IplantSuccessRepresentation(writer.toString());
 			}
 		}
 		catch (Exception e)

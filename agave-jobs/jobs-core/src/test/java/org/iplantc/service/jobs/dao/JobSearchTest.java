@@ -26,7 +26,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(groups={"broken"}, singleThreaded=true)
+@Test(singleThreaded=true)
 public class JobSearchTest  extends AbstractDaoTest {
 
 	private static final Logger log = Logger.getLogger(JobSearchTest.class);
@@ -70,17 +70,17 @@ public class JobSearchTest  extends AbstractDaoTest {
         {
         	JobStatusType status = JobStatusType.FINISHED;
             Job job = createJob(status);
-            searchCriteria.add(new Object[]{ status, "runtime.le", true, "Searching by less than or equal to  known exact runtime should not fail" });
+            searchCriteria.add(new Object[]{ status, "runtime.lte", true, "Searching by less than or equal to  known exact runtime should not fail" });
             
             if (job.getStartTime() == null) 
             {  
                 searchCriteria.add(new Object[]{ status, "runtime", false, "Searching by known exact runtime on a job that has not started should not fail" });
                 searchCriteria.add(new Object[]{ status, "runtime.eq", false, "Searching by known exact runtime on a job that has not started should not fail" });
-                searchCriteria.add(new Object[]{ status, "runtime.le", true, "Searching by less than or equal to known exact runtime on a job that has not started should succeed" });
+                searchCriteria.add(new Object[]{ status, "runtime.lte", true, "Searching by less than or equal to known exact runtime on a job that has not started should succeed" });
                 searchCriteria.add(new Object[]{ status, "runtime.lt", true, "Searching less than known exact runtime on a job that has not started should succeed" });
                 searchCriteria.add(new Object[]{ status, "runtime.gt", false, "Searching runtime strictly greater than than actual amount on a job that has not started should fail" });
                 searchCriteria.add(new Object[]{ status, "runtime.in", false, "Searching runtime with exact value in range on a job that has not started should not fail" });
-                searchCriteria.add(new Object[]{ status, "runtime.ge", false, "Searching by greater than or equal to known exact runtime on a job that has not started should not fail" });
+                searchCriteria.add(new Object[]{ status, "runtime.gte", false, "Searching by greater than or equal to known exact runtime on a job that has not started should not fail" });
             }
             else 
             {  
@@ -88,7 +88,7 @@ public class JobSearchTest  extends AbstractDaoTest {
                 searchCriteria.add(new Object[]{ status, "runtime.eq", true, "Searching by old runtime of unfinished job should fail" });
                 searchCriteria.add(new Object[]{ status, "runtime.ge", true, "Searching by greater than or equal to old runtime of unfinished job should fail" });
                 searchCriteria.add(new Object[]{ status, "runtime.lt", false, "Searching by less than old runtime of unfinished job should succeed" });
-                searchCriteria.add(new Object[]{ status, "runtime.le", true, "Searching by less than or equal to  known exact runtime should succeed" });
+                searchCriteria.add(new Object[]{ status, "runtime.lte", true, "Searching by less than or equal to  known exact runtime should succeed" });
                 searchCriteria.add(new Object[]{ status, "runtime.gt", false, "Searching by value greater than or equal to old runtime of unfinished job should fail" });
                 searchCriteria.add(new Object[]{ status, "runtime.in", true, "Searching by range with values greater than or equal to old runtime of unfinished job should fail" });
             }
@@ -117,7 +117,7 @@ public class JobSearchTest  extends AbstractDaoTest {
         
         if (shouldSucceed) {
             Assert.assertEquals(searchJobs.size(), 1, "findMatching returned the wrong number of jobs for search by " + searchField);
-            Assert.assertTrue(searchJobs.contains(job), "findMatching did not return the saved job.");
+            Assert.assertEquals(searchJobs.get(0).getUuid(), job.getUuid(), "findMatching did not return the saved job when searching by runtime");
         }
         else {
         	Assert.assertTrue(searchJobs.isEmpty(), "findMatching should return no jobs for search by " + searchField);
@@ -133,23 +133,23 @@ public class JobSearchTest  extends AbstractDaoTest {
 	    {
 	    	JobStatusType status = JobStatusType.FINISHED;
 	    	
-	        searchCriteria.add(new Object[]{ status, "walltime.le", true, "Searching by less than or equal to  known exact walltime should not fail" });
+	        searchCriteria.add(new Object[]{ status, "walltime.lte", true, "Searching by less than or equal to  known exact walltime should not fail" });
 	        
 	        if (JobStatusType.isFinished(status)) 
 	        {  
 	            searchCriteria.add(new Object[]{ status, "walltime", true, "Searching by known exact walltime should not fail" });
 	            searchCriteria.add(new Object[]{ status, "walltime.eq", true, "Searching by known exact walltime should not fail" });
-	            searchCriteria.add(new Object[]{ status, "walltime.le", true, "Searching by less than or equal to  known exact walltime should not fail" });
+	            searchCriteria.add(new Object[]{ status, "walltime.lte", true, "Searching by less than or equal to  known exact walltime should not fail" });
 	            searchCriteria.add(new Object[]{ status, "walltime.lt", false, "Searching walltime less than actual amount should fail" });
 	            searchCriteria.add(new Object[]{ status, "walltime.gt", false, "Searching walltime strictly greater than than actual amount should fail" });
 	            searchCriteria.add(new Object[]{ status, "walltime.in", true, "Searching walltime with exact value in range should not fail" });
-	            searchCriteria.add(new Object[]{ status, "walltime.ge", true, "Searching by greater than or equal to known exact walltime should not fail" });
+	            searchCriteria.add(new Object[]{ status, "walltime.gte", true, "Searching by greater than or equal to known exact walltime should not fail" });
 	        }
 	        else 
 	        {  
                 searchCriteria.add(new Object[]{ status, "walltime", false, "Searching by old walltime of unfinished job should fail" });
                 searchCriteria.add(new Object[]{ status, "walltime.eq", false, "Searching by old walltime of unfinished job should fail" });
-                searchCriteria.add(new Object[]{ status, "walltime.ge", false, "Searching by greater than or equal to old walltime of unfinished job should fail" });
+                searchCriteria.add(new Object[]{ status, "walltime.gte", false, "Searching by greater than or equal to old walltime of unfinished job should fail" });
                 searchCriteria.add(new Object[]{ status, "walltime.lt", true, "Searching by less than old walltime of unfinished job should succeed" });
                 searchCriteria.add(new Object[]{ status, "walltime.gt", false, "Searching by value greater than or equal to old walltime of unfinished job should fail" });
                 searchCriteria.add(new Object[]{ status, "walltime.in", false, "Searching by range with values greater than or equal to old walltime of unfinished job should fail" });
@@ -159,7 +159,7 @@ public class JobSearchTest  extends AbstractDaoTest {
         return searchCriteria.toArray(new Object[][] {});
     }
 	
-	@Test(dataProvider="searchJobsByDerivedWallTimeProvider")//, dependsOnMethods={"searchJobsByDerivedRunTime"})
+	@Test(dataProvider="searchJobsByDerivedWallTimeProvider", dependsOnMethods={"searchJobsByDerivedRunTime"})
 	public void searchJobsByDerivedWallTime(JobStatusType status, String searchField, boolean shouldSucceed, String message) throws Exception
     {   
 	    Job job = createJob(status);
@@ -175,10 +175,9 @@ public class JobSearchTest  extends AbstractDaoTest {
         List<JobDTO> searchJobs = JobDao.findMatching(job.getOwner(), new JobSearchFilter().filterCriteria(map));
 //        Assert.assertEquals(searchJobs == null, shouldSucceed, message);
         
-        if (shouldSucceed) {
-        	
+        if (shouldSucceed) {       	
             Assert.assertEquals(searchJobs.size(), 1, "findMatching returned the wrong number of jobs for search by " + searchField);
-            Assert.assertTrue(searchJobs.contains(job), "findMatching did not return the saved job.");
+            Assert.assertEquals(searchJobs.get(0).getUuid(), job.getUuid(), "findMatching did not return the saved job when searching by walltime");
         }
         else {
         	Assert.assertTrue(searchJobs.isEmpty(), "findMatching should return no jobs for search by " + searchField);

@@ -62,12 +62,12 @@ public class JobSearchFilter extends AgaveResourceSearchFilter
 			searchTermMappings.put("parameters", "%sparameters");
 			searchTermMappings.put("processorspernode", "%sprocessor_count");
 			searchTermMappings.put("retries", "%sretries");
-			searchTermMappings.put("runtime", "%sstart_time is not null and (unix_timestamp(DATE(DATE_FORMAT(%send_time,'%Y-%m-%d %H:%i:%s'))) - unix_timestamp(DATE(DATE_FORMAT(%sstart_time,'%Y-%m-%d %H:%i:%s'))))");
+			searchTermMappings.put("runtime", "%sstart_time is not null and (abs(unix_timestamp(%send_time) - unix_timestamp(%sstart_time)))");
 			searchTermMappings.put("starttime", "%sstart_time");
 			searchTermMappings.put("status", "%sstatus");
 			searchTermMappings.put("submittime", "%ssubmit_time");
 			searchTermMappings.put("visible", "%svisible");
-			searchTermMappings.put("walltime", "abs(unix_timestamp(DATE(DATE_FORMAT(%send_time,'%Y-%m-%d %H:%i:%s'))) - unix_timestamp(DATE(DATE_FORMAT(%screated,'%Y-%m-%d %H:%i:%s'))))");
+			searchTermMappings.put("walltime", "%send_time is not null and (abs(unix_timestamp(%send_time) - unix_timestamp(%screated)))");
 		}
 		
 		return searchTermMappings;
@@ -108,7 +108,7 @@ public class JobSearchFilter extends AgaveResourceSearchFilter
 			searchTypeMappings.put("status", JobStatusType.class);
 			searchTypeMappings.put("submittime", Date.class);
 			searchTypeMappings.put("visible", Boolean.class);
-			searchTypeMappings.put("walltime", Integer.class);
+			searchTypeMappings.put("walltime", Long.class);
 		}
 		
 		return searchTypeMappings;
@@ -121,7 +121,7 @@ public class JobSearchFilter extends AgaveResourceSearchFilter
 	@Override
 	public Object strongTypeSearchValue(Class searchTermType, String searchField, String searchValue)
     throws IllegalArgumentException {
-        if (searchTermType == Date.class) {
+		if (searchTermType == Date.class) {
             Object time = StringToTime.date(searchValue);
             if (Boolean.FALSE.equals(time)) {
                 if (NumberUtils.isDigits(searchValue)) {

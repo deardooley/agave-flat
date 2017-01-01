@@ -44,6 +44,8 @@ import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.StorageSystem;
 import org.joda.time.DateTime;
 
+import com.maverick.util.Arrays;
+
 /**
  * @author dooley
  * 
@@ -761,26 +763,17 @@ public class JobDao
 		try
 		{
 			session = getSession();
-//			SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 			
 			if (forceTimestamp) {
-//				log.debug(String.format("Job.created(pre force timestamp)[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getCreated()), new DateTime().toString(), f.format(new Date())));
-//				log.debug(String.format("Job.lastUpdated(pre force timestamp)[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getLastUpdated()), new DateTime().toString(), f.format(new Date())));
 				job.setLastUpdated(new DateTime().toDate());
 			}
 			
-//			log.debug(String.format("Job.created[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getCreated()), new DateTime().toString(), f.format(new Date())));
-//			log.debug(String.format("Job.lastUpdated(pre force timestamp)[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getLastUpdated()), new DateTime().toString(), f.format(new Date())));
-			
 			session.saveOrUpdate(job);
-//			session.flush();
 		}
 		catch (UnresolvableObjectException ex) {
 //		    throw ex;
 		}
 		catch (StaleStateException ex) {
-//			throw new UnresolvableObjectException(job.getId(), Job.class.getName());
-//		    log.error("Concurrency issue with job " + job.getUuid());
 		    throw ex;
 		}
 		catch (HibernateException ex)
@@ -1652,11 +1645,15 @@ public class JobDao
 			
 			for (SearchTerm searchTerm: searchCriteria.keySet()) 
 			{
-//			    if (searchTerm.getOperator() == SearchTerm.Operator.EQ && searchCriteria.get(searchTerm) instanceof Date) {
-//			        searchTerm.setOperator(SearchTerm.Operator.ON);
-//			    } 
-//			    
-			    sql += "\n       AND       " + searchTerm.getExpression();
+				// we have to format
+//				if (searchTerm.getSafeSearchField().equalsIgnoreCase("runtime") || 
+//						searchTerm.getSafeSearchField().equalsIgnoreCase("walltime")) {
+//					sql += "\n       AND       " + 
+//						StringUtils.replace(searchTerm.getExpression(), "__MYSQL_DATE_FORMAT__", "%Y-%m-%d %H:%i:%s.0");
+//				}
+//				else {
+					sql += "\n       AND       " + searchTerm.getExpression();
+//				}
 			}
 			
 			if (!sql.contains("j.visible")) {
@@ -1667,8 +1664,42 @@ public class JobDao
 			
 			String q = sql;
 			//log.debug(q);
-			SQLQuery query = session.createSQLQuery(sql);//.addEntity("j", Job.class);
-			query.setResultTransformer(Transformers.aliasToBean(JobDTO.class));
+			SQLQuery query = session.createSQLQuery(sql);
+			query.addScalar("id", StandardBasicTypes.LONG)
+				.addScalar("charge", StandardBasicTypes.DOUBLE)
+				.addScalar("memory_request", StandardBasicTypes.DOUBLE)
+				.addScalar("node_count", StandardBasicTypes.INTEGER)
+				.addScalar("processor_count", StandardBasicTypes.INTEGER)
+				.addScalar("retries", StandardBasicTypes.INTEGER)
+				.addScalar("status_checks", StandardBasicTypes.INTEGER)
+				.addScalar("archive_output", StandardBasicTypes.BOOLEAN)
+				.addScalar("visible", StandardBasicTypes.BOOLEAN)
+				.addScalar("archive_path", StandardBasicTypes.STRING)
+				.addScalar("archive_system", StandardBasicTypes.STRING)
+				.addScalar("created", StandardBasicTypes.TIMESTAMP)
+				.addScalar("end_time", StandardBasicTypes.TIMESTAMP)
+				.addScalar("error_message", StandardBasicTypes.STRING)
+				.addScalar("execution_system", StandardBasicTypes.STRING)
+				.addScalar("inputs", StandardBasicTypes.STRING)
+				.addScalar("internal_username", StandardBasicTypes.STRING)
+				.addScalar("last_updated", StandardBasicTypes.TIMESTAMP)
+				.addScalar("local_job_id", StandardBasicTypes.STRING)
+				.addScalar("name", StandardBasicTypes.STRING)
+				.addScalar("owner", StandardBasicTypes.STRING)
+				.addScalar("parameters", StandardBasicTypes.STRING)
+				.addScalar("queue_request", StandardBasicTypes.STRING)
+				.addScalar("requested_time", StandardBasicTypes.STRING)
+				.addScalar("scheduler_job_id", StandardBasicTypes.STRING)
+				.addScalar("software_name", StandardBasicTypes.STRING)
+				.addScalar("start_time", StandardBasicTypes.TIMESTAMP)
+				.addScalar("status", StandardBasicTypes.STRING)
+				.addScalar("submit_time", StandardBasicTypes.TIMESTAMP)
+				.addScalar("tenant_id", StandardBasicTypes.STRING)
+				.addScalar("update_token", StandardBasicTypes.STRING)
+				.addScalar("uuid", StandardBasicTypes.STRING)
+				.addScalar("work_path", StandardBasicTypes.STRING)
+				.setResultTransformer(Transformers.aliasToBean(JobDTO.class));
+			
             query.setString("tenantid", TenancyHelper.getCurrentTenantId());
 			
 			q = StringUtils.replace(q, ":tenantid", "'" + TenancyHelper.getCurrentTenantId() + "'");
@@ -1692,7 +1723,7 @@ public class JobDao
 			        List<String> formattedDates = (List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm));
 			        for(int i=0;i<formattedDates.size(); i++) {
 			            query.setString(searchTerm.getSearchField()+i, formattedDates.get(i));
-			            q = StringUtils.replace(q, ":" + searchTerm.getSearchField(), "'" + formattedDates.get(i) + "'");
+			            q = StringUtils.replace(q, ":" + searchTerm.getSearchField() + i, "'" + formattedDates.get(i) + "'");
 			        }
 			    }
 			    else if (searchTerm.getOperator().isSetOperator()) 
@@ -1709,7 +1740,7 @@ public class JobDao
 			    
 			}
 			
-			log.debug(q);
+//			log.debug(q);
 			
 			List<JobDTO> jobs = query
 					.setFirstResult(offset)
