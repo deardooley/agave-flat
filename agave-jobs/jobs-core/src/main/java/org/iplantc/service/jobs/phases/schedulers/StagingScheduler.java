@@ -46,7 +46,7 @@ public final class StagingScheduler
     {
         if (_phaseTriggerStatuses == null)
         {
-            _phaseTriggerStatuses = new ArrayList<>();
+            _phaseTriggerStatuses = new ArrayList<>(3);
             _phaseTriggerStatuses.add(JobStatusType.PENDING);
             _phaseTriggerStatuses.add(JobStatusType.PROCESSING_INPUTS);
             _phaseTriggerStatuses.add(JobStatusType.STAGING_INPUTS);

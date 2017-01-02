@@ -40,11 +40,11 @@ public abstract class AbstractQueueMessage
         NOOP,
         WKR_PROCESS_JOB,
         TPC_SHUTDOWN,
-        TCP_PAUSE_JOB,
-        TCP_DELETE_JOB,
-        TCP_STOP_JOB,   
-        TCP_START_WORKERS,
-        TCP_TERMINATE_WORKERS;
+        TPC_PAUSE_JOB,
+        TPC_DELETE_JOB,
+        TPC_STOP_JOB,   
+        TPC_START_WORKERS,
+        TPC_TERMINATE_WORKERS;
         
         // Convert a job command to job interrupt type.
         public JobInterruptType toInterruptType()
@@ -52,9 +52,9 @@ public abstract class AbstractQueueMessage
             switch (this)
             {   
                 // Only some commands interrupt jobs.
-                case TCP_PAUSE_JOB:     return JobInterruptType.PAUSE; 
-                case TCP_STOP_JOB:      return JobInterruptType.STOP;
-                case TCP_DELETE_JOB:    return JobInterruptType.DELETE;
+                case TPC_PAUSE_JOB:     return JobInterruptType.PAUSE; 
+                case TPC_STOP_JOB:      return JobInterruptType.STOP;
+                case TPC_DELETE_JOB:    return JobInterruptType.DELETE;
                 default:                return null;
             }
         }
@@ -140,19 +140,19 @@ public abstract class AbstractQueueMessage
             case TPC_SHUTDOWN:
                 cls = ShutdownMessage.class;
                 break;
-            case TCP_PAUSE_JOB:
+            case TPC_PAUSE_JOB:
                 cls = PauseJobMessage.class;
                 break;
-            case TCP_DELETE_JOB:
+            case TPC_DELETE_JOB:
                 cls = DeleteJobMessage.class;
                 break;
-            case TCP_STOP_JOB:
+            case TPC_STOP_JOB:
                 cls = StopJobMessage.class;
                 break;
-            case TCP_START_WORKERS:
+            case TPC_START_WORKERS:
                 cls = StartWorkersMessage.class;
                 break;
-            case TCP_TERMINATE_WORKERS:
+            case TPC_TERMINATE_WORKERS:
                 cls = TerminateWorkersMessage.class;
                 break;
             default:

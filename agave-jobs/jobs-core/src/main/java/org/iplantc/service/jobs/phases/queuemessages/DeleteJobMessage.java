@@ -12,13 +12,13 @@ public final class DeleteJobMessage
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public DeleteJobMessage(){super(JobCommand.TCP_DELETE_JOB);}
+    public DeleteJobMessage(){super(JobCommand.TPC_DELETE_JOB);}
     
     public DeleteJobMessage(String     jobName,
                             String     jobUuid,
                             String     tenantId)
     {
-        super(JobCommand.TCP_DELETE_JOB, jobName, jobUuid, tenantId);
+        super(JobCommand.TPC_DELETE_JOB, jobName, jobUuid, tenantId);
     }
     
     /* ********************************************************************** */
@@ -37,7 +37,7 @@ public final class DeleteJobMessage
      throws IOException
     {
         DeleteJobMessage m = (DeleteJobMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.TCP_DELETE_JOB)
+        if (m.command != JobCommand.TPC_DELETE_JOB)
         {
             String msg = "Invalid command value for DeleteJobMessage: " + m.command;
             throw new IOException(msg);

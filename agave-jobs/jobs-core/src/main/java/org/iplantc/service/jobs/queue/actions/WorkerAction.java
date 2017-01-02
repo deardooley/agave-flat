@@ -9,6 +9,7 @@ import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.transfer.URLCopy;
@@ -62,6 +63,6 @@ public interface WorkerAction {
      * @throws ClosedByInterruptException
      * @throws JobFinishedException 
      */
-    void checkStopped() throws ClosedByInterruptException, JobFinishedException;
-    
+    void checkStopped(boolean logException, JobStatusType newStatus) 
+      throws ClosedByInterruptException, JobFinishedException;
 }

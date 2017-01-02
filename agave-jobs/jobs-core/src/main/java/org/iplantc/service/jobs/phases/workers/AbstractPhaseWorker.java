@@ -19,7 +19,6 @@ import org.iplantc.service.jobs.exceptions.QuotaViolationException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.JobQuotaCheck;
 import org.iplantc.service.jobs.model.Job;
-import org.iplantc.service.jobs.model.JobPublished;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.JobInterruptUtils;
@@ -73,7 +72,6 @@ public abstract class AbstractPhaseWorker
     // Calculated fields.
     private Channel                      _jobChannel;
     private String                       _jobChannelConsumerTag;
-    private Channel                      _interruptChannel;
     private WorkerAction                 _workerAction;
     
     // The job currently being processed.  Updated by subclasses directly.
@@ -161,10 +159,9 @@ public abstract class AbstractPhaseWorker
         // ----------------- Queue Read -------------------------
         // Read loop.
         while (true) {
-            // Check interrupt status.
-            // TODO: Maybe this shouldn't be checked here.
-            //       Check for thread interrupts and do clean up.
-            //       Note the window here before we wait on I/O
+            // Check and clear thread interrupt status.
+            // Note the window here before we wait on I/O
+            if (Thread.interrupted()) break;
             
             // Wait for next request.
             QueueingConsumer.Delivery delivery = null;
@@ -314,13 +311,12 @@ public abstract class AbstractPhaseWorker
      * AbstractQueueMessage.JobCommand.  Command processors should never throw
      * exception and always return the ack boolean that determines whether
      * a basicAck or basicReject is communicated to the queue from which the 
-     * messge was read.
+     * message was read.
      * 
      * On a case by case basis, command processor implementations can reside
      * in this class (if all phases can share the same code), or in subclasses
      * (if some phase need customized processing) or in both.  If a processor
-     * is only implemented in this class, then it can be made private and 
-     * reference     
+     * is only implemented in this class, then it can be made private.
      */
     
     /* ---------------------------------------------------------------------- */
@@ -368,7 +364,7 @@ public abstract class AbstractPhaseWorker
         // We have a job reference to process.
         Job job = null;
         try {job = JobDao.getByUuid(qjob.uuid);}
-        catch (JobException e) {
+        catch (Exception e) {
             String msg = "Worker " + getName() + 
                          " unable to retrieve Job with UUID " + qjob.uuid +
                          " (" + qjob.name + ") from database.";
@@ -385,7 +381,9 @@ public abstract class AbstractPhaseWorker
             return false;
         }
         
-        // TODO: Do we need to set the status on this job?
+        /* --- From this point on we have to manage job status on all paths --- */ 
+        /* -------------------------------------------------------------------- */
+        
         // Make sure the job tenant matches this worker's assigned tenant.
         if (!getTenantId().equals(job.getTenantId())) {
             String msg = "Worker " + getName() + " assigned tenantId " +
@@ -393,6 +391,15 @@ public abstract class AbstractPhaseWorker
                     " (" + qjob.name + ") with tenantId " + 
                     job.getTenantId() + ".";
             _log.error(msg);
+            
+            // If we don't fail the job, the same logic that put the 
+            // job on the wrong tenant's queue will probably do it again.
+            String failMsg = "Job " + job.getUuid() + " (" + job.getName() + 
+                             ") for tenant " + job.getTenantId() + 
+                             " was improperly sent to worker " + getName() + 
+                             " that services queue " + getQueueName() +
+                             " for tenant " + getTenantId() + ".";
+            forceJobCompletion(job, JobStatusType.FAILED, failMsg);
             return false;
         }
         
@@ -409,7 +416,7 @@ public abstract class AbstractPhaseWorker
             if (detectDuplicateJob(job)) {
                 String msg = "Worker " + getName() + " detected duplicate job " +
                              job.getUuid() + " (" + job.getName() + ")."; 
-            _log.error(msg);
+            _log.warn(msg);
             return false;
         }
         
@@ -501,7 +508,7 @@ public abstract class AbstractPhaseWorker
     public void checkStopped() 
      throws ClosedByInterruptException, JobFinishedException
     {
-        checkStopped(false);
+        checkStopped(false, null);
     }
     
     /* ---------------------------------------------------------------------- */
@@ -512,22 +519,53 @@ public abstract class AbstractPhaseWorker
      * The logging flag causes debug records to be written to the log when an
      * exception is going to be thrown.
      * 
+     * Interrupts can happen in two ways.  First, an administrative command may 
+     * directly interrupt a worker thread using Thread.interrupt().  In this case,  
+     * a ClosedByInterruptException exception is thrown and the INTERRUPTED thread
+     * is responsible for leaving its job (if it has one) in a consistent state. 
+     * If the caller passes in a non-null newStatus parameter, this method will
+     * attempt to transition to that status.  Failed transitions will be logged
+     * but not surfaced to the caller.
+     * 
+     * Second, a user-initiated interrupt may have been received by the topic thread.
+     * In this case, the INTERRUPTING thread is responsible for setting the job
+     * status to some finished state before queuing the interrupt message.  A
+     * JobFinishedException exception is thrown to indicate to the worker thread
+     * that the job status has been updated.
+     * 
      * @param logException true causes this method to log before throwing an exception
+     * @param newStatus null or the status to transition to on ClosedByInterruptException 
+     *          exceptions
      * @throws ClosedByInterruptException when the worker thread has been interrupted
      * @throws JobFinishedException when the job has transitioned to a finished state
      */
     @Override
-    public void checkStopped(boolean logException) 
+    public void checkStopped(boolean logException, JobStatusType newStatus) 
      throws ClosedByInterruptException, JobFinishedException
     {
-        // See if the thread was interrupted and leave the flag unchanged.
-        if (Thread.currentThread().isInterrupted()) {
+        // See if the thread was interrupted and clear the flag.
+        if (Thread.interrupted()) {
             if (logException && _log.isDebugEnabled()) {
                 String msg = "Worker " + Thread.currentThread().getName() +
                              " interrupted while processing job " + 
                              _job.getUuid() + " (" + _job.getName() + ").";
                 _log.debug(msg);
             }
+            
+            // Attempt a job status transition if specified by caller.
+            if (newStatus != null)
+                try {
+                    _job = JobManager.updateStatus(_job, newStatus, "Worker interrupted.");
+                }
+                catch (Exception e)
+                {
+                    // Just log the error.
+                    String msg = "Unable to transition interrupted job " + _job.getUuid() + 
+                            " (" + _job.getName() + ") from status " + 
+                            _job.getStatus().name() + " to " + newStatus.name() + ".";
+                    _log.error(msg, e);
+                }
+            
             // Always throw the identifying exception.
             throw new ClosedByInterruptException();
         }
@@ -561,7 +599,7 @@ public abstract class AbstractPhaseWorker
         
         // We shouldn't be called when there's no 
         // current job, but we play it safe.
-        if (_job == null) return true;
+        if (_job == null) return false;
         
         // Query the database for changes to a finished status.
         boolean interrupted = JobInterruptUtils.isJobInterrupted(_job);
@@ -581,30 +619,31 @@ public abstract class AbstractPhaseWorker
      * 
      * @param job the job whose status should be changed
      * @param finalStatus one of the final statuses.
+     * @param finalMessage the message recorded with the status change
      */
-    protected void forceJobCompletion(JobStatusType finalStatus, String finalMessage)
+    protected void forceJobCompletion(Job job, JobStatusType finalStatus, String finalMessage)
     {
         // This method should be called by our subclasses that have already
         // assigned the _job field, but we check anyway.
-        if (_job == null) return;
+        if (job == null) return;
         
         // This method only moves a job to a finished status.
         if (!JobStatusType.isFinished(finalStatus))
         {
-            String msg = "Invalid attempt to complete job " + _job.getUuid() +
-                         " (" + _job.getName() + ") status " + finalStatus.name() + ".";
+            String msg = "Invalid attempt to complete job " + job.getUuid() +
+                         " (" + job.getName() + ") status " + finalStatus.name() + ".";
             _log.error(msg);
             return;
         }
         
         // Mark the job complete.
-        try {_job = JobManager.updateStatus(_job, finalStatus, finalMessage);}
+        try {job = JobManager.updateStatus(job, finalStatus, finalMessage);}
         catch (Exception e) {
             // We can't catch a break.
-            String msg = "Unable to move job " + _job.getUuid() + " (" +
-                    _job.getName() + ") from status " + _job.getStatus().name() + 
+            String msg = "Unable to move job " + job.getUuid() + " (" +
+                    job.getName() + ") from status " + job.getStatus().name() + 
                     " to " + finalStatus.name() + 
-                    ".  The job will remain in a zombie state until cleaned up.";
+                    ".  The job will remain in an invalid state until cleaned up.";
             _log.error(msg, e);
         }
     }
@@ -631,7 +670,7 @@ public abstract class AbstractPhaseWorker
     /* ---------------------------------------------------------------------- */
     /* checkJobQuota:                                                         */
     /* ---------------------------------------------------------------------- */
-    protected void checkJobQuota() throws JobWorkerException
+    protected void checkJobQuota(int days) throws JobWorkerException
     {
         // verify the user is within quota to run the job before staging the data.
         // this should have been caught by the original job selection, but could change
@@ -653,7 +692,7 @@ public abstract class AbstractPhaseWorker
                     e.getMessage() + ". This job will resume staging once one or more current jobs complete.");
             }
             catch (Throwable e1) {
-                _log.error("Failed to update job " + _job.getUuid() + " status to PENDING");
+                _log.error("Failed to update job " + _job.getUuid() + " status to PENDING", e1);
             }   
             throw new JobWorkerException(e);
         }
@@ -667,11 +706,11 @@ public abstract class AbstractPhaseWorker
                 _job = JobManager.updateStatus(_job, JobStatusType.PENDING, 
                     "Input staging is current paused waiting for a system containing " + 
                     "input data to become available. If the system becomes available " +
-                    "again within 7 days, this job " + 
-                    "will resume staging. After 7 days it will be killed.");
+                    "again within " + days + " days, this job " + 
+                    "will resume staging. After " + days + " days it will be killed.");
             }
             catch (Throwable e1) {
-                _log.error("Failed to update job " + _job.getUuid() + " status to PENDING");
+                _log.error("Failed to update job " + _job.getUuid() + " status to PENDING", e1);
             }
             throw new JobWorkerException(e);
         }
@@ -683,7 +722,7 @@ public abstract class AbstractPhaseWorker
                 _job = JobManager.updateStatus(_job, JobStatusType.FAILED, e.getMessage());
             }
             catch (Throwable e1) {
-                _log.error("Failed to update job " + _job.getUuid() + " status to FAILED");
+                _log.error("Failed to update job " + _job.getUuid() + " status to FAILED", e1);
             }
             throw new JobWorkerException(e);
         }
@@ -697,15 +736,18 @@ public abstract class AbstractPhaseWorker
         // Get the software system.
         Software software = SoftwareDao.getSoftwareByUniqueName(_job.getSoftwareName());
         
+        // TODO: What does this comment mean?
         // if the execution system for this job has a local storage config,
         // all other transfer workers will pass on it.
         if (!StringUtils.equals(Settings.LOCAL_SYSTEM_ID, _job.getSystem()) &&
             software.getExecutionSystem().getStorageConfig().getProtocol().equals(StorageProtocolType.LOCAL))
         {
+            // TODO: Do we need to change the job status here?
             // This is not really an error, but we need to throw some exception
             // to signal that this phase's processing should end for this job.
             String msg = "Job " + _job.getName() + " (" + _job.getUuid() +
-                         ") failed the software locality check.";
+                         ") failed the software locality check for " + 
+                         _job.getSoftwareName() + '.';
             throw new JobWorkerException(msg);
         }
     }
@@ -891,17 +933,6 @@ public abstract class AbstractPhaseWorker
             {
                 String msg = "Worker " + getName() + " unable to close job channel " + 
                              _jobChannel.getChannelNumber() + ".";
-                _log.error(msg, e);
-            }
-        
-        // Try to close the interrupt channel.
-        // Try to close job input channel.
-        if (_interruptChannel != null) 
-            try {_interruptChannel.close();}
-            catch (Exception e)
-            {
-                String msg = "Worker " + getName() + " unable to close interrupt channel " + 
-                             _interruptChannel.getChannelNumber() + ".";
                 _log.error(msg, e);
             }
     }

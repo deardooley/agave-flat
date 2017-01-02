@@ -181,6 +181,14 @@ public abstract class AbstractPhaseScheduler
     // Milliseconds between attempts to delete expired interrupts.
     private static final int INTERRUPT_DELETE_DELAY = 240000; // 4 minutes
     
+    // Milliseconds to wait (or poll) for threads to terminate 
+    // after being interrupted.
+    private static final int THREAD_DEATH_DELAY = 10000;
+    private static final int THREAD_DEATH_POLL_DELAY  = 100;
+    
+    // RabbitMQ connection close delay in milliseconds.
+    private static final int CONNECTION_CLOSE_DELAY = 5000;
+    
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
@@ -202,6 +210,10 @@ public abstract class AbstractPhaseScheduler
     
    // Monotonically increasing sequence number generator used as part of thread names.
     private static final AtomicInteger _threadSeqno = new AtomicInteger(0);
+    
+    // A thread that listens on the TOPIC_QUEUE_NAME for AbstractQueueMessage.JobCommand
+    // messages.  These messages include worker interrupts and scheduler interrupts.  
+    private Thread _topicThread;
     
     // A thread that periodically removes expired interrupts from database.
     // This thread is only created and started on the single STAGING scheduler
@@ -825,9 +837,9 @@ public abstract class AbstractPhaseScheduler
                       {
                           // ################### Worker Interrupts ###################
                           // ----- Job interrupts
-                          case TCP_DELETE_JOB:
-                          case TCP_PAUSE_JOB:
-                          case TCP_STOP_JOB:
+                          case TPC_DELETE_JOB:
+                          case TPC_PAUSE_JOB:
+                          case TPC_STOP_JOB:
                               ack = doJobInterrupt(command, envelope, properties, body);
                               break;
                               
@@ -836,10 +848,10 @@ public abstract class AbstractPhaseScheduler
                           case TPC_SHUTDOWN:
                               break;
                           // ----- Start specified number of worker threads
-                          case TCP_START_WORKERS:
+                          case TPC_START_WORKERS:
                               break;
                           // ----- Terminate specified number of worker threads  
-                          case TCP_TERMINATE_WORKERS:
+                          case TPC_TERMINATE_WORKERS:
                               break;
                           // ----- Test message input case   
                           case NOOP:
@@ -932,7 +944,7 @@ public abstract class AbstractPhaseScheduler
     private void startTopicThread()
     {
         // Create the topic thread.
-        Thread topicThread = 
+        _topicThread = 
            new Thread(_phaseThreadGroup, getTopicThreadName()) {
             @Override
             public void run() {
@@ -953,12 +965,15 @@ public abstract class AbstractPhaseScheduler
                 // This thread is terminating.
                 if (_log.isDebugEnabled())
                     _log.debug("<- Exiting topic thread " + getName() + ".");
+                
+                // Clear the thread reference.
+                _topicThread = null;
             }
         };
         
         // Configure and start the thread.
-        topicThread.setDaemon(true);
-        topicThread.start();
+        _topicThread.setDaemon(true);
+        _topicThread.start();
     }
     
     /* ---------------------------------------------------------------------- */
@@ -1149,7 +1164,8 @@ public abstract class AbstractPhaseScheduler
                                jobs.size() + " jobs.");
             
                 // See if this thread was interrupted before doing a lot of processing.
-                if (Thread.currentThread().isInterrupted()) {
+                // The interrupt status gets cleared as a side-effect.
+                if (Thread.interrupted()) {
                     String msg = "Scheduler thread " + Thread.currentThread().getName() +
                                  " for phase " + _phaseType.name() + 
                                  " interrupted while processing new work.";
@@ -1215,29 +1231,78 @@ public abstract class AbstractPhaseScheduler
                 
             } // End polling loop.
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            // Interrupts cause a graceful shutdown.
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            // All other exceptions indicate some sort of problem.
+            String msg = "Scheduler " + _name + " is shutting down because of an unexpected exception.";
+            _log.error(msg, e);
         }
         finally {
             // Always try to release the lease since we might be holding it.
             jobLeaseDao.releaseLease();
             
-            // TODO: Should the scheduler thread take down all other threads
-            //       and close all channels?
+            // Interrupt all threads in the phase's threadgroup.
+            interruptThreads();
+            
+            // Close all dedicated connections.
+            closeConnections();
             
             // Announce our termination.
             if (_log.isInfoEnabled()) {
-                String msg = "Scheduler thread " + Thread.currentThread().getName() +
-                    " for phase " + _phaseType.name() + 
-                    " is terminating.";
+                String msg = "Terminating thread " + Thread.currentThread().getName() +
+                             " with scheduler name " + _name + ".";
                 _log.info(msg);
             }
         }
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* interruptThreads:                                                      */
+    /* ---------------------------------------------------------------------- */
+    /** Interrupt all threads spawned by this thread and wait a configured 
+     * amount of time for the threads to terminate.
+     */
+    private void interruptThreads()
+    {
+        // Interrupt all threads in this phase's threadgroup and all of
+        // its subgroups.  These threads include the interrupt clean up
+        // thread, the topic thread and all worker threads.
+        _phaseThreadGroup.interrupt();
+        
+        // Wait a limited amount of time for the number of active threads 
+        // to go to zero.  This approach is simple but may give unexpected
+        // results if the system implicitly adds threads to the group.
+        for (int i = THREAD_DEATH_DELAY; i > 0; i -= THREAD_DEATH_POLL_DELAY)
+        {
+            // We can immediately return when no descendent thread are still active.
+            int activeThreads = _phaseThreadGroup.activeCount();
+            if (activeThreads == 0) return;
+            try {Thread.sleep(THREAD_DEATH_POLL_DELAY);} catch (Exception e){return;}
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* closeConnections:                                                      */
+    /* ---------------------------------------------------------------------- */
+    private void closeConnections()
+    {
+        // Close all rabbitmq connections.
+        if (_inConnection != null)
+            try {_inConnection.close(CONNECTION_CLOSE_DELAY);}
+            catch (Exception e) {
+                String msg = "Error closing inbound connection " + 
+                             _inConnection.getClientProvidedName() + ".";
+                _log.error(msg, e);
+            }
+        if (_outConnection != null)
+            try {_outConnection.close(CONNECTION_CLOSE_DELAY);}
+            catch (Exception e) {
+                String msg = "Error closing outbound connection " + 
+                             _outConnection.getClientProvidedName() + ".";
+                _log.error(msg, e);
+            }
+    }
+    
     /* ---------------------------------------------------------------------- */
     /* waitToAcquireLease:                                                    */
     /* ---------------------------------------------------------------------- */
@@ -1608,11 +1673,11 @@ public abstract class AbstractPhaseScheduler
         // Marshal the json message into it message object.
         AbstractQueueJobMessage qjob = null;
         try {
-            if (jobCommand == JobCommand.TCP_PAUSE_JOB)
+            if (jobCommand == JobCommand.TPC_PAUSE_JOB)
                 qjob = PauseJobMessage.fromJson(body.toString());
-            else if (jobCommand == JobCommand.TCP_STOP_JOB)
+            else if (jobCommand == JobCommand.TPC_STOP_JOB)
                 qjob = StopJobMessage.fromJson(body.toString());
-            else if (jobCommand == JobCommand.TCP_DELETE_JOB)
+            else if (jobCommand == JobCommand.TPC_DELETE_JOB)
                 qjob = DeleteJobMessage.fromJson(body.toString());
             else
             {

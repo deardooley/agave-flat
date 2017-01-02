@@ -4,6 +4,7 @@ import java.nio.channels.ClosedByInterruptException;
 
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.transfer.URLCopy;
 import org.iplantc.service.transfer.model.TransferTask;
@@ -64,8 +65,9 @@ public abstract class AbstractWorkerAction implements WorkerAction {
      * @see org.iplantc.service.jobs.queue.actions.WorkerAction#checkStopped()
      */
     @Override
-    public void checkStopped() throws ClosedByInterruptException, JobFinishedException
+    public void checkStopped(boolean logException, JobStatusType newStatus) 
+      throws ClosedByInterruptException, JobFinishedException
     {
-        worker.checkStopped();
+        worker.checkStopped(logException, newStatus);
     }
 }

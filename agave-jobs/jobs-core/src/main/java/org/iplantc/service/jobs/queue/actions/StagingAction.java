@@ -107,7 +107,7 @@ public class StagingAction extends AbstractWorkerAction {
         
         for (String inputKey : jobInputMap.keySet())
         {
-            checkStopped();
+            checkStopped(false, JobStatusType.PROCESSING_INPUTS);
             
             String[] rawInputValues = jobInputMap.get(inputKey);
             
@@ -121,7 +121,7 @@ public class StagingAction extends AbstractWorkerAction {
                 // here we iterate over each input value, staging them to the remote system.
                 for (String singleRawInputValue: rawInputValues) 
                 {   
-                    checkStopped();
+                    checkStopped(false, JobStatusType.PROCESSING_INPUTS);
                     
                     singleRawInputUri = new URI(singleRawInputValue);
                     String remotePath = null;
@@ -316,7 +316,7 @@ public class StagingAction extends AbstractWorkerAction {
                         throw new FileNotFoundException("Job work directory not found.");
                     }
                     
-                    checkStopped();
+                    checkStopped(false, JobStatusType.PROCESSING_INPUTS);
                     
                     // see if we can skip this transfer due to prior success
                     
@@ -404,7 +404,7 @@ public class StagingAction extends AbstractWorkerAction {
                         // we may not be able to kill the gridftp threads associated with this transfer,
                         // so in that event, the transfer will time out and we can catch the exception 
                         // here to rethrow as a ClosedByInterruptException.
-                        checkStopped();
+                        checkStopped(false, JobStatusType.PROCESSING_INPUTS);
                         if (urlCopy.isKilled()) {
                             throw new ClosedByInterruptException();
                         }

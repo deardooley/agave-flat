@@ -12,13 +12,13 @@ public final class PauseJobMessage
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public PauseJobMessage(){super(JobCommand.TCP_PAUSE_JOB);}
+    public PauseJobMessage(){super(JobCommand.TPC_PAUSE_JOB);}
     
     public PauseJobMessage(String     jobName,
                            String     jobUuid,
                            String     tenantId)
     {
-        super(JobCommand.TCP_PAUSE_JOB, jobName, jobUuid, tenantId);
+        super(JobCommand.TPC_PAUSE_JOB, jobName, jobUuid, tenantId);
     }
     
     /* ********************************************************************** */
@@ -37,7 +37,7 @@ public final class PauseJobMessage
      throws IOException
     {
         PauseJobMessage m = (PauseJobMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.TCP_PAUSE_JOB)
+        if (m.command != JobCommand.TPC_PAUSE_JOB)
         {
             String msg = "Invalid command value for PauseJobMessage: " + m.command;
             throw new IOException(msg);

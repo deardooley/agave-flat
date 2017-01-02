@@ -108,6 +108,4 @@ public class JobInterruptUtils
         
         return abortJob;
     }
-    
-
 }

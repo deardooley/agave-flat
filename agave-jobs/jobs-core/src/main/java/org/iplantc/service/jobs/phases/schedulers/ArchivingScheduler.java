@@ -46,7 +46,7 @@ public final class ArchivingScheduler
     {
         if (_phaseTriggerStatuses == null)
         {
-            _phaseTriggerStatuses = new ArrayList<>();
+            _phaseTriggerStatuses = new ArrayList<>(2);
             _phaseTriggerStatuses.add(JobStatusType.ARCHIVING);
             _phaseTriggerStatuses.add(JobStatusType.CLEANING_UP);
         }

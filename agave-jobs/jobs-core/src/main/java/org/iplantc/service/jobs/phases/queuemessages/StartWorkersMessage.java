@@ -21,7 +21,7 @@ public final class StartWorkersMessage
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public StartWorkersMessage(){super(JobCommand.TCP_START_WORKERS);}
+    public StartWorkersMessage(){super(JobCommand.TPC_START_WORKERS);}
     
     /* ********************************************************************** */
     /*                            Public Methods                              */
@@ -39,7 +39,7 @@ public final class StartWorkersMessage
      throws IOException
     {
         StartWorkersMessage m = (StartWorkersMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.TCP_START_WORKERS)
+        if (m.command != JobCommand.TPC_START_WORKERS)
         {
             String msg = "Invalid command value for TerminateWorkersMessage: " + m.command;
             throw new IOException(msg);

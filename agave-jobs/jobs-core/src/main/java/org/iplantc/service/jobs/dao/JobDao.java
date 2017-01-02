@@ -32,6 +32,7 @@ import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.search.SearchTerm;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.dto.JobDTO;
@@ -1083,7 +1084,7 @@ public class JobDao
      * @return the number of rows in the database affected (0 or 1)
      */ 
     public static int update(Job job, JobUpdateParameters parms)
-     throws JobException
+     throws JobException, JobFinishedException
     {
         // Make sure we have a job.
         if (job == null) {
@@ -1105,7 +1106,7 @@ public class JobDao
 	 * updates can be safely performed.  This method is called by JobManager.updateStatus() 
 	 * and is ultimately responsible for validating status changes and locking
 	 * the job record during status transitions.  Use this method if you only need
-	 * to update a job record, use JobManager.updateStatus() if you also require 
+	 * to update a job record; use JobManager.updateStatus() if you also require 
 	 * visibility and event processing.  
 	 * 
 	 * NOTE: This method does not update an in-memory job object, so existing
@@ -1135,7 +1136,7 @@ public class JobDao
 	 */
 	public static int update(String jobUuid, String jobTenantId, 
 	                         JobUpdateParameters parms)
-	 throws JobException
+	 throws JobException, JobFinishedException
 	{
 	    // ------------------- Check Input -------------------
 	    // Make sure we have a job uuid.
@@ -1208,7 +1209,8 @@ public class JobDao
 	            // Abort the update since the attempted status 
 	            // change is illegal, but first log the problem.
 	            String msg = "Invalid transition from " + curStatus.name() +
-	                         " to " + parms.getStatus() + " attempted.";
+	                         " to " + parms.getStatus().name() + " attempted for job " +
+	                         jobUuid + ".";
 	            log.error(msg);
 	            
 	            // Release the lock on the job record.
@@ -1219,7 +1221,8 @@ public class JobDao
 	            }
 	            
 	            // Throw our exception.
-	            throw new JobException(msg);
+	            if (JobStatusType.isFinished(curStatus)) throw new JobFinishedException(msg);
+	              else throw new JobException(msg);
 	        }
 	        
 	        // Get the thread-local session in which the lock routine began our transaction.

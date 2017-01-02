@@ -61,11 +61,11 @@ public final class MonitoringWorker
         // This structure maintains compatibility with legacy code.
         try {
             // ----- Check date.
-            checkStopped(true);
+            checkStopped(true, JobStatusType.RUNNING);
             checkExpiration();
             
             // ----- Check storage locality
-            checkStopped(true);
+            checkStopped(true, JobStatusType.RUNNING);
             checkSoftwareLocalityUsingJobManager();
             
             // ----- Monitor the running job

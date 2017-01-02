@@ -66,19 +66,19 @@ public final class ArchivingWorker
         // This structure maintains compatibility with legacy code.
         try {
             // ----- Check archiving.
-            checkStopped(true);
+            checkStopped(true, JobStatusType.ARCHIVING);
             isArchiving();
             
             // ----- Check storage locality
-            checkStopped(true);
+            checkStopped(true, JobStatusType.ARCHIVING);
             checkSoftwareLocality();
             
             // ----- Are we within the retry window?
-            checkStopped(true);
+            checkStopped(true, JobStatusType.ARCHIVING);
             checkExpirationDate(7);
             
             // ----- Check system availability
-            checkStopped(true);
+            checkStopped(true, JobStatusType.ARCHIVING);
             checkAvailability(7);
             
             // ----- Archive job

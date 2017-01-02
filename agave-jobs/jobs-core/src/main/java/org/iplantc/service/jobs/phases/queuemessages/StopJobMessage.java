@@ -12,13 +12,13 @@ public final class StopJobMessage
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public StopJobMessage(){super(JobCommand.TCP_STOP_JOB);}
+    public StopJobMessage(){super(JobCommand.TPC_STOP_JOB);}
     
     public StopJobMessage(String     jobName,
                           String     jobUuid,
                           String     tenantId)
     {
-        super(JobCommand.TCP_STOP_JOB, jobName, jobUuid, tenantId);
+        super(JobCommand.TPC_STOP_JOB, jobName, jobUuid, tenantId);
     }
 
     /* ********************************************************************** */
@@ -37,7 +37,7 @@ public final class StopJobMessage
      throws IOException
     {
         StopJobMessage m = (StopJobMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.TCP_STOP_JOB)
+        if (m.command != JobCommand.TPC_STOP_JOB)
         {
             String msg = "Invalid command value for StopJobMessage: " + m.command;
             throw new IOException(msg);

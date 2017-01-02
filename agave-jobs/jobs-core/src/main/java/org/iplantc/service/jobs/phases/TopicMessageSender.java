@@ -44,6 +44,15 @@ public class TopicMessageSender
     /* ---------------------------------------------------------------------- */
     /* sendJobMessage:                                                        */
     /* ---------------------------------------------------------------------- */
+    /** Put a job interrupt message on the job topic queue.  The caller is 
+     * responsible for already having updated the status of the job.  The topic
+     * thread will read the queued interrupt message and update the interrupts
+     * table with the job information.  Any worker thread subsequently servicing
+     * the job will note either the interrupt or the status change.  
+     * 
+     * @param message a concrete job message
+     * @throws JobException on error
+     */
     public static void sendJobMessage(AbstractQueueJobMessage message) 
       throws JobException
     {

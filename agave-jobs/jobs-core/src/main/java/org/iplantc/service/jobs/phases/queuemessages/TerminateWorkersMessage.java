@@ -21,7 +21,7 @@ public final class TerminateWorkersMessage
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public TerminateWorkersMessage(){super(JobCommand.TCP_TERMINATE_WORKERS);}
+    public TerminateWorkersMessage(){super(JobCommand.TPC_TERMINATE_WORKERS);}
     
     /* ********************************************************************** */
     /*                            Public Methods                              */
@@ -39,7 +39,7 @@ public final class TerminateWorkersMessage
      throws IOException
     {
         TerminateWorkersMessage m = (TerminateWorkersMessage) AbstractQueueMessage.fromJson(json);
-        if (m.command != JobCommand.TCP_TERMINATE_WORKERS)
+        if (m.command != JobCommand.TPC_TERMINATE_WORKERS)
         {
             String msg = "Invalid command value for TerminateWorkersMessage: " + m.command;
             throw new IOException(msg);

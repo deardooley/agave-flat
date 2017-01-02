@@ -46,7 +46,7 @@ public final class MonitoringScheduler
     {
         if (_phaseTriggerStatuses == null)
         {
-            _phaseTriggerStatuses = new ArrayList<>();
+            _phaseTriggerStatuses = new ArrayList<>(1);
             _phaseTriggerStatuses.add(JobStatusType.RUNNING);
         }
         return _phaseTriggerStatuses;

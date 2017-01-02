@@ -509,7 +509,7 @@ public class JobManager {
      * is ultimately responsible for validating status changes and locking
      * the job record during status transitions.  Use this method if you require 
      * visibility and event processing; use JobDao.update() if you only need
-     * to update a job record.
+     * to update a job record and don't want side-effects.
      *   
      * If present, the optional extraUpdates object can contain updates to job fields
      * other than the status field.  These updates will be applied in the same 
@@ -598,7 +598,7 @@ public class JobManager {
         if (!jobParms.isLastUpdatedFlag()) jobParms.setLastUpdated(date);
         
         // Determine if any of the other timestamps should be updated.
-        // Don't overwrite timestamps already in the unless explicitly
+        // Don't overwrite timestamps already in the job unless explicitly
         // set in the parameter object.
         switch (status)
         {

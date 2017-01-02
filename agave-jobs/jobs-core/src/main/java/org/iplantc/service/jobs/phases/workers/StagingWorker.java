@@ -60,19 +60,19 @@ public final class StagingWorker
         // This structure maintains compatibility with legacy code.
         try {
             // ----- Check the job quota.
-            checkStopped(true);
-            checkJobQuota();
+            checkStopped(true, JobStatusType.PENDING);
+            checkJobQuota(7);
         
             // ----- Check storage locality
-            checkStopped(true);
+            checkStopped(true, JobStatusType.PENDING);
             checkSoftwareLocality();
             
             // ----- Are we within the retry window?
-            checkStopped(true);
+            checkStopped(true, JobStatusType.PENDING);
             checkRetryPeriod(7);
             
             // ----- Is there anything to stage?
-            checkStopped(true);
+            checkStopped(true, JobStatusType.PENDING);
             checkStagingInput();
             
             // ----- Stage the job input.
@@ -85,8 +85,12 @@ public final class StagingWorker
         }
         finally {
             
-            // TODO: Check whether disconnect is a good idea.
             // Hibernate magic...
+            // Disconnect is less drastic than close and is the minimum that 
+            // should occur to free up the JDBC connection.  Note that (1) we
+            // are using an ancient version of Hibernate (3.6.10.Final) and 
+            // (2) our workers are now long-lived threads so we may have to
+            // revisit the disconnect vs. close discussion if problems arise.
             try { HibernateUtil.flush(); } catch (Exception e) {}
             try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
             try { HibernateUtil.disconnectSession(); } catch (Exception e) {} 
@@ -118,7 +122,7 @@ public final class StagingWorker
                 _log.error(msg, e);
                 
                 // Try one more time to change job status.
-                forceJobCompletion(JobStatusType.FAILED, msg);
+                forceJobCompletion(_job, JobStatusType.FAILED, msg);
                 
                 // Rethrow original exception.
                 throw e;
@@ -184,7 +188,7 @@ public final class StagingWorker
             {
                 // Check for thread or job interruptions and throw one 
                 // of two exceptions depending on interrupt type.
-                checkStopped();
+                checkStopped(false, JobStatusType.PROCESSING_INPUTS);
                 
                 setWorkerAction(new StagingAction(_job, this));
                 
@@ -197,7 +201,7 @@ public final class StagingWorker
                 finally {_job = getWorkerAction().getJob();}
                 
                 // If we are stopped we will quietly exit the retry loop.
-                if (!isJobStopped() || _job.getStatus() == JobStatusType.STAGED)
+                if (!isJobStopped() && _job.getStatus() == JobStatusType.STAGED)
                 {       
                     staged = true;
                     JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
@@ -206,11 +210,15 @@ public final class StagingWorker
                 }
             }
             catch (StaleObjectStateException | UnresolvableObjectException e) {
+                // This should never happen since only one worker thread processes
+                // a job at a time.  We keep the code just in case...
                 String msg = "Job " + _job.getUuid() + " already being processed by another thread. Ignoring.";
                 _log.error(msg, e);
                 throw new JobWorkerException(msg, e);
             }
             catch (ClosedByInterruptException e) {
+                // This worker thread was interrupted using Thread.interrupt().  We set the
+                // job back to its initial phase trigger before stopping work.
                 if (_log.isDebugEnabled())
                     _log.debug("Staging task for job " + _job.getUuid() + 
                             " aborted due to worker interrupt.", e);

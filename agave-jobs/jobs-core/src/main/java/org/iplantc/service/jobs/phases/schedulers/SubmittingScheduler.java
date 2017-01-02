@@ -46,7 +46,7 @@ public final class SubmittingScheduler
     {
         if (_phaseTriggerStatuses == null)
         {
-            _phaseTriggerStatuses = new ArrayList<>();
+            _phaseTriggerStatuses = new ArrayList<>(3);
             _phaseTriggerStatuses.add(JobStatusType.SUBMITTING);
             _phaseTriggerStatuses.add(JobStatusType.STAGED);
             _phaseTriggerStatuses.add(JobStatusType.STAGING_JOB);

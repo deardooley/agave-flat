@@ -57,15 +57,15 @@ public final class SubmittingWorker
         // This structure maintains compatibility with legacy code.
         try {
             // ----- Check the job quota.
-            checkStopped(true);
-            checkJobQuota();
+            checkStopped(true, JobStatusType.STAGED);
+            checkJobQuota(7);
         
             // ----- Check storage locality
-            checkStopped(true);
+            checkStopped(true, JobStatusType.STAGED);
             checkSoftwareLocality();
             
             // ----- Are we within the retry window?
-            checkStopped(true);
+            checkStopped(true, JobStatusType.STAGED);
             checkRetryPeriod(14);
             
             // ----- Stage the job input.
