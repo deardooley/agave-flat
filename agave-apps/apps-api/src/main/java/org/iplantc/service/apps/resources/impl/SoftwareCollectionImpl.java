@@ -252,7 +252,7 @@ public class SoftwareCollectionImpl extends AbstractSoftwareCollection implement
             }
             else 
             {
-                ApplicationManager.deleteApplication(existingSoftware);
+                ApplicationManager.deleteApplication(existingSoftware, getAuthenticatedUsername());
                 
                 SoftwareDao.persist(newSoftware);
                 
