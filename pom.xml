@@ -72,32 +72,86 @@
 			<id>taccaci</id>
 			<name>TACC ACI Maven repository</name>
 			<url>https://maven.tacc.utexas.edu/nexus/content/repositories/releases</url>
+			<releases>
+			     <enabled>true</enabled>
+			     <updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+			     <enabled>false</enabled>
+			</snapshots>
 		</repository>
 		<repository>
 			<id>taccaci-snapshot</id>
 			<name>TACC ACI Maven repository</name>
 			<url>https://maven.tacc.utexas.edu/nexus/content/repositories/snapshots</url>
+            <releases>
+                 <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                 <enabled>true</enabled>
+                 <updatePolicy>daily</updatePolicy>
+            </snapshots>
 		</repository>
 		<repository>
 			<id>taccaci-thirdparty</id>
 			<name>TACC ACI Maven repository</name>
 			<url>https://maven.tacc.utexas.edu/nexus/content/repositories/thirdparty</url>
+            <releases>
+                 <enabled>true</enabled>
+                 <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                 <enabled>false</enabled>
+            </snapshots>
 		</repository>
 		<repository>
 			<id>maven-restlet</id>
 			<name>Public online Restlet repository</name>
 			<!-- <url>https://maven.tacc.utexas.edu/nexus/content/repositories/maven-restlet/</url> -->
 			<url>http://maven.restlet.com</url>
+            <releases>
+                 <enabled>true</enabled>
+                 <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                 <enabled>false</enabled>
+            </snapshots>
 		</repository>
 		<repository>
 			<id>iron.io</id>
 			<name>Iron.io Maven repo</name>
 			<url>http://iron-io.github.com/maven/repository</url>
+            <releases>
+                 <enabled>true</enabled>
+                 <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                 <enabled>false</enabled>
+            </snapshots>
 		</repository>
         <repository>
             <id>jcenter</id>
             <name>Public testng repository</name>
             <url>http://jcenter.bintray.com</url>
+            <releases>
+                 <enabled>true</enabled>
+                 <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                 <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <releases>
+                 <enabled>true</enabled>
+                 <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                 <enabled>false</enabled>
+            </snapshots>
         </repository>
 	</repositories>
 
@@ -108,7 +162,11 @@
 			<url>https://maven.tacc.utexas.edu/nexus/content/repositories/releases</url>
 			<releases>
 				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
 			</releases>
+            <snapshots>
+                 <enabled>false</enabled>
+            </snapshots>
 		</pluginRepository>
 	</pluginRepositories>
 
