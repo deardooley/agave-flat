@@ -58,7 +58,7 @@ public class JobDTOTest extends AbstractDaoTest {
     public void toJSONTest() throws Exception
     {   
         Job job = createJob(JobStatusType.RUNNING);
-        JobDao.persist(job);
+        JobDao.create(job);
         
         Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
         
