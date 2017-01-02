@@ -539,40 +539,66 @@ function forward_postit_request($url, $method = "GET", $username = '', $need_aut
 
     // authenticate if necessary
     if ($username && $need_auth) {
-        // create a jwt header for use calling the api internally
-        $jwt_prefix = "eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==";
-        $jwt_suffix = "FA6GZjrB6mOdpEkdIQL/p2Hcqdo2QRkg/ugBbal8wQt6DCBb1gC6wPDoAenLIOc+yDorHPAgRJeLyt2DutNrKRFv6czq1wz7008DrdLOtbT4EKI96+mXJNQuxrpuU9lDZmD4af/HJYZ7HXg3Hc05+qDJ+JdYHfxENMi54fXWrxs=";
-        $jwt_claims = array(
-            "iss" => "wso2.org/products/am",
-            "exp" => strtotime('+1 week'),
-            "http://wso2.org/claims/subscriber" => $username,
-            "http://wso2.org/claims/applicationid" => "5",
-            "http://wso2.org/claims/applicationname" => "DefaultApplication",
-            "http://wso2.org/claims/applicationtier" => "Unlimited",
-            "http://wso2.org/claims/apicontext" => "*",
-            "http://wso2.org/claims/version" => "v2",
-            "http://wso2.org/claims/tier" => "Unlimited",
-            "http://wso2.org/claims/keytype" => "PRODUCTION",
-            "http://wso2.org/claims/usertype" => "APPLICATION_USER",
-            "http://wso2.org/claims/enduser" => $username,
-            "http://wso2.org/claims/enduserTenantId" => "-9999",
-            "http://wso2.org/claims/emailaddress" => $username . "@" . $tenant_id,
-            "http://wso2.org/claims/fullname" => "Dev User",
-            "http://wso2.org/claims/givenname" => "Dev",
-            "http://wso2.org/claims/lastname" => "User",
-            "http://wso2.org/claims/primaryChallengeQuestion" => "N/A",
-            "http://wso2.org/claims/role" => "Internal/everyone",
-            "http://wso2.org/claims/title" => "N/A"
-        );
-        $jwt_body = base64_encode(json_encode($jwt_claims));
+        
+        // if this is a call to the profiles api, route through the front end.
+        // this will require a bearer token, so we get an impersonation token to use
+        error_log("auth is needed for " . $url);
+        error_log("checking for profiles api path: " . $url_path);
+        if (is_profile_service_request_path($url_path)) {
+            require_once "include/impersonation_client.php";
 
-//        $bearer_token =
-//        $oauth_header = 'Authorization: Bearer ' . $bearer_token;
+            $impersonation_client = new ImpersonationClient($tenant_id);
+            error_log("generating impersonation token for " . $url);
+            $token = $impersonation_client->getTokenForUser($username);
 
-        $header_field = 'x-jwt-assertion-' . str_replace('.', '-', $tenant_id);
-        $header_value = sprintf("%s.%s.%s", $jwt_prefix, $jwt_body, $jwt_suffix);
-        if ($config['debug']) error_log($header_field . ": " . $header_value);
-        $headers[] = $header_field . ": " . $header_value;
+            // if we have a valid token here, use it. otherwise skip. auth will fail
+            if ($token) {
+                error_log("returned token " . $token);
+
+                $headers[] = "Authorization: Bearer " . $token;
+            } else {
+                error_log("no token returned from service account request" . $url);
+            }
+
+        }
+        // we don't add both a jwt and bearer token so as to avoid overwriting the end
+        // user jwt sent to the backend resource.
+        else {
+            // create a jwt header for use calling the api internally
+            $jwt_prefix = "eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==";
+            $jwt_suffix = "FA6GZjrB6mOdpEkdIQL/p2Hcqdo2QRkg/ugBbal8wQt6DCBb1gC6wPDoAenLIOc+yDorHPAgRJeLyt2DutNrKRFv6czq1wz7008DrdLOtbT4EKI96+mXJNQuxrpuU9lDZmD4af/HJYZ7HXg3Hc05+qDJ+JdYHfxENMi54fXWrxs=";
+            $jwt_claims = array(
+                "iss" => "wso2.org/products/am",
+                "exp" => strtotime('+1 week'),
+                "http://wso2.org/claims/subscriber" => $username,
+                "http://wso2.org/claims/applicationid" => "5",
+                "http://wso2.org/claims/applicationname" => "DefaultApplication",
+                "http://wso2.org/claims/applicationtier" => "Unlimited",
+                "http://wso2.org/claims/apicontext" => "*",
+                "http://wso2.org/claims/version" => "v2",
+                "http://wso2.org/claims/tier" => "Unlimited",
+                "http://wso2.org/claims/keytype" => "PRODUCTION",
+                "http://wso2.org/claims/usertype" => "APPLICATION_USER",
+                "http://wso2.org/claims/enduser" => $username,
+                "http://wso2.org/claims/enduserTenantId" => "-9999",
+                "http://wso2.org/claims/emailaddress" => $username . "@" . $tenant_id,
+                "http://wso2.org/claims/fullname" => "Dev User",
+                "http://wso2.org/claims/givenname" => "Dev",
+                "http://wso2.org/claims/lastname" => "User",
+                "http://wso2.org/claims/primaryChallengeQuestion" => "N/A",
+                "http://wso2.org/claims/role" => "Internal/everyone",
+                "http://wso2.org/claims/title" => "N/A"
+            );
+            $jwt_body = base64_encode(json_encode($jwt_claims));
+
+            //        $bearer_token =
+            //        $oauth_header = 'Authorization: Bearer ' . $bearer_token;
+
+            $header_field = 'x-jwt-assertion-' . str_replace('.', '-', $tenant_id);
+            $header_value = sprintf("%s.%s.%s", $jwt_prefix, $jwt_body, $jwt_suffix);
+            if ($config['debug']) error_log($header_field . ": " . $header_value);
+            $headers[] = $header_field . ": " . $header_value;
+        }
     }
 
     // forward range headers
@@ -799,5 +825,16 @@ if (!function_exists('getallheaders'))
        }
        return $headers;
     }
+}
+
+/**
+ * Checks to see whether the target URL request path is a call
+ * to the profiles api. If so, we will need to auth differently.
+ * 
+ * @param $url_path
+ * @return bool
+ */
+function is_profile_service_request_path($url_path) {
+    return strpos($url_path, '/profiles/') === 0;
 }
 ?>

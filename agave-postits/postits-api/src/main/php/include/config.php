@@ -13,6 +13,7 @@ date_default_timezone_set('America/Chicago');
 $config['debug'] = envVar('DEBUG', true);
 $config['service.version'] = envVar('IPLANT_SERVICE_VERSION','${foundation.service.version}');
 $config['service.default.page.size'] = intval(envVar('IPLANT_DEFAULT_PAGE_SIZE', '100'));
+$config['service.user.cache.dir'] = envVar('SERVICE_USER_CACHE_DIR', 'cache');
 
 /****************************************************************************************
  *						Trusted Users
@@ -68,7 +69,29 @@ $config['iplant.foundation.services']['apps'] = addTrailingSlash(envVar('IPLANT_
 $config['iplant.foundation.services']['postit'] = addTrailingSlash(envVar('IPLANT_POSTIT_SERVICE', '${foundation.service.postits}'));
 $config['iplant.foundation.services']['profile'] = addTrailingSlash(envVar('IPLANT_PROFILE_SERVICE', '${foundation.service.profiles}'));
 $config['iplant.foundation.services']['log'] = addTrailingSlash(envVar('IPLANT_LOG_SERVICE', '${foundation.service.log}'));
- 
+
+///****************************************************************************************
+// *						Agave API Service Users
+// ****************************************************************************************/
+//
+//include_once "tenants.php";
+//
+//$config['iplant.foundation.services']['service.users']['_common']['username'] = envVar("AGAVE_POSTIT_SERVICE_USER", "");
+//$config['iplant.foundation.services']['service.users']['_common']['password'] = envVar("AGAVE_POSTIT_SERVICE_PASSWORD", "");
+//$config['iplant.foundation.services']['service.users']['_common']['client_key'] = envVar("AGAVE_POSTIT_SERVICE_CLIENT_KEY", "");
+//$config['iplant.foundation.services']['service.users']['_common']['client_secret'] = envVar("AGAVE_POSTIT_SERVICE_CLIENT_SECRET", "");
+//
+//foreach($_ENV as $varName => $varValue) {
+//	$matches = array();
+//	$tenant_ids = get_all_tenant_ids();
+//	foreach ($tenant_ids as $tenant_id) {
+//		$config['iplant.foundation.services']['service.users'][$tenant_id]['username'] = envVar("AGAVE_POSTIT_SERVICE_{$tenant_id}_USER");
+//		$config['iplant.foundation.services']['service.users'][$tenant_id]['password'] = envVar("AGAVE_POSTIT_SERVICE_{$tenant_id}_PASSWORD");
+//		$config['iplant.foundation.services']['service.users'][$tenant_id]['client_key'] = envVar("AGAVE_POSTIT_SERVICE_{$tenant_id}_CLIENT_KEY");
+//		$config['iplant.foundation.services']['service.users'][$tenant_id]['client_secret'] = envVar("AGAVE_POSTIT_SERVICE_{$tenant_id}_CLIENT_SECRET");
+//	}
+//}
+
 /****************************************************************************************
  *						Error Response Codes
  ****************************************************************************************/

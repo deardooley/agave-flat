@@ -29,6 +29,34 @@ function get_tenant_info($tenant_id='')
 	return mysql_fetch_array($result, MYSQL_ASSOC);
 }
 
+/* Looks up the base url for the tenant's api based on the current tenant id */
+function get_tenant($tenant_id='')
+{
+	global $db, $config, $DEBUG;
+
+	$sql = "select * from tenants where tenant_id = '$tenant_id'";
+
+	if ($config['debug']) error_log($sql);
+
+	$result = mysql_query($sql, $db) or format_error_response("Failed to retrieve tenant: ".mysql_error($db));
+
+	return mysql_fetch_array($result, MYSQL_ASSOC);
+}
+
+/* Gets all tenant ids */
+function get_all_tenant_ids()
+{
+	global $db, $config, $DEBUG;
+
+	$sql = "select tenant_id from tenants";
+
+	if ($config['debug']) error_log($sql);
+
+	$result = mysql_query($sql, $db) or format_error_response("Failed to retrieve tenant: ".mysql_error($db));
+
+	return mysql_fetch_array($result, MYSQL_ASSOC);
+}
+
 /* save a token */
 function save_postit($postit)
 {
