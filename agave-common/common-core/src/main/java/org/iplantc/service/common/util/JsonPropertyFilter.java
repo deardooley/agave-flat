@@ -6,7 +6,6 @@ import java.util.Iterator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -28,32 +27,34 @@ public class JsonPropertyFilter {
      * @return
      * @throws IOException
      */
-    public String getFilteredContent(String content, String[] filters, boolean prettyPrint) throws IOException {
+    public JsonNode getFilteredContent(String content, String[] filters, boolean prettyPrint) throws IOException {
     	ObjectMapper mapper = new ObjectMapper();
     	
-    	return getFilteredContent(mapper.readTree(content), filters, prettyPrint);
+    	return getFilteredContent(mapper.readTree(content), filters);
     }
     
     /**
      * Applies path filters to a {@link JsonNode} and returns the result with optional
      * pretty printing.
+     * 
      * @param json
      * @param filters
      * @param prettyPrint
-     * @return
+     * @return a {@link JsonNode} value containing the filtered {@code json} value. Original paths are retained.
      * @throws IOException
      */
-    public String getFilteredContent(JsonNode json, String[] filters, boolean prettyPrint) throws IOException {
+    public JsonNode getFilteredContent(JsonNode json, String[] filters) throws IOException {
     	
     	ObjectMapper mapper = new ObjectMapper();
     	
     	if (ArrayUtils.isEmpty(filters) || ArrayUtils.contains(filters, "*")) {
-    		if (prettyPrint) {
-	    		DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
-	    		return mapper.writer(pp).writeValueAsString(json);
-	    	} else {
-	    		return json.toString();
-	    	}
+//    		if (prettyPrint) {
+//	    		DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
+//	    		return mapper.writer(pp).writeValueAsString(json);
+//	    	} else {
+//	    		return json.toString();
+//	    	}
+    		return json;
     	}
     	
     	// iterate over array
@@ -70,10 +71,10 @@ public class JsonPropertyFilter {
     					if (child.has(tokens[0])) {
     						if (child.get(tokens[0]).has(tokens[1])) {
     							if (filteredChild.has(tokens[0])) {
-	    							((ObjectNode)filteredChild.get(tokens[0])).put(tokens[1], filteredChild.get(tokens[0]).get(tokens[1]));
+	    							((ObjectNode)filteredChild.get(tokens[0])).set(tokens[1], filteredChild.get(tokens[0]).get(tokens[1]));
     							}
     							else {
-    								filteredChild.putObject(tokens[0]).put(tokens[1], child.get(tokens[0]).get(tokens[1]));
+    								filteredChild.putObject(tokens[0]).set(tokens[1], child.get(tokens[0]).get(tokens[1]));
     							}
     						}
     						else {
@@ -88,7 +89,7 @@ public class JsonPropertyFilter {
     				} 
 	    			else if (tokens.length == 1) { 
 		    			if (child.has(filter)) {
-		    				filteredChild.put(filter, child.get(filter));
+		    				filteredChild.set(filter, child.get(filter));
 		    			}
 	    			}
 	    		}
@@ -98,12 +99,13 @@ public class JsonPropertyFilter {
 	    		}
     		}
 	    	
-	    	if (prettyPrint) {
-	    		DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
-	    		return mapper.writer(pp).writeValueAsString(filteredJson);
-	    	} else {
-	    		return mapper.writeValueAsString(filteredJson);
-	    	}
+//	    	if (prettyPrint) {
+//	    		DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
+//	    		return mapper.writer(pp).writeValueAsString(filteredJson);
+//	    	} else {
+//	    		return mapper.writeValueAsString(filteredJson);
+//	    	}
+	    	return filteredJson;
     	}
     	else {
     		ObjectNode filteredChild = mapper.createObjectNode();
@@ -113,10 +115,10 @@ public class JsonPropertyFilter {
 					if (json.has(tokens[0])) {
 						if (json.get(tokens[0]).has(tokens[1])) {
 							if (filteredChild.has(tokens[0])) {
-    							((ObjectNode)filteredChild.get(tokens[0])).put(tokens[1], filteredChild.get(tokens[0]).get(tokens[1]));
+    							((ObjectNode)filteredChild.get(tokens[0])).set(tokens[1], filteredChild.get(tokens[0]).get(tokens[1]));
 							}
 							else {
-								filteredChild.putObject(tokens[0]).put(tokens[1], json.get(tokens[0]).get(tokens[1]));
+								filteredChild.putObject(tokens[0]).set(tokens[1], json.get(tokens[0]).get(tokens[1]));
 							}
 						}
 						else {
@@ -131,17 +133,18 @@ public class JsonPropertyFilter {
 				} 
     			else if (tokens.length == 1) { 
 	    			if (json.has(filter)) {
-	    				filteredChild.put(filter, json.get(filter));
+	    				filteredChild.set(filter, json.get(filter));
 	    			}
     			}
     		}
     		
-    		if (prettyPrint) {
-	    		DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
-	    		return mapper.writer(pp).writeValueAsString(filteredChild);
-	    	} else {
-	    		return mapper.writeValueAsString(filteredChild);
-	    	}
+//    		if (prettyPrint) {
+//	    		DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
+//	    		return mapper.writer(pp).writeValueAsString(filteredChild);
+//	    	} else {
+//	    		return mapper.writeValueAsString(filteredChild);
+//	    	}
+    		return filteredChild;
     	}
     }
 

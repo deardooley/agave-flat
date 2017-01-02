@@ -1196,14 +1196,14 @@ public class SystemDao extends AbstractDao {
             	if (searchTerm.getSearchField().startsWith("default")) {
             		// this has already been set.
             	}
-            	else if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN) {
+            	else if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN || searchTerm.getOperator() == SearchTerm.Operator.ON) {
                     List<String> formattedDates = (List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm));
                     for(int i=0;i<formattedDates.size(); i++) {
                         query.setString(searchTerm.getSafeSearchField()+i, formattedDates.get(i));
                         q = q.replaceAll(":" + searchTerm.getSafeSearchField(), "'" + formattedDates.get(i) + "'");
                     }
                 }
-                else if (searchTerm.getOperator().isSetOperator()) 
+            	else if (searchTerm.getOperator().isSetOperator()) 
                 {
                     query.setParameterList(searchTerm.getSafeSearchField(), (List<Object>)searchCriteria.get(searchTerm));
                     q = q.replaceAll(":" + searchTerm.getSafeSearchField(), "('" + StringUtils.join((List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm)), "','") + "')" );

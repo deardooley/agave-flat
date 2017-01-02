@@ -385,9 +385,23 @@ public class ApplicationManager
 	 * use a soft delete to preserve relationships and provenance.
 	 * @param software
 	 */
-	public static void deleteApplication(Software software)
+	public static void deleteApplication(Software software, String username)
 	{	
-		SoftwareDao.delete(software);
+		try {
+			
+			software.setAvailable(false);
+			SoftwareDao.persist(software);
+			
+			SoftwareEventProcessor eventProcessor = new SoftwareEventProcessor();
+			eventProcessor.processSoftwareContentEvent(software, 
+					SoftwareEventType.DELETED,
+					"App was disabled by user " + username, 
+					username);
+			
+		} catch (Throwable e) {
+			throw new SoftwareResourceException(400,
+					"Failed to erase app. Unable to delete associated jobs.", e);
+		}
 	}
 	
 //	/**
@@ -694,13 +708,6 @@ public class ApplicationManager
 					SoftwareEventType.DELETED,
 					"App was deleted by user " + username, 
 					username);
-			
-//			ApplicationManager.addEvent(software, 
-//                    SoftwareEventType.DELETED, 
-//                    "App was deleted by user " + username, 
-//                    username);
-            
-            
 			
 		} catch (Throwable e) {
 			throw new SoftwareResourceException(400,

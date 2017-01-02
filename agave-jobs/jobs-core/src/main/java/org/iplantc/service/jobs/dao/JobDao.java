@@ -18,11 +18,13 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.ObjectNotFoundException;
 import org.hibernate.Query;
+import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.StaleStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.hibernate.transform.AliasToEntityMapResultTransformer;
+import org.hibernate.transform.Transformers;
 import org.hibernate.type.StandardBasicTypes;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.persistence.HibernateUtil;
@@ -32,6 +34,7 @@ import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
+import org.iplantc.service.jobs.model.dto.JobDTO;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
 import org.iplantc.service.jobs.statemachine.JobFSMUtils;
@@ -1034,11 +1037,8 @@ public class JobDao
 		try
 		{
 			session = getSession();
-//			SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 			
 			if (forceTimestamp) {
-//				log.debug(String.format("Job.created(pre force timestamp)[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getCreated()), new DateTime().toString(), f.format(new Date())));
-//				log.debug(String.format("Job.lastUpdated(pre force timestamp)[%s] %s vs %s vs %s", job.getUuid(), f.format(job.getLastUpdated()), new DateTime().toString(), f.format(new Date())));
 				job.setLastUpdated(new DateTime().toDate());
 			}
 			
@@ -1052,8 +1052,6 @@ public class JobDao
 //		    throw ex;
 		}
 		catch (StaleStateException ex) {
-//			throw new UnresolvableObjectException(job.getId(), Job.class.getName());
-//		    log.error("Concurrency issue with job " + job.getUuid());
 		    throw ex;
 		}
 		catch (HibernateException ex)
@@ -2228,7 +2226,7 @@ public class JobDao
 	 * @return
 	 * @throws JobException
 	 */
-	public static List<Job> findMatching(String username,
+	public static List<JobDTO> findMatching(String username,
 			Map<SearchTerm, Object> searchCriteria) throws JobException
 	{
 		return JobDao.findMatching(username, searchCriteria, 0, Settings.DEFAULT_PAGE_SIZE);
@@ -2246,7 +2244,7 @@ public class JobDao
 	 * @throws JobException
 	 */
 	@SuppressWarnings("unchecked")
-	public static List<Job> findMatching(String username,
+	public static List<JobDTO> findMatching(String username,
 			Map<SearchTerm, Object> searchCriteria,
 			int offset, int limit) throws JobException
 	{
@@ -2254,14 +2252,48 @@ public class JobDao
 		{
 			Session session = getSession();
 			session.clear();
-			String sql = " SELECT j FROM Job as j \n";
-					//"LEFT OUTER JOIN JobPermission as p ON j.id = p.jobId ";
+			String sql = "SELECT j.archive_output, \n" + 
+					"       j.archive_output, \n" + 
+					"       j.archive_path, \n" + 
+					"       a.system_id as archive_system, \n" + 
+					"       j.charge, \n" + 
+					"       j.created, \n" + 
+					"       j.end_time, \n" + 
+					"       j.error_message, \n" + 
+					"       j.execution_system, \n" + 
+					"       j.id, \n" + 
+					"       j.inputs, \n" + 
+					"       j.internal_username, \n" + 
+					"       j.last_updated, \n" + 
+					"       j.local_job_id, \n" + 
+					"       j.memory_request, \n" + 
+					"       j.name, \n" + 
+					"       j.node_count, \n" + 
+					"       j.owner, \n" + 
+					"       j.parameters, \n" + 
+					"       j.processor_count, \n" + 
+					"       j.queue_request, \n" + 
+					"       j.requested_time, \n" + 
+					"       j.retries, \n" + 
+					"       j.scheduler_job_id, \n" + 
+					"       j.software_name, \n" + 
+					"       j.start_time, \n" + 
+					"       j.status, \n" + 
+					"       j.status_checks, \n" + 
+					"       j.submit_time, \n" + 
+					"       j.tenant_id, \n" + 
+					"       j.update_token, \n" + 
+					"       j.uuid, \n" + 
+					"       j.visible, \n" + 
+					"       j.work_path \n" + 
+					" FROM jobs j \n" +
+					" LEFT OUTER JOIN systems a ON j.archive_system = a.id \n";
 			if (!ServiceUtils.isAdmin(username)) {
 				
 				sql += " WHERE ( \n" +
 				    "       j.owner = :jobowner OR \n" +
 					"       j.id in ( \n" + 
-				    "               SELECT pm.jobId FROM JobPermission as pm \n" +
+				    "               SELECT pm.job_id FROM job_permissions as pm \n" +
 					"               WHERE pm.username = :jobowner AND pm.permission <> :none \n" +
 					"              ) \n" +
 					"      ) AND \n";
@@ -2269,27 +2301,66 @@ public class JobDao
 				sql += " WHERE ";
 			}
 			
-			sql +=  "        j.tenantId = :tenantid "; 
+			sql +=  "        j.tenant_id = :tenantid "; 
 			
 			for (SearchTerm searchTerm: searchCriteria.keySet()) 
 			{
-//			    if (searchTerm.getOperator() == SearchTerm.Operator.EQ && searchCriteria.get(searchTerm) instanceof Date) {
-//			        searchTerm.setOperator(SearchTerm.Operator.ON);
-//			    } 
-//			    
-			    sql += "\n       AND       " + searchTerm.getExpression();
+				// we have to format
+//				if (searchTerm.getSafeSearchField().equalsIgnoreCase("runtime") || 
+//						searchTerm.getSafeSearchField().equalsIgnoreCase("walltime")) {
+//					sql += "\n       AND       " + 
+//						StringUtils.replace(searchTerm.getExpression(), "__MYSQL_DATE_FORMAT__", "%Y-%m-%d %H:%i:%s.0");
+//				}
+//				else {
+					sql += "\n       AND       " + searchTerm.getExpression();
+//				}
 			}
 			
 			if (!sql.contains("j.visible")) {
-				sql +=  "\n       AND j.visible = :visiblebydefault \n";
+				sql +=  "\n       AND j.visible = :visiblebydefault ";
 			}
 			
-			sql +=	" ORDER BY j.lastUpdated DESC\n";
+			sql +=	"\n ORDER BY j.last_updated DESC\n";
 			
 			String q = sql;
 			//log.debug(q);
-			Query query = session.createQuery(sql)
-								 .setString("tenantid", TenancyHelper.getCurrentTenantId());
+			SQLQuery query = session.createSQLQuery(sql);
+			query.addScalar("id", StandardBasicTypes.LONG)
+				.addScalar("charge", StandardBasicTypes.DOUBLE)
+				.addScalar("memory_request", StandardBasicTypes.DOUBLE)
+				.addScalar("node_count", StandardBasicTypes.INTEGER)
+				.addScalar("processor_count", StandardBasicTypes.INTEGER)
+				.addScalar("retries", StandardBasicTypes.INTEGER)
+				.addScalar("status_checks", StandardBasicTypes.INTEGER)
+				.addScalar("archive_output", StandardBasicTypes.BOOLEAN)
+				.addScalar("visible", StandardBasicTypes.BOOLEAN)
+				.addScalar("archive_path", StandardBasicTypes.STRING)
+				.addScalar("archive_system", StandardBasicTypes.STRING)
+				.addScalar("created", StandardBasicTypes.TIMESTAMP)
+				.addScalar("end_time", StandardBasicTypes.TIMESTAMP)
+				.addScalar("error_message", StandardBasicTypes.STRING)
+				.addScalar("execution_system", StandardBasicTypes.STRING)
+				.addScalar("inputs", StandardBasicTypes.STRING)
+				.addScalar("internal_username", StandardBasicTypes.STRING)
+				.addScalar("last_updated", StandardBasicTypes.TIMESTAMP)
+				.addScalar("local_job_id", StandardBasicTypes.STRING)
+				.addScalar("name", StandardBasicTypes.STRING)
+				.addScalar("owner", StandardBasicTypes.STRING)
+				.addScalar("parameters", StandardBasicTypes.STRING)
+				.addScalar("queue_request", StandardBasicTypes.STRING)
+				.addScalar("requested_time", StandardBasicTypes.STRING)
+				.addScalar("scheduler_job_id", StandardBasicTypes.STRING)
+				.addScalar("software_name", StandardBasicTypes.STRING)
+				.addScalar("start_time", StandardBasicTypes.TIMESTAMP)
+				.addScalar("status", StandardBasicTypes.STRING)
+				.addScalar("submit_time", StandardBasicTypes.TIMESTAMP)
+				.addScalar("tenant_id", StandardBasicTypes.STRING)
+				.addScalar("update_token", StandardBasicTypes.STRING)
+				.addScalar("uuid", StandardBasicTypes.STRING)
+				.addScalar("work_path", StandardBasicTypes.STRING)
+				.setResultTransformer(Transformers.aliasToBean(JobDTO.class));
+			
+            query.setString("tenantid", TenancyHelper.getCurrentTenantId());
 			
 			q = StringUtils.replace(q, ":tenantid", "'" + TenancyHelper.getCurrentTenantId() + "'");
 			
@@ -2306,13 +2377,13 @@ public class JobDao
 		 		q = StringUtils.replace(q, ":none", "'NONE'");
 		 	}
 		 	
-			for (SearchTerm searchTerm: searchCriteria.keySet()) 
+		 	for (SearchTerm searchTerm: searchCriteria.keySet()) 
 			{
 			    if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN) {
 			        List<String> formattedDates = (List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm));
 			        for(int i=0;i<formattedDates.size(); i++) {
 			            query.setString(searchTerm.getSearchField()+i, formattedDates.get(i));
-			            q = StringUtils.replace(q, ":" + searchTerm.getSearchField(), "'" + formattedDates.get(i) + "'");
+			            q = StringUtils.replace(q, ":" + searchTerm.getSearchField() + i, "'" + formattedDates.get(i) + "'");
 			        }
 			    }
 			    else if (searchTerm.getOperator().isSetOperator()) 
@@ -2329,17 +2400,63 @@ public class JobDao
 			    
 			}
 			
-			// log.debug(q);
+//			log.debug(q);
 			
-			List<Job> jobs = query
+			List<JobDTO> jobs = query
 					.setFirstResult(offset)
 					.setMaxResults(limit)
+					.setCacheable(false)
+					.setCacheMode(CacheMode.IGNORE)
 					.list();
 
 			session.flush();
 			
 			return jobs;
 
+		}
+		catch (Throwable ex)
+		{
+			throw new JobException(ex);
+		}
+		finally {
+			try { HibernateUtil.commitTransaction();} catch (Exception e) {}
+		}
+	}
+	
+	public static int getJobWallTime(String uuid) throws JobException {
+		try
+		{
+			Session session = getSession();
+			session.clear();
+			String sql = "SELECT abs(unix_timestamp(j.end_time) - unix_timestamp(j.created)) as walltime from jobs j where j.uuid = :uuid";
+			
+			return ((BigInteger)session.createSQLQuery(sql)
+					.addScalar("walltime")
+					.setString("uuid", uuid)
+					.uniqueResult()).intValue();
+			
+		}
+		catch (Throwable ex)
+		{
+			throw new JobException(ex);
+		}
+		finally {
+			try { HibernateUtil.commitTransaction();} catch (Exception e) {}
+		}
+	}
+	
+	public static int getJobRunTime(String uuid) throws JobException {
+		try
+		{
+			Session session = getSession();
+			session.clear();
+			String sql = "SELECT abs(unix_timestamp(j.end_time) - unix_timestamp(j.start_time)) as runtime from jobs j where j.uuid = :uuid";
+			
+			return ((BigInteger)session.createSQLQuery(sql)
+					.addScalar("runtime")
+					.setString("uuid", uuid)
+					.uniqueResult()).intValue();
+			
 		}
 		catch (Throwable ex)
 		{
@@ -2379,7 +2496,7 @@ public class JobDao
 			Session session = getSession();
 			session.clear();
 			String hql = "select count(*) "
-					+ "from Job j"
+					+ "from Job j "
 					+ "where j.status in (" + JobStatusType.getActiveStatusValues() + ") "
 					+ "		and j.visible = :visible";
 			

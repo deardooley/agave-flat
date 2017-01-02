@@ -133,7 +133,7 @@ public class SoftwareResourceImpl extends AbstractSoftwareResource implements So
             
             Software newSoftware = ApplicationManager.processSoftware(existingSoftware, json, getAuthenticatedUsername());
             
-            ApplicationManager.deleteApplication(existingSoftware);
+            SoftwareDao.delete(existingSoftware);
             
             // maintain the uuid of the previous app for history tracking
             newSoftware.setUuid(existingSoftware.getUuid());

@@ -18,26 +18,31 @@ public class SearchTerm implements Comparable<SearchTerm>
 {
 	/**
 	 * Mapping construct to define conditions for a subsequent 
-	 * search based on the operators involved.  
+	 * search based on the operators involved. We don't do any 
+	 * date formatting on the column values in order to retain 
+	 * the flexibility to construct queries in HQL or SQL. 
+	 * 
+	 * See {@link #applyWildcards(Object)} for the formatting 
+	 * done on the search values.  
 	 * @author dooley
 	 *
 	 */
 	public enum Operator {
 		EQ("%s = :%s"), 
-		ON("DATE_FORMAT(%s,'%s') = DATE_FORMAT(DATE(:%s),'%s')"),
+		ON("%s between :%s0 and :%s1"),
 		NEQ("%s <> :%s"),
 		LT("%s < :%s"),
-		BEFORE("DATE_FORMAT(%s,'%s') < :%s"),
+		BEFORE("%s < :%s"),
 		LTE("%s <= :%s"),
 		GT("%s > :%s"),
-		AFTER("DATE_FORMAT(%s,'%s') > :%s"),
+		AFTER("%s > :%s"),
 		GTE("%s >= :%s"),
 		IN("%s in :%s"),
 		NIN("%s not in :%s"),
 		LIKE("%s like :%s"),
 		RLIKE("%s REGEXP :%s"),
 		NLIKE(":%s not like :%s"),
-		BETWEEN("DATE_FORMAT(%s,'%s') >= :%s0 and DATE_FORMAT(%s,'%s') <= :%s1");
+		BETWEEN("%s between :%s0 and :%s1");
 		
 		private String template;
 		
@@ -80,7 +85,11 @@ public class SearchTerm implements Comparable<SearchTerm>
 		/**
 		 * Null-safe filter for a search value. Known wildcards "*" will be
 		 * resolved to "%" and the result returned. Lists will be returned
-		 * unchanged.
+		 * unchanged. 
+		 * 
+		 * {@link Date} values are formatted to nanosecond precision with   
+		 * either 0's or 1's so we guarantee we are accurate to the second
+		 * regardless of the column precision in MySQL.
 		 *   
 		 * @param searchValue
 		 * @return
@@ -88,11 +97,19 @@ public class SearchTerm implements Comparable<SearchTerm>
 		public Object applyWildcards(Object searchValue) {
 			if (searchValue == null) {
 				searchValue = "";
-			} else if (searchValue instanceof List) {
+			} else if (searchValue instanceof List && this != ON) {
 			    if (this == BETWEEN) {
+			    	// single term 
 			        List<String> dates = new ArrayList<String>();
+			        boolean first = true;
 			        for(Date d: (List<Date>)searchValue) {
-			            dates.add(new SimpleDateFormat("YYYY-MM-dd HH:mm").format(d));
+			        	if (first) {
+			        		dates.add(new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.000000").format(d));
+			        		first = false;
+			        	}
+			        	else {
+			        		dates.add(new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.999999").format(d));
+			        	}
 			        }
 			        
 			        return dates;
@@ -100,10 +117,20 @@ public class SearchTerm implements Comparable<SearchTerm>
 			        return searchValue;
 			    }
 			} else if (searchValue instanceof Date) {
-			    if (this == ON) {
-			        return new SimpleDateFormat("YYYY-MM-dd").format((Date)searchValue);
-			    } else {
-			        return new SimpleDateFormat("YYYY-MM-dd HH:mm").format((Date)searchValue);
+				if (this == ON) {
+					List<String> dates = new ArrayList<String>();
+			        dates.add(new SimpleDateFormat("YYYY-MM-dd 00:00:00").format((Date)searchValue));
+			        dates.add(new SimpleDateFormat("YYYY-MM-dd 23:59:59").format((Date)searchValue));
+			        return dates;
+			    } 
+			    else if (this == GT || this == LTE || this == AFTER) {
+			    	return new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.999999").format((Date)searchValue);
+			    }
+			    else if (this == LT || this == GTE || this == BEFORE) {
+			    	return new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.000000").format((Date)searchValue);
+			    }
+			    else {
+			        return new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.000000").format((Date)searchValue);
 			    }
 			}
 			
@@ -339,21 +366,20 @@ public class SearchTerm implements Comparable<SearchTerm>
 		if (this.operator == Operator.BETWEEN) {
 			return String.format(operator.getTemplate(), 
 			        prefixedMappedfield, 
-			        "%Y-%m-%d %H:%i",
+//			        "%Y-%m-%d %H:%i:%s",
 			        getSafeSearchField(), 
-			        prefixedMappedfield, 
-			        "%Y-%m-%d %H:%i",
+//			        prefixedMappedfield, 
+//			        "%Y-%m-%d %H:%i:%s",
 			        getSafeSearchField());
 		} else if (this.operator == Operator.ON) {
 		    return String.format(operator.getTemplate(), 
                     prefixedMappedfield,
-                    "%Y-%m-%d",
                     getSafeSearchField(),
-                    "%Y-%m-%d");
-		} else if (this.operator == Operator.BEFORE || this.operator == Operator.AFTER) {
-            return String.format(operator.getTemplate(), 
-                    prefixedMappedfield, "%Y-%m-%d", getSafeSearchField());
-        } else {
+                    getSafeSearchField());
+//		} else if (this.operator == Operator.BEFORE || this.operator == Operator.AFTER) {
+//            return String.format(operator.getTemplate(), 
+//                    prefixedMappedfield, "%Y-%m-%d %H:%i:%s", getSafeSearchField());
+		} else {
 			return String.format(operator.getTemplate(), 
 					prefixedMappedfield, getSafeSearchField());
 		}

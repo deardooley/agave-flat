@@ -52,7 +52,11 @@ public abstract class IplantRepresentation extends StringRepresentation {
 						|| StringUtils.isEmpty(json)) {
 					setText(null);
 				} else {
-					setText(filterOutput(json));
+					if (isPrettyPrint()) {
+						setText(mapper.writer(pp).writeValueAsString(filterOutput(mapper.readTree(json))));
+					} else {
+						setText(filterOutput(mapper.readTree(json)).toString());
+					}
 				}
 			} else {
 				
@@ -61,7 +65,7 @@ public abstract class IplantRepresentation extends StringRepresentation {
 						.put("version", Settings.SERVICE_VERSION);
 				
 				if (!StringUtils.isEmpty(json)) {
-					jsonWrapper.set("result", mapper.readTree(filterOutput(json)));
+					jsonWrapper.set("result", filterOutput(mapper.readTree(json)));
 				}
 
 				if (isPrettyPrint()) {
@@ -126,25 +130,25 @@ public abstract class IplantRepresentation extends StringRepresentation {
 		return Boolean.valueOf(form.getFirstValue("naked"));
 	}
 
-	public String filterOutput(JsonNode json) throws IOException {
+	public JsonNode filterOutput(JsonNode jsonNode) throws IOException {
 		Form form = Request.getCurrent().getOriginalRef().getQueryAsForm();
 		String[] sFilters = StringUtils
 				.split(form.getFirstValue("filter"), ",");
 
 		try {
-			return new JsonPropertyFilter().getFilteredContent(json, sFilters,
-					isPrettyPrint());
+			return new JsonPropertyFilter().getFilteredContent(jsonNode, sFilters);
 		} catch (Exception e) {
-			ObjectMapper mapper = new ObjectMapper();
-
-			if (prettyPrint) {
-				DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
-				pp.indentArraysWith(new Lf2SpacesIndenter());
-
-				return mapper.writer(pp).writeValueAsString(json);
-			} else {
-				return mapper.writeValueAsString(json);
-			}
+//			ObjectMapper mapper = new ObjectMapper();
+//
+//			if (prettyPrint) {
+//				DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
+//				pp.indentArraysWith(new Lf2SpacesIndenter());
+//
+//				return mapper.writer(pp).writeValueAsString(json);
+//			} else {
+//				return mapper.writeValueAsString(json);
+//			}
+			return jsonNode;
 
 		}
 	}
@@ -171,13 +175,13 @@ public abstract class IplantRepresentation extends StringRepresentation {
 		}
 	}
 
-	public String filterOutput(String serializedResponse) throws IOException {
-		String[] filters = getJsonPathFilters();
-		try {
-			return new JsonPropertyFilter().getFilteredContent(
-					serializedResponse, filters, isPrettyPrint());
-		} catch (Exception e) {
-			return serializedResponse;
-		}
-	}
+//	public JsonNode filterOutput(JsonNode nakedJsonResponse) throws IOException {
+//		String[] filters = getJsonPathFilters();
+//		try {
+//			return new JsonPropertyFilter().getFilteredContent(
+//					nakedJsonResponse, filters);
+//		} catch (Exception e) {
+//			return nakedJsonResponse;
+//		}
+//	}
 }

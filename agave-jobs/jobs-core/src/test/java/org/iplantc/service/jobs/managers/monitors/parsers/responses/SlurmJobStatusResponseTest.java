@@ -1,9 +1,11 @@
 package org.iplantc.service.jobs.managers.monitors.parsers.responses;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
+import org.iplantc.service.jobs.managers.monitors.parsers.SlurmHPCMonitorResponseParser;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -12,17 +14,15 @@ public class SlurmJobStatusResponseTest {
 
 	@DataProvider
 	protected Object[][] parseResponseStatusProvider() {
-		return new Object[][] {
-				{ "10974959|COMPLETED|0:0|", "COMPLETED" },
-				{ "10974959|COMPLETED|0:0|", "COMPLETED" },
-				{ "10974959|FAILED|0:0|", "FAILED" },
-				{ "10974959|RESIZING|0:0|", "RESIZING" },
-				{ "10974959|RUNNING|0:0|", "RUNNING" },
-				{ "10974959|PENDING|0:0|", "PENDING" },
-				{ "10974959|EQW|0:0|", "EQW" },
-				{ "10974959|UNKNOWN|0:0|", "UNKNOWN" },
-				{ "10974959|FAILED|0:0|", "FAILED" }
-		};
+		
+		List<Object[]> testCases = new ArrayList<Object[]>();
+		for (SlurmHPCMonitorResponseParser.SlurmStatusType statusType: SlurmHPCMonitorResponseParser.SlurmStatusType.values()) {
+			testCases.add(new Object[]{ "10974959|" + statusType.name() + "|0:0|", statusType.name() });
+		}
+		testCases.add(new Object[]{ "10974959|UNKNOWN|0:0|", "UNKNOWN" });
+		testCases.add(new Object[]{ "10974959|asdfasdfasdfadfa|0:0|", "asdfasdfasdfadfa" });
+		
+		return testCases.toArray(new Object[][]{});
 	}
 	
 	@Test(dataProvider = "parseResponseStatusProvider")
@@ -151,6 +151,7 @@ public class SlurmJobStatusResponseTest {
 	protected Object[][] parseResponseMultilineProvider() {
 		return new Object[][] {
 				{ "10974959|COMPLETED|0:0|\n10974959.batch|COMPLETED|0:0|\n10974959.extern|COMPLETED|0:0|", "COMPLETED" },
+				{ "57544|TIMEOUT|1:0|\n8057544.batch|CANCELLED|0:15|", "TIMEOUT" }
 		};
 	}
 	

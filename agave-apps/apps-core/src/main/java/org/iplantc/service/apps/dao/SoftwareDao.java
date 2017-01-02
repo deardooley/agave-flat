@@ -857,6 +857,7 @@ public class SoftwareDao
 	                    + "     s.publiclyAvailable as publiclyAvailable, \n"
 	                    + "     s.label as label, \n"
 	                    + "     s.owner as owner, \n"
+	                    + "     s.created as created, \n"
 	                    + "     s.lastUpdated as lastUpdated, \n"
 	                    + "     s.uuid as uuid \n";
             if (getfullResponse) {
@@ -931,7 +932,7 @@ public class SoftwareDao
                 if (searchCriteria.get(searchTerm) == null 
                         || StringUtils.equalsIgnoreCase(searchCriteria.get(searchTerm).toString(), "null")) 
                 {
-                    if (searchTerm.getOperator() == SearchTerm.Operator.NEQ ) {
+                	if (searchTerm.getOperator() == SearchTerm.Operator.NEQ ) {
                         hql += "\n       AND       " + String.format(searchTerm.getMappedField(), searchTerm.getPrefix()) + " is not null ";
                     } else if (searchTerm.getOperator() == SearchTerm.Operator.EQ ) {
                         hql += "\n       AND       " + String.format(searchTerm.getMappedField(), searchTerm.getPrefix()) + " is null ";
@@ -952,7 +953,7 @@ public class SoftwareDao
             String q = hql;
             
             Query query = session.createQuery(hql)
-			            .setResultTransformer(Transformers.aliasToBean(Software.class))
+            			.setResultTransformer(Transformers.aliasToBean(Software.class))
 			            .setString("tenantid", TenancyHelper.getCurrentTenantId());
             
             q = q.replaceAll(":tenantid", "'" + TenancyHelper.getCurrentTenantId() + "'");
@@ -972,11 +973,11 @@ public class SoftwareDao
             
             for (SearchTerm searchTerm: searchCriteria.keySet()) 
             {
-                if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN) {
+                if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN || searchTerm.getOperator() == SearchTerm.Operator.ON) {
                     List<String> formattedDates = (List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm));
                     for(int i=0;i<formattedDates.size(); i++) {
                         query.setString(searchTerm.getSafeSearchField()+i, formattedDates.get(i));
-                        q = q.replaceAll(":" + searchTerm.getSafeSearchField(), "'" + formattedDates.get(i) + "'");
+                        q = q.replaceAll(":" + searchTerm.getSafeSearchField()+i, "'" + formattedDates.get(i) + "'");
                     }
                 }
                 else if (searchTerm.getOperator().isSetOperator()) 
@@ -998,7 +999,7 @@ public class SoftwareDao
                 
             }
             
-//            log.debug(q);
+            log.debug(q);
             
             List<Software> softwares = query
                     .setFirstResult(offset)

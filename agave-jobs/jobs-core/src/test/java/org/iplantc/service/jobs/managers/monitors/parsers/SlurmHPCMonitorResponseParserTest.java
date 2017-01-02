@@ -1,5 +1,8 @@
 package org.iplantc.service.jobs.managers.monitors.parsers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.RemoteJobFailureDetectedException;
 import org.iplantc.service.jobs.exceptions.RemoteJobIDParsingException;
@@ -30,9 +33,14 @@ public class SlurmHPCMonitorResponseParserTest {
 	
 	@DataProvider
 	protected Object[][] isJobRunningFailedStatusThrowsRemoteJobFailureDetectedExceptionProvider() {
-		return new Object[][] {
-				{ "10974959|FAILED|0:0|"}
-		};
+		List<Object[]> testCases = new ArrayList<Object[]>();
+		for (SlurmHPCMonitorResponseParser.SlurmStatusType statusType: SlurmHPCMonitorResponseParser.SlurmStatusType.values()) {
+			if (SlurmHPCMonitorResponseParser.SlurmStatusType.isFailureStatus(statusType.name())) {
+				testCases.add(new Object[]{ "10974959|" + statusType.name() + "|0:1|", statusType.name() });
+			}
+		}
+		
+		return testCases.toArray(new Object[][]{});
 	}
 	
 	@Test(dataProvider = "isJobRunningFailedStatusThrowsRemoteJobFailureDetectedExceptionProvider")
@@ -53,7 +61,7 @@ public class SlurmHPCMonitorResponseParserTest {
 			
 		}
 		catch (Exception e) {
-			Assert.fail("Unrecoverable status should throw RemoteJobFailureDetectedException");
+			Assert.fail("Failed status should throw RemoteJobFailureDetectedException");
 		}
 	}
 
@@ -88,14 +96,31 @@ public class SlurmHPCMonitorResponseParserTest {
 	
 	@DataProvider
 	protected Object[][] isJobRunningProvider() {
-		return new Object[][] {
-				{ "10974959||0:0|", false },
-				{ "10974959| |0:0|", false },
-				{ "10974959|RESIZING|0:0|", true },
-				{ "10974959|RUNNING|0:0|", true },
-				{ "10974959|PENDING|0:0|", true },
-				{ "10974959|COMPLETED|0:0|", false },
-		};
+		
+		List<Object[]> testCases = new ArrayList<Object[]>();
+		for (SlurmHPCMonitorResponseParser.SlurmStatusType statusType: SlurmHPCMonitorResponseParser.SlurmStatusType.values()) {
+			if (statusType.isFailureStatus()) {
+				testCases.add(new Object[]{ "10974959|" + statusType.name() + "|0:1|", false });
+			}
+			else {
+				testCases.add(new Object[]{ "10974959|" + statusType.name() + "|0:0|", true });
+			}
+		}
+		
+		testCases.add(new Object[]{ "10974959||0:0|", false });
+		testCases.add(new Object[]{ "10974959| |0:0|", false });
+		
+		return testCases.toArray(new Object[][]{});
+//		
+//		return new Object[][] {
+//				{ "10974959||0:0|", false },
+//				{ "10974959| |0:0|", false },
+//				{ "10974959|RESIZING|0:0|", true },
+//				{ "10974959|RUNNING|0:0|", true },
+//				{ "10974959|PENDING|0:0|", true },
+//				{ "10974959|COMPLETED|0:0|", false },
+//				
+//		};
 	}
 	
 	@Test(dataProvider = "isJobRunningProvider")

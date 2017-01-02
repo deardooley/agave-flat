@@ -40,11 +40,11 @@ public class JobSearchFilterTest extends AbstractDaoTest
 		JobSearchFilter jobSearchFilter = new JobSearchFilter();
 		for (String key: jobSearchFilter.getSearchTermMappings().keySet())
 		{
-		    // handle sets and ranges independently
-		    if (StringUtils.endsWithIgnoreCase(key, "between") 
-                    || StringUtils.endsWithIgnoreCase(key, "in") 
-                    || StringUtils.endsWithIgnoreCase(key, "nin")) continue;
-            
+//		    // handle sets and ranges independently
+//		    if (StringUtils.endsWithIgnoreCase(key, "between") 
+//                    || StringUtils.endsWithIgnoreCase(key, "in") 
+//                    || StringUtils.endsWithIgnoreCase(key, "nin")) continue;
+//            
             testData.add(new Object[]{ key, true, "Exact terms should be accepted" });
 			testData.add(new Object[]{ key.toUpperCase(), true, "Uppercase terms should be accepted" });
 			testData.add(new Object[]{ alternateCase(key), true, "Mixed case terms should be accepted" });
@@ -71,15 +71,24 @@ public class JobSearchFilterTest extends AbstractDaoTest
 		Map<String,Class> searchTypeMappings = jobSearchFilter.getSearchTypeMappings();
 		for (String key: jobSearchFilter.getSearchTermMappings().keySet())
 		{
-		    // handle sets and ranges independently
-            if (StringUtils.endsWithIgnoreCase(key, "between") 
-                    || StringUtils.endsWithIgnoreCase(key, "in") 
-                    || StringUtils.endsWithIgnoreCase(key, "nin")) continue;
-            
+			Class clazz = searchTypeMappings.get(key);
+			
             for (SearchTerm.Operator operator: SearchTerm.Operator.values()) {
-				if (searchTypeMappings.get(key) == Date.class && operator.isSetOperator() && SearchTerm.Operator.BETWEEN != operator) {
+				if (clazz == Date.class && operator.isSetOperator() && SearchTerm.Operator.BETWEEN != operator) {
 				    continue;
 				}
+				else if (clazz == Boolean.class && 
+						(operator.isSetOperator() || 
+						 operator != SearchTerm.Operator.EQ || 
+						 operator != SearchTerm.Operator.NEQ)) {
+					continue;
+				}
+				else if (operator == SearchTerm.Operator.BETWEEN || 
+						operator == SearchTerm.Operator.NIN ||
+						operator == SearchTerm.Operator.IN) {
+					continue;
+				}
+				
 				String op =  "." + operator.name();
                 
 				testData.add(new Object[]{ key + op, true, "Exact terms with uppercase operator should be accepted" });

@@ -626,7 +626,7 @@ public class JobManager {
     }
     
 	/**
-	 * This method attempts to archive a job's output by retirieving the
+	 * This method attempts to archive a job's output by retrieving the
 	 * .agave.archive shadow file from the remote job directory and staging
 	 * everything not in there to the user-supplied Job.archivePath on the
 	 * Job.archiveSystem

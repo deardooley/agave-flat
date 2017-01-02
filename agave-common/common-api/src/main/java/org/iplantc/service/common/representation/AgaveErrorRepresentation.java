@@ -3,6 +3,8 @@
  */
 package org.iplantc.service.common.representation;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 
 /**
  * Wrapper for error responses
@@ -17,7 +19,7 @@ public class AgaveErrorRepresentation extends AgaveRepresentation {
 	 */
 	public AgaveErrorRepresentation(String errorMessage)
 	{
-		super("error", errorMessage, null);
+		super("error", errorMessage, (JsonNode)null);
 	}
 
 }
