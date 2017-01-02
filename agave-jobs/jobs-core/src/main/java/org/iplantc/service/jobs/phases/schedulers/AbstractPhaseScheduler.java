@@ -85,18 +85,21 @@ import com.rabbitmq.client.Envelope;
  *   
  * There are two types of interrupts, those that are job-specific and those that are 
  * not.  Job-specific interrupts need to be routed and handled by the worker thread
- * that is currently processing the job, if one exists.  
+ * that is currently processing the job, if one exists.  Non job-specific interrupts 
+ * change the state of the jobs subsystem and are typically handled by the scheduler's 
+ * topic thread.  
+ * 
+ * See AbstractQueueMessage.JobCommand for all defined interrupt messages.  
  * 
  * A correct interrupt handling design prohibits race conditions in which interrupts
  * are lost or processed more than once.  Job-specific interrupts have to be serviced no 
  * matter what processing phase the job is in or where references to the job may exist.  
- * Non job-specific interrupts change the state of the jobs subsystem and are typically 
- * handled by the scheduler's topic thread. 
+ * Non job-specific interrupts may or may not effect currently processing jobs.  
  * 
  * In addition to handling each interrupt exactly once (or at least idempotently), the 
  * other main design consideration is to integrate the new mechanism into the existing 
  * codebase as seamlessly as possible.  This requirement means that Hibernate will still 
- * be used where it exists, though new SQL tables will use Hibernate only to acquire a 
+ * be used where it exists, though new table DAOs will use Hibernate only to acquire a 
  * session.
  * 
  * ++++ Job-Specific Interrupts ++++
@@ -118,7 +121,7 @@ import com.rabbitmq.client.Envelope;
  * 
  * The scheduler topic and its messages comprise the external interface to the new interrupt 
  * mechanism.  When a job-specific interrupt message is placed on the topic, the topic 
- * thread reads it and writes in interrupt record to the job_interrupts table.  The 
+ * thread reads it and writes an interrupt record to the job_interrupts table.  The 
  * interrupted job could be at any point in its processing.  Specifically, a job's status
  * could be marked STOPPED or PAUSED and the job could be in one of the following runtime
  * states:
@@ -130,27 +133,27 @@ import com.rabbitmq.client.Envelope;
  * Not scheduled means a scheduler has not yet placed the job on a phase queue.  In this
  * case, the job is finished and further processing will not occur.  The interrupt record
  * for this job has an expiration time after which the Interrupt Clean Up thread will
- * remove it from the jobS_interrupts table.
+ * remove it from the job_interrupts table.
  * 
  * If the job is queued or executing then a worker thread will eventually poll the 
- * job_interrupts table look for interrupts for the job it's servicing.  When interrupts 
- * are found, the worker services the interrupts in the order they were create (oldest 
+ * job_interrupts table looking for interrupts for the job it's servicing.  When interrupts 
+ * are found, the worker services the interrupts in the order they were created (oldest 
  * first).  Multiple interrupts to stop job processing are allowed, but once a job is 
  * stopped no further interrupts have an effect. 
  * 
  * As an aside, the old and new code are not perfectly fused:  The old code could fail
  * after changing a job's status in the database but before queuing an interrupt 
  * message on the scheduler topic.  In this case, an interrupt could be lost.  The new
- * design implements JobManager.safeUpdateStatus() to detect when a job's status is in  
- * a finished state when an update is attempted.  If a finished state is detected, 
- * safeUpdateState() disallows the status update and throws an exception.  This method
- * replaces calls to JobManager.updateStatus() where a problematic asynchronous status 
- * change could occur.  
+ * design implements safe JobManager.updateStatus() methods that detect when a job's status 
+ * is in a finished state before attempting to update the status.  If a finished state is 
+ * detected, updateState() disallows the status update and throws an exception.    
  * 
  * ++++ Non Job-Specific Interrupts ++++ 
  *  
- * coming soon 
- *  
+ * Non job-specific interrupt messages are administrative commands carried out by each
+ * scheduler's topic thread.  These commands scheduler scheduler shutdown, assigning
+ * new worker threads to a queue, and decreasing the number of worker thread dedicated
+ * to a queue. 
  *  
  * @author rcardone
  */
