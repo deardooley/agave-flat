@@ -1,20 +1,28 @@
 ###############################################################
-# Migration: V2.1.9.1__Add_job_queues_table.sql
+# Migration: V2.1.9.5__Add_job_queues_table.sql
 #
 # Adding new job_queues table to track queues used by job schedulers.
 # A new index is also added to the tenants table on its tenants_id
 # field to allow that field to be a foriegn key target.
+#
+# Also added job_interrupts, job_published and job_leases tables.
 #                                      
 # Database changes:
 #
 # Table changes:
 # + job_queues
+# + job_interrupts
+# + job_published
+# + job_leases
 #
 # Index changes:
+# + tenants_tenant_id
+# + jobs_status
 #
 # Column changes:
 # 
 # Data changes:
+# + job_leases records
 #
 #################################################################
 
