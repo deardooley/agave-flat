@@ -42,9 +42,12 @@ import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.ShutdownSignalException;
 
-/**
+/** This is the base class for all worker threads.  Workers are assigned a
+ * single work queue that is specific to a job processing phase.  A worker waits 
+ * on its queue for input and processes requests as they arrive.  More than one
+ * worker can service a queue at a time.    
+ * 
  * @author rcardone
- *
  */
 public abstract class AbstractPhaseWorker 
  extends Thread
@@ -57,7 +60,8 @@ public abstract class AbstractPhaseWorker
     private static final Logger _log = Logger.getLogger(AbstractPhaseWorker.class);
     
     // Communication constants.
-    private static final String WORKER_EXCHANGE_NAME = QueueConstants.WORKER_EXCHANGE_NAME ;
+    private static final String WORKER_EXCHANGE_NAME = QueueConstants.WORKER_EXCHANGE_NAME;
+    private static final int WORKER_INIT_RETRY_DELAY = 10000; // milliseconds
 
     /* ********************************************************************** */
     /*                                Fields                                  */
@@ -119,34 +123,71 @@ public abstract class AbstractPhaseWorker
     /* ---------------------------------------------------------------------- */
     /* run:                                                                   */
     /* ---------------------------------------------------------------------- */
+    /** The main queue read loop for worker threads.  Uncaught exceptions are
+     * handled by the method registered when this thread was created.  
+     * Initialization errors are handled in a retry loop in this thread.
+     */
     @Override
     public void run() {
         
         // This thread is starting.
         if (_log.isDebugEnabled())
-            _log.debug("-> Starting worker thread " + getName() + "");
+            _log.debug("-> Starting worker thread " + getName() + ".");
         
         // ----------------- Job Queue Set Up -------------------
-        // Create the channel and bind our queue to it.
-        _jobChannel = initJobChannel();
-        
-        // Exit without a fuss if something's wrong.
-        if (_jobChannel == null) return;
-        
-        // Use a queuing consumer so that we control the threading.  This
-        // consumer implements a blocking read call, which allows us to
-        // process requests on this thread.
-        QueueingConsumer consumer = new QueueingConsumer(_jobChannel);
-        
-        // We explicitly acknowledge message receipt after processing them.
-        boolean autoack = false;
-        try {_jobChannelConsumerTag = _jobChannel.basicConsume(_queueName, autoack, consumer);}
-        catch (IOException e) {
-            String msg = "Worker " + getName() + " is unable consume messages from queue " + 
-                        _queueName + ".";
-           _log.error(msg, e);
-           try {_jobChannel.abort(AMQP.CHANNEL_ERROR, msg);} catch (Exception e1){}
-           return; // TODO: figure out better longterm strategy.
+        // Initialization retry loop.
+        QueueingConsumer consumer = null;
+        while (true) {
+            try {
+                // Create the channel and bind our queue to it.
+                _jobChannel = initJobChannel();
+                
+                // Use a queuing consumer so that we control the threading.  This
+                // consumer implements a blocking read call, which allows us to
+                // process requests on this thread.
+                consumer = new QueueingConsumer(_jobChannel);
+            
+                // We explicitly acknowledge message receipt after processing them.
+                boolean autoack = false;
+                try {_jobChannelConsumerTag = _jobChannel.basicConsume(_queueName, autoack, consumer);}
+                catch (Exception e) {
+                    String msg = "Worker " + getName() + " is unable consume messages from queue " + 
+                            _queueName + " .";
+                    _log.error(msg, e);
+                    throw e; 
+                }
+            }
+            catch (Exception e) {
+                // Discard the channel and delete the consumer if they were created. 
+                String msg = "Initialization failed for Job worker " + getName() + ".";
+                if (_jobChannel != null)
+                   try {_jobChannel.abort(AMQP.CHANNEL_ERROR, msg);} catch (Exception e1){}
+                consumer = null;
+                
+                // Calculate a bounded and somewhat random wait time.
+                int rand = (int) Math.round(Math.random() * 10000); // between 0 and 10 seconds
+                rand += WORKER_INIT_RETRY_DELAY;
+                msg += " Waiting " + rand + " milliseconds before retrying.";
+                _log.warn(msg);
+               
+                // Wait before retrying to avoid pounding the system when there 
+                // is an underlying problem such as a network or broker failure.  
+                // The randomized wait time staggers retry attempts when multiple 
+                // workers fail to initialize.  
+                try {Thread.sleep(rand);}
+                    catch (InterruptedException e1) {
+                        // Exit thread on interrupt.
+                        if (_log.isDebugEnabled())
+                            _log.debug("<- Exiting worker thread " + getName() + ".");
+                        return;
+                    }
+                
+                // Retry initialization.
+                continue;
+            }
+            
+            // We successfully initialized communications.
+            break;
         }
         
         // Reusable json mapper.
@@ -174,12 +215,12 @@ public abstract class AbstractPhaseWorker
                 break;
             } catch (ConsumerCancelledException e) {
                 _log.info("Cancelled signal received by thread " + getName(), e);
-                break;
+                continue;
             } catch (InterruptedException e) {
                 _log.info("Interrupted signal received by thread " + getName(), e);
                 break;
             } catch (Exception e) {
-                _log.info("Unexpected exception received by thread " + getName(), e);
+                _log.error("Unexpected exception received by thread " + getName(), e);
                 break;
             }
             
@@ -828,7 +869,14 @@ public abstract class AbstractPhaseWorker
     /* ---------------------------------------------------------------------- */
     /* initJobChannel:                                                        */
     /* ---------------------------------------------------------------------- */
-    private Channel initJobChannel() 
+    /** Create and configure the thread-specific channel.  Declare the worker
+     * exchange and bind it to the worker's queue.
+     * 
+     * @return the channel if initialization succeeds
+     * @throws JobWorkerException if initialization fails
+     */
+    private Channel initJobChannel()
+     throws JobWorkerException
     {
         // Create this thread's channel.
         Channel channel = null;
@@ -838,11 +886,7 @@ public abstract class AbstractPhaseWorker
                               "Unable to create channel for queue " + _queueName + 
                               ": " + e.getMessage();
                  _log.error(msg, e);
-             
-                 // TODO: We need to raise an exception in a way that does not
-                 //       cause an infinite cascade of new thread launches, but
-                 //       does signal that there's a serious problem.
-                 return null;
+                 throw new JobWorkerException(msg, e);
          }
          if (_log.isInfoEnabled()) 
              _log.info("Created job channel number " + channel.getChannelNumber() + 
@@ -859,10 +903,8 @@ public abstract class AbstractPhaseWorker
                          ": " + e.getMessage();
                  _log.error(msg, e);
             
-                 // TODO: We need to raise an exception in a way that does not
-                 //       cause an infinite cascade of new thread launches, but
-                 //       does signal that there's a serious problem.
-                 return null;
+                 try {channel.abort(AMQP.CHANNEL_ERROR, msg);} catch (Exception e1){}
+                 throw new JobWorkerException(msg, e);
              }
          
          // Create this thread's exchange.
@@ -874,11 +916,8 @@ public abstract class AbstractPhaseWorker
                          ": " + e.getMessage();
                  _log.error(msg, e);
             
-                 // TODO: We need to raise an exception in a way that does not
-                 //       cause an infinite cascade of new thread launches, but
-                 //       does signal that there's a serious problem.
                  try {channel.abort(AMQP.CHANNEL_ERROR, msg);} catch (Exception e1){}
-                 return null;
+                 throw new JobWorkerException(msg, e);
              }
          
          // Create the queue with the configured name.
@@ -892,11 +931,8 @@ public abstract class AbstractPhaseWorker
                          ": " + e.getMessage();
                  _log.error(msg, e);
             
-                 // TODO: We need to raise an exception in a way that does not
-                 //       cause an infinite cascade of new thread launches, but
-                 //       does signal that there's a serious problem.
                  try {channel.abort(AMQP.CHANNEL_ERROR, msg);} catch (Exception e1){}
-                 return null;
+                 throw new JobWorkerException(msg, e);
              }
         
          // Bind the queue to the exchange using the queue name as the binding key.
@@ -907,11 +943,8 @@ public abstract class AbstractPhaseWorker
                          ": " + e.getMessage();
                  _log.error(msg, e);
                 
-                 // TODO: We need to raise an exception in a way that does not
-                 //       cause an infinite cascade of new thread launches, but
-                 //       does signal that there's a serious problem.
                  try {channel.abort(AMQP.CHANNEL_ERROR, msg);} catch (Exception e1){}
-                 return null;
+                 throw new JobWorkerException(msg, e);
              }
          
          // Success.

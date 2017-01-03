@@ -1279,7 +1279,7 @@ public abstract class AbstractPhaseScheduler
         {
             // We can immediately return when no descendent thread are still active.
             int activeThreads = _phaseThreadGroup.activeCount();
-            if (activeThreads == 0) return;
+            if (activeThreads == 0) break;
             try {Thread.sleep(THREAD_DEATH_POLL_DELAY);} catch (Exception e){return;}
         }
     }
