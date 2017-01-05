@@ -1,11 +1,11 @@
 package org.iplantc.service.jobs.util;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -62,6 +62,20 @@ public final class TenantQueues
     /* ---------------------------------------------------------------------- */
     /* update:                                                                */
     /* ---------------------------------------------------------------------- */
+    /** Convenience method that reads the default queue configuration file.
+     * 
+     * @return a result object
+     * @throws JobException on error
+     */
+    public UpdateResult update()
+     throws JobException
+    {
+        return update(DEFAULT_CONFIG_FILE);
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* update:                                                                */
+    /* ---------------------------------------------------------------------- */
     /** This method reads a queue configuration file that contains queue
      * definitions in a json array.
      * 
@@ -83,8 +97,13 @@ public final class TenantQueues
         UpdateResult result = new UpdateResult();
         
         // -------------------- Read Configuration File ---------------------
-        BufferedReader rdr = null;
-        try {rdr = new BufferedReader(new FileReader(fileName));}
+        // Get the class loader.
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) classLoader = ClassLoader.getSystemClassLoader();
+        
+        // Read the configuration file.
+        InputStream ins = null;
+        try {ins = classLoader.getResourceAsStream(fileName);}
             catch (Exception e) {
                 String msg = "Unable to read tenant queue configuration file: " + fileName + ".";
                 _log.error(msg, e);
@@ -94,15 +113,20 @@ public final class TenantQueues
         // Get an object mapper.
         ObjectMapper mapper = new ObjectMapper();
         JobQueue[] queueDefArray = null;
-        try {queueDefArray = mapper.readValue(rdr, JobQueue[].class);}
+        try {queueDefArray = mapper.readValue(ins, JobQueue[].class);}
             catch (Throwable e) {
                 String msg = "Unable to read tenant queue configuration file: " + fileName + ".";
                 _log.error(msg, e);
                 throw new JobException(msg, e);
             }
+            finally {
+                // Always attempt to close the input stream.
+                try {ins.close();} catch (IOException e){}
+            }
         
         // Is there any work to do?
         if ((queueDefArray == null) || queueDefArray.length == 0) return result;
+        result.queueDefinitionsRead = queueDefArray.length;
         
         // Tracing.
         if (_log.isDebugEnabled())
@@ -176,7 +200,14 @@ public final class TenantQueues
         for (JobQueue queueDef : queueDefArray) {
             
             // Skip garbage; missing tenantId already logged.
-            if (queueDef.getName() == null || queueDef.getTenantId() == null) continue;
+            if (queueDef.getName() == null) {
+                result.queuesRejected.add("Unnamed Queue");
+                continue;
+            }
+            if (queueDef.getTenantId() == null) {
+                result.queuesRejected.add(queueDef.getName());
+                continue;
+            }
             
             // Process the definition as long as its tenant is defined.
             // Missing tenants have already been logged.
@@ -324,11 +355,89 @@ public final class TenantQueues
     /* ********************************************************************** */ 
     public static final class UpdateResult
     {
-        public LinkedList<String> queuesCreated = new LinkedList<>();
-        public LinkedList<String> queuesUpdated = new LinkedList<>();
-        public LinkedList<String> queuesNotChanged = new LinkedList<>();
-        public LinkedList<String> queuesRejected = new LinkedList<>();
-        public LinkedList<String> queuesCreateFailed = new LinkedList<>();
-        public LinkedList<String> queuesUpdateFailed = new LinkedList<>();
+        public int queueDefinitionsRead;
+        public ArrayList<String> queuesCreated = new ArrayList<>();
+        public ArrayList<String> queuesUpdated = new ArrayList<>();
+        public ArrayList<String> queuesNotChanged = new ArrayList<>();
+        public ArrayList<String> queuesRejected = new ArrayList<>();
+        public ArrayList<String> queuesCreateFailed = new ArrayList<>();
+        public ArrayList<String> queuesUpdateFailed = new ArrayList<>();
+        
+        /** Provide a formatted string of queue results that looks like:
+         * 
+         *  Queues created: 2, [q1, q2]
+         *  Queues updated: 0
+         *  ...
+         * 
+         * The skipped queues are not listed to avoid drownding in noise.
+         * */
+        @Override
+        public String toString()
+        {
+            StringBuilder buf = new StringBuilder(200);
+            buf.append("Queue definitions read: ");
+            buf.append(queueDefinitionsRead);
+            buf.append("\n");
+            
+            buf.append("Queues created: ");
+            buf.append(queuesCreated.size());
+            if (!queuesCreated.isEmpty()){
+                buf.append(", ");
+                buf.append(list(queuesCreated));
+            }
+            buf.append("\n");
+            
+            buf.append("Queues updated: ");
+            buf.append(queuesUpdated.size());
+            if (!queuesUpdated.isEmpty()){
+                buf.append(", ");
+                buf.append(list(queuesUpdated));
+            }
+            buf.append("\n");
+            
+            buf.append("Queues skipped: ");
+            buf.append(queuesNotChanged.size());
+            buf.append("  <Not Shown>");
+            buf.append("\n");
+            
+            buf.append("Queues rejected: ");
+            buf.append(queuesRejected.size());
+            if (!queuesRejected.isEmpty()){
+                buf.append(", ");
+                buf.append(list(queuesRejected));
+            }
+            buf.append("\n");
+            
+            buf.append("Queue create failures: ");
+            buf.append(queuesCreateFailed.size());
+            if (!queuesCreateFailed.isEmpty()){
+                buf.append(", ");
+                buf.append(list(queuesCreateFailed));
+            }
+            buf.append("\n");
+            
+            buf.append("Queue update failures: ");
+            buf.append(queuesUpdateFailed.size());
+            if (!queuesUpdateFailed.isEmpty()){
+                buf.append(", ");
+                buf.append(list(queuesUpdateFailed));
+            }
+            buf.append("\n");
+            
+            return buf.toString();
+        }
+        
+        /** Concatenate queue names into a string. */
+        private String list(List<String> qlist)
+        {
+            StringBuilder buf = new StringBuilder(200);
+            buf.append("[");
+            for (int i = 0; i < qlist.size(); i++) {
+                if (i != 0) buf.append(", ");
+                buf.append(qlist.get(i));
+            }
+            buf.append("]");
+            return buf.toString();
+        }
     }
 }

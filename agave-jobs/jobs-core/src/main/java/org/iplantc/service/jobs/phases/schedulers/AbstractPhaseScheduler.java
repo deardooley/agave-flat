@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -46,6 +47,7 @@ import org.iplantc.service.jobs.phases.workers.StagingWorker;
 import org.iplantc.service.jobs.phases.workers.SubmittingWorker;
 import org.iplantc.service.jobs.queue.SelectorFilter;
 import org.iplantc.service.jobs.util.TenantQueues;
+import org.iplantc.service.jobs.util.TenantQueues.UpdateResult;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -691,10 +693,20 @@ public abstract class AbstractPhaseScheduler
         
         // Call the update utility.
         TenantQueues tenantQueues = new TenantQueues();
-        try {tenantQueues.update(TenantQueues.DEFAULT_CONFIG_FILE);}
-            catch (Exception e) {
-                _log.error("Tenant queue definition not refreshed, using existing definitions.");
+        try {
+            // Perform the update.
+            UpdateResult result = tenantQueues.update();
+            if (_log.isDebugEnabled()) {
+                StringBuilder buf = new StringBuilder(512);
+                buf.append("\n-------------- Queue Update Results -------------\n");
+                buf.append(result.toString());
+                buf.append("-------------------------------------------------\n");
+                _log.debug(buf.toString());
             }
+        }
+        catch (Exception e) {
+            _log.error("Tenant queue definition not refreshed, using existing definitions.");
+        }
         finally {
             // We only get one shot at queue refresh.
             _updatedTenantQueue = true;

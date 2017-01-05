@@ -146,7 +146,7 @@ public class TenantDao extends AbstractDao
 		{
 			Session session = getSession();
 			session.clear();
-			Long matches = ((Long) session.createQuery("select count(id) from tenants t where t.tenantCode = :tenantCode")
+			Long matches = ((Long) session.createQuery("select count(id) from Tenant t where t.tenantCode = :tenantCode")
 					.setString("tenantCode",  tenantCode)
 					.uniqueResult()).longValue();
 			

@@ -1,0 +1,126 @@
+
+     [
+        {
+            "name" : "ARCHIVING.iplantc.org",
+            "tenantId" :"iplantc.org",
+            "phase" : "ARCHIVING",
+            "priority" : 1,
+            "numWorkers" : 3,
+            "maxMessages" : 2,
+            "filter" : "phase = 'ARCHIVING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "name" : "MONITORING.iplantc.org",
+            "tenantId" :"iplantc.org",
+            "phase" : "MONITORING",
+            "priority" : 1,
+            "numWorkers" : 3,
+            "maxMessages" : 2,
+            "filter" : "phase = 'MONITORING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "name" : "STAGING.iplantc.org",
+            "tenantId" :"iplantc.org",
+            "phase" : "STAGING",
+            "priority" : 1,
+            "numWorkers" : 3,
+            "maxMessages" : 2,
+            "filter" : "phase = 'STAGING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "name" : "SUBMITTING.iplantc.org",
+            "tenantId" :"iplantc.org",
+            "phase" : "SUBMITTING",
+            "priority" : 1,
+            "numWorkers" : 3,
+            "maxMessages" : 2,
+            "filter" : "phase = 'SUBMITTING' AND tenant_id = 'iplantc.org'"
+        },
+        
+        {
+            "name" : "STAGING.iplantc.org.CREATE-1",
+            "tenantId" :"iplantc.org",
+            "phase" : "STAGING",
+            "priority" : 105,
+            "numWorkers" : 3,
+            "maxMessages" : 2,
+            "filter" : "phase = 'STAGING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "name" : "STAGING.iplantc.org.CREATE-2",
+            "tenantId" :"iplantc.org",
+            "phase" : "STAGING",
+            "priority" : 110,
+            "numWorkers" : 3,
+            "maxMessages" : 2,
+            "filter" : "phase = 'STAGING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "name" : "STAGING.iplantc.org.CREATE-FAILURE-1",
+            "tenantId" :"iplantc.org",
+            "phase" : "STAGING",
+            "priority" : 10,
+            "numWorkers" : 6,
+            "maxMessages" : 6,
+            "filter" : "phase = 'STAGING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "name" : "MONITORING.iplantc.org.CREATE-FAILURE-2",
+            "tenantId" :"iplantc.org",
+            "phase" : "MONITORING",
+            "priority" : 0,
+            "numWorkers" : 12,
+            "maxMessages" : 12,
+            "filter" : "phase = 'MONITORING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "name" : "MONITORING.iplantc.org.UPDATE-1",
+            "tenantId" :"iplantc.org",
+            "phase" : "MONITORING",
+            "priority" : 40,
+            "numWorkers" : 40,
+            "maxMessages" : 40,
+            "filter" : "phase = 'MONITORING' AND tenant_id = 'iplantc.org' AND junk = 2"
+        },
+        {
+            "name" : "MONITORING.iplantc.org.UPDATE-FAILURE-1",
+            "tenantId" :"iplantc.org",
+            "phase" : "MONITORING",
+            "priority" : 8,
+            "numWorkers" : -1,
+            "maxMessages" : 8,
+            "filter" : "phase = 'MONITORING' AND tenant_id = 'iplantc.org' AND junk = 2"
+        },
+        {
+            "name" : "MONITORING.iplantc.org.UPDATE-2",
+            "tenantId" :"iplantc.org",
+            "phase" : "MONITORING",
+            "priority" : 11,
+            "numWorkers" : 11,
+            "maxMessages" : 11
+        },
+        {
+            "name" : "MONITORING.iplantc.org.REJECT-1",
+            "phase" : "MONITORING",
+            "priority" : 12,
+            "numWorkers" : 12,
+            "maxMessages" : 12,
+            "filter" : "phase = 'MONITORING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "phase" : "STAGING",
+            "priority" : 2,
+            "numWorkers" : 2,
+            "maxMessages" : 2,
+            "filter" : "phase = 'STAGING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "phase" : "SUBMITTING",
+            "priority" : 2,
+            "numWorkers" : 2,
+            "maxMessages" : 2,
+            "filter" : "phase = 'SUBMITTING' AND tenant_id = 'iplantc.org'"
+        }
+        
+    ]
+
