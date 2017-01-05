@@ -132,26 +132,26 @@ public class JobsApplication extends AgaveApplication
                     throw e;
                 }
             try {taskService.execute(new SubmittingScheduler());}
-            catch (Exception e)
-            {
-                String msg = "Unable to start SubmittingScheduler.";
-                _log.error(msg, e);
-                throw e;
-            }
+                catch (Exception e)
+                {
+                    String msg = "Unable to start SubmittingScheduler.";
+                    _log.error(msg, e);
+                    throw e;
+                }
             try {taskService.execute(new MonitoringScheduler());}
-            catch (Exception e)
-            {
-                String msg = "Unable to start MonitoringScheduler.";
-                _log.error(msg, e);
-                throw e;
-            }
+                catch (Exception e)
+                {
+                    String msg = "Unable to start MonitoringScheduler.";
+                    _log.error(msg, e);
+                    throw e;
+                }
             try {taskService.execute(new ArchivingScheduler());}
-            catch (Exception e)
-            {
-                String msg = "Unable to start ArchivingScheduler.";
-                _log.error(msg, e);
-                throw e;
-            }
+                catch (Exception e)
+                {
+                    String msg = "Unable to start ArchivingScheduler.";
+                    _log.error(msg, e);
+                    throw e;
+                }
         }
     }
 

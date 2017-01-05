@@ -45,6 +45,7 @@ import org.iplantc.service.jobs.phases.workers.PhaseWorkerParms;
 import org.iplantc.service.jobs.phases.workers.StagingWorker;
 import org.iplantc.service.jobs.phases.workers.SubmittingWorker;
 import org.iplantc.service.jobs.queue.SelectorFilter;
+import org.iplantc.service.jobs.util.TenantQueues;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -211,8 +212,12 @@ public abstract class AbstractPhaseScheduler
     // listed in priority order.
     private final HashMap<String,List<JobQueue>> _tenantQueues = new HashMap<>();
     
-   // Monotonically increasing sequence number generator used as part of thread names.
+    // Monotonically increasing sequence number generator used as part of thread names.
     private static final AtomicInteger _threadSeqno = new AtomicInteger(0);
+    
+    // This flag is set by the one scheduler instance that 
+    // updates the tenant queues on invocation.
+    private static boolean _updatedTenantQueue = false;
     
     // A thread that listens on the TOPIC_QUEUE_NAME for AbstractQueueMessage.JobCommand
     // messages.  These messages include worker interrupts and scheduler interrupts.  
@@ -313,6 +318,9 @@ public abstract class AbstractPhaseScheduler
     public void run() 
     {
         try {
+            // Update tenant queues.
+            updateTenantQueues();
+            
             // Connect to the scheduler topic (incoming).
             initJobTopic();
             
@@ -669,6 +677,30 @@ public abstract class AbstractPhaseScheduler
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* updateTenantQueues:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Read the queue configuration resource file and add any new queues to the
+     * database.
+     */
+    private static synchronized void updateTenantQueues()
+    {
+        // Only one scheduler gets to update the tenant queues
+        // on any jobs-core invocation.
+        if (_updatedTenantQueue) return;
+        
+        // Call the update utility.
+        TenantQueues tenantQueues = new TenantQueues();
+        try {tenantQueues.update(TenantQueues.DEFAULT_CONFIG_FILE);}
+            catch (Exception e) {
+                _log.error("Tenant queue definition not refreshed, using existing definitions.");
+            }
+        finally {
+            // We only get one shot at queue refresh.
+            _updatedTenantQueue = true;
+        }
+    }
+    
     /* ---------------------------------------------------------------------- */
     /* initJobTopic:                                                          */
     /* ---------------------------------------------------------------------- */

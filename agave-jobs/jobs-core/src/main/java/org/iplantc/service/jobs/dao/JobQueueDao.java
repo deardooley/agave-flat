@@ -559,6 +559,7 @@ public final class JobQueueDao {
      * @param name the full name of the target queue
      * @param filter the new filter
      * @param tenantId the queue's tenantId
+     * @return number of queues affected (0 or 1)
      * @throws JobQueueException input or operational error
      */
     public int updateFilter(String name, String filter, String tenantId)
@@ -623,6 +624,122 @@ public final class JobQueueDao {
                 String msg = "Unable to commit update transaction " +
                              "for " + name + ".filter" +  
                              " in tenant " + tenantId + ".";
+                _log.error(msg);
+                throw new JobQueueException(msg, e);
+            }
+        }
+        
+        return rows;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* updateFields:                                                          */
+    /* ---------------------------------------------------------------------- */
+    /** Update all the fields that can be changed on an existing queue record.
+     * This method reassigns the lastUpdate timestamp in the input queue object 
+     * to the current time.
+     * 
+     * @param jobQueue the object containing all the updatable field values
+     * @return number of queues affected (0 or 1)
+     * @throws JobQueueException input or operational error
+     * @throws JobQueuePriorityException duplicate priority error
+     */
+    public int updateFields(JobQueue jobQueue) 
+     throws JobQueueException, JobQueuePriorityException
+    {
+        // ------------------------- Check Input -------------------------
+        // Null/empty checks.
+        if (jobQueue == null) {
+            String msg = "Null job queue object received.";
+            _log.error(msg);
+            throw new JobQueueException(msg);
+        }
+        if (StringUtils.isBlank(jobQueue.getName())) {
+            String msg = "No job queue name specified in job queue definition.";
+            _log.error(msg);
+            throw new JobQueueException(msg);
+        }
+        if (StringUtils.isBlank(jobQueue.getTenantId())) {
+            String msg = "No tenant id specified in job queue definition.";
+            _log.error(msg);
+            throw new JobQueueException(msg);
+        }
+        
+        // Validate the filter.
+        validateFilter(jobQueue.getFilter());
+        
+        // Numeric checks.
+        if (jobQueue.getPriority() < 1) {
+            String msg = "A priority of at least 1 must be specified in job queue definition.";
+            _log.error(msg);
+            throw new JobQueueException(msg);
+        }
+        if (jobQueue.getNumWorkers() < 1) {
+            String msg = "At least 1 worker thread must be specified in job queue definition.";
+            _log.error(msg);
+            throw new JobQueueException(msg);
+        }
+        if (jobQueue.getMaxMessages() < 1) {
+            String msg = "Maximum messages of at least 1 must be specified in job queue definition.";
+            _log.error(msg);
+            throw new JobQueueException(msg);
+        }
+        
+        // Reset the last updated field.
+        jobQueue.setLastUpdated(new Date());
+        
+        // ------------------------- Call SQL ----------------------------
+        int rows = 0;
+        try
+        {
+            // Begin new transaction.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Create the delete command.
+            String sql = "update job_queues " +
+                         "set priority = :priority, " +
+                              "num_workers = :numWorkers, " +
+                              "max_messages = :maxMessages, " +
+                              "filter = :filter, " +
+                              "last_updated = :lastUpdated " +
+                         "where name = :name and tenant_id = :tenant_id";
+            
+            // Fill in the placeholders.           
+            Query qry = session.createSQLQuery(sql);
+            qry.setInteger("priority", jobQueue.getPriority());
+            qry.setInteger("numWorkers", jobQueue.getNumWorkers());
+            qry.setInteger("maxMessages", jobQueue.getMaxMessages());
+            qry.setString("filter", jobQueue.getFilter().trim());
+            qry.setTimestamp("lastUpdated", jobQueue.getLastUpdated());
+            qry.setString("name", jobQueue.getName().trim());
+            qry.setString("tenant_id", jobQueue.getTenantId().trim());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            
+            // Issue the call.
+            rows = qry.executeUpdate();
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
+            // General exception.
+            String msg = "Unable to update fields for queue " + jobQueue.getName() + 
+                         " in tenant " + jobQueue.getTenantId() + ".";
+            _log.error(msg);
+            throw new JobQueueException(msg, e);
+        }
+        finally {
+            try {HibernateUtil.commitTransaction();} 
+            catch (Exception e) 
+            {
+                String msg = "Unable to commit update fields transaction " +
+                             "for " + jobQueue.getName() + 
+                             " in tenant " + jobQueue.getTenantId() + ".";
                 _log.error(msg);
                 throw new JobQueueException(msg, e);
             }
