@@ -695,7 +695,7 @@ public abstract class AbstractPhaseScheduler
         TenantQueues tenantQueues = new TenantQueues();
         try {
             // Perform the update.
-            UpdateResult result = tenantQueues.update();
+            UpdateResult result = tenantQueues.updateAll();
             if (_log.isDebugEnabled()) {
                 StringBuilder buf = new StringBuilder(512);
                 buf.append("\n-------------- Queue Update Results -------------\n");

@@ -1,0 +1,40 @@
+
+     [
+        {
+            "name" : "ARCHIVING.iplantc.org",
+            "tenantId" :"iplantc.org",
+            "phase" : "ARCHIVING",
+            "priority" : 1,
+            "numWorkers" : 3,
+            "maxMessages" : 2,
+            "filter" : "phase = 'ARCHIVING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "name" : "MONITORING.iplantc.org",
+            "tenantId" :"iplantc.org",
+            "phase" : "MONITORING",
+            "priority" : 1,
+            "numWorkers" : 3,
+            "maxMessages" : 2,
+            "filter" : "phase = 'MONITORING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "name" : "STAGING.iplantc.org",
+            "tenantId" :"iplantc.org",
+            "phase" : "STAGING",
+            "priority" : 1,
+            "numWorkers" : 3,
+            "maxMessages" : 2,
+            "filter" : "phase = 'STAGING' AND tenant_id = 'iplantc.org'"
+        },
+        {
+            "name" : "SUBMITTING.iplantc.org",
+            "tenantId" :"iplantc.org",
+            "phase" : "SUBMITTING",
+            "priority" : 1,
+            "numWorkers" : 3,
+            "maxMessages" : 2,
+            "filter" : "phase = 'SUBMITTING' AND tenant_id = 'iplantc.org'"
+        }
+    ]
+

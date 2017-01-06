@@ -1,5 +1,6 @@
 package org.iplantc.service.jobs.util;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -31,8 +32,11 @@ public final class TenantQueues
     // Tracing.
     private static final Logger _log = Logger.getLogger(TenantQueues.class);
     
-    // Default tenant queue configuration file.
-    public static final String DEFAULT_CONFIG_FILE = "TenantQueueConfiguration.json";
+    // Default tenant queue configuration directory.
+    public static final String DEFAULT_CONFIG_DIR = "queueConfigurations/";
+    
+    // Configuration files have the form <tenantId>.json.
+    public static final String CONFIG_FILE_SUFFIX = ".json";
     
     /* ********************************************************************** */
     /*                                 Fields                                 */
@@ -47,30 +51,55 @@ public final class TenantQueues
     /* main:                                                                  */
     /* ---------------------------------------------------------------------- */
     public static void main(String[] args)
-     throws JobException
+     throws JobException, FileNotFoundException
     {
         // Parse parms.
-        String fileName;
+        String fileName = null;
         if (args.length > 0) fileName = args[0];
-         else fileName = DEFAULT_CONFIG_FILE;
         
         // Update the queue configuration.
         TenantQueues tenantQueues = new TenantQueues();
-        tenantQueues.update(fileName);
+        UpdateResult result;
+        if (fileName != null) result = tenantQueues.update(fileName);
+         else result = tenantQueues.updateAll();
+
+        // Print results.
+        if (_log.isInfoEnabled()) {
+            StringBuilder buf = new StringBuilder(512);
+            buf.append("\n-------------- Queue Update Results -------------\n");
+            buf.append(result.toString());
+            buf.append("-------------------------------------------------\n");
+            _log.info(buf.toString());
+        }
     }
     
     /* ---------------------------------------------------------------------- */
-    /* update:                                                                */
+    /* updateAll:                                                              */
     /* ---------------------------------------------------------------------- */
     /** Convenience method that reads the default queue configuration file.
      * 
      * @return a result object
      * @throws JobException on error
      */
-    public UpdateResult update()
+    public UpdateResult updateAll()
      throws JobException
     {
-        return update(DEFAULT_CONFIG_FILE);
+        // Get all active tenant ids.
+        TenantDao tenantDao = new TenantDao();
+        List<String> tenantIds;
+        try {tenantIds = tenantDao.getTenantIds(true);}
+            catch (Exception e) {
+                String msg = "Unable to query active tenants.";
+                _log.error(msg, e);
+                throw new JobException(msg,e);
+            }
+        
+        // Accumulate results across all tenants that are found.
+        // We ignore tenant without configuration files.
+        UpdateResult result = new UpdateResult();
+        for (String tenantId : tenantIds) 
+            try {update(tenantId, result);} catch (FileNotFoundException e) {} 
+        return result;
     }
     
     /* ---------------------------------------------------------------------- */
@@ -79,22 +108,45 @@ public final class TenantQueues
     /** This method reads a queue configuration file that contains queue
      * definitions in a json array.
      * 
-     * @param fileName non-null configuration file path
+     * @param tenantId non-null configuration file path
      * @return a result object
      * @throws JobException on error
+     * @throws FileNotFoundException 
      */
-    public UpdateResult update(String fileName)
-     throws JobException
+    public UpdateResult update(String tenantId, UpdateResult... cumulativeResult)
+     throws JobException, FileNotFoundException
     {
+        // -------------------- Validation/Initialization -------------------
         // Check input.
-        if (StringUtils.isBlank(fileName)) {
-            String msg = "Invalid queue configuration file name.";
+        if (StringUtils.isBlank(tenantId)) {
+            String msg = "Invalid tenant ID.";
             _log.error(msg);
             throw new JobException(msg);
         }
         
-        // Result accumulator.
-        UpdateResult result = new UpdateResult();
+        // Validate the tenant.
+        TenantDao tenantDao = new TenantDao();
+        boolean exists;
+        try {exists = tenantDao.exists(tenantId);}
+        catch (Exception e) {
+            String msg = "Unable to check existance of tenant " + tenantId + 
+                         ". Skipping queue definition refresh for this tenant.";
+            _log.error(msg, e);
+            throw new JobException(msg, e);
+        }
+        if (!exists) {
+            String msg = "Tenant " + tenantId + " does not exist.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Assign result varable.
+        UpdateResult result;
+        if (cumulativeResult.length > 0) result = cumulativeResult[0];
+            else result = new UpdateResult();
+        
+        // Construct resource file name.
+        String fileName = DEFAULT_CONFIG_DIR + tenantId + CONFIG_FILE_SUFFIX;
         
         // -------------------- Read Configuration File ---------------------
         // Get the class loader.
@@ -109,6 +161,12 @@ public final class TenantQueues
                 _log.error(msg, e);
                 throw new JobException(msg, e);
             }
+        // A tenant may legitimately not have a configuration file.
+        if (ins == null) {
+            String msg = "Tenant queue configuration file: " + fileName + " not found.";
+            _log.info(msg);
+            throw new FileNotFoundException(msg);
+        }
         
         // Get an object mapper.
         ObjectMapper mapper = new ObjectMapper();
@@ -124,96 +182,65 @@ public final class TenantQueues
                 try {ins.close();} catch (IOException e){}
             }
         
+        // Record that we read the tenant configuration file.
+        result.fileNames.add(fileName);
+        
         // Is there any work to do?
         if ((queueDefArray == null) || queueDefArray.length == 0) return result;
-        result.queueDefinitionsRead = queueDefArray.length;
         
-        // Tracing.
+        // Accumulate the total read total.
+        result.queueDefinitionsRead += queueDefArray.length;
         if (_log.isDebugEnabled())
             _log.debug(queueDefArray.length + " queue definitions read from " + fileName + ".");
         
         // -------------------- Get Tenant Info -----------------------------
-        // Create the set of all tenantId's configured with a queue.
-        HashSet<String> tenantSet = new HashSet<>();
-        for (JobQueue queue : queueDefArray) {
-            if (queue.getName() == null) continue;
-            if (queue.getTenantId() != null) tenantSet.add(queue.getTenantId());
-             else {
-                 String msg = "No tenant ID configured in queue definition " + 
-                              queue.getName() + ".";
-                 _log.warn(msg);
-             }
-        }
-        
-        // Remove any tenant that isn't defined in the tenants table.
-        TenantDao tenantDao = new TenantDao();
-        Iterator<String> it = tenantSet.iterator();
-        while (it.hasNext()) {
-            // Check that the tenant has been defined.
-            String tenantId = it.next();
-            boolean exists = false; // 
-            try {exists = tenantDao.exists(tenantId);}
-                catch (Exception e) {
-                    String msg = "Unable to check existance of tenant " + tenantId + 
-                                 ". Skipping queue definition refresh for this tenant.";
-                    _log.error(msg, e);
-                }
-            
-            // Remove the undefined or inaccessible tenant from 
-            // the set of tenant with configured queues.
-            if (!exists) it.remove(); 
-        }
-        
-        // Don't bother if there's no work to do.
-        if (tenantSet.isEmpty()) return result;
+        // Put the currently defined queues for the tenant in a map 
+        // with key queue name and value queue object.
         _jobQueueDao = new JobQueueDao();
-
-        // Get all the currently defined queues for all the vetted tenants and
-        // save them in a map.  The map organization is by tenant by queue name:
-        //
-        //      tenantId -> Map<queueName, queue>
-        //
-        HashMap<String,HashMap<String,JobQueue>> tenantQueueMap = new HashMap<>();
-        it = tenantSet.iterator();
-        while (it.hasNext()) {
+        List<JobQueue> existingQueueList = null;
+        try {existingQueueList = _jobQueueDao.getQueues(tenantId);}
+            catch (Exception e) {
+                // Log error and skip this tenant.
+                String msg = "Unable to retreive queue definitions for tenant " + tenantId + 
+                             ". Skipping queue definition refresh for this tenant.";
+                 _log.error(msg, e);
+                 throw new JobException(msg, e);
+            }
             
-            // Get all the queues defined for a tenant.
-            String tenantId = it.next();
-            List<JobQueue> existingQueueList = null;
-            try {existingQueueList = _jobQueueDao.getQueues(tenantId);}
-                catch (Exception e) {
-                    // Log error and skip this tenant.
-                    String msg = "Unable to retreive queue definitions for tenant " + tenantId + 
-                                 ". Skipping queue definition refresh for this tenant.";
-                    _log.error(msg, e);
-                    continue;
-                }
-            
-            // Populate the nested map structure.
-            HashMap<String,JobQueue> queueMap = new HashMap<>(2 * existingQueueList.size() + 1);
-            for (JobQueue queue : existingQueueList) queueMap.put(queue.getName(), queue);
-            tenantQueueMap.put(tenantId, queueMap);
-        }
+        // Populate the nested map structure.
+        HashMap<String,JobQueue> existingQueueMap = new HashMap<>(2 * existingQueueList.size() + 1);
+        for (JobQueue queue : existingQueueList) existingQueueMap.put(queue.getName(), queue);
         
         // -------------------- Write Database ------------------------------
         // Process each queue defintion.
         for (JobQueue queueDef : queueDefArray) {
             
-            // Skip garbage; missing tenantId already logged.
+            // Skip garbage.
             if (queueDef.getName() == null) {
                 result.queuesRejected.add("Unnamed Queue");
+                _log.warn("Encountered unnamed queue definition in file " + fileName + ".");
                 continue;
             }
             if (queueDef.getTenantId() == null) {
                 result.queuesRejected.add(queueDef.getName());
+                _log.warn("No tenant ID configured in queue definition " + 
+                          queueDef.getName() + ".");
                 continue;
             }
             
-            // Process the definition as long as its tenant is defined.
-            // Missing tenants have already been logged.
-            HashMap<String,JobQueue> existingQueueMap = tenantQueueMap.get(queueDef.getTenantId());
-            if (existingQueueMap == null) result.queuesRejected.add(queueDef.getName());
-             else processQueueDefinition(queueDef, existingQueueMap, result);
+            // Check for the expected tenant id.
+            if (!tenantId.equals(queueDef.getTenantId())) {
+                result.queuesRejected.add(queueDef.getName());
+                _log.warn("Queue " + queueDef.getName() + " is defined in file " + fileName + 
+                          " with tenant id " + queueDef.getTenantId() + " instead of " +
+                          tenantId + ".");
+                continue;
+            }
+                
+            // We either insert a new queue definition or update an existing one.
+            JobQueue existingQueue = existingQueueMap.get(queueDef.getName());
+            if (existingQueue == null) insertQueueDefintion(queueDef, result);
+             else updateQueueDefinition(queueDef, existingQueue, result);
         }
         
         return result;
@@ -222,25 +249,6 @@ public final class TenantQueues
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
-    /* ---------------------------------------------------------------------- */
-    /* processQueueDefinition:                                                */
-    /* ---------------------------------------------------------------------- */
-    /** Determine whether a queue insert or update should take place. 
-     * 
-     * @param queueDef the queue definition from the configuration file
-     * @param existingQueueMap the (non-null) queues currently defined for the tenant
-     * @param result the result reporting object that will be modified
-     */
-    private void processQueueDefinition(JobQueue queueDef,  
-                                        HashMap<String,JobQueue> existingQueueMap, 
-                                        UpdateResult result)
-    {
-        // We either insert a new queue definition or update an existing one.
-        JobQueue existingQueue = existingQueueMap.get(queueDef.getName());
-        if (existingQueue == null) insertQueueDefintion(queueDef, result);
-         else updateQueueDefinition(queueDef, existingQueue, result);
-    }
-    
     /* ---------------------------------------------------------------------- */
     /* insertQueueDefintion:                                                  */
     /* ---------------------------------------------------------------------- */
@@ -356,6 +364,7 @@ public final class TenantQueues
     public static final class UpdateResult
     {
         public int queueDefinitionsRead;
+        public ArrayList<String> fileNames = new ArrayList<>();
         public ArrayList<String> queuesCreated = new ArrayList<>();
         public ArrayList<String> queuesUpdated = new ArrayList<>();
         public ArrayList<String> queuesNotChanged = new ArrayList<>();
@@ -377,6 +386,14 @@ public final class TenantQueues
             StringBuilder buf = new StringBuilder(200);
             buf.append("Queue definitions read: ");
             buf.append(queueDefinitionsRead);
+            buf.append("\n");
+            
+            buf.append("Files read: ");
+            buf.append(fileNames.size());
+            if (!fileNames.isEmpty()){
+                buf.append(", ");
+                buf.append(list(fileNames));
+            }
             buf.append("\n");
             
             buf.append("Queues created: ");

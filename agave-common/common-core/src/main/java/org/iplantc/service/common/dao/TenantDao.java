@@ -3,8 +3,10 @@
  */
 package org.iplantc.service.common.dao;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.log4j.Logger;
 import org.hibernate.CacheMode;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -18,6 +20,9 @@ import org.iplantc.service.common.persistence.HibernateUtil;
  */
 public class TenantDao extends AbstractDao
 {
+    // Tracing.
+    private static final Logger _log = Logger.getLogger(TenantDao.class);
+
 	private static ConcurrentHashMap<String, Tenant> tenantCache = new ConcurrentHashMap<String, Tenant>();
 	
 	protected Session getSession() {
@@ -193,5 +198,50 @@ public class TenantDao extends AbstractDao
 		finally {
 			try { HibernateUtil.commitTransaction();} catch (Exception e) {}
 		}
-	}	
+	}
+	
+	/** Return a list of tenant ids.  Set the activeOnly flag to true to
+	 * avoid retrieving ids of disabled tenants. 
+	 * 
+	 * @param activeOnly true returns tenant with active status, 
+	 *                   false returns all tenants including disabled ones
+	 * @return list of tenant ids
+	 */
+	public List<String> getTenantIds(boolean activeOnly)
+	throws TenantException
+	{
+	    // Result list.
+	    List<String> idList;
+	    
+	    // Create the where clause depending on input.
+	    String whereClause = "";
+	    if (activeOnly)
+	        whereClause = "where status != 'DISABLED'";
+	    
+        try
+        {
+            Session session = getSession();
+            session.clear();
+            
+            // Create the query.
+            String sql = "select tenant_id from tenants " + whereClause +
+                         " order by tenant_id";
+            
+            // Issue the query and commit.
+            idList = session.createSQLQuery(sql).list();
+            HibernateUtil.commitTransaction();
+        }
+        catch (HibernateException ex)
+        {
+            // Log the error.
+            String msg = "Unable to retrieve tenant IDs.";
+            _log.error(msg, ex);
+            
+            // Rollback if possible before throwing exception.
+            try {HibernateUtil.rollbackTransaction();} catch (Exception e){}
+            throw new TenantException(msg, ex);
+        }
+	    
+	    return idList;
+	}
 }

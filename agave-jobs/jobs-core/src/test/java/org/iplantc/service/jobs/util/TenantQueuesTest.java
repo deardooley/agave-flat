@@ -1,13 +1,15 @@
 package org.iplantc.service.jobs.util;
 
+import java.io.FileNotFoundException;
+
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.dao.JobQueueDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.testng.Assert;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /** Class that reads the tenant queue configuration resource file
@@ -28,7 +30,7 @@ public final class TenantQueuesTest
     private static final Logger _log = Logger.getLogger(TenantQueuesTest.class);
     
     // Default tenant queue configuration file.
-    private static final String TEST_CONFIG_FILE = "TenantQueueConfigurationTEST.json";
+    private static final String TEST_TENANT = "iplantc.org";
     
     /* ********************************************************************** */
     /*                            Set Up / Tear Down                          */
@@ -36,7 +38,7 @@ public final class TenantQueuesTest
     /* ---------------------------------------------------------------------- */
     /* setup:                                                                 */
     /* ---------------------------------------------------------------------- */
-    @BeforeSuite
+    @BeforeMethod
     private void setup()
     {
         // The tests in this file assume that some of the queues created by 
@@ -76,7 +78,7 @@ public final class TenantQueuesTest
     /* ---------------------------------------------------------------------- */
     /* teardown:                                                              */
     /* ---------------------------------------------------------------------- */
-    @AfterSuite
+    @AfterMethod
     private void teardown()
     {
         // Delete the queues we created in setup and those created during
@@ -98,15 +100,39 @@ public final class TenantQueuesTest
     /*                             Public Methods                             */
     /* ********************************************************************** */ 
     /* ---------------------------------------------------------------------- */
-    /* queueTest:                                                             */
+    /* updateTest:                                                            */
     /* ---------------------------------------------------------------------- */
     @Test(enabled=true)
-    public void queueTest()
-     throws JobException
+    public void updateTest()
+     throws JobException, FileNotFoundException
     {
-        // Update the queue configuration.
+        // Update the queue configuration for a specific tenant.
         TenantQueues tenantQueues = new TenantQueues();
-        TenantQueues.UpdateResult result = tenantQueues.update(TEST_CONFIG_FILE);
+        TenantQueues.UpdateResult result = tenantQueues.update(TEST_TENANT);
+        System.out.println(result.toString());
+        
+        // The results are a tight coupling between the queues expected to be 
+        // defined before the test, queues defined in setup(), and queue 
+        // definitions in the configuration file.
+        Assert.assertEquals(result.queueDefinitionsRead, 14, "Unexpected number of read definitions.");
+        Assert.assertEquals(result.queuesCreated.size(), 2, "Unexpected number of created queues.");
+        Assert.assertEquals(result.queuesCreateFailed.size(), 2, "Unexpected number of create FAILED queues.");
+        Assert.assertEquals(result.queuesUpdated.size(), 2, "Unexpected number of updated queues.");
+        Assert.assertEquals(result.queuesUpdateFailed.size(), 1, "Unexpected number of update FAILED queues.");
+        Assert.assertEquals(result.queuesNotChanged.size(), 4, "Unexpected number of skipped queues.");
+        Assert.assertEquals(result.queuesRejected.size(), 3, "Unexpected number of rejected queues.");
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* updateAllTest:                                                         */
+    /* ---------------------------------------------------------------------- */
+    @Test(enabled=true)
+    public void updateAllTest()
+     throws JobException, FileNotFoundException
+    {
+        // Update the queue configuration for all tenants.
+        TenantQueues tenantQueues = new TenantQueues();
+        TenantQueues.UpdateResult result = tenantQueues.updateAll();
         System.out.println(result.toString());
         
         // The results are a tight coupling between the queues expected to be 
