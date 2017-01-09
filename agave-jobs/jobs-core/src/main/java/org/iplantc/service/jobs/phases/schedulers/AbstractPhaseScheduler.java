@@ -1597,15 +1597,63 @@ public abstract class AbstractPhaseScheduler
      */
     private String selectQueueName(Job job)
     {
-        // TODO: Expand the sources in properties.
         // Populate substitution values.
         //
         // These values can only be class Boolean, Byte, Short, Integer, Long, 
         // Float, Double, and String; any other values will cause an exception.
         // Property names cannot be null or the empty string.
         Map<String, Object> properties = new HashMap<>();
+        
+        // Used by system to retrieve queue set and available for use in filters.
         properties.put("phase", _phaseType.name());
         properties.put("tenant_id", job.getTenantId());
+        
+        // Other properties from Job object available for use in filters.
+        // See the Job class for the meaning of each value.
+        if (job.getArchiveCanonicalUrl() != null)
+            properties.put("archiveCanonicalUrl", job.getArchiveCanonicalUrl());
+        if (job.getArchivePath() != null)
+            properties.put("archivePath", job.getArchivePath());
+        if (job.getArchiveSystem() != null) {
+            if (job.getArchiveSystem().getName() != null)
+                properties.put("archiveSystemName", job.getArchiveSystem().getName());
+            if (job.getArchiveSystem().getSite() != null)
+                properties.put("archiveSystemSite", job.getArchiveSystem().getSite());
+            if (job.getArchiveSystem().getStatus() != null)
+                properties.put("archiveSystemStatus", job.getArchiveSystem().getStatus().name());
+            if (job.getArchiveSystem().getUserRole(job.getOwner()) != null)
+                properties.put("archiveSystemUserRole", job.getArchiveSystem().getUserRole(job.getOwner()));
+        }
+        if (job.getBatchQueue() != null)
+            properties.put("batchQueue", job.getBatchQueue());
+        if (job.getCharge() != null)
+            properties.put("charge", job.getCharge());
+        if (job.getCreated() != null)
+            properties.put("created", job.getCreated());
+        if (job.getInternalUsername() != null)
+            properties.put("internalUsername", job.getInternalUsername());
+        if (job.getMaxRunTime() != null)
+            properties.put("maxRunTime", job.getMaxRunTime());
+        if (job.getMemoryPerNode() != null)
+            properties.put("memoryPerNode", job.getMemoryPerNode());
+        if (job.getName() != null)
+            properties.put("name", job.getName());
+        if (job.getNodeCount() != null)
+            properties.put("nodeCount", job.getNodeCount());
+        if (job.getOutputPath() != null)
+            properties.put("outputPath", job.getOutputPath());
+        if (job.getOwner() != null)
+            properties.put("owner", job.getOwner());
+        if (job.getProcessorsPerNode() != null)
+            properties.put("processorsPerNode", job.getProcessorsPerNode());
+        if (job.getRetries() != null)
+            properties.put("retries", job.getRetries());
+        if (job.getSoftwareName() != null)
+            properties.put("softwareName", job.getSoftwareName());
+        if (job.getSystem() != null)
+            properties.put("system", job.getSystem());
+        if (job.getWorkPath() != null)
+            properties.put("workPath", job.getWorkPath());
         
         // Evaluate each of this tenant's queues in priority order.
         String selectedQueueName = null;
