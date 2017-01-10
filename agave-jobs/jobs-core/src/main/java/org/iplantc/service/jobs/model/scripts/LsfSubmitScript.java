@@ -38,7 +38,7 @@ public class LsfSubmitScript extends AbstractSubmitScript {
 
 		String result = "#!/bin/bash \n" 
 			+ DIRECTIVE_PREFIX + "-J " + name + "\n"
-			+ DIRECTIVE_PREFIX + "-oo " + standardOutputFile + "\n" 
+			+ DIRECTIVE_PREFIX + "-o " + standardOutputFile + "\n" 
 			+ DIRECTIVE_PREFIX + "-e " + standardErrorFile + "\n" 
 			+ DIRECTIVE_PREFIX + "-W " + getTime() + "\n"
 			+ DIRECTIVE_PREFIX + "-q " + queue.getEffectiveMappedName() + "\n"
@@ -80,6 +80,7 @@ public class LsfSubmitScript extends AbstractSubmitScript {
 	public String getTime()
 	{
 		// convert the requested time from hhh:mm:ss format to milliseconds
+		
 		int maxRequestedTimeInMilliseconds = TimeUtils.getMillisecondsForMaxTimeValue(time);
 		
 		// LSF acceptes a minmum run time of 1 minute. Adjust 

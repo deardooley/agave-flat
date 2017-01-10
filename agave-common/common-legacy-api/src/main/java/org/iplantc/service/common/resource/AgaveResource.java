@@ -3,7 +3,10 @@
  */
 package org.iplantc.service.common.resource;
 
-import static org.restlet.data.MediaType.*;
+import static org.restlet.data.MediaType.APPLICATION_JSON;
+import static org.restlet.data.MediaType.APPLICATION_WWW_FORM;
+import static org.restlet.data.MediaType.MULTIPART_FORM_DATA;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -75,7 +78,7 @@ public abstract class AgaveResource extends Resource
             debugjwt = Boolean.parseBoolean(form.getFirstValue("debugjwt"));
             
             String sFilters = form.getFirstValue("filter");
-            if (StringUtils.isEmpty(sFilters)) {
+            if (StringUtils.isBlank(sFilters)) {
             	jsonPathFilters = new String[]{};
     		}
     		else {
@@ -448,5 +451,5 @@ public abstract class AgaveResource extends Resource
 
     public void setForceDownload(boolean forceDownload) {
         this.forceDownload = forceDownload;
-    }
+    }	
 }

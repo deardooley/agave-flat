@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.iplantc.agave</groupId>
 		<artifactId>transforms</artifactId>
-		<version>2.1.9</version>
+		<version>2.1.10</version>
 	</parent>
 	<artifactId>transforms-api</artifactId>
 	<name>iPlant Agave API Transforms Service API Endpoints</name>

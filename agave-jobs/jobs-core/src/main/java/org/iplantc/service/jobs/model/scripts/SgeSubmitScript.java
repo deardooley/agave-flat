@@ -38,6 +38,8 @@ public class SgeSubmitScript extends AbstractSubmitScript
 				+ DIRECTIVE_PREFIX + "-o " + standardOutputFile + "\n" 
 				+ DIRECTIVE_PREFIX + "-e " + standardErrorFile + "\n" 
 				+ DIRECTIVE_PREFIX + "-l h_rt=" + time + "\n" 
+				// we can remote to the system and find the correct parallel environment
+				// using the "qconf -spl" command.
 				+ DIRECTIVE_PREFIX + "-pe " + nodes + "way " + processors + "\n"
 				+ DIRECTIVE_PREFIX + "-q " + queue.getEffectiveMappedName() + "\n";
 				if (!StringUtils.isEmpty(queue.getCustomDirectives())) {

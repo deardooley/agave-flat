@@ -15,11 +15,11 @@ import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
+import org.iplantc.service.common.resource.SearchableAgaveResource;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.dto.JobDTO;
-import org.iplantc.service.jobs.model.views.View;
 import org.iplantc.service.jobs.search.JobSearchFilter;
 import org.joda.time.DateTime;
 import org.json.JSONStringer;
@@ -41,7 +41,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  * 
  */
-public class JobSearchResource extends AbstractJobResource {
+public class JobSearchResource extends SearchableAgaveResource<JobSearchFilter> {
+	
 	private static final Logger	log	= Logger.getLogger(JobSearchResource.class);
 	
 	public static List<String> jobAttributes = new ArrayList<String>();
@@ -64,8 +65,6 @@ public class JobSearchResource extends AbstractJobResource {
 	{
 		super(context, request, response);
 
-		this.username = getAuthenticatedUsername();
-		
 		for (int i = 0; i < request.getAttributes().size(); i++)
 		{
 			// check that more attributes are supported
@@ -95,7 +94,7 @@ public class JobSearchResource extends AbstractJobResource {
 		
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 
 				AgaveLogServiceClient.ActivityKeys.JobSearch.name(), 
-				username, "", request.getClientInfo().getUpstreamAddress());
+				getAuthenticatedUsername(), "", request.getClientInfo().getUpstreamAddress());
 	}
 
 	/**
@@ -106,7 +105,7 @@ public class JobSearchResource extends AbstractJobResource {
 	{
 		try
 		{
-			List<JobDTO> jobs = JobDao.findMatching(username, new JobSearchFilter().filterCriteria(queryParameters), offset, limit);
+			List<JobDTO> jobs = JobDao.findMatching(getAuthenticatedUsername(), new JobSearchFilter().filterCriteria(queryParameters), offset, limit);
 			
 			ObjectMapper mapper = new ObjectMapper();
 			if (hasJsonPathFilters()) {
@@ -194,6 +193,11 @@ public class JobSearchResource extends AbstractJobResource {
 	public boolean allowPut()
 	{
 		return false;
+	}
+
+	@Override
+	public JobSearchFilter getAgaveResourceSearchFilter() {
+		return new JobSearchFilter();
 	}
 
 }

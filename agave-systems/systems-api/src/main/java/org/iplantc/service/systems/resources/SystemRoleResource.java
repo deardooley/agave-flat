@@ -74,7 +74,7 @@ public class SystemRoleResource extends AgaveResource
 	}
 
 	/**
-	 * Get operation to list system roles
+	 * Implements HTTP GET method to list system roles
 	 */
 	@Override
 	public Representation represent(Variant variant) throws ResourceException

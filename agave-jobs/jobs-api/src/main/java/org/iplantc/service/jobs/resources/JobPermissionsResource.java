@@ -63,7 +63,6 @@ public class JobPermissionsResource extends AbstractJobResource
 				AgaveLogServiceClient.ActivityKeys.JobsShare.name(), 
 				username, "", getRequest().getClientInfo().getUpstreamAddress());
 		
-		
 	}
 
 	/**
