@@ -9,7 +9,7 @@
 </listAttribute>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LAUNCH_CONFIGURATION_BUILD_SCOPE" value="${none}"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="/bin/sh"/>
-<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-l -i -c &quot;docker run --rm=true -v ${workspace_loc:/postman-tests}/files-names:/etc/newman -t postman/newman_ubuntu1404 \&#10;    --collection=&quot;Agave-Local.files-names-collection.json.postman_collection&quot; \&#10;    --environment=&quot;Agave-Local.files-names-collection.postman_environment&quot; \&#10;    -n 4 --data=&quot;data_variables_list.json&quot; \&#10;    --testReportFile=&quot;newman-local-report.xml&quot;"/>
-<stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/postman-tests}"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-l -i -c &quot;./newman-v2.sh --skip-frontend -v local&quot;"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/postman-tests/staging}"/>
 <booleanAttribute key="xrebel.delayedApply" value="true"/>
 </launchConfiguration>

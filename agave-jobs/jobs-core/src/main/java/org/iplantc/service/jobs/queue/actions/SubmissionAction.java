@@ -157,7 +157,7 @@ public class SubmissionAction extends AbstractWorkerAction {
                     try
                     {
                         log.error("Failed to submit job " + getJob().getUuid() + " on " + getJob().getSystem() + 
-                                " due to scheduler exception", e);
+                                " due to scheduler exception");
                         this.job = JobManager.updateStatus(getJob(), getJob().getStatus(), "Attempt " 
                             + attempts + " failed to submit job due to scheduler exception. " + e.getMessage());
                     }

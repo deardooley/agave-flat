@@ -1,0 +1,56 @@
+{
+	"id": "lsf.example.com",
+	"name": "Exection system with lsf scheduler",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "My example system used for lsf testing",
+	"site": "my.site",
+	"executionType": "HPC",
+	"default": true,
+	"queues": [
+		{
+			"name": "debug",
+			"maxJobs": 100,
+			"maxUserJobs": 5,
+			"maxProcessorsPerNode": 2,
+			"maxNodes": 1,
+			"maxMemory": "5MB",
+			"customDirectives": "-p 1",
+			"default": false
+		},
+		{
+			"name": "normal",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": "-p 1",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "docker.example.com",
+		"port": 10177,
+		"protocol": "SSH",
+		"auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+	},
+	"storage":{
+      "host":"docker.example.com",
+      "port":10177,
+      "protocol":"SFTP",
+      "rootDir":"/",
+      "homeDir":"/home/testuser",
+      "auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+    },
+    "scratchDir": "scratch",
+	"workDir": "scratch",
+	"scheduler": "LSF",
+	"environment": "",
+	"startupScript": "~/bashrc"
+}

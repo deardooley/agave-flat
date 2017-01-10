@@ -11,10 +11,11 @@ ssh:
     - '10111:22'
    
 gsissh:
-  image: agaveapi/gridftp:latest
+  image: agaveapi/gridftp:5
   hostname: docker.example.com
   ports:
     - '2222:2222'
+    - '2022:22'
 
 slurm:
   image: agaveapi/slurm:latest
@@ -25,24 +26,34 @@ slurm:
 torque:
   image: agaveapi/torque:latest
   hostname: docker.example.com
+  privileged: true
   ports:
     - '10144:22'
 
-gridengine:
-  image: agaveapi/gridengine:latest
-  hostname: docker.example.com
-  ports:
-    - '10155:22'
-    
 htcondor:
   image: agaveapi/htcondor:latest
   hostname: docker.example.com
   ports:
     - '10155:22'
 
-# openlava:
-#   image: agaveapi/openlava:2.2
-#   hostname: docker.example.com
-#   ports:
-#     - '10166:22' 
+gridengine:
+  image: agaveapi/gridengine:latest
+  hostname: docker.example.com
+  environment:
+    - "HOSTNAME=docker.example.com"
+  privileged: true
+  ports:
+    - '10166:22'
+    - '6444:6444'
+    - '6445:6445'
+    
+openlava:
+  image: agaveapi/openlava:3.3
+  hostname: docker.example.com
+  ports:
+    - '10177:22' 
+    - '6879:6879'
+    - '6878:6878'
+    - '6882:6882'
+    - '6881:6881'
 

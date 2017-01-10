@@ -27,7 +27,7 @@
       }
 	},
 	"storage":{
-      "host":"storage.example.com",
+      "host":"docker.example.com",
       "port":10155,
       "protocol":"SFTP",
       "rootDir":"/",

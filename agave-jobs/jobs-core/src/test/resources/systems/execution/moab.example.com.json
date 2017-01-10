@@ -1,0 +1,46 @@
+{
+	"id": "moab.example.com",
+	"name": "Exection system with moab scheduler",
+	"status": "UP",
+	"type": "EXECUTION",
+	"description": "My example system used for moab testing",
+	"site": "my.site",
+	"executionType": "HPC",
+	"default": true,
+	"queues": [
+		{
+			"name": "debug",
+			"maxJobs": 100,
+			"maxMemory": "2048GB",
+			"customDirectives": "",
+			"default": true
+		}
+	],
+	"login": {
+		"host": "docker.example.com",
+		"port": 10144,
+		"protocol": "SSH",
+		"auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+	},
+	"storage":{
+      "host":"docker.example.com",
+      "port":10144,
+      "protocol":"SFTP",
+      "rootDir":"/",
+      "homeDir":"/home/testuser",
+      "auth":{
+         "username":"testuser",
+         "password":"testuser",
+         "type":"PASSWORD"
+      }
+    },
+    "scratchDir": "scratch",
+	"workDir": "scratch",
+	"scheduler": "MOAB",
+	"environment": "",
+	"startupScript": "./bashrc"
+}

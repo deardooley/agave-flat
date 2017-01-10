@@ -25,7 +25,7 @@ public class TimeUtils {
 		if (StringUtils.isEmpty(value)) 
 			return false;
 		else
-			return Pattern.matches("([0-9]{2,4}):([0-5]\\d):([0-5]\\d)", value);
+			return Pattern.matches("([0-9]{1,4}):([0-5]\\d):([0-5]\\d)", value);
 	}
 	
 	public static int compareRequestedJobTimes(String t1, String t2) throws IllegalArgumentException

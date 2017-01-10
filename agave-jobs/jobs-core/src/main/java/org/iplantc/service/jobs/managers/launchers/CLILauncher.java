@@ -5,13 +5,11 @@ package org.iplantc.service.jobs.managers.launchers;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.managers.launchers.parsers.RemoteJobIdParser;
 import org.iplantc.service.jobs.managers.launchers.parsers.RemoteJobIdParserFactory;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.util.Slug;
-import org.iplantc.service.systems.model.enumerations.RemoteShell;
 import org.iplantc.service.transfer.RemoteDataClient;
 
 /**
@@ -41,42 +39,66 @@ public class CLILauncher extends HPCLauncher
 		RemoteDataClient remoteExecutionDataClient = null;
 		try
 		{
-			submissionClient = executionSystem.getRemoteSubmissionClient(job.getInternalUsername());
-			remoteExecutionDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
-			String cdCommand = null;
-			if (!StringUtils.isEmpty(executionSystem.getStartupScript())) {
-				cdCommand = "source " + executionSystem.getStartupScript() + " ; ";		
-			}
+			submissionClient = getExecutionSystem().getRemoteSubmissionClient(getJob().getInternalUsername());
 			
-			// enter the job directory explicitly
-			cdCommand = "cd " + remoteExecutionDataClient.resolvePath(job.getWorkPath());
+			remoteExecutionDataClient = getExecutionSystem().getRemoteDataClient(getJob().getInternalUsername());
 			
-			// get the logfile name so we can redirect output properly
-			String logFileBaseName = Slug.toSlug(job.getName());
+			// Get the remote work directory for the log file
+			String remoteWorkPath = remoteExecutionDataClient.resolvePath(getJob().getWorkPath());
+						
+			// Resolve the startupScript and generate the command to run it and log the response to the
+			// remoteWorkPath + "/.agave.log" file
+			String startupScriptCommand = getStartupScriptCommand(remoteWorkPath);
+						
+			// command to cd to the remoteWorkPath
+			String cdCommand = " cd " + remoteWorkPath;
 			
-			// grant the file write permissions just in case it doens't have them
+			// ensure the wrapper template has execute permissions
 			String chmodCommand = " chmod +x " + batchScriptName + " > /dev/null ";
 			
-			// submit the script and echo the pid or dump the output for debugging
-			String submitCommand = " sh -c './"+ batchScriptName + 
-					" 2> " + logFileBaseName + ".err 1> " + logFileBaseName + ".out & export AGAVE_PID=$! " +
-					" && if [ -n \"$(ps -o comm= -p $AGAVE_PID)\" ] || [ -e " + logFileBaseName + ".pid ]; then echo $AGAVE_PID; else cat " + logFileBaseName + ".err; fi'";
-			
-			String submissionResponse = submissionClient.runCommand(
-					cdCommand + " && " + chmodCommand + " && " + submitCommand);
-					
-			if (StringUtils.isEmpty(submissionResponse.trim())) 
-			{
-				// retry once just in case it was a flickr
-				submissionResponse = submissionClient.runCommand(
-						cdCommand + " &&  " + chmodCommand + " && " + submitCommand);
+			// get the logfile name so we can redirect output properly
+			String logFileBaseName = Slug.toSlug(getJob().getName());
 				
-				if (!ServiceUtils.isValid(submissionResponse.trim())) 
+			// command to submit the resolved wrapper template (*.ipcexe) script to the 
+			// scheduler. This forks the command in a child process redirecting stderr 
+			// to the logFileBaseName + ".err" and stdout to logFileBaseName + ".out".
+			// The process id of the invoked wrapper script is captured and quickly 
+			// evaluated to see if the script failed immediately. If so, the error 
+			// response is echoed back to the service. Otherwise, the process id is
+			// echoed to stdout for the RemoteJobIdParser to extract and associate with
+			// the job record.
+			String submitCommand = String.format(" sh -c './%s 2> %s.err 1> %s.out & " + 
+												 " export AGAVE_PID=$! && " +
+												 " if [ -n \"$(ps -o comm= -p $AGAVE_PID)\" ] || [ -e %s.pid ]; then " + 
+												 	" echo $AGAVE_PID; " + 
+												 " else " + 
+												 	" cat %s.err; " + 
+												 " fi'",
+					batchScriptName,
+					logFileBaseName,
+					logFileBaseName,
+					logFileBaseName,
+					logFileBaseName);
+			
+			// run the aggregate command on the remote system
+			String submissionResponse = submissionClient.runCommand(
+					startupScriptCommand + " ; " + cdCommand + " && " + chmodCommand + " && " + submitCommand);
+					
+			if (StringUtils.isBlank(submissionResponse)) 
+			{
+				// retry the remote command once just in case it was a flicker
+				submissionResponse = submissionClient.runCommand(
+						startupScriptCommand + " ; " + cdCommand + " &&  " + chmodCommand + " && " + submitCommand);
+				
+				// blank response means the job didn't go in...twice. Fail the attempt
+				if (StringUtils.isBlank(submissionResponse)) 
 					throw new JobException("Failed to submit cli job. " + submissionResponse);
 			}
 			
+			// parse the response from the remote command invocation to get the localJobId
+			// by which we'll reference the job during monitoring, etc.
 			RemoteJobIdParser jobIdParser = 
-					new RemoteJobIdParserFactory().getInstance(executionSystem.getScheduler());
+					new RemoteJobIdParserFactory().getInstance(getExecutionSystem().getScheduler());
 			
 			return jobIdParser.getJobId(submissionResponse);
 		}
@@ -91,25 +113,6 @@ public class CLILauncher extends HPCLauncher
 		{
 			try { submissionClient.close(); } catch (Exception e){}
 			try { remoteExecutionDataClient.disconnect(); } catch (Exception e) {}
-		}
-	}
-	
-	@SuppressWarnings("unused")
-	private RemoteShell findRemoteShell() throws Exception
-	{
-	    log.debug("Fetching " + job.getSystem() + " remote shell for job " + job.getUuid());
-		String submissionResponse = submissionClient.runCommand("ps -o comm= -p $$");
-		submissionResponse = StringUtils.trimToNull(submissionResponse);
-		submissionResponse = StringUtils.remove(submissionResponse, "-");
-		if (StringUtils.isEmpty(submissionResponse)) {
-			return RemoteShell.BASH;
-		} 
-		
-		try {
-			return RemoteShell.valueOf(submissionResponse.toUpperCase());
-		} catch (Exception e) {
-			log.error("Unrecognized remote shell: " +  submissionResponse + ". Using BASH instead.");
-			return RemoteShell.BASH;
 		}
 	}
 }

@@ -8,16 +8,19 @@ import java.nio.channels.ClosedByInterruptException;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.enumerations.StartupScriptJobVariableType;
 import org.iplantc.service.jobs.model.scripts.SubmitScript;
 import org.iplantc.service.jobs.model.scripts.SubmitScriptFactory;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
+import org.iplantc.service.systems.model.enumerations.StartupScriptSystemVariableType;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.exceptions.AuthenticationException;
@@ -85,8 +88,13 @@ public abstract class AbstractJobMonitor implements JobMonitor {
 	public RemoteSubmissionClient getRemoteSubmissionClient() 
 	throws Exception 
 	{
-		ExecutionSystem system = JobManager.getJobExecutionSystem(job);
-		return system.getRemoteSubmissionClient(job.getInternalUsername());
+		ExecutionSystem system = getExecutionSystem();
+		return system.getRemoteSubmissionClient(getJob().getInternalUsername());
+	}
+	
+	public ExecutionSystem getExecutionSystem() throws SystemUnavailableException
+	{
+		return JobManager.getJobExecutionSystem(getJob());
 	}
 
 	/* (non-Javadoc)
@@ -97,7 +105,7 @@ public abstract class AbstractJobMonitor implements JobMonitor {
 	throws RemoteDataException, IOException, AuthenticationException, 
 		SystemUnavailableException, RemoteCredentialException 
 	{	
-		RemoteDataClient remoteDataClient = JobManager.getJobExecutionSystem(job).getRemoteDataClient(job.getInternalUsername());
+		RemoteDataClient remoteDataClient = getExecutionSystem().getRemoteDataClient(getJob().getInternalUsername());
         remoteDataClient.authenticate();
         return remoteDataClient;
 	}
@@ -161,6 +169,51 @@ public abstract class AbstractJobMonitor implements JobMonitor {
             return new DateTime().toDate();
         }
     }
+    
+    /**
+     * @param startupScript
+     * @return
+     * @throws SystemUnavailableException
+     */
+    public String resolveStartupScriptMacros(String startupScript) 
+	throws SystemUnavailableException 
+	{
+		if (StringUtils.isBlank(startupScript)) {
+			return null;
+		}
+		else {
+			String resolvedStartupScript = startupScript;
+			for (StartupScriptSystemVariableType macro: StartupScriptSystemVariableType.values()) {
+				resolvedStartupScript = StringUtils.replace(resolvedStartupScript, "${" + macro.name() + "}", macro.resolveForSystem(getExecutionSystem()));
+			}
+			
+			for (StartupScriptJobVariableType macro: StartupScriptJobVariableType.values()) {
+				resolvedStartupScript = StringUtils.replace(resolvedStartupScript, "${" + macro.name() + "}", macro.resolveForJob(getJob()));
+			}
+			
+			return resolvedStartupScript;
+		}
+	}
+    
+    /**
+	 * @return
+	 * @throws SystemUnavailableException
+	 */
+	public String getStartupScriptCommand() throws SystemUnavailableException {
+		String startupScriptCommand = "";
+		if (!StringUtils.isEmpty(getExecutionSystem().getStartupScript())) {
+			String resolvedstartupScript = resolveStartupScriptMacros(getExecutionSystem().getStartupScript());
+			
+			if (resolvedstartupScript != null) {
+//				startupScriptCommand = String.format("echo $(source %s 2>&1) >> %s/.agave.log ; ",
+//					resolvedstartupScript,
+//					remoteDataClient.resolvePath(job.getWorkPath()));
+				startupScriptCommand = String.format("echo $(source %s 2>&1) >> /dev/null ; ",
+						resolvedstartupScript);
+			}
+		}
+		return startupScriptCommand;
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.jobs.managers.monitors.JobMonitor#getStatus()

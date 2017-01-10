@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -85,10 +86,10 @@ public class CondorLauncher  extends AbstractJobLauncher {
      * makes and sets new time marker for creation of job run directories
      */
     private void setTimeMarker() {
-    	DateTime date = new DateTime(job.getCreated());
+    	DateTime date = new DateTime(getJob().getCreated());
         Long time = date.getMillis();
         timeMark = time.toString();
-        tag = job.getName() + "-" + timeMark;
+        tag = getJob().getName() + "-" + timeMark;
     }
 
     /**
@@ -98,7 +99,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
      * @return a string representing the condor_submit file name
      */
     private String createSubmitFileName(String time) {
-        return "condorSubmit-" + job.getName() + "-" + time;
+        return "condorSubmit-" + getJob().getName() + "-" + time;
     }
 
     /**
@@ -108,11 +109,11 @@ public class CondorLauncher  extends AbstractJobLauncher {
      */
     private void createCondorSubmitFile(String timeMark) throws JobException
     {
-        step = "Creating the " + job.getSoftwareName() + " condor submit file for job " + job.getUuid();
+        step = "Creating the " + getJob().getSoftwareName() + " condor submit file for job " + getJob().getUuid();
         log.debug(step);
 
         // todo need to add classAd info to submit file
-        submitFileObject = SubmitScriptFactory.getScript(job);
+        submitFileObject = SubmitScriptFactory.getScript(getJob());
         
         try 
         {
@@ -183,7 +184,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
 	 */
 	private void createTransferWrapper() throws JobException {
 	    step = "Creating Condor submission transfer wrapper to run " + 
-	            job.getSoftwareName() + " for job " + job.getUuid();
+	            getJob().getSoftwareName() + " for job " + getJob().getUuid();
 	    log.debug(step);
 	    StringBuilder transferScript = new StringBuilder();
 	    FileWriter transferWriter = null;
@@ -195,7 +196,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
 	        transferScript.append("#!/bin/bash\n\n");
 	        transferScript.append("tar xzvf transfer.tar.gz\n");
 	        transferScript.append("# we supply the executable and path from the software definition\n");
-	        executablePath = software.getExecutablePath();
+	        executablePath = getSoftware().getExecutablePath();
 	        if (executablePath.startsWith("/")) {
 	        	executablePath = executablePath.substring(1);
 	        }
@@ -228,13 +229,13 @@ public class CondorLauncher  extends AbstractJobLauncher {
     @Override
     public File processApplicationTemplate() throws JobException 
     {
-        step = "Processing " + job.getSoftwareName() + " wrapper template for job " + job.getUuid();
+        step = "Processing " + getJob().getSoftwareName() + " wrapper template for job " + getJob().getUuid();
         log.debug(step);
 
         // need tempAppDir + software.getExecutablePath()
         // read in the template file
         // create the submit script in the temp folder
-        File appTemplateFile = new File(tempAppDir + File.separator + software.getExecutablePath());
+        File appTemplateFile = new File(tempAppDir + File.separator + getSoftware().getExecutablePath());
         // replace the executable script file references with the file names
         Map<String, String> inputMap = null;
         String appTemplate = null;
@@ -245,21 +246,80 @@ public class CondorLauncher  extends AbstractJobLauncher {
         try {
             if (!appTemplateFile.exists()) {
                 throw new JobException("Unable to locate wrapper script for \"" +
-                        software.getUniqueName() + "\" at " +
-                        software.getDeploymentPath() + "/" + software.getExecutablePath());
+                        getSoftware().getUniqueName() + "\" at " +
+                        getSoftware().getDeploymentPath() + "/" + getSoftware().getExecutablePath());
             }
             appTemplate = FileUtils.readFileToString(appTemplateFile);
 
             batchScript = new StringBuilder();
             
-            String callbackStart = resolveMacros("\n${AGAVE_JOB_CALLBACK_RUNNING} \n\n");
-            batchScript.append(callbackStart);
-
-            // add in any custom environment variables that need to be set
-            if (!StringUtils.isEmpty(software.getExecutionSystem().getEnvironment())) {
-            	batchScript.append(software.getExecutionSystem().getEnvironment());
-        	}
+            // agave log file environment variable
+            batchScript.append("##########################################################\n");
+            batchScript.append("# Agave Environment Settings \n");
+            batchScript.append("##########################################################\n\n");
             
+            batchScript.append("# Location of agave job lifecycle log file\n");
+            batchScript.append("AGAVE_LOG_FILE=$(pwd)/.agave.log\n\n\n");
+			
+            batchScript.append("##########################################################\n");
+            batchScript.append("# Agave Utility functions \n");
+            batchScript.append("##########################################################\n\n");
+            
+            // datetime function
+            batchScript.append("# cross-plaltform function to print an ISO8601 formatted timestamp \n");
+            batchScript.append("function agave_datetime_iso() { \n  date '+%Y-%m-%dT%H:%M:%S%z'; \n} \n\n");
+	
+			// logging function
+            batchScript.append("# standard logging function to write agave job lifecycle logs\n");
+            batchScript.append("function agave_log_response() { \n  echo \"[$(agave_datetime_iso)] ${@}\"; \n} 2>&1 >> \"${AGAVE_LOG_FILE}\"\n\n");
+         			
+            
+            // write the callback to trigger status update at start
+            batchScript.append("# Callback to signal the job has started executing user-defined logic\n");
+            batchScript.append(resolveMacros("${AGAVE_JOB_CALLBACK_RUNNING}"));
+            
+            
+            batchScript.append("##########################################################\n");
+            batchScript.append("# Agave App and System Environment Settings \n");
+            batchScript.append("##########################################################\n\n");
+            
+            
+            List<String> appModules = getSoftware().getModulesAsList();
+            if (!appModules.isEmpty()) {
+	            batchScript.append("# App specific module commands\n");
+	            
+	            // add modules if specified by the app. Generally these won't be used in a condor app,
+	            // but in the event they're running mpi or gliding in, these are available.
+				for (String module : appModules) {
+					batchScript.append("module " + module + "\n");
+				}
+				batchScript.append("\n");
+            }
+            else {
+            	batchScript.append("# No modules commands configured for this app\n\n");   
+            }
+			
+            // add in any custom environment variables that need to be set
+            if (!StringUtils.isEmpty(getSoftware().getExecutionSystem().getEnvironment())) {
+            	batchScript.append("# App specific environment variables\n");
+            	batchScript.append(getSoftware().getExecutionSystem().getEnvironment());
+            	batchScript.append("\n\n\n");
+        	}
+            else {
+            	batchScript.append("# No custom environment variables configured for this app\n\n\n");   
+            }
+            
+            
+            batchScript.append("##########################################################\n");
+            batchScript.append("# Begin App Wrapper Template Logic \n");
+            batchScript.append("##########################################################\n\n");
+           
+            appTemplate = appTemplate + 
+					"\n\n\n" +
+            		"##########################################################\n" +
+            		"# End App Wrapper Template Logic \n" +
+            		"##########################################################\n\n";
+           
             // replace the parameters with their passed in values
             appTemplate = resolveTemplateMacros(appTemplate);
 
@@ -304,9 +364,9 @@ public class CondorLauncher  extends AbstractJobLauncher {
 	protected String resolveTemplateMacros(String appTemplate)
 	throws JobException, URISyntaxException {
 		// replace the parameters with their passed in values
-		JsonNode jobParameters = job.getParametersAsJsonObject();
+		JsonNode jobParameters = getJob().getParametersAsJsonObject();
 		
-		for (SoftwareParameter param: software.getParameters())
+		for (SoftwareParameter param: getSoftware().getParameters())
 		{
 			if (jobParameters.has(param.getKey())) 
 			{
@@ -335,9 +395,9 @@ public class CondorLauncher  extends AbstractJobLauncher {
 		}
 		
 		// replace the parameters with their passed in values
-		JsonNode jobInputs = job.getInputsAsJsonObject();
+		JsonNode jobInputs = getJob().getInputsAsJsonObject();
 		
-		for (SoftwareInput input: software.getInputs())
+		for (SoftwareInput input: getSoftware().getInputs())
 		{
 			if (jobInputs.has(input.getKey())) 
 			{
@@ -366,7 +426,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
 		}
 		
 		// strip out all references to icommands and it irods shadow files
-		if (executionSystem.isPubliclyAvailable()) {
+		if (getExecutionSystem().isPubliclyAvailable()) {
 			appTemplate = CommandStripper.strip(appTemplate);
 		}
 		
@@ -383,14 +443,14 @@ public class CondorLauncher  extends AbstractJobLauncher {
 	}
     
     private void createRemoteTransferPackage() throws Exception {
-        step = "Creating the " + job.getSoftwareName() + " transfer package for job " + job.getUuid();
+        step = "Creating the " + getJob().getSoftwareName() + " transfer package for job " + getJob().getUuid();
         log.debug(step);
         
-        String createTransferPackageCmd = new String("cd " + job.getWorkPath() + "; "
+        String createTransferPackageCmd = new String("cd " + getJob().getWorkPath() + "; "
                 + "tar czvf ./transfer.tar.gz  --exclude condorSubmit --warning=no-file-changed .");
-        ExecutionSystem system = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
+        ExecutionSystem system = (ExecutionSystem) new SystemDao().findBySystemId(getJob().getSystem());
         
-    	RemoteSubmissionClient remoteSubmissionClient = system.getRemoteSubmissionClient(job.getInternalUsername());
+    	RemoteSubmissionClient remoteSubmissionClient = system.getRemoteSubmissionClient(getJob().getInternalUsername());
     	String response = remoteSubmissionClient.runCommand(createTransferPackageCmd);
     	response = StringUtils.lowerCase(response);
     	if (StringUtils.contains(response, "cannot") || StringUtils.contains(response, "command not found")) {
@@ -458,16 +518,16 @@ public class CondorLauncher  extends AbstractJobLauncher {
      * @throws JobException
      */
     private void addExecutionPermissionsToWrapper(){
-        step = "Changing execute permissions on transfer_wrapper and executable for job " + job.getUuid();
+        step = "Changing execute permissions on transfer_wrapper and executable for job " + getJob().getUuid();
         log.debug(step);
 
-        String changePermissionsCmd = new String("cd " + job.getWorkPath() + "; "
+        String changePermissionsCmd = new String("cd " + getJob().getWorkPath() + "; "
                 + "chmod +x *.sh");
-        ExecutionSystem system = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
+        ExecutionSystem system = (ExecutionSystem) new SystemDao().findBySystemId(getJob().getSystem());
 
         RemoteSubmissionClient remoteSubmissionClient = null;
         try {
-            remoteSubmissionClient = system.getRemoteSubmissionClient(job.getInternalUsername());
+            remoteSubmissionClient = system.getRemoteSubmissionClient(getJob().getInternalUsername());
             String response = remoteSubmissionClient.runCommand(changePermissionsCmd);
             if (response.contains("Cannot")) {
                 throw new JobException("Failed to create transfer package for condor submission. \n" + response);
@@ -486,21 +546,21 @@ public class CondorLauncher  extends AbstractJobLauncher {
         String condorSubmitCmdString = null;
         try 
         {
-        	if (software == null || !software.isAvailable()) {
+        	if (getSoftware() == null || !getSoftware().isAvailable()) {
 				throw new SoftwareException("App is not longer available for execution");
 			}
         	
         	// if the system is down, return it to the queue to wait for the system
 			// to come back up.
-			if (executionSystem == null)
+			if (getExecutionSystem() == null)
 			{
-				throw new JobException("Execution system " + job.getSystem() + 
+				throw new JobException("Execution system " + getJob().getSystem() + 
 						" is no longer a registered system.");
 			} 
-			else if (!executionSystem.getStatus().equals(SystemStatusType.UP) || 
-					!executionSystem.isAvailable()) 
+			else if (!getExecutionSystem().getStatus().equals(SystemStatusType.UP) || 
+					!getExecutionSystem().isAvailable()) 
 			{
-				throw new SystemUnavailableException("Execution system " + job.getSystem() + 
+				throw new SystemUnavailableException("Execution system " + getJob().getSystem() + 
 						" is not currently available for job submission.");
 			} 
         				
@@ -561,12 +621,12 @@ public class CondorLauncher  extends AbstractJobLauncher {
             // run condor_submit
             String condorJobId = submitJobToQueue();
             
-            job.setSubmitTime(new DateTime().toDate());   // Date job submitted to Condor
-            job.setLastUpdated(new DateTime().toDate());  // Date job started by Condor
-            job.setLocalJobId(condorJobId);
-            job.setStatus(JobStatusType.QUEUED, "Condor job successfully placed into queue");
+            getJob().setSubmitTime(new DateTime().toDate());   // Date job submitted to Condor
+            getJob().setLastUpdated(new DateTime().toDate());  // Date job started by Condor
+            getJob().setLocalJobId(condorJobId);
+            getJob().setStatus(JobStatusType.QUEUED, "Condor job successfully placed into queue");
             
-            JobDao.persist(job);
+            JobDao.persist(getJob());
             
         }
         catch (ClosedByInterruptException e) {
@@ -575,7 +635,7 @@ public class CondorLauncher  extends AbstractJobLauncher {
         catch (JobException e) {
         	jobFailed = true;
         	log.error(step);
-        	this.job = JobManager.updateStatus(this.job, JobStatusType.FAILED, e.getMessage());
+        	this.setJob(JobManager.updateStatus(this.getJob(), JobStatusType.FAILED, e.getMessage()));
         	throw e;
         } 
         catch (SystemUnavailableException e) {
@@ -586,8 +646,8 @@ public class CondorLauncher  extends AbstractJobLauncher {
         catch (Exception e) {
             jobFailed = true;
             log.error(step);
-            this.job = JobManager.updateStatus(this.job, JobStatusType.FAILED, e.getMessage());
-            throw new JobException("Failed to invoke app: \"" + software.getUniqueName() + "\n\"   with command:  " + condorSubmitCmdString + "\n" + e.getMessage(), e);
+            this.setJob(JobManager.updateStatus(this.getJob(), JobStatusType.FAILED, e.getMessage()));
+            throw new JobException("Failed to invoke app: \"" + getSoftware().getUniqueName() + "\n\"   with command:  " + condorSubmitCmdString + "\n" + e.getMessage(), e);
         } 
         finally {
         	FileUtils.deleteQuietly(tempAppDir);
@@ -599,22 +659,45 @@ public class CondorLauncher  extends AbstractJobLauncher {
     {
     	RemoteDataClient remoteExecutionDataClient = null;
 		try {
-	    	// construct the command line for call to shell process
-	        //String[] condorSubmitCmdString = new String[]{"/bin/bash", "-cl", "cd " + tempAppDir.getAbsolutePath() + "; condor_submit " + condorSubmitFile.getName()};
-    		remoteExecutionDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
+			submissionClient = getExecutionSystem().getRemoteSubmissionClient(getJob().getInternalUsername());
 			
-    		String condorSubmitCmdString = "cd " + remoteExecutionDataClient.resolvePath(job.getWorkPath()) + "; " +
-    				"condor_submit " + condorSubmitFile.getName();
-	        log.debug("Submitting condor submit file to condor_submit: \"" + software.getName() + "\" with command:\n " + condorSubmitCmdString);
-	        
-	        ExecutionSystem system = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
-	        submissionClient = system.getRemoteSubmissionClient(job.getInternalUsername());
+	        //String[] condorSubmitCmdString = new String[]{"/bin/bash", "-cl", "cd " + tempAppDir.getAbsolutePath() + "; condor_submit " + condorSubmitFile.getName()};
+    		remoteExecutionDataClient = getExecutionSystem().getRemoteDataClient(getJob().getInternalUsername());
+			
+    		// Get the remote work directory for the log file
+			String remoteWorkPath = remoteExecutionDataClient.resolvePath(getJob().getWorkPath());
+						
+			// Resolve the startupScript and generate the command to run it and log the response to the
+			// remoteWorkPath + "/.agave.log" file
+			String startupScriptCommand = getStartupScriptCommand(remoteWorkPath);
+						
+			// command to cd to the remoteWorkPath
+			String cdCommand = "cd " + remoteWorkPath;
+			
+			// command to submit the condor submit file we built to wrap the 
+			// job assets to the remote condor master
+			String submitCommand = "condor_submit " + condorSubmitFile.getName();
+			
+			// run the aggregate command on the remote system
+			String submissionResponse = submissionClient.runCommand(
+	        		startupScriptCommand + " ; " + cdCommand + " ; " + submitCommand);
 	    	
-	        String response = submissionClient.runCommand(condorSubmitCmdString);
-	    	
-	        CondorJobIdParser jobIdParser = new CondorJobIdParser();
+			if (StringUtils.isBlank(submissionResponse)) 
+			{
+				// retry the remote command once just in case it was a flicker
+				submissionResponse = submissionClient.runCommand(
+						startupScriptCommand + " ; " + cdCommand + " ; " + submitCommand);
+				
+				// blank response means the job didn't go in...twice. Fail the attempt
+				if (StringUtils.isBlank(submissionResponse)) 
+					throw new JobException("Failed to submit condor job. " + submissionResponse);
+			}
+			
+			// parse the response from the remote command invocation to get the localJobId
+			// by which we'll reference the job during monitoring, etc.
+			CondorJobIdParser jobIdParser = new CondorJobIdParser();
 	        
-	        return jobIdParser.getJobId(response);
+	        return jobIdParser.getJobId(submissionResponse);
     	} 
     	catch (JobException e) {
     		throw e;

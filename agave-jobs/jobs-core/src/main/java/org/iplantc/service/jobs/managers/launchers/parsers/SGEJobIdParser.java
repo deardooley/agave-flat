@@ -1,5 +1,8 @@
 package org.iplantc.service.jobs.managers.launchers.parsers;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.RemoteJobIDParsingException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
@@ -16,33 +19,24 @@ public class SGEJobIdParser implements RemoteJobIdParser {
 	@Override
 	public String getJobId(String output) throws RemoteJobIDParsingException, JobException, SchedulerException
 	{
-		if (!output.contains("has been submitted"))
+		Pattern pattern = Pattern.compile("Your job(?:-array)? (\\d+)(?:\\.\\d+-\\d+:\\d)? \\(\"([^\"]*)\"\\) has been submitted");
+		Matcher matcher = pattern.matcher(output);
+		
+		// if the response matches the standard SGE qsub response, return the matching job id
+		if (matcher.find())
 		{
-			if (output.contains("You have exceeded the max job time limit."))
-			{
-				throw new JobException(output);
-			} 
-			else if (output.contains("qmaster")) 
-			{
-				throw new SchedulerException("Failed to submit job. The system " +
-						"is temporarily down while the scheduler is reset.", 
-						new JobException(output));
-			}
-			else
-			{
-				throw new JobException("Failed to submit job. " + output); 
-			}
+			return matcher.group(1);
 		}
-		else
-		{
-			// save job with local jobid
-			output = output.replaceAll("\n", "").replaceAll("\\n", "");
-			// output is of the form "Your job xxxxxxx (\"test_job\") has
-			// been submitted
-			output = output.substring(output.indexOf("Your job ") + 9);
-			output = output.substring(0, output.indexOf("("));
-			output = output.trim();
-			return output;
+		// otherwise, see what we can learn about the cause of the failure.
+		else if (output.contains("You have exceeded the max job time limit.")) {
+			throw new JobException(output);
+		} 
+		// likely the master server is down
+		else if (output.contains("qmaster")) {
+			throw new SchedulerException("Failed to submit job. Response from the scheduler was: " + output, new JobException());
+		}
+		else {
+			throw new JobException("Failed to submit job. Response from the scheduler was: " + output); 
 		}
 	}
 

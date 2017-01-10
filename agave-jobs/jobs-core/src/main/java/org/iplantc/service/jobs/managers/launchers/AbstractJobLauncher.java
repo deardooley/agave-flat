@@ -36,6 +36,7 @@ import org.iplantc.service.jobs.exceptions.SchedulerException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.model.enumerations.StartupScriptJobVariableType;
 import org.iplantc.service.jobs.model.enumerations.WrapperTemplateAttributeVariableType;
 import org.iplantc.service.jobs.model.enumerations.WrapperTemplateStatusVariableType;
 import org.iplantc.service.jobs.util.Slug;
@@ -44,10 +45,10 @@ import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
+import org.iplantc.service.systems.model.enumerations.StartupScriptSystemVariableType;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.iplantc.service.transfer.RemoteDataClient;
-import org.iplantc.service.transfer.RemoteDataClientFactory;
 import org.iplantc.service.transfer.RemoteTransferListener;
 import org.iplantc.service.transfer.URLCopy;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
@@ -74,9 +75,9 @@ public abstract class AbstractJobLauncher implements JobLauncher
     
 	protected File 						tempAppDir = null;
 	protected String 					step;
-    protected Job						job;
-    protected Software 					software;
-	protected ExecutionSystem 			executionSystem;
+    private Job							job;
+    private Software 					software;
+	private ExecutionSystem 			executionSystem;
 //	protected RemoteDataClient	 		remoteExecutionDataClient;
 //	protected RemoteDataClient	 		remoteSoftwareDataClient;
 	protected RemoteDataClient          localDataClient;
@@ -85,9 +86,9 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	protected TransferTask              transferTask;
 	
 	public AbstractJobLauncher(Job job) {
-		this.job = job;
-        this.software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
-        this.executionSystem = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
+		this.setJob(job);
+        this.setSoftware(SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName()));
+        this.setExecutionSystem((ExecutionSystem) new SystemDao().findBySystemId(job.getSystem()));
         
         localDataClient = new Local(null, "/", Files.createTempDir().getAbsolutePath());
 	}
@@ -175,7 +176,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
         Matcher callbackMatcher = emptyCallbackPattern.matcher(wrapperTemplate);
         while (callbackMatcher.matches()) {
         	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
-                    job, "JOB_RUNTIME_CALLBACK_EVENT", new String[]{});
+                    getJob(), "JOB_RUNTIME_CALLBACK_EVENT", new String[]{});
             
             wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(0), callbackSnippet);
             
@@ -187,7 +188,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
         callbackMatcher = defaultCallbackPattern.matcher(wrapperTemplate);
         while (callbackMatcher.matches()) {
         	String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
-                    job, "JOB_RUNTIME_CALLBACK_EVENT", StringUtils.split(callbackMatcher.group(2), ","));
+                    getJob(), "JOB_RUNTIME_CALLBACK_EVENT", StringUtils.split(callbackMatcher.group(2), ","));
             
             wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(1), callbackSnippet);
             
@@ -198,7 +199,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
         callbackMatcher = customCallbackPattern.matcher(wrapperTemplate);
         while (callbackMatcher.matches()) {
             String callbackSnippet = WrapperTemplateStatusVariableType.resolveNotificationEventMacro(
-                    job, callbackMatcher.group(2), StringUtils.split(callbackMatcher.group(3), ","));
+                    getJob(), callbackMatcher.group(2), StringUtils.split(callbackMatcher.group(3), ","));
             
             wrapperTemplate = StringUtils.replace(wrapperTemplate, callbackMatcher.group(1), callbackSnippet);
             
@@ -215,16 +216,57 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	public String resolveMacros(String wrapperTemplate) {
 		
 		for (WrapperTemplateAttributeVariableType macro: WrapperTemplateAttributeVariableType.values()) {
-			wrapperTemplate = StringUtils.replace(wrapperTemplate, "${" + macro.name() + "}", macro.resolveForJob(job));
+			wrapperTemplate = StringUtils.replace(wrapperTemplate, "${" + macro.name() + "}", macro.resolveForJob(getJob()));
 		}
 		
 		for (WrapperTemplateStatusVariableType macro: WrapperTemplateStatusVariableType.values()) {
 //			if (macro != WrapperTemplateStatusVariableType.AGAVE_JOB_CALLBACK_NOTIFICATION) {
-				wrapperTemplate = StringUtils.replace(wrapperTemplate, "${" + macro.name() + "}", macro.resolveForJob(job));
+				wrapperTemplate = StringUtils.replace(wrapperTemplate, "${" + macro.name() + "}", macro.resolveForJob(getJob()));
 //			}
 		}
 		
 		return wrapperTemplate;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.jobs.managers.launchers.JobLauncher#resolveStartupScriptMacros(java.lang.String)
+	 */
+	public String resolveStartupScriptMacros(String startupScript) {
+		if (StringUtils.isBlank(startupScript)) {
+			return null;
+		}
+		else {
+			String resolvedStartupScript = startupScript;
+			for (StartupScriptSystemVariableType macro: StartupScriptSystemVariableType.values()) {
+				resolvedStartupScript = StringUtils.replace(resolvedStartupScript, "${" + macro.name() + "}", macro.resolveForSystem(getExecutionSystem()));
+			}
+			
+			for (StartupScriptJobVariableType macro: StartupScriptJobVariableType.values()) {
+				resolvedStartupScript = StringUtils.replace(resolvedStartupScript, "${" + macro.name() + "}", macro.resolveForJob(getJob()));
+			}
+			
+			return resolvedStartupScript;
+		}
+	}
+	
+	/**
+	 * Generates the command to source the {@link ExecutionSystem#getStartupScript()} and log the 
+	 * response to the {@code .agave.log} file in the job work directory.
+	 * @return the properly escaped command to be run on the remote system.
+	 * @throws SystemUnavailableException
+	 */
+	public String getStartupScriptCommand(String absoluteRemoteWorkPath) throws SystemUnavailableException {
+		String startupScriptCommand = "";
+		if (!StringUtils.isEmpty(getExecutionSystem().getStartupScript())) {
+			String resolvedstartupScript = resolveStartupScriptMacros(getExecutionSystem().getStartupScript());
+			
+			if (resolvedstartupScript != null) {
+				startupScriptCommand = String.format("printf \"[%%s] %%b\\n\" $(date '+%%Y-%%m-%%dT%%H:%%M:%%S%%z') \"$(source %s 2>&1)\" >> %s/.agave.log ",
+						resolvedstartupScript,
+						absoluteRemoteWorkPath);
+			}
+		}
+		return startupScriptCommand;
 	}
 	
 //	/**
@@ -259,20 +301,20 @@ public abstract class AbstractJobLauncher implements JobLauncher
      * @throws JobException 
      */
     protected void createTempAppDir() throws JobException {
-        step = "Creating cache directory to process " + job.getSoftwareName() + 
-                " wrapper template for job " + job.getUuid();
+        step = "Creating cache directory to process " + getJob().getSoftwareName() + 
+                " wrapper template for job " + getJob().getUuid();
         log.debug(step);
         
         // # local temp directory on server for staging execution folders.
         // this should have been created by the staging task, but in case
         // there were no inputs, we need to create it ourself.
-        if (StringUtils.isEmpty(job.getWorkPath())) {
+        if (StringUtils.isEmpty(getJob().getWorkPath())) {
         	String remoteWorkPath = null;
         	
-			if (!StringUtils.isEmpty(software.getExecutionSystem().getScratchDir())) {
-				remoteWorkPath = software.getExecutionSystem().getScratchDir();
-			} else if (!StringUtils.isEmpty(software.getExecutionSystem().getWorkDir())) {
-				remoteWorkPath = software.getExecutionSystem().getWorkDir();
+			if (!StringUtils.isEmpty(getSoftware().getExecutionSystem().getScratchDir())) {
+				remoteWorkPath = getSoftware().getExecutionSystem().getScratchDir();
+			} else if (!StringUtils.isEmpty(getSoftware().getExecutionSystem().getWorkDir())) {
+				remoteWorkPath = getSoftware().getExecutionSystem().getWorkDir();
 			}
 			
 			if (!StringUtils.isEmpty(remoteWorkPath)) {
@@ -281,15 +323,15 @@ public abstract class AbstractJobLauncher implements JobLauncher
 				remoteWorkPath = "";
 			}
 			
-			remoteWorkPath += job.getOwner() +
-					"/job-" + job.getUuid() + "-" + Slug.toSlug(job.getName());
+			remoteWorkPath += getJob().getOwner() +
+					"/job-" + getJob().getUuid() + "-" + Slug.toSlug(getJob().getName());
 			
-			job.setWorkPath(remoteWorkPath);
+			getJob().setWorkPath(remoteWorkPath);
 			
-			JobDao.persist(job);
+			JobDao.persist(getJob());
         }
         
-        tempAppDir = new File(FileUtils.getTempDirectory(), FilenameUtils.getName(job.getWorkPath()));
+        tempAppDir = new File(FileUtils.getTempDirectory(), FilenameUtils.getName(getJob().getWorkPath()));
         
         if (tempAppDir.exists()) {
         	FileUtils.deleteQuietly(tempAppDir);
@@ -303,9 +345,10 @@ public abstract class AbstractJobLauncher implements JobLauncher
      */
     protected void copySoftwareToTempAppDir() throws JobException, SystemUnavailableException 
     {
-        step = "Fetching app assets for job " + job.getUuid() + " from " +
-                "agave://" + software.getStorageSystem().getSystemId() + "/" + 
-                software.getDeploymentPath() + "to temp application directory";
+        step = "Fetching app assets for job " + getJob().getUuid() + " from " +
+                "agave://" + getSoftware().getStorageSystem().getSystemId() + "/" + 
+                getSoftware().getDeploymentPath() + " to temp application directory " + 
+                tempAppDir.getAbsolutePath();
         
         log.debug(step);
         
@@ -313,20 +356,20 @@ public abstract class AbstractJobLauncher implements JobLauncher
         RemoteDataClient remoteSoftwareDataClient = null;
 		try 
 		{
-        	if (software.getStorageSystem() == null) 
+        	if (getSoftware().getStorageSystem() == null) 
         	{
         		throw new JobException("Unable to submit job. Storage system with app assets is " + 
         				" no longer a registered system.");
         	} 
-        	else if(!software.getStorageSystem().isAvailable() || 
-        			!software.getStorageSystem().getStatus().equals(SystemStatusType.UP)) 
+        	else if(!getSoftware().getStorageSystem().isAvailable() || 
+        			!getSoftware().getStorageSystem().getStatus().equals(SystemStatusType.UP)) 
         	{
         		throw new SystemUnavailableException("Unable to fetch app assets. Storage system " + 
-        				software.getStorageSystem().getSystemId() + " is not currently available for use.");
+        				getSoftware().getStorageSystem().getSystemId() + " is not currently available for use.");
         	} 
         	else 
         	{
-        		remoteSoftwareDataClient = software.getStorageSystem().getRemoteDataClient();
+        		remoteSoftwareDataClient = getSoftware().getStorageSystem().getRemoteDataClient();
         		
 	        	if (remoteSoftwareDataClient != null) {
 	        		remoteSoftwareDataClient.authenticate();
@@ -336,9 +379,9 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	        		// what we really want is to just copy contents into tempAppDir, so we work around default behavior
 	        		// first copy the remote data here
 	        		transferTask = new TransferTask(
-	    					"agave://" + software.getStorageSystem().getSystemId() + "/" + software.getDeploymentPath(), 
+	    					"agave://" + getSoftware().getStorageSystem().getSystemId() + "/" + getSoftware().getDeploymentPath(), 
 	    					"https://workers.prod.agaveapi.co/" + tempAppDir.getAbsolutePath(), 
-	    					job.getOwner(), null, null);
+	    					getJob().getOwner(), null, null);
 	    			
 //	    			transferTask.setTotalSize(-1);
 //	    			transferTask.setBytesTransferred(0);
@@ -349,22 +392,22 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	    			
 	        		TransferTaskDao.persist(transferTask);
 	    			
-	        		JobDao.refresh(job);
+	        		JobDao.refresh(getJob());
 	    			
-	    			job.addEvent(new JobEvent(JobStatusType.STAGING_JOB, 
+	    			getJob().addEvent(new JobEvent(JobStatusType.STAGING_JOB, 
 	    					"Fetching app assets from "  + transferTask.getSource(), 
 	    					null,
-	    					job.getOwner()));
+	    					getJob().getOwner()));
 	    			
-	        		JobDao.persist(job);
+	        		JobDao.persist(getJob());
 	        			        		
 //	        		urlCopy.copy(software.getDeploymentPath(), tempAppDir.getAbsolutePath(), transferTask);
-	        		remoteSoftwareDataClient.get(software.getDeploymentPath(), tempAppDir.getAbsolutePath(), new RemoteTransferListener(transferTask));
+	        		remoteSoftwareDataClient.get(getSoftware().getDeploymentPath(), tempAppDir.getAbsolutePath(), new RemoteTransferListener(transferTask));
 	        		
 	    			checkStopped();
                     
 	        		// now copy the contents of the deployment folder to the parent dir, which is tempAppDir
-	        		File copiedDeploymentFolder = new File(tempAppDir, FilenameUtils.getName(StringUtils.removeEnd(software.getDeploymentPath(), "/")));
+	        		File copiedDeploymentFolder = new File(tempAppDir, FilenameUtils.getName(StringUtils.removeEnd(getSoftware().getDeploymentPath(), "/")));
 	        		if (!copiedDeploymentFolder.getAbsoluteFile().equals(tempAppDir) && copiedDeploymentFolder.exists() && copiedDeploymentFolder.isDirectory()) {
 	        			FileUtils.copyDirectory(copiedDeploymentFolder, tempAppDir, null, true);
 		        		// now delete the redundant deployment folder
@@ -374,13 +417,13 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	        		checkStopped();
                     
                     
-	        		if (software.isPubliclyAvailable()) {
+	        		if (getSoftware().isPubliclyAvailable()) {
 	    				// validate the checksum to make sure the app itself hasn't  changed
-	    				File zippedFile = new File(tempAppDir, FilenameUtils.getName(software.getDeploymentPath()));
+	    				File zippedFile = new File(tempAppDir, FilenameUtils.getName(getSoftware().getDeploymentPath()));
 	    				String checksum = MD5Checksum.getMD5Checksum(zippedFile);
-	    				if (software.getChecksum() == null 
-	    						|| StringUtils.equals(checksum, software.getChecksum()) 
-	    						|| software.getStorageSystem().getStorageConfig().getProtocol().equals(StorageProtocolType.IRODS))
+	    				if (getSoftware().getChecksum() == null 
+	    						|| StringUtils.equals(checksum, getSoftware().getChecksum()) 
+	    						|| getSoftware().getStorageSystem().getStorageConfig().getProtocol().equals(StorageProtocolType.IRODS))
 	    				{
 	    					ZipUtil.unzip(zippedFile, tempAppDir);
 	    					if (tempAppDir.list().length > 1) {
@@ -394,33 +437,33 @@ public abstract class AbstractJobLauncher implements JobLauncher
 //	    					SoftwareDao.persist(software);
 	    					Tenant tenant = new TenantDao().findByTenantId(TenancyHelper.getCurrentTenantId());
 	    					String message ="While submitting a job, the Job Service noticed that the checksum " +
-                                    "of the public app " + software.getUniqueName() + " had changed. This " +
+                                    "of the public app " + getSoftware().getUniqueName() + " had changed. This " +
                                     "will impact provenance and could impact experiment reproducability. " +
                                     "Please restore the application zip bundle from archive and re-enable " + 
                                     "the application via the admin console.\n\n" +
-                                    "Name: " + software.getUniqueName() + "\n" + 
-                                    "User: " + job.getOwner() + "\n" +
-                                    "Job: " + job.getUuid() + "\n" +
-                                    "Time: " + new DateTime(job.getCreated()).toString();
+                                    "Name: " + getSoftware().getUniqueName() + "\n" + 
+                                    "User: " + getJob().getOwner() + "\n" +
+                                    "Job: " + getJob().getUuid() + "\n" +
+                                    "Time: " + new DateTime(getJob().getCreated()).toString();
 	    					try {
 	    						EmailMessage.send(tenant.getContactName(), 
 					    							tenant.getContactEmail(), 
-					    							"Public app " + software.getUniqueName() + " has been corrupted.", 
+					    							"Public app " + getSoftware().getUniqueName() + " has been corrupted.", 
 					    							message, HTMLizer.htmlize(message));
 	    					}
 	    					catch (Throwable e) {
 	    						log.error("Failed to notify admin that " + message, e);
 	    					}
 	    					
-	    					throw new SoftwareException("Public app bundle for " + software.getUniqueName() + 
+	    					throw new SoftwareException("Public app bundle for " + getSoftware().getUniqueName() + 
 	    					        " has changed. Please verify this app and try again.");
 	    				}
 	    				
-	    				File standardLocation = new File(tempAppDir, new File(software.getDeploymentPath()).getName());
+	    				File standardLocation = new File(tempAppDir, new File(getSoftware().getDeploymentPath()).getName());
 	    				if (standardLocation.exists()) {
 	    					tempAppDir = standardLocation.getAbsoluteFile();
 	    				} else {
-	    					standardLocation = new File(tempAppDir, software.getExecutablePath());
+	    					standardLocation = new File(tempAppDir, getSoftware().getExecutablePath());
 	    					
 	    					if (!standardLocation.exists()) {
 	    						// need to go searching for the path. no idea how this could happen
@@ -428,7 +471,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	    						for (File child: tempAppDir.listFiles()) 
 	    						{
 	    							if (child.isDirectory()) {
-	    								standardLocation = new File(child, software.getExecutablePath());
+	    								standardLocation = new File(child, getSoftware().getExecutablePath());
 	    								if (standardLocation.exists()) {
 	    									File copyDir = new File(tempAppDir.getAbsolutePath()+".copy");
 	    									FileUtils.moveDirectory(child, copyDir);
@@ -442,8 +485,8 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	    						}
 	    						
 	    						if (!foundDeploymentPath) {
-	    							log.error("Unable to find app path for public app " + software.getUniqueName());
-	    							throw new SoftwareException("Unable to find the deployment path for the public app " + software.getUniqueName());
+	    							log.error("Unable to find app path for public app " + getSoftware().getUniqueName());
+	    							throw new SoftwareException("Unable to find the deployment path for the public app " + getSoftware().getUniqueName());
 	    						}
 	    					}
 	    				}
@@ -456,13 +499,13 @@ public abstract class AbstractJobLauncher implements JobLauncher
         
 		}
 		catch (ClosedByInterruptException e) {
-            log.debug("Submission task for job " + job.getUuid() + " aborted due to interrupt by worker process.");
+            log.debug("Submission task for job " + getJob().getUuid() + " aborted due to interrupt by worker process.");
         } 
 		catch (JobException e) {
         	throw e;
         } 
 		catch (Exception e) {
-            throw new JobException("Remote data connection to " + software.getExecutionSystem().getSystemId() + " threw exception and stopped job execution", e);
+            throw new JobException("Remote data connection to " + getSoftware().getExecutionSystem().getSystemId() + " threw exception and stopped job execution", e);
         } 
 		finally {
         	 try { remoteSoftwareDataClient.disconnect(); } catch (Exception e) {}
@@ -485,17 +528,17 @@ public abstract class AbstractJobLauncher implements JobLauncher
     	TransferTask transferTask;
     	RemoteDataClient remoteExecutionDataClient = null;
 		try {
-			log.debug("Staging " + job.getSoftwareName() + " app dependencies for job " + job.getUuid() + " to agave://" + job.getSystem() + "/" + job.getWorkPath());
-			remoteExecutionDataClient = new SystemDao().findBySystemId(job.getSystem()).getRemoteDataClient(job.getInternalUsername());
+			log.debug("Staging " + getJob().getSoftwareName() + " app dependencies for job " + getJob().getUuid() + " to agave://" + getJob().getSystem() + "/" + getJob().getWorkPath());
+			remoteExecutionDataClient = new SystemDao().findBySystemId(getJob().getSystem()).getRemoteDataClient(getJob().getInternalUsername());
 			remoteExecutionDataClient.authenticate();
-			remoteExecutionDataClient.mkdirs(job.getWorkPath(), job.getOwner());
+			remoteExecutionDataClient.mkdirs(getJob().getWorkPath(), getJob().getOwner());
 			
 			checkStopped();
 			
 			transferTask = new TransferTask(
 					"https://workers.prod.agaveapi.co/" + tempAppDir.getAbsolutePath(), 
-					"agave://" + job.getSystem() + "/" + job.getWorkPath(), 
-					job.getOwner(), null, null);
+					"agave://" + getJob().getSystem() + "/" + getJob().getWorkPath(), 
+					getJob().getOwner(), null, null);
 			
 			transferTask.setTotalSize(FileUtils.sizeOfDirectory(tempAppDir));
 //			transferTask.setBytesTransferred(0);
@@ -505,26 +548,26 @@ public abstract class AbstractJobLauncher implements JobLauncher
 			
 			TransferTaskDao.persist(transferTask);
 			
-			JobDao.refresh(job);
+			JobDao.refresh(getJob());
 			
-			job.addEvent(new JobEvent(JobStatusType.STAGING_JOB, 
+			getJob().addEvent(new JobEvent(JobStatusType.STAGING_JOB, 
 					"Staging runtime assets to "  + transferTask.getDest(), 
 					null, 
-					job.getOwner()));
+					getJob().getOwner()));
 			
-			JobDao.persist(job);
+			JobDao.persist(getJob());
     		
 			// first time around we copy everything
-			if (job.getRetries() <= 0) {
+			if (getJob().getRetries() <= 0) {
 				remoteExecutionDataClient.put(tempAppDir.getAbsolutePath(), 
-											new File(job.getWorkPath()).getParent(), 
+											new File(getJob().getWorkPath()).getParent(), 
 											new RemoteTransferListener(transferTask));
 			} 
 			// after that we try to save some time on retries by only copying the assets 
 			// that are missing or changed since the last attempt.
 			else {
 				remoteExecutionDataClient.syncToRemote(tempAppDir.getAbsolutePath(), 
-											new File(job.getWorkPath()).getParent(), 
+											new File(getJob().getWorkPath()).getParent(), 
 											new RemoteTransferListener(transferTask));
 			}
 		} 
@@ -556,9 +599,9 @@ public abstract class AbstractJobLauncher implements JobLauncher
         } 
         catch (IOException e) 
         {
-            step = "Creating an archive manifest file for job " + job.getUuid();
+            step = "Creating an archive manifest file for job " + getJob().getUuid();
             log.debug(step);
-            throw new JobException("Failed to create manifest file for job " + job.getUuid(), e);
+            throw new JobException("Failed to create manifest file for job " + getJob().getUuid(), e);
         }
 		finally {
             try { logWriter.close(); } catch (Exception e) {}
@@ -603,7 +646,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
             
             for (WrapperTemplateAttributeVariableType macro: WrapperTemplateAttributeVariableType.values()) {
                 if (StringUtils.startsWith(macro.name(), "AGAVE")) {
-                    writer.append(String.format("%s=\"%s\"\n", macro.name(), macro.resolveForJob(job)));
+                    writer.append(String.format("%s=\"%s\"\n", macro.name(), macro.resolveForJob(getJob())));
                 }
             }
             
@@ -611,9 +654,9 @@ public abstract class AbstractJobLauncher implements JobLauncher
         } 
         catch (IOException e) 
         {
-            step = "Creating the .agaverc " + job.getUuid();
+            step = "Creating the .agaverc " + getJob().getUuid();
             log.debug(step);
-            throw new JobException("Failed to create runcom file for job " + job.getUuid(), e);
+            throw new JobException("Failed to create runcom file for job " + getJob().getUuid(), e);
         }
         finally {
             try { writer.close(); } catch (Exception e) {}
@@ -895,5 +938,40 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	@Override
 	public synchronized Job getJob() {
 	    return this.job;
+	}
+
+	/**
+	 * @return the executionSystem
+	 */
+	public ExecutionSystem getExecutionSystem() {
+		return executionSystem;
+	}
+
+	/**
+	 * @param executionSystem the executionSystem to set
+	 */
+	public void setExecutionSystem(ExecutionSystem executionSystem) {
+		this.executionSystem = executionSystem;
+	}
+
+	/**
+	 * @return the software
+	 */
+	public Software getSoftware() {
+		return software;
+	}
+
+	/**
+	 * @param software the software to set
+	 */
+	public void setSoftware(Software software) {
+		this.software = software;
+	}
+
+	/**
+	 * @param job the job to set
+	 */
+	public void setJob(Job job) {
+		this.job = job;
 	}
 }

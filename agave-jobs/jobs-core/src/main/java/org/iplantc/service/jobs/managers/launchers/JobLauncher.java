@@ -145,5 +145,15 @@ public interface JobLauncher
      * @return content of wrapper template with all macros resolved.
      */
     public String resolveRuntimeNotificationMacros(String wrapperTemplate);
+    
+    /**
+	 * Replaces all {@link ExecutionSystem#startupScript} macros with the system and job-specific 
+	 * values for this job.
+	 *   
+	 * @param startupScript
+	 * @return null if the value is blank, the value of the {@code resolveStartupScriptMacros) 
+	 * filtered with job and system macros otherwise.
+	 */
+	public String resolveStartupScriptMacros(String startupScript);
 
 }

@@ -1,239 +1,350 @@
 package org.iplantc.service.jobs.managers.launchers;
 
-import static org.mockito.Mockito.*;
-
 import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
-import org.iplantc.service.common.persistence.TenancyHelper;
-import org.iplantc.service.common.uuid.AgaveUUID;
-import org.iplantc.service.common.uuid.UUIDType;
+import org.iplantc.service.apps.dao.SoftwareDao;
+import org.iplantc.service.apps.model.Software;
+import org.iplantc.service.apps.model.SoftwareInput;
+import org.iplantc.service.apps.model.SoftwareParameter;
+import org.iplantc.service.jobs.dao.JobDao;
+import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.SoftwareUnavailableException;
 import org.iplantc.service.jobs.model.Job;
-import org.mockito.Mockito;
+import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.model.enumerations.WrapperTemplateAttributeVariableType;
+import org.iplantc.service.jobs.model.enumerations.WrapperTemplateStatusVariableType;
+import org.iplantc.service.jobs.submission.AbstractJobSubmissionTest;
+import org.iplantc.service.jobs.util.Slug;
+import org.iplantc.service.systems.dao.SystemDao;
+import org.iplantc.service.systems.exceptions.SystemUnavailableException;
+import org.iplantc.service.systems.model.ExecutionSystem;
+import org.iplantc.service.systems.model.StorageSystem;
+import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
+import org.iplantc.service.systems.model.enumerations.SchedulerType;
+import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
+import org.iplantc.service.transfer.RemoteDataClient;
+import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.json.JSONObject;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-public class AbstractJobLauncherTest
-{
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-	@DataProvider
-	protected Object[][] parseSoftwareInputValueIntoTemplateVariableValueProvider() 
-	throws Exception
-	{
-		return new Object[][] {
-				
-		};
-		
-	}
-	
-	//@Test(dataProvider="parseSoftwareInputValueIntoTemplateVariableValueProvider")
-	public void parseSoftwareInputValueIntoTemplateVariableValue()
-	{
-		throw new RuntimeException("Test not implemented");
-	}
-	
-	@DataProvider
-	protected Object[][] parseSoftwareParameterValueIntoTemplateVariableValueProvider() 
-	throws Exception
-	{
-		return new Object[][] {
-				
-		};
-		
+
+public abstract class AbstractJobLauncherTest extends AbstractJobSubmissionTest {
+
+	private String remoteFilePath;
+
+	public AbstractJobLauncherTest() {
+		super();
 	}
 
-	//@Test
-	public void parseSoftwareParameterValueIntoTemplateVariableValue()
-	{
-		throw new RuntimeException("Test not implemented");
-	}
-	
-	@DataProvider
-	protected Object[][] resolveMacrosProvider() 
-	throws Exception
-	{
-		return new Object[][] {
-				
-		};
-		
+	@BeforeClass
+	@Override
+	public void beforeClass() throws Exception {
+		super.beforeClass();
 	}
 
-	//@Test
-	public void resolveMacros()
+	@AfterClass
+	public void afterClass() throws Exception {
+		
+		try {
+			RemoteDataClient remoteDataClient = null;
+//			try 
+//			{
+//				Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
+//				
+//				remoteDataClient = software.getStorageSystem().getRemoteDataClient();
+//				remoteDataClient.authenticate();
+//				if (remoteDataClient.doesExist(software.getDeploymentPath())) {
+//					remoteDataClient.delete(software.getDeploymentPath());
+//					Assert.assertFalse(remoteDataClient.doesExist(software.getDeploymentPath()), 
+//							"Failed to delete software deployment path from software storage system");
+//				}
+//			} catch (RemoteDataException e) {
+//				Assert.fail("Failed to authenticate to the storage system " + job.getSoftwareName(), e);
+//			} catch (Exception e) {
+//				Assert.fail("Failed to delete software deployment path", e);
+//			} finally {
+//				try {remoteDataClient.disconnect();} catch (Exception e){}
+//			}
+			
+//			try {
+//				remoteDataClient = new SystemDao().findBySystemId(job.getSystem()).getRemoteDataClient(job.getInternalUsername());
+//				remoteDataClient.authenticate();
+//				if (remoteDataClient.doesExist(job.getWorkPath())) {
+//					remoteDataClient.delete(job.getWorkPath());
+//					Assert.assertFalse(remoteDataClient.doesExist(job.getWorkPath()), "Failed to delete work directory from execution system");
+//				}
+//			} catch (Exception e) {
+//				Assert.fail("Failed delete work directory", e);
+//			} finally {
+//				try {remoteDataClient.disconnect();} catch (Exception e){}
+//			}
+		
+		} finally {
+			clearJobs();
+			clearSoftware();
+			clearSystems();
+		}
+	}
+
+	@Override
+	protected void initSystems() throws Exception {
+	    storageSystem = (StorageSystem) getNewInstanceOfRemoteSystem(RemoteSystemType.STORAGE, 
+	    		getStorageSystemProtocolType().name().toLowerCase());
+        storageSystem.setOwner(SYSTEM_OWNER);
+        storageSystem.setPubliclyAvailable(true);
+        storageSystem.setGlobalDefault(true);
+        storageSystem.getUsersUsingAsDefault().add(SYSTEM_OWNER);
+        systemDao.persist(storageSystem);
+        
+        executionSystem = (ExecutionSystem)getNewInstanceOfRemoteSystem(RemoteSystemType.EXECUTION, 
+        		getExectionSystemSchedulerType().name().toLowerCase());
+        executionSystem.setOwner(SYSTEM_OWNER);
+        executionSystem.setPubliclyAvailable(true);
+        executionSystem.setType(RemoteSystemType.EXECUTION);
+        systemDao.persist(executionSystem);
+    }
+
+	/**
+	 * The type of scheduler to we'll use in this test. The 
+	 * {@link SchedulerType} maps to a config file named 
+	 * as systems/execution/{@link SchedulerType#name()}.example.com.json
+	 * @return the scheduler to use for the storage system
+	 */
+	protected abstract SchedulerType getExectionSystemSchedulerType();
+	
+	/**
+	 * Specifies the type of storage system we'll use in this test. 
+	 * The {@link StorageProtocolType} maps to a config file named 
+	 * as systems/storage/{@link StorageProtocolType#name()}.example.com.json
+	 * 
+	 * @return the protocol to use for the storage system
+	 */
+	protected StorageProtocolType getStorageSystemProtocolType() {
+		return StorageProtocolType.SFTP;
+	}
+
+	@Override
+	protected void initSoftware() throws Exception {
+		JSONObject json = jtd.getTestDataObject(SOFTWARE_SYSTEM_TEMPLATE_DIR + File.separator + 
+				executionSystem.getExecutionType().name().toLowerCase() + File.separator + 
+				executionSystem.getScheduler().name().toLowerCase() + ".json");
+		
+		json.put("deploymentSystem", storageSystem.getSystemId());
+		
+		Software software = Software.fromJSON(json, SYSTEM_OWNER);
+		software.setOwner(SYSTEM_OWNER);
+		
+		SoftwareDao.persist(software);
+	}
+
+	protected void stageSoftwareDeploymentDirectory(Software software)
+	throws Exception {
+		RemoteDataClient remoteDataClient = null;
+		try 
+		{
+			remoteDataClient = software.getStorageSystem().getRemoteDataClient();
+			remoteDataClient.authenticate();
+			remoteDataClient.mkdirs(software.getDeploymentPath());
+			String remoteTemplatePath = software.getDeploymentPath() + File.separator + software.getExecutablePath();
+			remoteDataClient.put(SOFTWARE_WRAPPER_FILE, 
+					software.getDeploymentPath() + File.separator + software.getExecutablePath());
+			Assert.assertTrue(remoteDataClient.doesExist(remoteTemplatePath), 
+					"Failed to copy software assets to deployment system " 
+			+ software.getStorageSystem().getSystemId());
+		} catch (RemoteDataException e) {
+			Assert.fail("Failed to authenticate to the storage system " + job.getSoftwareName(), e);
+		} catch (Exception e) {
+			Assert.fail("Failed to copy input file to remote system", e);
+		} 
+		finally {
+			try {remoteDataClient.disconnect();} catch (Exception e){}
+		}
+	}
+
+	@DataProvider(name = "submitJobProvider")
+	protected Object[][] submitJobProvider() throws Exception {
+		List<Software> testApps = SoftwareDao.getUserApps(SYSTEM_OWNER, false);
+		
+		Object[][] testData = new Object[testApps.size()][3];
+		for(int i=0; i< testApps.size(); i++) {
+			testData[i] = new Object[] { testApps.get(i), "Submission to " + testApps.get(i).getExecutionSystem().getSystemId() + " failed.", false };
+		}
+		
+		return testData;
+	}
+
+	protected Job createAndPersistJob(Software software) throws Exception {
+		//RemoteDataClient remoteDataClient = null;
+		ObjectMapper mapper = new ObjectMapper();
+		
+		Job job = new Job();
+		job.setName( software.getExecutionSystem().getScheduler().name() + " test");
+		job.setArchiveOutput(false);
+		job.setArchivePath("/");
+		job.setArchiveSystem(storageSystem);
+		job.setCreated(new Date());
+		job.setMemoryPerNode((double).5);
+		job.setOwner(software.getOwner());
+		job.setProcessorsPerNode((long)1);
+		job.setMaxRunTime("1:00:00");
+		job.setSoftwareName(software.getUniqueName());
+		job.setStatus(JobStatusType.PENDING, job.getErrorMessage());
+		job.setSystem(software.getExecutionSystem().getSystemId());
+		job.setBatchQueue(software.getExecutionSystem().getDefaultQueue().getName());
+		
+		ObjectNode jobInputs = mapper.createObjectNode();
+		for(SoftwareInput input: software.getInputs()) {
+			jobInputs.put(input.getKey(), String.format("agave://%s/%s/%s", 
+					software.getStorageSystem().getSystemId(),
+					software.getDeploymentPath(),
+					software.getExecutablePath()));
+		}
+		job.setInputsAsJsonObject(jobInputs);
+		
+		ObjectNode jobParameters = mapper.createObjectNode();
+		for (SoftwareParameter parameter: software.getParameters()) {
+			jobParameters.set(parameter.getKey(), parameter.getDefaultValueAsJsonArray());
+		}
+		job.setParametersAsJsonObject(jobParameters);
+		
+		JobDao.persist(job);
+		
+		String remoteWorkPath = null;
+		if (StringUtils.isEmpty(software.getExecutionSystem().getScratchDir())) {
+			remoteWorkPath = job.getOwner() +
+				"/job-" + job.getId() + "-" + Slug.toSlug(job.getName()) + 
+				"/" + FilenameUtils.getName(software.getDeploymentPath());
+		} else {
+			remoteWorkPath = software.getExecutionSystem().getScratchDir() + 
+					job.getOwner() + 
+					"/job-" + job.getId() + "-" + Slug.toSlug(job.getName()) +
+					"/" + FilenameUtils.getName(software.getDeploymentPath());
+		}
+		
+		job.setWorkPath(remoteWorkPath);
+		
+		JobDao.persist(job);
+		
+		return job;
+	}
+
+	@DataProvider
+	protected Object[][] resolveMacrosProvider() throws Exception {
+		List<Software> testApps = SoftwareDao.getUserApps(SYSTEM_OWNER, false);
+		
+		job = createAndPersistJob(testApps.get(0));
+		
+		Object[][] testData = new Object[WrapperTemplateAttributeVariableType.values().length + WrapperTemplateStatusVariableType.values().length + 1][3];
+		int i = 0;
+		for (WrapperTemplateAttributeVariableType macro: WrapperTemplateAttributeVariableType.values()) {
+			testData[i++] = new Object[] { job, macro.name(), macro.resolveForJob(job), true };
+		}
+		
+		for (WrapperTemplateStatusVariableType macro: WrapperTemplateStatusVariableType.values()) {
+			testData[i++] = new Object[] { job, macro.name(), macro.resolveForJob(job), true };
+		}
+		
+		testData[i++] = new Object[] { job, WrapperTemplateAttributeVariableType.AGAVE_JOB_ARCHIVE_URL.name(), "", false  };
+		
+		return testData;
+	}
+
+	@Test(groups = { "submission" }, dataProvider = "resolveMacrosProvider", enabled = true)
+	public void resolveMacros(Job job, String macro, String expectedValue, boolean archive) 
+	throws JobException, SystemUnavailableException, SoftwareUnavailableException 
 	{
-		throw new RuntimeException("Test not implemented");
+		JobLauncher launcher = new HPCLauncher(job);
+		Assert.assertEquals(launcher.resolveMacros("${" + macro + "}"), expectedValue, "Launcher did not resolve wrapper template macro " + macro + " properly.");
 	}
 	
+
+//	@Test (groups={"submission"}, dataProvider="processApplicationTemplateProvider", dependsOnMethods={"resolveMacros"})
+//	public void processApplicationTemplate(Software software, String message, boolean shouldThrowException) 
+//	throws Exception 
+//	{
+//		job = createAndPersistJob(software);
+//		super.genericProcessApplicationTemplate(job, message, shouldThrowException);
+//	}
+	
+
 	@DataProvider
-	protected Object[][] resolveRuntimeNotificationMacrosWithoutEventAndDataProvider() 
-	throws Exception
-	{
-		return new Object[][] {
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|}", "JOB_RUNTIME_CALLBACK_EVENT" },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION| }", "JOB_RUNTIME_CALLBACK_EVENT" },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|,}", "JOB_RUNTIME_CALLBACK_EVENT"},
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|,,}", "JOB_RUNTIME_CALLBACK_EVENT" }
+	protected Object[][] resolveNotificationsMacrosProvider() throws Exception {
+		List<Software> testApps = SoftwareDao.getUserApps(SYSTEM_OWNER, false);
+		
+		job = createAndPersistJob(testApps.get(0));
+		
+		return new Object[][] { 
+			{job, "", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, null), 
+				false  },
+			{job, "HOME", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, new String[]{"HOME"}), 
+				false  },
+			{job, "HOME,HOSTNAME,SHELL", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, new String[]{"HOME","HOSTNAME","SHELL"}), 
+				false  },
+			{job, "MY_EVENT|", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, "MY_EVENT", new String[]{}), 
+				false  },
+			{job, "MY_EVENT|HOME", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, "MY_EVENT", new String[]{"HOME"}), 
+				false  },
+			{job, "MY_EVENT|HOME,HOSTNAME,SHELL", 
+				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, "MY_EVENT", new String[]{"HOME","HOSTNAME","SHELL"}), 
+				false  },
 		};
-		
-		
 	}
-	
-	@Test(dataProvider="resolveRuntimeNotificationMacrosWithoutEventAndDataProvider")
-	public void resolveRuntimeNotificationMacrosWithoutEventAndData(String wrapperTemplate, String expectedEvent) {
-		
-		Job job = Mockito.mock(Job.class);
-		when(job.getUuid()).thenReturn(new AgaveUUID(UUIDType.JOB).toString());
-		when(job.getUuid()).thenReturn(TenancyHelper.getCurrentTenantId());
-		when(job.getUpdateToken()).thenReturn(UUID.randomUUID().toString());
-		CLILauncher launcher = new CLILauncher(job);
-		String resolvedWrapperCode = launcher.resolveRuntimeNotificationMacros(wrapperTemplate);
-		System.out.println(resolvedWrapperCode);
-		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \""+expectedEvent+"\""), "Empty user event name should write default custom user event name");
-	}
-	
-	@DataProvider
-	protected Object[][] resolveRuntimeNotificationMacrosWithoutEventProvider() 
-	throws Exception
+
+	@Test(groups = { "submission" }, dataProvider = "resolveNotificationsMacrosProvider", dependsOnMethods = { "resolveMacros" }, enabled = true)
+	public void resolveNotificationMacros(Job job, String macroVars, String expectedValue, boolean archive) 
+	throws JobException, SystemUnavailableException, SoftwareUnavailableException 
 	{
-		return new Object[][] {
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|VALUE1}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|VALUE1,VALUE2}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1","VALUE2") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|VALUE1,,VALUE2}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1","VALUE2") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|VALUE1,,,}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|,VALUE1}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|,,VALUE1}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|VALUE1,VALUE1}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1") },
-			};	
-		
+		JobLauncher launcher = new HPCLauncher(job);
+		Assert.assertEquals(launcher.resolveRuntimeNotificationMacros("${AGAVE_JOB_CALLBACK_NOTIFICATION|" + macroVars + "}"), expectedValue, "Launcher did not resolve wrapper template notification macro properly.");
 	}
-	
-	@Test(dataProvider="resolveRuntimeNotificationMacrosWithoutEventProvider", dependsOnMethods={"resolveRuntimeNotificationMacrosWithoutEventAndData"})
-	public void resolveRuntimeNotificationMacrosWithoutEvent(String wrapperTemplate, String expectedEvent, List<String> expectedValues) {
+
+	@Test(groups = { "submission" }, dataProvider = "submitJobProvider", dependsOnMethods = { "resolveMacros" }, enabled = true)
+	public void submitJob(Software software, String message, boolean shouldThrowException)
+	throws Exception {
+		try {
+			job = createAndPersistJob(software);
 		
-		Job job = Mockito.mock(Job.class);
-		when(job.getUuid()).thenReturn(new AgaveUUID(UUIDType.JOB).toString());
-		when(job.getUuid()).thenReturn(TenancyHelper.getCurrentTenantId());
-		when(job.getUpdateToken()).thenReturn(UUID.randomUUID().toString());
-		CLILauncher launcher = new CLILauncher(job);
-		String resolvedWrapperCode = launcher.resolveRuntimeNotificationMacros(wrapperTemplate);
-		System.out.println(resolvedWrapperCode);
-		for (String uniqueName: new HashSet<String>(expectedValues)) {
-			String expectedString = String.format("echo '  \"%s\": \"'$(printf %%q \"$%s\")'\",' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
-//			String expectedString = String.format("echo '  \"%s\": '$(printf %%q \"$%s\")'\",\\\n' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
-			Assert.assertTrue(resolvedWrapperCode.contains(expectedString), "User custom data should be written into the output data");
-			resolvedWrapperCode = StringUtils.replaceOnce(resolvedWrapperCode,expectedString, "");
-			Assert.assertFalse(resolvedWrapperCode.contains(expectedString), "Duplicate user variable names should be filtered out prior to writing the callback output");
+			stageSoftwareDeploymentDirectory(software);
+		
+			stageJobInputs(job);
+			
+			this.genericRemoteSubmissionTestCase(job, true, "Condor job submission failed", false);
 		}
-		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \""+expectedEvent+"\""), "Empty user event name should write default custom user event name");
-	}
-	
-	@DataProvider
-	protected Object[][] resolveRuntimeNotificationMacrosWithoutDataProvider() 
-	throws Exception
-	{
-		return new Object[][] {
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION| | , , }", "JOB_RUNTIME_CALLBACK_EVENT"},
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||}", "JOB_RUNTIME_CALLBACK_EVENT" },
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|| }", "JOB_RUNTIME_CALLBACK_EVENT" },
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||,}", "JOB_RUNTIME_CALLBACK_EVENT" },
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|| , }", "JOB_RUNTIME_CALLBACK_EVENT" },
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||, , }", "JOB_RUNTIME_CALLBACK_EVENT" },
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||,,}", "JOB_RUNTIME_CALLBACK_EVENT" },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION| |}", "JOB_RUNTIME_CALLBACK_EVENT" },
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB|}", "MAPPED_JOB" },
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB| }", "MAPPED_JOB" },
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB|,}", "MAPPED_JOB"},
-//				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB|,,}", "MAPPED_JOB" }
-		};
-	}
-	
-	@Test(dataProvider="resolveRuntimeNotificationMacrosWithoutDataProvider", dependsOnMethods={"resolveRuntimeNotificationMacrosWithoutEvent"})
-	public void resolveRuntimeNotificationMacrosWithoutData(String wrapperTemplate, String expectedEvent) {
-		
-		Job job = Mockito.mock(Job.class);
-		when(job.getUuid()).thenReturn(new AgaveUUID(UUIDType.JOB).toString());
-		when(job.getUuid()).thenReturn(TenancyHelper.getCurrentTenantId());
-		when(job.getUpdateToken()).thenReturn(UUID.randomUUID().toString());
-		CLILauncher launcher = new CLILauncher(job);
-		String resolvedWrapperCode = launcher.resolveRuntimeNotificationMacros(wrapperTemplate);
-		System.out.println(resolvedWrapperCode);
-		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \""+expectedEvent+"\""), "Empty user event name should write default custom user event name");
-	}
-	
-	@DataProvider
-	protected Object[][] resolveRuntimeNotificationMacrosProvider() 
-	throws Exception
-	{
-		return new Object[][] {
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||VALUE1}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||VALUE1,VALUE2}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1","VALUE2") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||VALUE1,,VALUE2}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1","VALUE2") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||VALUE1,,,}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||,VALUE1}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||,,VALUE1}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION||VALUE1,VALUE1}", "JOB_RUNTIME_CALLBACK_EVENT", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB|VALUE1}", "MAPPED_JOB", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB|VALUE1,VALUE2}", "MAPPED_JOB", Arrays.asList("VALUE1","VALUE2") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB|VALUE1,,VALUE2}", "MAPPED_JOB", Arrays.asList("VALUE1","VALUE2") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB|VALUE1,,,}", "MAPPED_JOB", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB|,VALUE1}", "MAPPED_JOB", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB|,,VALUE1}", "MAPPED_JOB", Arrays.asList("VALUE1") },
-				{ "${AGAVE_JOB_CALLBACK_NOTIFICATION|MAPPED_JOB|VALUE1,VALUE1}", "MAPPED_JOB", Arrays.asList("VALUE1") },
-		};	
-	}
-	
-	@Test(dataProvider="resolveRuntimeNotificationMacrosProvider", dependsOnMethods={"resolveRuntimeNotificationMacrosWithoutData"})
-	public void resolveRuntimeNotificationMacros(String wrapperTemplate, String expectedEvent, List<String> expectedValues) {
-		
-		Job job = Mockito.mock(Job.class);
-		when(job.getUuid()).thenReturn(new AgaveUUID(UUIDType.JOB).toString());
-		when(job.getUuid()).thenReturn(TenancyHelper.getCurrentTenantId());
-		when(job.getUpdateToken()).thenReturn(UUID.randomUUID().toString());
-		CLILauncher launcher = new CLILauncher(job);
-		String resolvedWrapperCode = launcher.resolveRuntimeNotificationMacros(wrapperTemplate);
-		System.out.println(resolvedWrapperCode);
-		for (String uniqueName: new HashSet<String>(expectedValues)) {
-			String expectedString = String.format("echo '  \"%s\": \"'$(printf %%q \"$%s\")'\",' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
-//			String expectedString = String.format("echo '  \"%s\": '$(printf %%q \"$%s\")'\",\\\n' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
-			Assert.assertTrue(resolvedWrapperCode.contains(expectedString), "User custom data should be written into the output data");
-			resolvedWrapperCode = StringUtils.replaceOnce(resolvedWrapperCode,expectedString, "");
-			Assert.assertFalse(resolvedWrapperCode.contains(expectedString), "Duplicate user variable names should be filtered out prior to writing the callback output");
+		finally {
+			try { JobDao.delete(job); } catch (Exception e) {}
+			try { SoftwareDao.delete(software); } catch (Exception e) {}
+			try { new SystemDao().remove(executionSystem); } catch (Exception e) {}
 		}
-		
-		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \""+expectedEvent+"\""), "Empty user event name should write default custom user event name");
-		
 	}
-	
-	@Test()
-	public void resolveRuntimeNotificationMacrosInFullWrapperTemplate() throws IOException {
-		
-		String wrapperTemplate = FileUtils.readFileToString(new File("target/test-classes/software/fork-1.0.0/wrapper.sh"));
-		String expectedEvent = "JOB_RUNTIME_CALLBACK_EVENT";
-		List<String> expectedValues = Arrays.asList("CALLBACK");
- 		
-		Job job = Mockito.mock(Job.class);
-		when(job.getUuid()).thenReturn(new AgaveUUID(UUIDType.JOB).toString());
-		when(job.getUuid()).thenReturn(TenancyHelper.getCurrentTenantId());
-		when(job.getUpdateToken()).thenReturn(UUID.randomUUID().toString());
-		CLILauncher launcher = new CLILauncher(job);
-		String resolvedWrapperCode = launcher.resolveRuntimeNotificationMacros(wrapperTemplate);
-		System.out.println(resolvedWrapperCode);
-		for (String uniqueName: new HashSet<String>(expectedValues)) {
-			String expectedString = String.format("echo '  \"%s\": \"'$(printf %%q \"$%s\")'\",' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
-//			String expectedString = String.format("echo '  \"%s\": '$(printf %%q \"$%s\")'\",\\\n' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
-			Assert.assertTrue(resolvedWrapperCode.contains(expectedString), "User custom data should be written into the output data");
-			resolvedWrapperCode = StringUtils.replaceOnce(resolvedWrapperCode,expectedString, "");
-			Assert.assertFalse(resolvedWrapperCode.contains(expectedString), "Duplicate user variable names should be filtered out prior to writing the callback output");
-		}
-		
-		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \""+expectedEvent+"\""), "Empty user event name should write default custom user event name");
-		
+
+	/**
+	 * @return the remoteFilePath
+	 */
+	public String getRemoteFilePath() {
+		return remoteFilePath;
 	}
+
+	/**
+	 * @param remoteFilePath the remoteFilePath to set
+	 */
+	public void setRemoteFilePath(String remoteFilePath) {
+		this.remoteFilePath = remoteFilePath;
+	}
+
 }

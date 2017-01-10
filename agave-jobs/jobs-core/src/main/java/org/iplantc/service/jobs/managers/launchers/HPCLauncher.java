@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -66,13 +67,13 @@ public class HPCLauncher extends AbstractJobLauncher
 		File tempAppDir = null;
 		try
 		{
-			if (software == null || !software.isAvailable()) {
-				throw new SoftwareUnavailableException("Application " + job.getSoftwareName() + " is not longer available for execution");
+			if (getSoftware() == null || !getSoftware().isAvailable()) {
+				throw new SoftwareUnavailableException("Application " + getJob().getSoftwareName() + " is not longer available for execution");
 			}
 			
 			// if the system is down, return it to the queue to wait for the system
 			// to come back up.
-			if (executionSystem == null || !executionSystem.getStatus().equals(SystemStatusType.UP)) 
+			if (getExecutionSystem() == null || !getExecutionSystem().getStatus().equals(SystemStatusType.UP)) 
 			{
 				throw new SystemUnavailableException();
 			} 
@@ -107,22 +108,22 @@ public class HPCLauncher extends AbstractJobLauncher
             
 //            JobDao.refresh(job);
             
-            job.setSubmitTime(new DateTime().toDate()); // Date job submitted to queue
-            job.setLastUpdated(new DateTime().toDate());  // Date job started by queue
-            job.setLocalJobId(remoteJobId);
+            getJob().setSubmitTime(new DateTime().toDate()); // Date job submitted to queue
+            getJob().setLastUpdated(new DateTime().toDate());  // Date job started by queue
+            getJob().setLocalJobId(remoteJobId);
             
-            if (!job.getStatus().equals(JobStatusType.RUNNING)) {
-                String message = "Job successfully submitted to execution system as local id " + job.getLocalJobId();
-	            if (executionSystem.getExecutionType() == ExecutionType.HPC) {
+            if (!getJob().getStatus().equals(JobStatusType.RUNNING)) {
+                String message = "Job successfully submitted to execution system as local id " + getJob().getLocalJobId();
+	            if (getExecutionSystem().getExecutionType() == ExecutionType.HPC) {
 	            	message = "HPC job successfully placed into " + 
-	            			job.getBatchQueue() + " queue as local job " + job.getLocalJobId();
-	            } else if (executionSystem.getExecutionType() == ExecutionType.CLI) {
-	            	message = "CLI job successfully forked as process id " + job.getLocalJobId();
+	            			getJob().getBatchQueue() + " queue as local job " + getJob().getLocalJobId();
+	            } else if (getExecutionSystem().getExecutionType() == ExecutionType.CLI) {
+	            	message = "CLI job successfully forked as process id " + getJob().getLocalJobId();
 	            }
 	            
-	            log.debug(message.replaceFirst("job", "job " + job.getUuid()));
+	            log.debug(message.replaceFirst("job", "job " + getJob().getUuid()));
 	            
-	            job.setStatus(JobStatusType.QUEUED, message);
+	            getJob().setStatus(JobStatusType.QUEUED, message);
 	            
 	            //   Forked jobs start running right away. if they bomb out right after submission,
 	            // then they would stay in the queued state for the entire job runtime before being
@@ -130,17 +131,17 @@ public class HPCLauncher extends AbstractJobLauncher
 	            // immediately and keep the feedback loop on failed jobs tight. 
 	            //   It's worth noting that the RUNNING status on valid jobs will still come through, 
 	            // but it will be ignored since the job state is already running. no harm no foul.  
-	            if (software.getExecutionType() == ExecutionType.CLI) {
-	            	job.setStatus(JobStatusType.RUNNING, message);
+	            if (getSoftware().getExecutionType() == ExecutionType.CLI) {
+	            	getJob().setStatus(JobStatusType.RUNNING, message);
 	            }
             }
             else
             {
-                log.debug("Callback already received for job " + job.getUuid() 
+                log.debug("Callback already received for job " + getJob().getUuid() 
                         + " skipping duplicate status update.");    
             }
             
-            JobDao.persist(job);
+            JobDao.persist(getJob());
 		}
 		catch (ClosedByInterruptException e) {
             throw e;
@@ -168,7 +169,7 @@ public class HPCLauncher extends AbstractJobLauncher
 	@Override
     public File processApplicationTemplate() throws JobException 
     {
-		step = "Process the " + job.getSoftwareName() + " wrapper template for job " + job.getUuid();
+		step = "Process the " + getJob().getSoftwareName() + " wrapper template for job " + getJob().getUuid();
 		 
         log.debug(step);
         FileWriter batchWriter = null;
@@ -178,64 +179,98 @@ public class HPCLauncher extends AbstractJobLauncher
         try 
 		{
 			// create the submit script in the temp folder
-        	batchScriptName = Slug.toSlug(job.getName()) + ".ipcexe";
+        	batchScriptName = Slug.toSlug(getJob().getName()) + ".ipcexe";
         	ipcexeFile = new File(tempAppDir + File.separator + batchScriptName);
 			batchWriter = new FileWriter(ipcexeFile);
 			
-			SubmitScript script = SubmitScriptFactory.getScript(job);
+			SubmitScript script = SubmitScriptFactory.getScript(getJob());
 	
 			// write the script header
 			batchWriter.write(script.getScriptText());
 			
-			remoteExecutionDataClient = software.getExecutionSystem().getRemoteDataClient(job.getInternalUsername());
+			remoteExecutionDataClient = getSoftware().getExecutionSystem().getRemoteDataClient(getJob().getInternalUsername());
 			
-			String absWorkDir = remoteExecutionDataClient.resolvePath(job.getWorkPath());
+			String absWorkDir = remoteExecutionDataClient.resolvePath(getJob().getWorkPath());
 			
-			batchWriter.write("\ncd " + absWorkDir + "\n");
-			
-			batchWriter.write("AGAVE_LOG_FILE=" + absWorkDir + "/.agave.log\n");
-			
-			// write the callback to trigger status update at start
-			batchWriter.write(resolveMacros("\n${AGAVE_JOB_CALLBACK_RUNNING} \n\n"));
-//					"\ncurl -sSk \"" + Settings.IPLANT_JOB_SERVICE
-//					+ "trigger/job/" + job.getUuid() + "/token/"
-//					+ job.getUpdateToken() + "/status/" + JobStatusType.RUNNING
-//					+ "?pretty=true\" 1>&2 \n\n");
-			
-			
-			batchWriter.write("\n\n# Environmental settings for "
-					+ job.getSoftwareName() + ":\n\n");
-	
-			
-			// add modules. The irods module is required for all HPC systems
-			// we add it last so it can't be purged by app module commands
-			for (String module : software.getModulesAsList()) {
-				batchWriter.write("module " + module + "\n");
-			}
-			
-			// add in any custom environment variables that need to be set
-            if (!StringUtils.isEmpty(software.getExecutionSystem().getEnvironment())) {
-            	batchWriter.write(software.getExecutionSystem().getEnvironment() + "\n");
-        	}
+			batchWriter.write("##########################################################\n");
+            batchWriter.write("# Agave Environment Settings \n");
+            batchWriter.write("##########################################################\n\n");
             
-            //batchWriter.write("module load irods\n"); // already loaded by default
+            batchWriter.write("# Ensure we're in the job work directory \n");
+            batchWriter.write("cd " + absWorkDir + "\n\n");
 			
-			// read in the template file
+            batchWriter.write("# Location of agave job lifecycle log file \n");
+            batchWriter.write("AGAVE_LOG_FILE=" + absWorkDir + "/.agave.log\n\n\n");
+			
+            batchWriter.write("##########################################################\n");
+            batchWriter.write("# Agave Utility functions \n");
+            batchWriter.write("##########################################################\n\n");
+            
+            // datetime function
+            batchWriter.write("# cross-plaltform function to print an ISO8601 formatted timestamp \n");
+            batchWriter.write("function agave_datetime_iso() { \n  date '+%Y-%m-%dT%H:%M:%S%z'; \n} \n\n");
+	
+			// logging function
+            batchWriter.write("# standard logging function to write agave job lifecycle logs\n");
+            batchWriter.write("function agave_log_response() { \n  echo \"[$(agave_datetime_iso)] ${@}\"; \n} 2>&1 >> \"${AGAVE_LOG_FILE}\"\n\n");
+         			
+            // write the callback to trigger status update at start
+            batchWriter.write("# Callback to signal the job has started executing user-defined logic\n");
+            batchWriter.write(resolveMacros("${AGAVE_JOB_CALLBACK_RUNNING}"));
+            
+            
+            batchWriter.write("##########################################################\n");
+            batchWriter.write("# Agave App and System Environment Settings \n");
+            batchWriter.write("##########################################################\n\n");
+            
+            
+            List<String> appModules = getSoftware().getModulesAsList();
+            if (!appModules.isEmpty()) {
+	            batchWriter.write("# App specific module commands\n");
+	            
+	            // add modules if specified by the app. Generally these won't be used in a condor app,
+	            // but in the event they're running mpi or gliding in, these are available.
+				for (String module : appModules) {
+					batchWriter.write("module " + module + "\n");
+				}
+				batchWriter.write("\n");
+            }
+            else {
+            	batchWriter.write("# No modules commands configured for this app\n\n");   
+            }
+			
+            // add in any custom environment variables that need to be set
+            if (!StringUtils.isEmpty(getSoftware().getExecutionSystem().getEnvironment())) {
+            	batchWriter.write("# App specific environment variables\n");
+            	batchWriter.write(getSoftware().getExecutionSystem().getEnvironment());
+            	batchWriter.write("\n");
+        	}
+            else {
+            	batchWriter.write("# No custom environment variables configured for this app\n\n\n");   
+            }
+            
+            
+            batchWriter.write("##########################################################\n");
+            batchWriter.write("# Begin App Wrapper Template Logic \n");
+            batchWriter.write("##########################################################\n\n");
+           
+			
+            // read in the template file
 			File appTemplateFile = new File(tempAppDir
-					+ File.separator + software.getExecutablePath());
+					+ File.separator + getSoftware().getExecutablePath());
 			
 			if (!appTemplateFile.exists()) {
 				throw new FileNotFoundException("Unable to locate wrapper script for \"" + 
-						software.getUniqueName() + "\" at " + 
+						getSoftware().getUniqueName() + "\" at " + 
 						appTemplateFile.getAbsolutePath());
 			}
 			
 			appTemplate = FileUtils.readFileToString(appTemplateFile);
 			
 			// replace the parameters with their passed in values
-			JsonNode jobParameters = job.getParametersAsJsonObject();
+			JsonNode jobParameters = getJob().getParametersAsJsonObject();
 			
-			for (SoftwareParameter param: software.getParameters())
+			for (SoftwareParameter param: getSoftware().getParameters())
 			{
 				if (jobParameters.has(param.getKey())) 
 				{
@@ -264,9 +299,9 @@ public class HPCLauncher extends AbstractJobLauncher
 			}
 			
 			// replace the parameters with their passed in values
-			JsonNode jobInputs = job.getInputsAsJsonObject();
+			JsonNode jobInputs = getJob().getInputsAsJsonObject();
 			
-			for (SoftwareInput input: software.getInputs())
+			for (SoftwareInput input: getSoftware().getInputs())
 			{
 				if (jobInputs.has(input.getKey())) 
 				{
@@ -295,7 +330,7 @@ public class HPCLauncher extends AbstractJobLauncher
 			}
 			
 			// strip out all references to banned commands such as icommands, etc
-			if (executionSystem.isPubliclyAvailable()) {
+			if (getExecutionSystem().isPubliclyAvailable()) {
 				appTemplate = CommandStripper.strip(appTemplate); 
 			}
 			
@@ -305,8 +340,14 @@ public class HPCLauncher extends AbstractJobLauncher
 			
 			// add the success statement after the template by default. The user can add failure catches
 			// in their scripts that will trump a later success status.
-			appTemplate = appTemplate + "\n\n${AGAVE_JOB_CALLBACK_CLEANING_UP}\n";
-			
+			appTemplate = appTemplate + 
+					"\n\n\n" + 
+					"##########################################################\n" +
+            		"# End App Wrapper Template Logic \n" +
+            		"##########################################################\n\n" +
+            		"# Callback to signal the job has completed all user-defined logic\n" +
+            		"${AGAVE_JOB_CALLBACK_CLEANING_UP}";
+           
 			// Replace all the runtime callback notifications
 			appTemplate = resolveRuntimeNotificationMacros(appTemplate);
 						
@@ -352,32 +393,46 @@ public class HPCLauncher extends AbstractJobLauncher
 		RemoteDataClient remoteExecutionDataClient = null;
 		try
 		{
-			submissionClient = executionSystem.getRemoteSubmissionClient(job.getInternalUsername());
+			submissionClient = getExecutionSystem().getRemoteSubmissionClient(getJob().getInternalUsername());
 			
-			remoteExecutionDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
+			remoteExecutionDataClient = getExecutionSystem().getRemoteDataClient(getJob().getInternalUsername());
 			
-			String cdCommand = "source ~/.bashrc; cd " + remoteExecutionDataClient.resolvePath(job.getWorkPath());
+			// Get the remote work directory for the log file
+			String remoteWorkPath = remoteExecutionDataClient.resolvePath(getJob().getWorkPath());
 			
+			// Resolve the startupScript and generate the command to run it and log the response to the
+			// remoteWorkPath + "/.agave.log" file
+			String startupScriptCommand = getStartupScriptCommand(remoteWorkPath);
+			
+			// command to cd to the remoteWorkPath
+			String cdCommand = "cd " + remoteExecutionDataClient.resolvePath(getJob().getWorkPath());
+			
+			// ensure the wrapper template has execute permissions
 			String chmodCommand = "chmod +x " + batchScriptName;
 			
-			String submitCommand = executionSystem.getScheduler().getBatchSubmitCommand() + " "
+			// command to submit the batch script to the scheduler. 
+			String submitCommand = getExecutionSystem().getScheduler().getBatchSubmitCommand() + " "
 					+ batchScriptName;
 			
+			// run the aggregate command on the remote system
 			submissionResponse = submissionClient.runCommand(
-					cdCommand + "; " + chmodCommand + "; " + submitCommand);
+					startupScriptCommand + "; " + cdCommand + "; " + chmodCommand + "; " + submitCommand);
 					
-			if (StringUtils.isEmpty(StringUtils.trimToNull(submissionResponse))) 
+			if (StringUtils.isBlank(submissionResponse)) 
 			{
-				// retry once just in case it was a flickr
+				// retry the remote command once just in case it was a flicker
 				submissionResponse = submissionClient.runCommand(
-						cdCommand + "; " + chmodCommand + "; " + submitCommand);
+						startupScriptCommand + "; " + cdCommand + "; " + chmodCommand + "; " + submitCommand);
 				
-				if (StringUtils.isEmpty(StringUtils.trimToNull(submissionResponse))) 
-					throw new JobException("Failed to submit job. " + submissionResponse);
+				// blank response means the job didn't go in...twice. Fail the attempt
+				if (StringUtils.isBlank(submissionResponse)) 
+					throw new JobException("Failed to submit hpc job. " + submissionResponse);
 			}
 			
+			// parse the response from the remote command invocation to get the localJobId
+			// by which we'll reference the job during monitoring, etc.
 			RemoteJobIdParser jobIdParser = 
-					new RemoteJobIdParserFactory().getInstance(executionSystem.getScheduler());
+					new RemoteJobIdParserFactory().getInstance(getExecutionSystem().getScheduler());
 			
 			return jobIdParser.getJobId(submissionResponse);
 		}
@@ -388,7 +443,7 @@ public class HPCLauncher extends AbstractJobLauncher
 			throw e;
 		}
 		catch (SchedulerException e) {
-			throw new JobException(e.getMessage(), e);
+			throw e;
 		}
 		catch (Exception e)
 		{

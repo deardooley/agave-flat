@@ -5,7 +5,7 @@
 	"type": "EXECUTION",
 	"description": "Sample gsissh execution system.",
 	"site": "tacc.xsede.org",
-	"executionType": "HPC",
+	"executionType": "CLI",
 	"default": false,
 	"queues": [
 		{
@@ -36,26 +36,18 @@
 	},
 	"storage": {
 		"host": "docker.example.com",
-		"port": 2811,
-		"protocol": "GRIDFTP",
+		"port": 2022,
+		"protocol": "SFTP",
 		"homeDir": "/home/testuser",
 		"rootDir": "/",
 		"auth": {
 			"username": "testuser",
 			"password": "testuser",
 			"credential": null,
-			"type": "X509",
-			"server": {
-				"id": "docker.example.com",
-				"name": "Agave Dev myproxy Docker container",
-				"endpoint": "docker.example.com",
-				"port": 7514,
-				"protocol": "MYPROXY"
-			}
+			"type": "PASSWORD"
 		}
-		
 	},
-	"scheduler": "SGE",
+	"scheduler": "FORK",
 	"environment": "",
 	"startupScript": "./bashrc"
 }

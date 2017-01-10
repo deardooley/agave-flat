@@ -23,7 +23,7 @@ public class CondorJobIdParser implements RemoteJobIdParser
 	{
 		// there should be only two lines if things are good
     	List<String> lines = Arrays.asList(output.replaceAll("\r", "\\n").split("\n"));
-        if(lines != null && !lines.isEmpty()){
+        if(lines != null && lines.size() == 2){
             // lines second element should be ie. "1 job(s) submitted to cluster 95."
             return parseJobNumber(lines.get(1));
         } else {
