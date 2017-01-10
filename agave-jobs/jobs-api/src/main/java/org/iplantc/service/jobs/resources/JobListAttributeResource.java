@@ -13,9 +13,12 @@ import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
+import org.iplantc.service.common.resource.SearchableAgaveResource;
+import org.iplantc.service.common.search.AgaveResourceResultOrdering;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.search.JobSearchFilter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.restlet.Context;
@@ -33,7 +36,7 @@ import org.restlet.resource.Variant;
  * @author dooley
  * 
  */
-public class JobListAttributeResource extends AbstractJobResource 
+public class JobListAttributeResource extends SearchableAgaveResource<JobSearchFilter> 
 {
 	private static final Logger	log	= Logger.getLogger(JobListAttributeResource.class);
 	
@@ -57,8 +60,6 @@ public class JobListAttributeResource extends AbstractJobResource
 	{
 		super(context, request, response);
 
-		this.username = getAuthenticatedUsername();
-		
 		String userAttr = (String) request.getAttributes().get("attribute");
 		if (ServiceUtils.isValid(userAttr)) {
 			// only add valid attributes, preserve their case for the sql query
@@ -74,7 +75,7 @@ public class JobListAttributeResource extends AbstractJobResource
 		
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 
 				AgaveLogServiceClient.ActivityKeys.JobAttributeList.name(), 
-				username, "", request.getClientInfo().getUpstreamAddress());
+				getAuthenticatedUsername(), "", request.getClientInfo().getUpstreamAddress());
 	}
 
 	/**
@@ -93,10 +94,9 @@ public class JobListAttributeResource extends AbstractJobResource
 			//String json = "";
 			
 			JSONArray json = new JSONArray();
-			List<Job> jobs = JobDao.getByUsername(username);
-			for (int i=offset; i< Math.min((limit+offset), jobs.size()); i++)
+			List<Job> jobs = JobDao.getByUsername(getAuthenticatedUsername(), offset, limit, getSortOrder(AgaveResourceResultOrdering.ASC), getSortOrderSearchTerm());
+			for (Job job: jobs) 
 			{
-				Job job = jobs.get(i);
 				JSONObject jsonJob = new JSONObject();
 				jsonJob.put("id", job.getUuid());
 				jsonJob.put(attribute, job.getValueForAttributeName(attribute));
@@ -110,7 +110,7 @@ public class JobListAttributeResource extends AbstractJobResource
 		}
 		catch (Exception e)
 		{
-			log.error("Failed to search jobs by attribute " + attribute + " for user " + username, e);
+			log.error("Failed to search jobs by attribute " + attribute + " for user " + getAuthenticatedUsername(), e);
 			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
 			return new IplantErrorRepresentation(e.getMessage());
 		}
@@ -158,6 +158,11 @@ public class JobListAttributeResource extends AbstractJobResource
 	public boolean allowPut()
 	{
 		return false;
+	}
+
+	@Override
+	public JobSearchFilter getAgaveResourceSearchFilter() {
+		return new JobSearchFilter();
 	}
 
 }

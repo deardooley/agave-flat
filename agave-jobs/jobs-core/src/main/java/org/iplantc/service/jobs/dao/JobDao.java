@@ -4,9 +4,7 @@
 package org.iplantc.service.jobs.dao;
 
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +29,7 @@ import org.iplantc.service.apps.util.ServiceUtils;
 //import org.iplantc.service.common.dao.SearchTerm;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.common.search.AgaveResourceResultOrdering;
 import org.iplantc.service.common.search.SearchTerm;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
@@ -40,11 +39,8 @@ import org.iplantc.service.jobs.model.dto.JobDTO;
 //import org.iplantc.service.jobs.model.SummaryTenantUserJobActivity;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
-import org.iplantc.service.systems.model.RemoteSystem;
-import org.iplantc.service.systems.model.StorageSystem;
+import org.iplantc.service.jobs.search.JobSearchFilter;
 import org.joda.time.DateTime;
-
-import com.maverick.util.Arrays;
 
 /**
  * @author dooley
@@ -90,32 +86,65 @@ public class JobDao
 	 * @param limit
 	 * @return
 	 * @throws JobException
+	 * @deprecated 
+	 * @see {@link #getByUsername(String, int, int, AgaveResourceSearchResultOrdering, SearchTerm)
+	 */
+	public static List<Job> getByUsername(String username, int offset, int limit) 
+	throws JobException
+	{
+		return getByUsername(username, offset, limit, null, null);
+	}
+	
+	/**
+	 * Returns all jobs for a given username with optional search result ordering
+	 * @param username
+	 * @param offset
+	 * @param limit
+	 * @return
+	 * @throws JobException
 	 */
 	@SuppressWarnings("unchecked")
-	public static List<Job> getByUsername(String username, int offset, int limit) throws JobException
+	public static List<Job> getByUsername(String username, int offset, int limit, AgaveResourceResultOrdering order, SearchTerm orderBy) 
+	throws JobException
 	{
+		if (order == null) {
+			order = AgaveResourceResultOrdering.DESC;
+		}
+		
+		if (orderBy == null) {
+			orderBy = new JobSearchFilter().filterAttributeName("lastupdated");
+		}
+		
 		try
 		{
 			Session session = getSession();
 			session.clear();
-			String sql = "select distinct j.* "
-					+ "from jobs j "
-					+ "		left join job_permissions p on j.id = p.job_id "
-					+ "where ("
-					+ "			j.owner = :owner "
-					+ "			or ("
-					+ "				p.username = :owner " 
-					+ "				and p.permission <> :none "  
-					+ "			) " 
-					+ "		) "
-					+ "		and j.visible = :visible "
-					+ "		and j.tenant_id = :tenantid "
-					+ "order by j.id desc";
+			String sql = "select distinct j.* \n"
+					+ "from jobs j \n"
+					+ "		left join job_permissions p on j.id = p.job_id \n"
+					+ "where ( \n"
+					+ "			j.owner = :owner \n"
+					+ "			or ( \n"
+					+ "				p.username = :owner \n" 
+					+ "				and p.permission <> :none \n"  
+					+ "			) \n" 
+					+ "		) \n"
+					+ "		and j.visible = :visible \n"
+					+ "		and j.tenant_id = :tenantid \n"
+					+ "order by " + String.format(orderBy.getMappedField(), orderBy.getPrefix()) + " " +  order.toString() + " \n";
 			
+			
+			String q = sql;
+			q = StringUtils.replace(q, ":owner", String.format("'%s'", username));
+			q = StringUtils.replace(q, ":none", String.format("'%s'", PermissionType.NONE.name()));
+			q = StringUtils.replace(q, ":visible", String.format("'%d'", 1));
+			q = StringUtils.replace(q, ":tenantid", String.format("'%s'", TenancyHelper.getCurrentTenantId()));
+			
+//			log.debug(q);
 			List<Job> jobs = session.createSQLQuery(sql).addEntity(Job.class)
 					.setString("owner",username)
 					.setString("none",PermissionType.NONE.name())
-					.setBoolean("visible", Boolean.TRUE)
+					.setInteger("visible", new Integer(1))
 					.setString("tenantid", TenancyHelper.getCurrentTenantId())
 					.setFirstResult(offset)
 					.setMaxResults(limit)
@@ -1588,6 +1617,33 @@ public class JobDao
 			Map<SearchTerm, Object> searchCriteria,
 			int offset, int limit) throws JobException
 	{
+		return findMatching(username, searchCriteria, offset, limit, null, null);
+	}
+	
+	/**
+	 * Searches for jobs by the given user who matches the given set of 
+	 * parameters. Permissions are honored in this query.
+	 *
+	 * @param username
+	 * @param searchCriteria
+	 * @param offset
+	 * @param limit
+	 * @return
+	 * @throws JobException
+	 */
+	@SuppressWarnings("unchecked")
+	public static List<JobDTO> findMatching(String username,
+			Map<SearchTerm, Object> searchCriteria,
+			int offset, int limit, AgaveResourceResultOrdering order, SearchTerm orderBy) throws JobException
+	{
+		if (order == null) {
+			order = AgaveResourceResultOrdering.ASCENDING;
+		}
+		
+		if (orderBy == null) {
+			orderBy = new JobSearchFilter().filterAttributeName("lastupdated");
+		}
+		
 		try
 		{
 			Session session = getSession();
@@ -1660,7 +1716,7 @@ public class JobDao
 				sql +=  "\n       AND j.visible = :visiblebydefault ";
 			}
 			
-			sql +=	"\n ORDER BY j.last_updated DESC\n";
+			sql +=	"\n ORDER BY " + String.format(orderBy.getMappedField(), orderBy.getPrefix()) + " " + order.toString() + " \n";
 			
 			String q = sql;
 			//log.debug(q);
@@ -1719,7 +1775,7 @@ public class JobDao
 		 	
 		 	for (SearchTerm searchTerm: searchCriteria.keySet()) 
 			{
-			    if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN) {
+			    if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN || searchTerm.getOperator() == SearchTerm.Operator.ON) {
 			        List<String> formattedDates = (List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm));
 			        for(int i=0;i<formattedDates.size(); i++) {
 			            query.setString(searchTerm.getSearchField()+i, formattedDates.get(i));
@@ -1740,7 +1796,7 @@ public class JobDao
 			    
 			}
 			
-//			log.debug(q);
+			log.debug(q);
 			
 			List<JobDTO> jobs = query
 					.setFirstResult(offset)

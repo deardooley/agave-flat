@@ -11,7 +11,8 @@ import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.notification.managers.NotificationManager;
-import org.iplantc.service.systems.exceptions.SystemUnavailableException;
+import org.iplantc.service.systems.dao.SystemDao;
+import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.model.ExecutionSystem;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -140,7 +141,12 @@ public class JobEventProcessor {
     	ExecutionSystem executionSystem = null;
         try 
     	{
-            executionSystem = JobManager.getJobExecutionSystem(getEvent().getJob());
+            executionSystem = (ExecutionSystem) new SystemDao().findActiveAndInactiveSystemBySystemId(getEvent().getJob().getSystem());
+            
+            if (executionSystem == null) {
+            	throw new SystemUnknownException("Job execution system "
+                        + getEvent().getJob().getSystem() + " is not currently available");
+            }
             
             jsonContent.set("job", jsonJob);
         	jsonContent.set("system", mapper.readTree(executionSystem.toJSON()));
@@ -157,12 +163,12 @@ public class JobEventProcessor {
         		jsonContent.remove("system");
         	}
         	
-        	jsonContent.put("job", jsonJob);
+        	jsonContent.set("job", jsonJob);
         	
     		NotificationManager.process(executionSystem.getUuid(), eventName, getEvent().getCreatedBy(), jsonContent.toString());
     		
         }
-        catch (SystemUnavailableException e) {
+        catch (SystemUnknownException e) {
             log.error("Unable to process " + eventName + " event for system " + getEvent().getJob().getSystem()
             		 + " by job " + getEvent().getJob().getUuid() + ". Unable to resolve system id", e);
         }
