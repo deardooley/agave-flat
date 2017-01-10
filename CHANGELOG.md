@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - JOBS: Improved formatting and documentation on preamble and post amble of job scripts.
 - JOBS: Added `lastUpdated` field in full job response.  
 - JOBS: Added search and sorting to job event service. 
+- TENANTS: AD-1029 Adding response filtering to customize the response objects.
+- USAGE: AD-1029 Adding response filtering to customize the response objects.
+- POSTITS: AD-1029 Adding response filtering to customize the response objects.
 
 ### Changed
 - JOBS: AH-165 Fixed a bug preventing startupScript from being sourced on connection to remote systems. Startup script is now sourced as the first command when remoting to any system. The path is an actual system path, so tilda and environment variables will work as expected. 
