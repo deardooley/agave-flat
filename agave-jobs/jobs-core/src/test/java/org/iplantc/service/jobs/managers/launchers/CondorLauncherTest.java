@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
  * {@link CondorLauncher} class.
  */
 @Test(groups={"job","launcher"})
-public class CONDORLauncherTest extends AbstractJobLauncherTest
+public class CondorLauncherTest extends AbstractJobLauncherTest
 {
 	@Override
 	protected SchedulerType getExectionSystemSchedulerType() {
