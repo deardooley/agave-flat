@@ -8,10 +8,13 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.exceptions.JobTerminationException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.enumerations.StartupScriptJobVariableType;
 import org.iplantc.service.remote.RemoteSubmissionClient;
 import org.iplantc.service.remote.exceptions.RemoteExecutionException;
+import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.enumerations.SchedulerType;
+import org.iplantc.service.systems.model.enumerations.StartupScriptSystemVariableType;
 
 /**
  * Handles actual mechanics of killing a job. Implementing classes
@@ -44,14 +47,22 @@ public abstract class AbstractJobKiller implements JobKiller {
 		{
 			remoteSubmissionClient = getExecutionSystem().getRemoteSubmissionClient(getJob().getInternalUsername());
 			
-			String cmd = getCommand();
-			String result = remoteSubmissionClient.runCommand(cmd);
+			// Resolve the startupScript and generate the command to run it and log the response to the
+			// "/.agave.log" file
+			String startupScriptCommand = getStartupScriptCommand();
+			
+			// get the command to kill the remote job process
+			String remoteJobKillCommand = getCommand();
+			
+			// run the aggregate command on the remote system
+			String result = remoteSubmissionClient.runCommand(
+					startupScriptCommand + " ; " + remoteJobKillCommand);
 			
 			// if the response was empty, the job could be done, but the scheduler could only 
 			// recognize numeric job ids. Let's try again with just the numeric part
-			if (StringUtils.isEmpty(result)) {
+			if (StringUtils.isBlank(result)) {
 				String altCommand = getAltCommand();
-				if (StringUtils.isEmpty(altCommand)) {
+				if (StringUtils.isBlank(altCommand)) {
 					log.debug("Empty response found when checking remote execution system of agave job " 
 							+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
 							+ ". No numeric job id found in the batch job id for remtoe system. "
@@ -61,7 +72,7 @@ public abstract class AbstractJobKiller implements JobKiller {
 					log.debug("Empty response found when checking remote execution system of agave job " 
 							+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
 							+ ". Attempting to recheck with just the numeric job id " + job.getNumericLocalJobId());
-					result = remoteSubmissionClient.runCommand(altCommand);
+					result = remoteSubmissionClient.runCommand(startupScriptCommand + " ; " + altCommand);
 				}
 			}
 			
@@ -89,6 +100,51 @@ public abstract class AbstractJobKiller implements JobKiller {
 		finally {
 		    try { remoteSubmissionClient.close(); } catch (Throwable e) {}
 		}
+	}
+	
+	/**
+     * @param startupScript
+     * @return
+     * @throws SystemUnavailableException
+     */
+    public String resolveStartupScriptMacros(String startupScript) 
+	throws SystemUnavailableException 
+	{
+		if (StringUtils.isBlank(startupScript)) {
+			return null;
+		}
+		else {
+			String resolvedStartupScript = startupScript;
+			for (StartupScriptSystemVariableType macro: StartupScriptSystemVariableType.values()) {
+				resolvedStartupScript = StringUtils.replace(resolvedStartupScript, "${" + macro.name() + "}", macro.resolveForSystem(getExecutionSystem()));
+			}
+			
+			for (StartupScriptJobVariableType macro: StartupScriptJobVariableType.values()) {
+				resolvedStartupScript = StringUtils.replace(resolvedStartupScript, "${" + macro.name() + "}", macro.resolveForJob(getJob()));
+			}
+			
+			return resolvedStartupScript;
+		}
+	}
+	
+	/**
+	 * @return
+	 * @throws SystemUnavailableException
+	 */
+	public String getStartupScriptCommand() throws SystemUnavailableException {
+		String startupScriptCommand = "";
+		if (!StringUtils.isEmpty(getExecutionSystem().getStartupScript())) {
+			String resolvedstartupScript = resolveStartupScriptMacros(getExecutionSystem().getStartupScript());
+			
+			if (resolvedstartupScript != null) {
+//				startupScriptCommand = String.format("echo $(source %s 2>&1) >> %s/.agave.log ; ",
+//					resolvedstartupScript,
+//					remoteDataClient.resolvePath(job.getWorkPath()));
+				startupScriptCommand = String.format("echo $(source %s 2>&1) >> /dev/null ; ",
+						resolvedstartupScript);
+			}
+		}
+		return startupScriptCommand;
 	}
 	
 	/**

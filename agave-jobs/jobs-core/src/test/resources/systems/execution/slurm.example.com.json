@@ -5,7 +5,7 @@
 	"type": "EXECUTION",
 	"description": "My example system used for testing",
 	"site": "my.site",
-	"executionType": "CLI",
+	"executionType": "HPC",
 	"default": true,
 	"queues": [
 		{

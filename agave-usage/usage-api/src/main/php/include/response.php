@@ -37,7 +37,9 @@ function format_response($status='success', $message='', $result='', $http_respo
 
 	if (is_array($content))
 	{
-		if (isset($_GET['pretty']) && strtolower($_GET['pretty']) == 'true') {
+		$content = apply_request_response_filter($content, $_GET['filter']);
+    
+    if (isset($_GET['pretty']) && strtolower($_GET['pretty']) == 'true') {
 			//echo str_replace('\/', '/', json_encode($content, JSON_PRETTY_PRINT));
 			echo prettyPrint(str_replace('\/', '/', json_encode($content)));
 		} else {
@@ -52,6 +54,60 @@ function format_response($status='success', $message='', $result='', $http_respo
 	die();
 }
 
+/**
+ * Filters the api response with the fields listed in $filter. If
+ * $filter is empty or '*', the raw response is returned. Unmatched
+ * fields are ignored.
+ *
+ * @param array $item
+ * @param string $filter
+ * @return array filtered array or the original if $filter is a '*'
+ */
+function apply_request_response_filter($content, $filter='') {
+    if (empty($filter) || $filter == "*") {
+        return $content;
+    }
+    else if (empty($content)) {
+        return $content;
+    }
+    // test for an wrapped response object
+    else if (array_key_exists("result", $content)) {
+        $content['result'] = apply_request_response_filter($content['result'], $filter);
+        return $content;
+    }
+    // test for an object
+    else if (array_key_exists("id", $content)) {
+        return filter_response_item($content, $filter);
+    }
+    // multidimensional array
+    else {
+
+        $filtered_content = array();
+        foreach ($content as $item) {
+            $filtered_content[] = filter_response_item($item, $filter);
+        }
+
+        return $filtered_content;
+    }
+}
+
+/**
+ * Filters an single response item with the comma-separated list of
+ * $filter values.
+ * @param array $item
+ * @param string $filter
+ * @return array filtered array or the original if $filter is a '*'
+ */
+function filter_response_item($item, $filter='') {
+    $fields = explode(',',$filter);
+    $filtered_content = array();
+    foreach($fields as $field) {
+        if (array_key_exists($field, $item)) {
+            $filtered_content[$field] = $item[$field];
+        }
+    }
+    return $filtered_content;
+}
 /**
  * Indents a flat JSON string to make it more human-readable.
  *

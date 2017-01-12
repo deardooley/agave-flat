@@ -19,7 +19,7 @@ public enum SchedulerType
 		{
 			case LSF:
 			case CUSTOM_LSF:
-				return "bsub -pack ";
+				return "bsub < ";
 			case LOADLEVELER:
 			case CUSTOM_LOADLEVELER:
 				return "llsub";

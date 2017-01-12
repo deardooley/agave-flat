@@ -1,0 +1,67 @@
+{
+  "name": "loadleveler-fork",
+  "version": "1.0.0",
+  "helpURI": "http://support.agaveapi.co",
+  "label": "Remote command execution script",
+  "defaultNodeCount": 1,
+  "defaultRequestedTime": "00:10:00",
+  "shortDescription": "Simple app for running a user-defined command on a remote loadleveler system",
+  "longDescription": "Simple app for running a user-defined command on a remote loadleveler system. No sanitization is done on the command choice.",
+  "executionSystem": "loadleveler.example.com",
+  "executionType": "HPC",
+  "parallelism": "SERIAL",
+  "deploymentPath": "testuser/agave/apps/fork-1.0.0",
+  "deploymentSystem": "storage.example.com",
+  "templatePath": "wrapper.sh",
+  "testPath": "test/test.sh",
+  "tags": [
+    "demo","debug"
+  ],
+  "modules": [],
+  "inputs": [
+  	{
+		"details": {
+			"description": "Select an input file", 
+			"label": "Target File", 
+			"visible": true
+		}, 
+		"id": "inputfile", 
+		"semantics": {
+			"fileTypes": [
+				"TEXT-0"
+			], 
+			"minCardinality": 0, 
+			"ontology": [
+				"0"
+			]
+		}, 
+		"value": {
+			"default": "agave://storage.example.com/testuser/agave/apps/fork-1.0.0/test/test.sh", 
+			"required": false, 
+			"validator": "", 
+			"visible": true
+		}
+	}
+  ],
+  "parameters": [
+    {
+      "id": "command",
+      "details": {
+        "label": "Command to run",
+        "description": "This is the actual command you want to run. ex. df -h -d 1",
+        "argument": null,
+        "showArgument": false
+      },
+      "value": {
+        "default": "whoami && date && hostname",
+        "type": "string",
+        "required": true,
+        "visible": true
+      },
+      "semantics": {
+        "ontology": []
+      }
+    }
+  ],
+  "checkpointable": false
+}

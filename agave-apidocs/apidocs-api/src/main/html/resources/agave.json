@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "2.1.5",
+    "version": "2.1.10",
     "title": "Agave Platform Science API",
     "description": "Power your digital lab and reduce the time from theory to discovery using the Agave Science-as-a-Service API Platform. Agave provides hosted services that allow researchers to manage data, conduct experiments, and publish and share results from anywhere at any time.",
     "license": {
@@ -7339,6 +7339,136 @@
               "type": "array",
               "items": {
                 "$ref": "#/definitions/Transform"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth": ["PRODUCTION"]
+          }
+        ]
+      }
+    },
+    "/uuids/v2/": {
+      "get": {
+        "description": "Resolve one or more UUID to their resource URL and type",
+        "tags": [
+          "uuids"
+        ],
+        "operationId": "resolveUuids",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "uuids",
+            "in": "query",
+            "required": false,
+            "x-is-map": false,
+            "type": "string",
+            "description": "A comma-separated list of UUID to resolve"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "x-is-map": false,
+            "default": 100.0,
+            "type": "integer",
+            "format": "int64",
+            "description": "The maximum number of results returned from this query"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "x-is-map": false,
+            "default": 0.0,
+            "type": "integer",
+            "format": "int64",
+            "description": "The number of results skipped in the result set returned from this query"
+          },
+          {
+            "name": "naked",
+            "in": "query",
+            "required": true,
+            "x-is-map": false,
+            "default": true,
+            "type": "boolean"
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "x-is-map": false,
+            "default": false,
+            "type": "boolean",
+            "description": "If true, the summary object will be expanded to the full resource representation."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/UUIDSummary"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth": ["PRODUCTION"]
+          }
+        ]
+      }
+    },
+    "/uuids/v2/{uuid}": {
+      "get": {
+        "description": "Resolve one or more UUID to their resource URL and type",
+        "tags": [
+          "uuids"
+        ],
+        "operationId": "resolveUuid",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "x-is-map": false,
+            "type": "string",
+            "description": "A valid Agave UUID to resolve"
+          },
+          {
+            "name": "naked",
+            "in": "query",
+            "required": false,
+            "x-is-map": false,
+            "default": true,
+            "type": "boolean"
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "x-is-map": false,
+            "default": false,
+            "type": "boolean",
+            "description": "If true, the summary object will be expanded to the full resource representation."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/UUIDSummary"
               }
             }
           }

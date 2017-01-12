@@ -74,7 +74,7 @@ public class AbstractJobSubmissionTest {
 	public static String CREDENTIALS_TEMPLATE_DIR = "target/test-classes/credentials";
 	public static String TEST_DATA_DIR = "target/test-classes/transfer";
 	public static String TEST_INPUT_FILE = TEST_DATA_DIR + "/test_upload.txt";
-	public static String SOFTWARE_WRAPPER_FILE = SOFTWARE_SYSTEM_TEMPLATE_DIR + "/wrapper.sh";
+	public static String SOFTWARE_WRAPPER_FILE = SOFTWARE_SYSTEM_TEMPLATE_DIR + "/fork-1.0.0/wrapper.sh";
 	
 	public static final String SYSTEM_OWNER = "testuser";
 	public static final String SYSTEM_OWNER_SHARED = "testshareuser";
@@ -91,7 +91,7 @@ public class AbstractJobSubmissionTest {
 	 * Initalizes the test db and adds the test app 
 	 */
 	@BeforeClass
-	public void beforeClass() throws Exception {
+	protected void beforeClass() throws Exception {
 	    
 		clearData();
         clearJobs();
@@ -105,7 +105,7 @@ public class AbstractJobSubmissionTest {
 	}
 	
 	@AfterClass
-    public void afterClass() throws Exception
+	protected void afterClass() throws Exception
     {
         clearData();
         clearJobs();
@@ -868,6 +868,66 @@ public class AbstractJobSubmissionTest {
 		
         System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + actuallyThrewException);
 		Assert.assertTrue(actuallyThrewException == shouldThrowException, exceptionMsg);
+		
+	}
+	
+	/**
+     * Generic submission test used by all the methods testing job launching in some form or fashion.
+     * 
+     * @param job
+     * @param queuedOrRunning
+     * @param message
+     * @param shouldThrowException
+     */
+	protected Job genericRemoteSubmissionTestCase(Job job, boolean queuedOrRunning, String message, boolean shouldThrowException) 
+	{
+		boolean actuallyThrewException = false;
+		String exceptionMsg = message;
+		
+		IPhaseWorker worker = Mockito.mock(IPhaseWorker.class);
+		SubmissionAction submissionAction = new SubmissionAction(job, worker);
+		
+		try
+        {
+//		    job.setArchivePath(job.getOwner() + "/archive/jobs/job-" + job.getUuid() + "-" + Slug.toSlug(job.getName()));
+//		    
+//			JobDao.persist(job);
+//			
+			submissionAction.run();
+            
+            job = submissionAction.getJob();
+			
+            Assert.assertEquals(job.getStatus() == JobStatusType.RUNNING || 
+        			job.getStatus() == JobStatusType.QUEUED, queuedOrRunning, 
+                    "Job status did not match queued or running after submission");
+            if (queuedOrRunning) {
+            	Assert.assertNotNull(submissionAction.getJob().getLocalJobId(),
+                        "Local job id was not obtained during submission");
+                Assert.assertTrue(job.getRetries() == 0,
+                        "Job should only submit once when it does not fail during submission");
+                Assert.assertNotNull(job.getSubmitTime(),
+                    "Job submit time was not updated during job submission");
+            } else {
+                Assert.assertNull(job.getLocalJobId(),
+                        "Local job id should be null if submission fails");
+                Assert.assertNull(job.getSubmitTime(),
+                    "Job submit time should not be updated if the job did not submit.");
+            }
+        }
+        catch (Exception e)
+		{
+			actuallyThrewException = true;
+            exceptionMsg = "Error placing job into queue on " + job.getSystem() + ": " + message;
+            if (actuallyThrewException != shouldThrowException) e.printStackTrace();
+		}
+		finally {
+		    job = submissionAction.getJob();
+		}
+		
+        System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + actuallyThrewException);
+		Assert.assertTrue(actuallyThrewException == shouldThrowException, exceptionMsg);
+		
+		return job;
 		
 	}
 	

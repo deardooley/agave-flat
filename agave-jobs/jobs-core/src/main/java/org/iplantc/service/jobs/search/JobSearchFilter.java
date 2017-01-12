@@ -164,7 +164,12 @@ public class JobSearchFilter extends AgaveResourceSearchFilter
             return BooleanUtils.toBoolean(searchValue);
         } else if (searchTermType == JobStatusType.class) {
             try {
-                return JobStatusType.valueOf(StringUtils.upperCase(searchValue));
+            	if (StringUtils.contains(searchValue, "*")) {
+            		return searchValue;
+            	}
+            	else {
+            		return JobStatusType.valueOf(StringUtils.upperCase(searchValue)).name();
+            	}
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Unknown job status " + searchValue);
             }

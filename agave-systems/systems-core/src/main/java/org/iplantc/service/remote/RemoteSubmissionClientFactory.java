@@ -1,7 +1,6 @@
 package org.iplantc.service.remote;
 
 import org.ietf.jgss.GSSCredential;
-import org.iplantc.service.remote.api.APISubmissionClient;
 import org.iplantc.service.remote.gsissh.GSISSHClient;
 import org.iplantc.service.remote.local.LocalSubmissionClient;
 import org.iplantc.service.remote.ssh.MaverickSSHSubmissionClient;
@@ -52,8 +51,8 @@ public class RemoteSubmissionClientFactory {
 					return new MaverickSSHSubmissionClient(host, 
 							port, username, password, proxyHost, proxyPort);
 				}
-			case API: 
-				return new APISubmissionClient(host, port, username, password);
+//			case API: 
+//				return new APISubmissionClient(host, port, username, password);
 //			case GRAM:
 //				//GSSCredential credential = (GSSCredential)userAuthConfig.retrieveCredential();
 //				//return new GRAMSubmissionClient(host, port, credential);

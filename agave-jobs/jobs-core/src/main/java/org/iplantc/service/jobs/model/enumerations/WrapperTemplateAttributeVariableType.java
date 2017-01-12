@@ -20,7 +20,6 @@ import org.joda.time.DateTime;
 
 public enum WrapperTemplateAttributeVariableType implements WrapperTemplateVariableType
 {
-
 	// job value macros
 	IPLANT_JOB_NAME,
 	AGAVE_JOB_NAME,

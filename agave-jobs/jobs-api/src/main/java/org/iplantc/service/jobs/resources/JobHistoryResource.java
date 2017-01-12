@@ -5,17 +5,23 @@ package org.iplantc.service.jobs.resources;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
+import org.iplantc.service.common.resource.SearchableAgaveResource;
+import org.iplantc.service.common.search.AgaveResourceResultOrdering;
+import org.iplantc.service.common.search.AgaveResourceSearchFilter;
+import org.iplantc.service.common.search.SearchTerm;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobEventDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.managers.JobPermissionManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
+import org.iplantc.service.jobs.search.JobEventSearchFilter;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.TransferException;
 import org.iplantc.service.transfer.model.TransferSummary;
@@ -34,14 +40,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- * The JobManageResource is the job management interface for users. Through the
- * actions bound to this class, users can obtain individual job
- * description(GET) and kill jobs (DELETE).
+ * Handles search and listings for {@link JobEvent} resources.
  * 
  * @author dooley
  * 
  */
-public class JobHistoryResource extends AbstractJobResource 
+public class JobHistoryResource extends SearchableAgaveResource<JobEventSearchFilter>
 {
 	private String				sJobId;
 	private Job					job;
@@ -55,8 +59,6 @@ public class JobHistoryResource extends AbstractJobResource
 	{
 		super(context, request, response);
 
-		this.username = getAuthenticatedUsername();
-		
 		this.sJobId = (String) request.getAttributes().get("jobid");
 		
 		getVariants().add(new Variant(MediaType.APPLICATION_JSON));
@@ -72,7 +74,7 @@ public class JobHistoryResource extends AbstractJobResource
 
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 
 				AgaveLogServiceClient.ActivityKeys.JobsGetHistory.name(), 
-				username, "", getRequest().getClientInfo().getUpstreamAddress());
+				getAuthenticatedUsername(), "", getRequest().getClientInfo().getUpstreamAddress());
 		
 		if (!ServiceUtils.isValid(sJobId))
 		{
@@ -87,12 +89,20 @@ public class JobHistoryResource extends AbstractJobResource
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, 
 						"No job found with job id " + sJobId);
 			}
-			else if (new JobPermissionManager(job, username).canRead(username))
+			else if (new JobPermissionManager(job, getAuthenticatedUsername()).canRead(getAuthenticatedUsername()))
 			{
 				ObjectMapper mapper = new ObjectMapper();
 				ArrayNode history = mapper.createArrayNode();
 				
-				List<JobEvent> events = JobEventDao.getByJobId(job.getId(), limit, offset);
+				Map<SearchTerm, Object> queryParameters = getQueryParameters();
+
+				List<JobEvent> events = null;
+				if (queryParameters.isEmpty()) {
+					events = JobEventDao.getByJobId(job.getId(), limit, offset, getSortOrder(AgaveResourceResultOrdering.ASC), getSortOrderSearchTerm());
+				}
+				else {
+					events = JobEventDao.findMatching(job.getId(), queryParameters, offset, limit, getSortOrder(AgaveResourceResultOrdering.ASC), getSortOrderSearchTerm());
+				}
 				
 				for(JobEvent event: events)
 				{
@@ -170,4 +180,9 @@ public class JobHistoryResource extends AbstractJobResource
 	@Override public boolean allowGet() { return true; }
 	@Override public boolean allowPut() { return false; }
 	@Override public boolean allowPost() { return false; }
+
+	@Override
+	public JobEventSearchFilter getAgaveResourceSearchFilter() {
+		return new JobEventSearchFilter();
+	}
 }

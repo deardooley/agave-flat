@@ -84,13 +84,15 @@ public class HPCMonitor extends AbstractJobMonitor {
 				    jobUpdateParms.setStatusChecks(job.getStatusChecks());
 				    JobManager.updateStatus(job, job.getStatus(), job.getErrorMessage(), jobUpdateParms);
 		        	
-					ExecutionSystem system = JobManager.getJobExecutionSystem(job);
+					ExecutionSystem system = getExecutionSystem();
 					
 					checkStopped();
                     
                     remoteSubmissionClient = getRemoteSubmissionClient();
+                    
+                    String startupScriptCommand = getStartupScriptCommand();
 					
-					String queryCommand = system.getScheduler().getBatchQueryCommand() + " " + job.getLocalJobId();
+					String queryCommand = startupScriptCommand + system.getScheduler().getBatchQueryCommand() + " " + job.getLocalJobId();
 					
 					String result = null;
 					try

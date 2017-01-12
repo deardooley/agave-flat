@@ -26,10 +26,7 @@
     "templatePath":"/wrapper.sh",
     "testPath":"library/test.sh",
     "checkpointable": true,
-    "modules":[
-        "purge",
-        "load TACC"
-    ],
+    "modules":[],
     "inputs":[
         {
             "id":"query1",

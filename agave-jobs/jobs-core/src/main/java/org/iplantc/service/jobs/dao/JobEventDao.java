@@ -4,17 +4,25 @@
 package org.iplantc.service.jobs.dao;
 
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.hibernate.CacheMode;
 import org.hibernate.HibernateException;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.common.search.AgaveResourceResultOrdering;
+import org.iplantc.service.common.search.SearchTerm;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.search.JobEventSearchFilter;
+import org.iplantc.service.jobs.search.JobSearchFilter;
 
 /**
  * Model class for interacting with job events. JobEvents are
@@ -93,7 +101,29 @@ public class JobEventDao {
 	public static List<JobEvent> getByJobId(Long jobId, int limit, int offset)
 	throws JobException
 	{
-
+		return getByJobId(jobId, limit, offset, null, null);
+	}
+	
+	/**
+	 * @param jobId
+	 * @param limit
+	 * @param offset
+	 * @return
+	 * @throws JobException
+	 */
+	@SuppressWarnings("unchecked")
+	public static List<JobEvent> getByJobId(Long jobId, int limit, int offset, AgaveResourceResultOrdering order, SearchTerm orderBy)
+	throws JobException
+	{
+		if (order == null) {
+			order = AgaveResourceResultOrdering.ASCENDING;
+		}
+		
+		if (orderBy == null) {
+			orderBy = new JobEventSearchFilter().filterAttributeName("id");
+		}
+		
+	
 		if (!ServiceUtils.isValid(jobId))
 			throw new JobException("Job id cannot be null");
 
@@ -101,7 +131,9 @@ public class JobEventDao {
 		{
 			Session session = getSession();
 			
-			String hql = "from JobEvent e where e.job.id = :jobid order by e.id asc";
+			String hql = "FROM JobEvent e \n"
+					+ "WHERE e.job.id = :jobid \n"
+					+ "ORDER BY " + String.format(orderBy.getMappedField(), orderBy.getPrefix()) + " " +  order.toString() + " \n";
 			List<JobEvent> events = session.createQuery(hql)
 					.setLong("jobid", jobId)
 					.setFirstResult(offset)
@@ -271,5 +303,110 @@ public class JobEventDao {
 			try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
 		}
 	}
+	
+	/**
+	 * Searches for {@link JobEvent} by the given user who matches the given set of 
+	 * parameters. Permissions are honored in this query.
+	 *
+	 * @param jobid
+	 * @param searchCriteria
+	 * @param offset
+	 * @param limit
+	 * @return
+	 * @throws JobException
+	 */
+	@SuppressWarnings("unchecked")
+	public static List<JobEvent> findMatching(Long jobId,
+			Map<SearchTerm, Object> searchCriteria,
+			int offset, int limit, AgaveResourceResultOrdering order, SearchTerm orderBy) throws JobException
+	{
+		if (order == null) {
+			order = AgaveResourceResultOrdering.ASCENDING;
+		}
+		
+		if (orderBy == null) {
+			orderBy = new JobSearchFilter().filterAttributeName("lastupdated");
+		}
+		
+		try
+		{
+			Session session = getSession();
+			session.clear();
+			String hql = "FROM JobEvent e \n" +
+					" WHERE e.job.id = :jobid \n" +
+					"        e.tenant_id = :tenantid \n "; 
+			
+			for (SearchTerm searchTerm: searchCriteria.keySet()) 
+			{
+				hql += "\n       AND       " + searchTerm.getExpression();
+			}
+			
+			if (!hql.contains("e.visible")) {
+				hql +=  "\n       AND e.visible = :visiblebydefault ";
+			}
+			
+			hql +=	"\n ORDER BY " + String.format(orderBy.getMappedField(), orderBy.getPrefix()) + " " +  order.toString() + " \n";
+			
+			String q = hql;
+			//log.debug(q);
+			Query query = session.createQuery(hql)
+					.setLong("jobid", jobId)
+					.setString("tenantid", TenancyHelper.getCurrentTenantId());
+			
+			q = StringUtils.replace(q, ":jobid", String.valueOf(jobId));
+			q = StringUtils.replace(q, ":tenantid", "'" + TenancyHelper.getCurrentTenantId() + "'");
+			
+			if (hql.contains(":visiblebydefault") ) {
+				query.setBoolean("visiblebydefault", Boolean.TRUE);
+				
+				q = StringUtils.replace(q, ":visiblebydefault", "1");
+			}
+			
+		 	for (SearchTerm searchTerm: searchCriteria.keySet()) 
+			{
+			    if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN) {
+			        List<String> formattedDates = (List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm));
+			        for(int i=0;i<formattedDates.size(); i++) {
+			            query.setString(searchTerm.getSearchField()+i, formattedDates.get(i));
+			            q = StringUtils.replace(q, ":" + searchTerm.getSearchField() + i, "'" + formattedDates.get(i) + "'");
+			        }
+			    }
+			    else if (searchTerm.getOperator().isSetOperator()) 
+				{
+					query.setParameterList(searchTerm.getSearchField(), (List<Object>)searchCriteria.get(searchTerm));
+					q = StringUtils.replace(q, ":" + searchTerm.getSearchField(), "('" + StringUtils.join((List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm)), "','") + "')" );
+				}
+				else 
+				{
+					query.setParameter(searchTerm.getSearchField(), 
+							searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm)));
+					q = StringUtils.replace(q, ":" + searchTerm.getSearchField(), "'" + String.valueOf(searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm))) + "'");
+				}
+			    
+			}
+			
+//			log.debug(q);
+			
+			List<JobEvent> events = query
+					.setFirstResult(offset)
+					.setMaxResults(limit)
+					.setCacheable(false)
+					.setCacheMode(CacheMode.IGNORE)
+					.list();
+
+			session.flush();
+			
+			return events;
+
+		}
+		catch (Throwable ex)
+		{
+			throw new JobException(ex);
+		}
+		finally {
+			try { HibernateUtil.commitTransaction();} catch (Exception e) {}
+		}
+	}
 
 }
+

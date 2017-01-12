@@ -1,6 +1,31 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+
+## 2.1.10 - 2017-01-10
+
+### Added
+- JOBS: Added logging of the startupScript to the job’s `.agave.log` file on job execution and termination. Monitoring does not log the output as it could potentially explode the log file size for long-running jobs. 
+- JOBS: Added support for system and job macros to be included in the `startupScript` system parameter and resolved at runtime.  
+- JOBS: AD-1028 Added support for sorting responses from the Jobs API. Add `order` and `orderBy` url query parameters to customize the behavior. `order` can be ASC or DESC. `orderBy` can be any valid job search field.
+- JOBS: Improved formatting and documentation on preamble and post amble of job scripts.
+- JOBS: Added `lastUpdated` field in full job response.  
+- JOBS: Added search and sorting to job event service. 
+- TENANTS: AD-1029 Adding response filtering to customize the response objects.
+- USAGE: AD-1029 Adding response filtering to customize the response objects.
+- POSTITS: AD-1029 Adding response filtering to customize the response objects.
+
+### Changed
+- JOBS: AH-165 Fixed a bug preventing startupScript from being sourced on connection to remote systems. Startup script is now sourced as the first command when remoting to any system. The path is an actual system path, so tilda and environment variables will work as expected. 
+- JOBS: Fixed a bug launching jobs on LSF and parsing potentially different scheduler responses.  
+- JOBS: Fixed a bug launching jobs on PBS/MOAB/TORQUE and parsing potentially different scheduler responses.  
+- JOBS: Fixed use of magnitude abbreviations (GB, TB, etc) in condor submit scripts. 
+- JOBS: Fixed search by job statuses.  
+
+### Removed
+- SYSTEMS: support for `GRAM` and `API` login protocols.  
+
+
 ## 2.1.9 - 2016-11-21
 
 ### Added

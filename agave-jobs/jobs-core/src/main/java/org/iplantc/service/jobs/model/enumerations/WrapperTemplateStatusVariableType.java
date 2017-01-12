@@ -47,7 +47,7 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
 				return WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, null);
 			}
 			else {
-				return String.format("curl -sSk \"%strigger/job/%s/token/%s/status/%s?pretty=true&filter=id,status\" >> \"$AGAVE_LOG_FILE\"  2>&1 \n\n\n",
+				return String.format("agave_log_response $(curl -sSk \"%strigger/job/%s/token/%s/status/%s?filter=id,status\" 2>&1) \n\n\n",
 						TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, job.getTenantId()),
 						job.getUuid(),
 						job.getUpdateToken(),
@@ -105,7 +105,7 @@ public enum WrapperTemplateStatusVariableType implements WrapperTemplateVariable
             
             sb.append("echo -e \"}\" >> \"$AGAVE_CALLBACK_FILE\"\n\n");
             String callbackUrl = TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_JOB_SERVICE, job.getTenantId());
-            sb.append(String.format("cat \"$AGAVE_CALLBACK_FILE\" | sed  -e \"s#: \\\"''\\\"#: \\\"\\\"#g\" | curl -sS%s -H \"Content-Type: application/json\" -X POST --data-binary @- \"%strigger/job/%s/token/%s/status/HEARTBEAT?pretty=true\" >> \"$AGAVE_LOG_FILE\" 2>&1 \n\n\n",
+            sb.append(String.format("agave_log_response $(cat \"$AGAVE_CALLBACK_FILE\" | sed  -e \"s#: \\\"''\\\"#: \\\"\\\"#g\" | curl -sS%s -H \"Content-Type: application/json\" -X POST --data-binary @- \"%strigger/job/%s/token/%s/status/HEARTBEAT?pretty=true\" 2>&1) \n\n\n",
             		callbackUrl.startsWith("https") ? "k" : "",
             		callbackUrl,
                     job.getUuid(),

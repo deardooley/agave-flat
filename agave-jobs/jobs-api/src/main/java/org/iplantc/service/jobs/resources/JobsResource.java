@@ -3,16 +3,22 @@
  */
 package org.iplantc.service.jobs.resources;
 
+import static org.iplantc.service.common.search.AgaveResourceResultOrdering.ASCENDING;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
+import org.iplantc.service.common.resource.SearchableAgaveResource;
+import org.iplantc.service.common.search.AgaveResourceSearchFilter;
+import org.iplantc.service.common.search.AgaveResourceResultOrdering;
 import org.iplantc.service.common.search.SearchTerm;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
@@ -46,7 +52,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  * @author dooley
  *
  */
-public class JobsResource extends AbstractJobResource {
+public class JobsResource extends SearchableAgaveResource<JobSearchFilter> {
 	private static final Logger	log	= Logger.getLogger(JobsResource.class);
 
 	private String internalUsername;
@@ -59,8 +65,6 @@ public class JobsResource extends AbstractJobResource {
 	public JobsResource(Context context, Request request, Response response)
 	{
 		super(context, request, response);
-
-		this.username = getAuthenticatedUsername();
 
 		internalUsername = (String) context.getAttributes().get("internalUsername");
 
@@ -78,14 +82,14 @@ public class JobsResource extends AbstractJobResource {
 	{
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(),
 				AgaveLogServiceClient.ActivityKeys.JobsList.name(),
-				username, "", getRequest().getClientInfo().getUpstreamAddress());
+				getAuthenticatedUsername(), "", getRequest().getClientInfo().getUpstreamAddress());
 
 		try
 		{
 			Map<SearchTerm, Object> queryParameters = getQueryParameters();
 
 			if (queryParameters.isEmpty()) {
-				List<Job> jobs = JobDao.getByUsername(username, offset, limit);
+				List<Job> jobs = JobDao.getByUsername(getAuthenticatedUsername(), offset, limit, getSortOrder(AgaveResourceResultOrdering.DESC), getSortOrderSearchTerm());
 				if (hasJsonPathFilters()) {
 					ObjectMapper mapper = new ObjectMapper();
 					ArrayNode json = mapper.createArrayNode();
@@ -131,7 +135,7 @@ public class JobsResource extends AbstractJobResource {
 				}
 			} 
 			else {
-				List<JobDTO> jobs = JobDao.findMatching(username, queryParameters, offset, limit);
+				List<JobDTO> jobs = JobDao.findMatching(getAuthenticatedUsername(), queryParameters, offset, limit, getSortOrder(AgaveResourceResultOrdering.DESC), getSortOrderSearchTerm());
 				ObjectMapper mapper = new ObjectMapper();
 				if (hasJsonPathFilters()) {
 //					return new IplantSuccessRepresentation(mapper.valueToTree(jobs));
@@ -200,13 +204,13 @@ public class JobsResource extends AbstractJobResource {
 	{
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(),
 				AgaveLogServiceClient.ActivityKeys.JobsSubmit.name(),
-				username, "", getRequest().getClientInfo().getUpstreamAddress());
+				getAuthenticatedUsername(), "", getRequest().getClientInfo().getUpstreamAddress());
 
 		try
 		{
 			JsonNode json = super.getPostedEntityAsObjectNode(true);
 //			Job job = JobManager.processJob(json, username, internalUsername);
-			JobRequestProcessor processor = new JobRequestProcessor(username, internalUsername);
+			JobRequestProcessor processor = new JobRequestProcessor(getAuthenticatedUsername(), internalUsername);
 			Job job = processor.processJob(json);
 			
 			// append any bundled notifications to the hypermedia response 
@@ -225,13 +229,13 @@ public class JobsResource extends AbstractJobResource {
 			getResponse().setEntity(
 					new IplantErrorRepresentation(e.getMessage()));
 			getResponse().setStatus(e.getStatus());
-			log.error("Job submission failed for user " + username, e);
+			log.error("Job submission failed for user " + getAuthenticatedUsername(), e);
 		}
 		catch (Exception e) {
 			getResponse().setEntity(
 					new IplantErrorRepresentation("Failed to submit job: " + e.getMessage()));
 			getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
-			log.error("Job submission failed for user " + username, e);
+			log.error("Job submission failed for user " + getAuthenticatedUsername(), e);
 		}
 	}
 
@@ -259,19 +263,8 @@ public class JobsResource extends AbstractJobResource {
 		return false;
 	}
 
-	/**
-	 * Parses url query looking for a search string
-	 * @return
-	 */
-	private Map<SearchTerm, Object> getQueryParameters()
-	{
-		Form form = getRequest().getOriginalRef().getQueryAsForm();
-		if (form != null && !form.isEmpty()) {
-			return new JobSearchFilter().filterCriteria(form.getValuesMap());
-		} else {
-			return new HashMap<SearchTerm, Object>();
-		}
+	@Override
+	public JobSearchFilter getAgaveResourceSearchFilter() {
+		return new JobSearchFilter();
 	}
-
-
 }

@@ -4,10 +4,10 @@
 	<parent>
 		<groupId>org.iplantc.agave</groupId>
 		<artifactId>jobs</artifactId>
-		<version>2.1.9</version>
+		<version>2.1.10</version>
 	</parent>
 	<artifactId>jobs-core</artifactId>
-	<name>iPlant Agave API Jobs Service Core</name>
+	<name>Agave Platform Jobs Service Core</name>
 	<description>Core packages for the Jobs service</description>
 
 	<scm>

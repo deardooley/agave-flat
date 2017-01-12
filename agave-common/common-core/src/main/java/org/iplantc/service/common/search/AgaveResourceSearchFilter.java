@@ -15,8 +15,8 @@ import org.iplantc.service.common.util.StringToTime;
 import org.joda.time.DateTime;
 
 public abstract class AgaveResourceSearchFilter {
-
-    protected static HashMap<String, String> searchTermMappings = new HashMap<String,String>();
+	
+	protected static HashMap<String, String> searchTermMappings = new HashMap<String,String>();
     @SuppressWarnings("rawtypes")
     protected static HashMap<String, Class> searchTypeMappings = new HashMap<String,Class>();
 

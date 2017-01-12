@@ -88,7 +88,9 @@ public class ProcessMonitor extends AbstractJobMonitor
 					
 					remoteSubmissionClient = system.getRemoteSubmissionClient(job.getInternalUsername());
 					
-					String queryCommand = system.getScheduler().getBatchQueryCommand() + " " + job.getLocalJobId() ;
+					String startupScriptCommand = getStartupScriptCommand();
+        			
+					String queryCommand = startupScriptCommand + system.getScheduler().getBatchQueryCommand() + " " + job.getLocalJobId() ;
 					
 					String result = null;
 					try 
@@ -168,6 +170,8 @@ public class ProcessMonitor extends AbstractJobMonitor
 			try { remoteSubmissionClient.close(); } catch (Exception e) {}
 		}
 	}
+
+	
 
 	/**
 	 * @throws JobException

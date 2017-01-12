@@ -87,7 +87,7 @@ public class CondorSubmitScript extends AbstractSubmitScript {
 	        sb.append("on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n\n");
 	        
 	        sb.append("request_cpus = " + job.getProcessorsPerNode() + "\n");
-	        sb.append("request_memory = " + job.getMemoryPerNode() + "G\n\n");
+	        sb.append("request_memory = " + job.getMemoryPerNode() * 1024 + "\n\n");
 	        
 	        sb.append("executable   = " + executable + "\n");
 	        sb.append("input        = " + transferInputFiles + "\n");
@@ -315,23 +315,7 @@ public class CondorSubmitScript extends AbstractSubmitScript {
     public void setUniverse(CondorUniverse universe) {
     	this.universe = universe;
     }
-
-//    public String getErrorFilename() {
-//        return errorFilename;
-//    }
-//
-//    public void setErrorFilename(String error) {
-//    	errorFilename = error;
-//    }
-//
-//    public String getOutputFilename() {
-//        return outputFilename;
-//    }
-//
-//    public void setOutputFilename(String output) {
-//    	outputFilename = output;
-//    }
-
+    
     public String getLogFilename() {
         return logFilename;
     }

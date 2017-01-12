@@ -18,7 +18,7 @@
 	],
 	"login": {
 		"host": "docker.example.com",
-		"port": 10022,
+		"port": 10133,
 		"protocol": "SSH",
 		"auth":{
          "username":"testuser",
@@ -27,8 +27,8 @@
       }
 	},
 	"storage":{
-      "host":"storage.example.com",
-      "port":10022,
+      "host":"docker.example.com",
+      "port":10133,
       "protocol":"SFTP",
       "rootDir":"/",
       "homeDir":"/home/testuser",

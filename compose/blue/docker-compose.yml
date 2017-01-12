@@ -232,8 +232,8 @@ services:
       file: '../service-definitions.yml'
       service: postits
     ports:
-#      - "80"
-      - "8090:80"
+      - "80"
+#      - "8090:80"
       - "8453:443"
     environment:
       - 'CONTAINER_STACK=blue'
@@ -254,8 +254,8 @@ services:
       file: '../service-definitions.yml'
       service: logging
     ports:
-#      - "80"
-      - "8093:80"
+      - "80"
+#      - "8093:80"
       - "8456:443"
     environment:
       - 'CONTAINER_STACK=blue'
@@ -267,7 +267,7 @@ services:
     hostname: api.example.com
     ports:
       - "80"
-    #   - "80"
+    #   - "8092:80"
     #   - "8455:443"
     environment:
       - 'CONTAINER_STACK=blue'

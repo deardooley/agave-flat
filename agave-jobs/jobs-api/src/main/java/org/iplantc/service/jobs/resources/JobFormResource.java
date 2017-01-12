@@ -24,6 +24,7 @@ import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
+import org.iplantc.service.common.resource.AgaveResource;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.RemoteSystem;
@@ -48,7 +49,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  * @author dooley
  * 
  */
-public class JobFormResource extends AbstractJobResource 
+public class JobFormResource extends AgaveResource 
 {
 	private String softwareName; // unique name of the app
 
@@ -61,15 +62,13 @@ public class JobFormResource extends AbstractJobResource
 	{
 		super(context, request, response);
 
-		this.username = getAuthenticatedUsername();
-			
 		softwareName = (String) request.getAttributes().get("name");
 
 		getVariants().add(new Variant(MediaType.APPLICATION_JSON));
 		
 		AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 
 				AgaveLogServiceClient.ActivityKeys.JobSubmissionForm.name(), 
-				username, "", request.getClientInfo().getUpstreamAddress());
+				getAuthenticatedUsername(), "", request.getClientInfo().getUpstreamAddress());
 
 	}
 
@@ -97,7 +96,7 @@ public class JobFormResource extends AbstractJobResource
 		
 		Software software = SoftwareDao.getSoftwareByUniqueName(softwareName.trim());
 		try {
-			if (!ApplicationManager.isInvokableByUser(software, username)) {
+			if (!ApplicationManager.isInvokableByUser(software, getAuthenticatedUsername())) {
 				throw new SoftwareException("User does not have permission to access this application");
 			}
 		} catch (SoftwareException e) {
