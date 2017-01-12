@@ -581,8 +581,9 @@ public class CloneAction extends AbstractWorkerAction<Software> {
             clonedSoftwareDataClient.put(namedLocalDeploymentPath.getAbsolutePath(), FilenameUtils.getPathNoEndSeparator(clonedSoftware.getDeploymentPath()), listener);
             
         } catch (Exception e) {
-            throw new SoftwareException("Failed to copy public application assets to the default public storage system, " 
-                    + clonedSoftware.getStorageSystem().getSystemId(), e);
+            throw new SoftwareException("Failed to copy the deploymentPath for " + getEntity().getUniqueName() + 
+            		" on " +  getEntity().getStorageSystem().getSystemId() + 
+            		" to the new deployment folder on " + clonedSoftware.getStorageSystem().getSystemId(), e);
         } finally {
             try {
                 if (clonedSoftwareDataClient.isPermissionMirroringRequired()) {
@@ -597,10 +598,12 @@ public class CloneAction extends AbstractWorkerAction<Software> {
             }
         }
         
-        if (!clonedSoftwareDataClient.doesExist(clonedSoftware.getDeploymentPath())) 
-        {
-            throw new FileNotFoundException("Failed to copy cloned app assets to deployment system " + clonedSoftware.getStorageSystem().getSystemId());
-        }
+//        if (!clonedSoftwareDataClient.doesExist(clonedSoftware.getDeploymentPath())) 
+//        {
+//            throw new FileNotFoundException("Failed to copy the deploymentPath for " + getEntity().getUniqueName() + 
+//            		" on " +  getEntity().getStorageSystem().getSystemId() + 
+//            		" to the new deployment folder on " + clonedSoftware.getStorageSystem().getSystemId());
+//        }
     }
 
     /**
@@ -635,7 +638,7 @@ public class CloneAction extends AbstractWorkerAction<Software> {
                 logicalFile, 
                 clonedSoftware.getOwner());
         
-        // resolve the path to the folder for public apps on the public default storage system
+        // resolve the path to the folder for the original apps on the app's storage system
         // note that this may change over time, but it's saved with the app, so that's fine.
         if (!publishedSoftwareDataClient.doesExist(remoteDeploymentPath)) {
             if (pm.canReadWrite(publishedSoftwareDataClient.resolvePath(remoteDeploymentPath))) {
@@ -706,10 +709,10 @@ public class CloneAction extends AbstractWorkerAction<Software> {
         } 
         else 
         {
-            throw new SoftwareException("The checksum calculated for the current public app bundle "
-                    + "does not match the value calculated when the app was originally published. " +
-                    "This may indicate data corruption. If this problem persists, please contact your"
-                    + "tenant administrator for help resolving the problem.");
+            throw new SoftwareException("The checksum calculated for the current public app bundle " +
+                    "does not match the value calculated when the app was originally published. " +
+                    "This may indicate data corruption. If this problem persists, please contact your " +
+                    "tenant administrator for help resolving the problem.");
         }
         
         File localDeploymentPath = new File(tempAppDir, FilenameUtils.getName(getEntity().getExecutablePath()));
