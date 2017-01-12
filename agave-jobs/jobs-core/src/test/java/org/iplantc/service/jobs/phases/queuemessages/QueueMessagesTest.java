@@ -59,16 +59,17 @@ public class QueueMessagesTest {
                                 "Regenerated message object does not match the original object.");
         }
         
-        // ------------------------ CancelJob -------------------------
+        // ------------------------ DeleteJob -------------------------
         {
             // Generate the json.
             DeleteJobMessage m = new DeleteJobMessage();
-            m.jobName = "cancelJob";
+            m.jobName = "deleteJob";
             m.jobUuid = "999";
+            m.tenantId = "squatter";
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TCP_CANCEL_JOB\",\"name\":\"cancelJob\",\"uuid\":\"999\"}", 
+                    json, "{\"command\":\"TPC_DELETE_JOB\",\"tenantId\":\"squatter\",\"jobName\":\"deleteJob\",\"jobUuid\":\"999\"}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
@@ -76,18 +77,19 @@ public class QueueMessagesTest {
             Assert.assertEquals(AgaveStringUtils.toComparableString(m2),  
                                 AgaveStringUtils.toComparableString(m),
                                 "Regenerated message object does not match the original object.");
-        }
+         }
         
         // ------------------------ StopJob ---------------------------
         {
             // Generate the json.
             StopJobMessage m = new StopJobMessage();
-            m.jobName = "stopJbo";
+            m.jobName = "stopJob";
             m.jobUuid = "1001";
+            m.tenantId = "squatter";
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TCP_STOP_JOB\",\"name\":\"stopJbo\",\"uuid\":\"1001\"}", 
+                    json, "{\"command\":\"TPC_STOP_JOB\",\"tenantId\":\"squatter\",\"jobName\":\"stopJob\",\"jobUuid\":\"1001\"}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
@@ -103,10 +105,11 @@ public class QueueMessagesTest {
             PauseJobMessage m = new PauseJobMessage();
             m.jobName = "pauseJob";
             m.jobUuid = "34";
+            m.tenantId = "squatter";
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TCP_PAUSE_JOB\",\"name\":\"pauseJob\",\"uuid\":\"34\"}", 
+                    json, "{\"command\":\"TPC_PAUSE_JOB\",\"tenantId\":\"squatter\",\"jobName\":\"pauseJob\",\"jobUuid\":\"34\"}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
@@ -116,20 +119,64 @@ public class QueueMessagesTest {
                                 "Regenerated message object does not match the original object.");
         }
         
-        // ------------------------ TerminateWorkers ------------------
+        // ------------------------ ResetNumWorkers ------------------
         {
             // Generate the json.
-            TerminateWorkersMessage m = new TerminateWorkersMessage();
+            ResetNumWorkersMessage m = new ResetNumWorkersMessage();
             m.queueName = "myQueue";
             m.numWorkers = 22;
+            m.tenantId = "squatter";
+            m.phase = JobPhaseType.ARCHIVING;
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TCP_TERMINATE_WORKERS\",\"queueName\":\"myQueue\",\"numWorkers\":22}", 
+                    json, "{\"command\":\"TPC_RESET_NUM_WORKERS\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"ARCHIVING\",\"numWorkers\":22}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
-            TerminateWorkersMessage m2 = TerminateWorkersMessage.fromJson(json);
+            ResetNumWorkersMessage m2 = ResetNumWorkersMessage.fromJson(json);
+            Assert.assertEquals(AgaveStringUtils.toComparableString(m2),  
+                                AgaveStringUtils.toComparableString(m),
+                                "Regenerated message object does not match the original object.");
+        }
+        
+        // ------------------------ ResetPriority ------------------
+        {
+            // Generate the json.
+            ResetPriorityMessage m = new ResetPriorityMessage();
+            m.queueName = "myQueue";
+            m.priority = 339;
+            m.tenantId = "squatter";
+            m.phase = JobPhaseType.ARCHIVING;
+            String json = m.toJson();
+            System.out.println(json);
+            Assert.assertEquals(
+                    json, "{\"command\":\"TPC_RESET_PRIORITY\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"ARCHIVING\",\"priority\":339}", 
+                    "Unexpected JSON generated");
+      
+            // Regenerate the message object.
+            ResetPriorityMessage m2 = ResetPriorityMessage.fromJson(json);
+            Assert.assertEquals(AgaveStringUtils.toComparableString(m2),  
+                                AgaveStringUtils.toComparableString(m),
+                                "Regenerated message object does not match the original object.");
+        }
+        
+        // ------------------------ ResetMaxMessages ------------------
+        {
+            // Generate the json.
+            ResetMaxMessagesMessage m = new ResetMaxMessagesMessage();
+            m.queueName = "myQueue";
+            m.maxMessages = 45;
+            m.tenantId = "squatter";
+            m.phase = JobPhaseType.ARCHIVING;
+            String json = m.toJson();
+            System.out.println(json);
+            Assert.assertEquals(
+                    json, "{\"command\":\"TPC_RESET_MAX_MESSAGES\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"ARCHIVING\",\"maxMessages\":45}", 
+                    "Unexpected JSON generated");
+      
+            // Regenerate the message object.
+            ResetMaxMessagesMessage m2 = ResetMaxMessagesMessage.fromJson(json);
             Assert.assertEquals(AgaveStringUtils.toComparableString(m2),  
                                 AgaveStringUtils.toComparableString(m),
                                 "Regenerated message object does not match the original object.");

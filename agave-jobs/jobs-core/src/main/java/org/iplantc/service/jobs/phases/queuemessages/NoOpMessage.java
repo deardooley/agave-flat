@@ -2,8 +2,6 @@ package org.iplantc.service.jobs.phases.queuemessages;
 
 import java.io.IOException;
 
-import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
-
 /** This message class adds a field that allows a test message
  * to be specified.  If present, the message will be printed in 
  * log record.  

@@ -5,7 +5,9 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueConfigMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueJobMessage;
+import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -71,40 +73,11 @@ public class TopicMessageSender
         Channel topicChannel = getNewOutChannel();
         
         try {
-            // Create the durable, non-autodelete topic exchange.
-            boolean durable = true;
-            try {topicChannel.exchangeDeclare(QueueConstants.TOPIC_EXCHANGE_NAME, "topic", durable);}
-                catch (IOException e) {
-                    String msg = "Unable to create exchange on " + OUTBOUND_CONNECTION_NAME + 
-                                 "/" + topicChannel.getChannelNumber() + ": " + e.getMessage();
-                    _log.error(msg, e);
-                    throw new JobException(msg, e);
-                }
-        
-            // Create the durable topic with a well-known name.
-            durable = true;
-            boolean exclusive = false;
-            boolean autoDelete = false;
-            try {topicChannel.queueDeclare(QueueConstants.TOPIC_QUEUE_NAME, 
-                                           durable, exclusive, autoDelete, null);}
-                catch (IOException e) {
-                    String msg = "Unable to declare topic queue " + 
-                                 QueueConstants.TOPIC_QUEUE_NAME +
-                                 " on " + OUTBOUND_CONNECTION_NAME + "/" + 
-                                 topicChannel.getChannelNumber() + ": " + e.getMessage();
-                    _log.error(msg, e);
-                    throw new JobException(msg, e);
-                }
+            // Create the durable, non-autodelete topic exchange and topic queue.
+            initQueue(topicChannel);
         
             // Serialize message.
-            String json = null;
-            try {json = message.toJson();}
-            catch (Exception e) {
-               String msg = "Unable to serialize " + message.command.name() +
-                            ": " + e.getMessage();
-               _log.error(msg, e);
-               throw new JobException(msg, e);
-            }
+            String json = messageToJson(message);
             
             // Send the message to the job topic so that exactly one scheduler 
             // reads the message.  The choice of scheduler is arbitrary.
@@ -117,6 +90,92 @@ public class TopicMessageSender
             } 
             catch (Exception e) {
                 String msg = "Unable to publish job interrupt message to topic " +
+                             QueueConstants.TOPIC_QUEUE_NAME + ": " + json;
+                _log.error(msg, e);
+                throw new JobException(msg, e);
+            }
+        }
+        finally {
+            // Always close the topic channel.
+            try {topicChannel.close();}
+            catch (Exception e) {
+                String msg = "Error closing topic channel";
+                _log.error(msg, e);
+            }
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* sendConfigMessage:                                                     */
+    /* ---------------------------------------------------------------------- */
+    /** Put a job interrupt message on the job topic queue.  The caller is 
+     * responsible for already having updated the status of the job.  The topic
+     * thread will read the queued interrupt message and update the interrupts
+     * table with the job information.  Any worker thread subsequently servicing
+     * the job will note either the interrupt or the status change.  
+     * 
+     * @param message a concrete job message
+     * @throws JobException on error
+     */
+    public static void sendConfigMessage(AbstractQueueConfigMessage message) 
+      throws JobException
+    {
+        // Validate that the message is complete.
+        if (message == null)
+        {
+            String msg = "Null message received by sendJobMessage().";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Validate message.
+        message.validate();
+        
+        // Get a new communication channel for each call.
+        Channel topicChannel = getNewOutChannel();
+        
+        try {
+            // Create the durable, non-autodelete topic exchange and topic queue.
+            initQueue(topicChannel);
+        
+            // Serialize message.
+            String json = messageToJson(message);
+            
+            // The phase determines the one scheduler that will service this message.
+            // The topic thread on the target scheduler will receive the message.
+            String routingKey = null;
+            switch (message.phase)
+            {
+                case ARCHIVING:
+                    routingKey = QueueConstants.TOPIC_ARCHIVING_ROUTING_KEY;
+                    break;
+                case MONITORING:
+                    routingKey = QueueConstants.TOPIC_MONITORING_ROUTING_KEY;
+                    break;
+                case STAGING:
+                    routingKey = QueueConstants.TOPIC_STAGING_ROUTING_KEY;
+                    break;
+                case SUBMITTING:
+                    routingKey = QueueConstants.TOPIC_SUBMITTING_ROUTING_KEY;
+                    break;
+                default:
+                    String msg = "Unknown phase " + message.phase + 
+                                 " encountered during topic message processing.";
+                    _log.error(msg);
+                    throw new JobException(msg);
+            }
+            
+            // Send the message to the job topic so that only the  chosen scheduler 
+            // reads the message.  
+            try {
+                // TODO: Publisher confirm?
+                topicChannel.basicPublish(QueueConstants.TOPIC_EXCHANGE_NAME, 
+                                          routingKey, 
+                                          QueueConstants.PERSISTENT_JSON, 
+                                          json.getBytes());
+            } 
+            catch (Exception e) {
+                String msg = "Unable to publish queue configuration message to topic " +
                              QueueConstants.TOPIC_QUEUE_NAME + ": " + json;
                 _log.error(msg, e);
                 throw new JobException(msg, e);
@@ -241,5 +300,67 @@ public class TopicMessageSender
          
          return channel;
     }
+ 
+    /* ---------------------------------------------------------------------- */
+    /* initQueue:                                                             */
+    /* ---------------------------------------------------------------------- */
+    /** Create or initialize the topic exchange and queue.
+     * 
+     * @param topicChannel channel on which the exchange will be declared 
+     *                     and queue bound
+     * @throws JobException on error
+     */
+    private static void initQueue(Channel topicChannel)
+     throws JobException
+    {
+        // Create the durable, non-autodelete topic exchange.
+        boolean durable = true;
+        try {topicChannel.exchangeDeclare(QueueConstants.TOPIC_EXCHANGE_NAME, "topic", durable);}
+            catch (IOException e) {
+                String msg = "Unable to create exchange on " + OUTBOUND_CONNECTION_NAME + 
+                             "/" + topicChannel.getChannelNumber() + ": " + e.getMessage();
+                _log.error(msg, e);
+                throw new JobException(msg, e);
+            }
     
+        // Create the durable topic with a well-known name.
+        durable = true;
+        boolean exclusive = false;
+        boolean autoDelete = false;
+        try {topicChannel.queueDeclare(QueueConstants.TOPIC_QUEUE_NAME, 
+                                       durable, exclusive, autoDelete, null);}
+            catch (IOException e) {
+                String msg = "Unable to declare topic queue " + 
+                             QueueConstants.TOPIC_QUEUE_NAME +
+                             " on " + OUTBOUND_CONNECTION_NAME + "/" + 
+                             topicChannel.getChannelNumber() + ": " + e.getMessage();
+                _log.error(msg, e);
+                throw new JobException(msg, e);
+            }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* initQueue:                                                             */
+    /* ---------------------------------------------------------------------- */
+    /** Serialize a message into a json string.
+     * 
+     * @param message source message
+     * @return json string
+     * @throws JobException on error
+     */
+    private static String messageToJson(AbstractQueueMessage message)
+     throws JobException
+    {
+        // Serialize the message to json.
+        String json = null;
+        try {json = message.toJson();}
+        catch (Exception e) {
+           String msg = "Unable to serialize " + message.command.name() +
+                        ": " + e.getMessage();
+           _log.error(msg, e);
+           throw new JobException(msg, e);
+        }
+        
+        return json;
+    }
 }

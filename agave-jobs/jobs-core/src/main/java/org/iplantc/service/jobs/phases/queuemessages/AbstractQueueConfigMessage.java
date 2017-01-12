@@ -2,12 +2,13 @@ package org.iplantc.service.jobs.phases.queuemessages;
 
 import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 
 /** This abstract topic message contains the common fields needed in job-specific messages.
  * 
  * @author rcardone
  */
-public abstract class AbstractQueueJobMessage 
+public abstract class AbstractQueueConfigMessage 
  extends AbstractQueueMessage
 {
     /* ********************************************************************** */
@@ -17,24 +18,24 @@ public abstract class AbstractQueueJobMessage
     // changes to the QueueMessagesTest program.
     //
     // Command fields.
-    public String tenantId;  // Caller's tenant id
-    public String jobName;   // Job name
-    public String jobUuid;   // Job unique id
+    public String queueName;   // Target queue name
+    public String tenantId;    // Caller's tenantId
+    public JobPhaseType phase; // Phase the queue services
     
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public AbstractQueueJobMessage(JobCommand jobCommand){super(jobCommand);}
+    public AbstractQueueConfigMessage(JobCommand jobCommand){super(jobCommand);}
     
-    public AbstractQueueJobMessage(JobCommand jobCommand,
-                                   String     jobName,
-                                   String     jobUuid,
-                                   String     tenantId)
+    public AbstractQueueConfigMessage(JobCommand   jobCommand,
+                                      String       queueName,
+                                      String       tenantId,
+                                      JobPhaseType phase)
     {
         this(jobCommand);
-        this.jobName = jobName;
-        this.jobUuid = jobUuid;
+        this.queueName = queueName;
         this.tenantId = tenantId;
+        this.phase = phase;
     }
     
     /* ********************************************************************** */
@@ -50,18 +51,18 @@ public abstract class AbstractQueueJobMessage
     public void validate() throws JobException
     {
         // Make sure all fields are filled in.
+        if (StringUtils.isBlank(queueName)) {
+            String msg = "Invalid queue name assignment in " + 
+                         getClass().getSimpleName() + " object.";
+            throw new JobException(msg);
+        }
         if (StringUtils.isBlank(tenantId)) {
             String msg = "Invalid tenantId assignment in " + 
                          getClass().getSimpleName() + " object.";
             throw new JobException(msg);
         }
-        if (StringUtils.isBlank(jobName)) {
-            String msg = "Invalid job name assignment in " + 
-                         getClass().getSimpleName() + " object.";
-            throw new JobException(msg);
-        }
-        if (StringUtils.isBlank(jobUuid)) {
-            String msg = "Invalid job uuid assignment in " + 
+        if (phase == null) {
+            String msg = "Null phase assignment in " + 
                          getClass().getSimpleName() + " object.";
             throw new JobException(msg);
         }

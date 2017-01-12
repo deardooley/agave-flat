@@ -15,6 +15,7 @@ import org.iplantc.service.jobs.resources.JobHistoryResource;
 import org.iplantc.service.jobs.resources.JobListAttributeResource;
 import org.iplantc.service.jobs.resources.JobManageResource;
 import org.iplantc.service.jobs.resources.JobPermissionsResource;
+import org.iplantc.service.jobs.resources.JobQueueResource;
 import org.iplantc.service.jobs.resources.JobSearchResource;
 import org.iplantc.service.jobs.resources.JobStatusResource;
 import org.iplantc.service.jobs.resources.JobUpdateResource;
@@ -70,6 +71,10 @@ public class JobsApplication extends AgaveApplication
 			secureEndpoint(router,"/search/{attribute1}/{value1}/{attribute2}/{value2}/{attribute3}/{value3}/{attribute4}/{value4}/{attribute5}/{value5}/{attribute6}/{value6}/",JobSearchResource.class);
 			secureEndpoint(router,"/search/{attribute1}/{value1}/{attribute2}/{value2}/{attribute3}/{value3}/{attribute4}/{value4}/{attribute5}/{value5}/{attribute6}/{value6}/{attribute7}/{value7}",JobSearchResource.class);
 			secureEndpoint(router,"/search/{attribute1}/{value1}/{attribute2}/{value2}/{attribute3}/{value3}/{attribute4}/{value4}/{attribute5}/{value5}/{attribute6}/{value6}/{attribute7}/{value7}/",JobSearchResource.class);
+            
+            // Job queue api.
+            secureEndpoint(router, "/admin/queues", JobQueueResource.class); 
+            secureEndpoint(router, "/admin/queues/{queuename}", JobQueueResource.class); 
 			
 			// individual job description(GET), X update(POST), and kill(DELETE)
 			secureEndpoint(router, "/{jobid}", JobManageResource.class);  

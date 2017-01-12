@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -893,12 +892,23 @@ public abstract class AbstractPhaseScheduler
                           // ################# Scheduler Interrupts ##################
                           // ----- Shutdown scheduler
                           case TPC_SHUTDOWN:
+                              _log.info("Topic message TPC_SHUTDOWN not implemented yet.");
+                              ack = false;
                               break;
-                          // ----- Start specified number of worker threads
-                          case TPC_START_WORKERS:
+                          // ----- Reset the number of worker threads servicing a queue
+                          case TPC_RESET_NUM_WORKERS:
+                              _log.info("Topic message TPC_RESET_NUM_WORKERS not implemented yet.");
+                              ack = false;
                               break;
-                          // ----- Terminate specified number of worker threads  
-                          case TPC_TERMINATE_WORKERS:
+                          // ----- Reset a queue's priority 
+                          case TPC_RESET_PRIORITY:
+                              _log.info("Topic message TPC_RESET_PRIORITY not implemented yet.");
+                              ack = false;
+                              break;
+                          // ----- Reset a queue's maximum message bound 
+                          case TPC_RESET_MAX_MESSAGES:
+                              _log.info("Topic message TPC_RESET_MAX_MESSAGES not implemented yet.");
+                              ack = false;
                               break;
                           // ----- Test message input case   
                           case NOOP:

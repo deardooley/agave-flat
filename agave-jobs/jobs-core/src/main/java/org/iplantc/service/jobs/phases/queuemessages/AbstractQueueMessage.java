@@ -43,8 +43,9 @@ public abstract class AbstractQueueMessage
         TPC_PAUSE_JOB,
         TPC_DELETE_JOB,
         TPC_STOP_JOB,   
-        TPC_START_WORKERS,
-        TPC_TERMINATE_WORKERS;
+        TPC_RESET_NUM_WORKERS,
+        TPC_RESET_PRIORITY,
+        TPC_RESET_MAX_MESSAGES;
         
         // Convert a job command to job interrupt type.
         public JobInterruptType toInterruptType()
@@ -63,6 +64,9 @@ public abstract class AbstractQueueMessage
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
+    // Note that adding fields, or changing the names or ordering, will require 
+    // changes to the QueueMessagesTest program.
+    //
     // Identify the command to be executed.
     public final JobCommand command;
     
@@ -149,11 +153,14 @@ public abstract class AbstractQueueMessage
             case TPC_STOP_JOB:
                 cls = StopJobMessage.class;
                 break;
-            case TPC_START_WORKERS:
-                cls = StartWorkersMessage.class;
+            case TPC_RESET_NUM_WORKERS:
+                cls = ResetNumWorkersMessage.class;
                 break;
-            case TPC_TERMINATE_WORKERS:
-                cls = TerminateWorkersMessage.class;
+            case TPC_RESET_PRIORITY:
+                cls = ResetPriorityMessage.class;
+                break;
+            case TPC_RESET_MAX_MESSAGES:
+                cls = ResetMaxMessagesMessage.class;
                 break;
             default:
                 String msg = "Unknown queue message command encountered: " + command;
