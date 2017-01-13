@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 
-## 2.1.10 - 2017-01-10
+## 2.1.10 - 2017-01-13
 
 ### Added
 - JOBS: Added logging of the startupScript to the job’s `.agave.log` file on job execution and termination. Monitoring does not log the output as it could potentially explode the log file size for long-running jobs. 
@@ -21,6 +21,11 @@ All notable changes to this project will be documented in this file.
 - JOBS: Fixed a bug launching jobs on PBS/MOAB/TORQUE and parsing potentially different scheduler responses.  
 - JOBS: Fixed use of magnitude abbreviations (GB, TB, etc) in condor submit scripts. 
 - JOBS: Fixed search by job statuses.  
+- JOBS: Improved response returned from the API when a job cannot be stopped due to the remote system being unavailable. 
+- METADATA: Improved API response when attempting to delete a metadata or metadata schema item that does not exist.  
+- METADATA: Started to enforce cache invalidation to metadata and metadata schema permission lookups to avoid 404 on write-read requests made in rapid succession.  
+- APPS: Fixed a bug during app cloning that intermittently caused by failures when the storage system holding the app assets did not acknowledge the recently copied assets being present on the file system. _I'm looking at you, S3_.  
+- NOTIFICATIONS: Fixed error response message on notification deserialization when the `associatedUuid` was invalid. 
 
 ### Removed
 - SYSTEMS: support for `GRAM` and `API` login protocols.  
