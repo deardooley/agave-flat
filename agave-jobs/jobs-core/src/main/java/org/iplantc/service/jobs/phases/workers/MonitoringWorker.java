@@ -9,11 +9,13 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.jobs.Settings;
+import org.iplantc.service.jobs.dao.JobPublishedDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.queue.actions.MonitoringAction;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
@@ -162,7 +164,18 @@ public final class MonitoringWorker
                 // Wrap this in a try/catch so we can update the local reference to the job.
                 getWorkerAction().run();
             }
-            finally {_job = getWorkerAction().getJob();}
+            finally {
+                // Refresh the job object.
+                _job = getWorkerAction().getJob();
+                
+                // Allow scheduler to reschedule monitoring if state hasn't changed.
+                try {JobPublishedDao.deletePublishedJob(JobPhaseType.MONITORING, _job.getUuid());}
+                catch (Exception e) {
+                    // Just record the incident.
+                    String msg = "Unable to delete published job record.";
+                    _log.error(msg, e);
+                }
+            }
         }
         catch (ClosedByInterruptException e) {
             String msg = "Monitoring task for job " + _job.getUuid() + " aborted due to worker interrupt.";

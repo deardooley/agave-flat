@@ -53,10 +53,4 @@ public final class StagingScheduler
         }
         return _phaseTriggerStatuses;
     }
-    
-    /* ---------------------------------------------------------------------- */
-    /* allowsRepublishing:                                                    */
-    /* ---------------------------------------------------------------------- */
-    @Override
-    public boolean allowsRepublishing(){return false;}
 }

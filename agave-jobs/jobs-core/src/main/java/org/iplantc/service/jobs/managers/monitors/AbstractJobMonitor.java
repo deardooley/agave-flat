@@ -196,9 +196,6 @@ public abstract class AbstractJobMonitor implements JobMonitor {
 			String resolvedstartupScript = resolveStartupScriptMacros(getExecutionSystem().getStartupScript());
 			
 			if (resolvedstartupScript != null) {
-//				startupScriptCommand = String.format("echo $(source %s 2>&1) >> %s/.agave.log ; ",
-//					resolvedstartupScript,
-//					remoteDataClient.resolvePath(job.getWorkPath()));
 				startupScriptCommand = String.format("echo $(source %s 2>&1) >> /dev/null ; ",
 						resolvedstartupScript);
 			}

@@ -51,10 +51,4 @@ public final class MonitoringScheduler
         }
         return _phaseTriggerStatuses;
     }
-
-    /* ---------------------------------------------------------------------- */
-    /* allowsRepublishing:                                                    */
-    /* ---------------------------------------------------------------------- */
-    @Override
-    public boolean allowsRepublishing(){return true;}
 }

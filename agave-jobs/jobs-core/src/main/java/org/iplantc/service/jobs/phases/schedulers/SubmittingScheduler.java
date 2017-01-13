@@ -53,10 +53,4 @@ public final class SubmittingScheduler
         }
         return _phaseTriggerStatuses;
     }
-    
-    /* ---------------------------------------------------------------------- */
-    /* allowsRepublishing:                                                    */
-    /* ---------------------------------------------------------------------- */
-    @Override
-    public boolean allowsRepublishing(){return false;}
 }

@@ -2,6 +2,8 @@ package org.iplantc.service.jobs.phases.schedulers;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -284,17 +286,18 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* isFilteringPublishedJobs:                                              */
     /* ---------------------------------------------------------------------- */
-    /** Each phase specifies if it allows jobs to be rescheduled multiple 
-     * times.  Scheduling involves placing a job on an appropriate queue.  Some
-     * phases expect that a job is published to its queue exactly one time, other
-     * phases republish the job until its status changes.
+    /** Each phase can specify if it allows jobs to be rescheduled multiple 
+     * times by overriding this method.  Scheduling involves placing a job on an 
+     * appropriate queue.  Some phases expect that a job is published to its 
+     * queue exactly one time, other phases may republish the job until its 
+     * status changes.
      * 
      * @return return false if republishing is prohibited (i.e., a job is 
      *                expected to be queued once in the phase); true if the 
      *                phase scheduler republishes the job until the job's
      *                status changes.
      */
-    public abstract boolean allowsRepublishing();
+    public boolean allowsRepublishing(){return false;}
     
     /* ********************************************************************** */
     /*                             Public Methods                             */
@@ -1632,14 +1635,16 @@ public abstract class AbstractPhaseScheduler
             if (job.getArchiveSystem().getStatus() != null)
                 properties.put("archiveSystemStatus", job.getArchiveSystem().getStatus().name());
             if (job.getArchiveSystem().getUserRole(job.getOwner()) != null)
-                properties.put("archiveSystemUserRole", job.getArchiveSystem().getUserRole(job.getOwner()));
+                properties.put("archiveSystemUserRole", job.getArchiveSystem().getUserRole(job.getOwner()).toString());
         }
         if (job.getBatchQueue() != null)
             properties.put("batchQueue", job.getBatchQueue());
         if (job.getCharge() != null)
             properties.put("charge", job.getCharge());
-        if (job.getCreated() != null)
-            properties.put("created", job.getCreated());
+        if (job.getCreated() != null) {
+            DateFormat formatter = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+            properties.put("created", formatter.format(job.getCreated()));
+        }
         if (job.getInternalUsername() != null)
             properties.put("internalUsername", job.getInternalUsername());
         if (job.getMaxRunTime() != null)

@@ -52,10 +52,4 @@ public final class ArchivingScheduler
         }
         return _phaseTriggerStatuses;
     }
-    
-    /* ---------------------------------------------------------------------- */
-    /* allowsRepublishing:                                                    */
-    /* ---------------------------------------------------------------------- */
-    @Override
-    public boolean allowsRepublishing(){return false;}
 }
