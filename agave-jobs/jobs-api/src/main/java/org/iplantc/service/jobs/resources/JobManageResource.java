@@ -226,6 +226,11 @@ public class JobManageResource extends AbstractJobResource {
 						getResponse().setEntity(new IplantSuccessRepresentation());
 						getResponse().setStatus(Status.SUCCESS_OK);
 					}
+					catch (JobTerminationException e) {
+						getResponse().setEntity(
+								new IplantErrorRepresentation(e.getMessage()));
+						getResponse().setStatus(Status.SERVER_ERROR_BAD_GATEWAY);
+					}
 					catch (JobException e)
 					{
 						getResponse().setEntity(
@@ -236,9 +241,9 @@ public class JobManageResource extends AbstractJobResource {
 					catch (Exception e)
 					{
 						getResponse().setEntity(
-								new IplantErrorRepresentation("Job deletion failed"));
+								new IplantErrorRepresentation("Job termination failed"));
 						getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
-						log.error("Job deletion failed for user " + username, e);
+						log.error("Job termination failed for user " + username, e);
 					}
 				}
 				// reset the job to the previous active status
@@ -411,9 +416,16 @@ public class JobManageResource extends AbstractJobResource {
 			}
 			else if (new JobPermissionManager(job, username).canWrite(username))
 			{
-				JobManager.hide(job.getId(), username);
+				String message = null;
+			
+				try {
+					JobManager.hide(job.getId(), username);
+				}
+				catch (JobTerminationException e) {
+					message = e.getMessage();
+				}
 				
-				getResponse().setEntity(new IplantSuccessRepresentation());
+				getResponse().setEntity(new IplantSuccessRepresentation(message, null));
 				getResponse().setStatus(Status.SUCCESS_OK);
 			}
 			else
@@ -423,7 +435,7 @@ public class JobManageResource extends AbstractJobResource {
 						"User does not have permission to view this job"));
 			}
 		}
-		catch (JobException | JobTerminationException e)
+		catch (JobException e)
 		{
 			getResponse().setEntity(
 					new IplantErrorRepresentation(e.getMessage()));

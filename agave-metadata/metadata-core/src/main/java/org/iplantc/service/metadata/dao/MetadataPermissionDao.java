@@ -6,6 +6,7 @@ package org.iplantc.service.metadata.dao;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.CacheMode;
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
@@ -75,6 +76,8 @@ public class MetadataPermissionDao {
 					+ "WHERE uuid = :uuid "
 					+ "ORDER BY username ASC";
 			Query query = session.createQuery(hql)
+					.setCacheMode(CacheMode.IGNORE)
+					.setCacheable(false)
 					.setString("uuid", uuid);
 			
 			if (offset > 0) {
@@ -201,6 +204,8 @@ public class MetadataPermissionDao {
 			List<MetadataPermission> pems = session.createQuery(hql)
 					.setString("username", username)
 					.setString("uuid", uuid)
+					.setCacheMode(CacheMode.IGNORE)
+					.setCacheable(false)
 					.list();
 			
 			session.flush();
