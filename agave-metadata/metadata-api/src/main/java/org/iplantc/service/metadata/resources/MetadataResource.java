@@ -181,7 +181,7 @@ public class MetadataResource extends AgaveResource
             }
         }
         catch (ResourceException e) {
-        	log.error("Failed to fetch metadata item " + uuid, e);
+        	log.error("Failed to fetch metadata item " + uuid + ". " + e.getMessage());
         	throw e;
         }
         catch (Throwable e) {
@@ -442,14 +442,14 @@ public class MetadataResource extends AgaveResource
         }
         catch (ResourceException e)
     	{
-        	log.error("Failed to update metadata item " + uuid, e);
+        	log.error("Failed to update metadata item " + uuid + ". " + e.getMessage());
         	
         	getResponse().setStatus(e.getStatus());
         	getResponse().setEntity(new IplantErrorRepresentation(e.getMessage()));
         }
         catch (Exception e)
     	{
-        	log.error("Failed to update metadata item " + uuid, e);
+        	log.error("Failed to update metadata item " + uuid);
         	
         	getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
         	getResponse().setEntity(new IplantErrorRepresentation("Unable to store the metadata object. " +
@@ -524,7 +524,7 @@ public class MetadataResource extends AgaveResource
 	    }
         catch (ResourceException e)
         {
-        	log.error("Failed to delete metadata " + uuid, e);
+        	log.error("Failed to delete metadata item " + uuid + ". " + e.getMessage());
 
         	getResponse().setStatus(e.getStatus());
         	getResponse().setEntity(new IplantErrorRepresentation(e.getMessage()));

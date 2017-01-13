@@ -61,7 +61,8 @@ public abstract class IplantRepresentation extends StringRepresentation {
 			} else {
 				
 				ObjectNode jsonWrapper = mapper.createObjectNode()
-						.put("status", status).put("message", message)
+						.put("status", status)
+						.put("message", message)
 						.put("version", Settings.SERVICE_VERSION);
 				
 				if (!StringUtils.isEmpty(json)) {

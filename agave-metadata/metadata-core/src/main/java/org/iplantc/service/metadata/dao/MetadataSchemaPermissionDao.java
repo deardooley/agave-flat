@@ -6,6 +6,7 @@ package org.iplantc.service.metadata.dao;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.CacheMode;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -13,8 +14,6 @@ import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.metadata.exceptions.MetadataException;
-import org.iplantc.service.metadata.model.MetadataItem;
-import org.iplantc.service.metadata.model.MetadataPermission;
 import org.iplantc.service.metadata.model.MetadataSchemaItem;
 import org.iplantc.service.metadata.model.MetadataSchemaPermission;
 import org.iplantc.service.metadata.model.enumerations.PermissionType;
@@ -56,7 +55,11 @@ public class MetadataSchemaPermissionDao {
 			Session session = getSession();
 
 			String hql = "from MetadataSchemaPermission where schemaId = :schemaId order by username asc";
-			List<MetadataSchemaPermission> pems = session.createQuery(hql).setString("schemaId", schemaId).list();
+			List<MetadataSchemaPermission> pems = session.createQuery(hql)
+					.setString("schemaId", schemaId)
+					.setCacheMode(CacheMode.IGNORE)
+					.setCacheable(false)
+					.list();
 
 			session.flush();
 
@@ -128,7 +131,10 @@ public class MetadataSchemaPermissionDao {
             	query.setMaxResults(limit);
             }
             
-            List<String> metadataSchemaUUIDGrantedToUser = query.list();
+            List<String> metadataSchemaUUIDGrantedToUser = query
+            		.setCacheMode(CacheMode.IGNORE)
+					.setCacheable(false)
+					.list();
             
             session.flush();
             
@@ -165,6 +171,8 @@ public class MetadataSchemaPermissionDao {
 			List<MetadataSchemaPermission> pems = session.createQuery(hql)
 					.setString("username", username)
 					.setString("schemaId", schemaId)
+					.setCacheMode(CacheMode.IGNORE)
+					.setCacheable(false)
 					.list();
 
 			session.flush();

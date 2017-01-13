@@ -23,7 +23,7 @@ import org.iplantc.service.notification.model.validation.ValidAssociatedUuidVali
 @Documented
 public @interface ValidAssociatedUuid {
 
-    String message() default "{org.iplantc.service.common.UUID.message}";
+    String message() default "{org.iplantc.service.common.uuid.UUID.message}";
 
     Class<?>[] groups() default {};
 

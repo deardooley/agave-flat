@@ -140,7 +140,7 @@ public abstract class AbstractJobKiller implements JobKiller {
 //				startupScriptCommand = String.format("echo $(source %s 2>&1) >> %s/.agave.log ; ",
 //					resolvedstartupScript,
 //					remoteDataClient.resolvePath(job.getWorkPath()));
-				startupScriptCommand = String.format("echo $(source %s 2>&1) >> /dev/null ; ",
+				startupScriptCommand = String.format("echo $(source %s 2>&1) >> /dev/null ",
 						resolvedstartupScript);
 			}
 		}

@@ -8,6 +8,7 @@ import static org.iplantc.service.common.clients.AgaveLogServiceClient.ActivityK
 import static org.iplantc.service.common.clients.AgaveLogServiceClient.ActivityKeys.SchemaSearch;
 import static org.iplantc.service.common.clients.AgaveLogServiceClient.ServiceKeys.METADATA02;
 
+import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -191,7 +192,7 @@ public class MetadataSchemaResource extends AgaveResource
             }
         } 
         catch (ResourceException e) {
-        	log.error("Failed to fetch metadata schema " + uuid, e);
+        	log.error("Failed to fetch metadata schema " + uuid + ". " + e.getMessage());
         	throw e;
         } 
         catch (Throwable e) {
@@ -324,7 +325,7 @@ public class MetadataSchemaResource extends AgaveResource
             getResponse().setEntity(new IplantSuccessRepresentation(sdoc));
         } 
         catch (ResourceException e) {
-        	log.error("Failed to update metadata schema " + uuid, e);
+        	log.error("Failed to update metadata schema " + uuid + ". " + e.getMessage());
         	
         	getResponse().setStatus(e.getStatus());
             getResponse().setEntity(new IplantErrorRepresentation(e.getMessage()));
@@ -356,7 +357,7 @@ public class MetadataSchemaResource extends AgaveResource
         	if (collection == null) {
         		throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
                 	"Unable to connect to metadata store. " +
-                    "If this problem persists, please contact the system administrators.");
+                    "If this problem persists, please contact the system administrators.", new FileNotFoundException());
             }
 
         	if (StringUtils.isEmpty(uuid)) {
@@ -399,14 +400,14 @@ public class MetadataSchemaResource extends AgaveResource
         }
         catch (ResourceException e) 
         {
-        	log.error("Failed to delete schema " + uuid, e);
+        	log.error("Failed to fetch metadata schema " + uuid + ". " + e.getMessage());
         	
         	getResponse().setStatus(e.getStatus());
             getResponse().setEntity(new IplantErrorRepresentation(e.getMessage()));
         }
         catch (Throwable e) 
         {
-        	log.error("Failed to delete schema" + uuid, e);
+        	log.error("Failed to delete schema " + uuid, e);
         	
         	getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
             getResponse().setEntity(new IplantErrorRepresentation("Unable to delete the associated metadata schema. " +

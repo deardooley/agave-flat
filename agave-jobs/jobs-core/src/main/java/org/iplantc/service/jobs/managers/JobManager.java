@@ -250,6 +250,20 @@ public class JobManager {
 
                     return job;
                 }
+			    catch (SystemUnavailableException  e) {
+			    	
+			    	String message = "Failed to kill job " + job.getUuid()
+                            + " identified by id " + job.getLocalJobId() + " on " + job.getSystem()
+                            + ". The system is currently unavailable.";
+
+                    log.debug(message);
+                    
+                    job = JobManager.updateStatus(job, job.getStatus(), "Failed to kill job "
+                            + " identified by id " + job.getLocalJobId() + " on " + job.getSystem()
+                            + " Response from " + job.getSystem() + ": " + e.getMessage());
+
+                    throw new JobTerminationException(message, e);
+			    }
                 catch (RemoteExecutionException e) {
 
                     job = killer.getJob();
@@ -414,7 +428,7 @@ public class JobManager {
 				} 
 				catch (SystemUnavailableException e) {
 					throw new JobTerminationException("Failed to stop job " + job.getUuid() + 
-							". Execution system is unavailable", e);
+							". Execution system is unavailable.", e);
 				}
 				catch (RemoteExecutionException e) {
 					throw new JobTerminationException("Failed to stop " + job.getUuid()
