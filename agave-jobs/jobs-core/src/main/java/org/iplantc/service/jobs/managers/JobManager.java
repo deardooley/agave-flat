@@ -235,13 +235,13 @@ public class JobManager {
 
                     String message = "Failed to kill job " + job.getUuid()
                             + " identified by id " + job.getLocalJobId() + " on " + job.getSystem()
-                            + " Response from " + job.getSystem() + ": " + e.getMessage();
+                            + ". Response from " + job.getSystem() + ": " + e.getMessage();
 
                     log.debug(message);
 
                     job = JobManager.updateStatus(job, JobStatusType.FAILED, "Failed to kill job "
                             + " identified by id " + job.getLocalJobId() + " on " + job.getSystem()
-                            + " Response from " + job.getSystem() + ": " + e.getMessage());
+                            + ". Response from " + job.getSystem() + ": " + e.getMessage());
 
                     throw new JobTerminationException(message, e);
                 }
