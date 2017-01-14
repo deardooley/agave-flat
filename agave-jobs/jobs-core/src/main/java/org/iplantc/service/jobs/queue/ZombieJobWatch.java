@@ -77,6 +77,7 @@ public class ZombieJobWatch implements org.quartz.Job
 			for (BigInteger jobId: zombieJobIds) 
             {
 				Job job = JobDao.getById(jobId.longValue());
+				if (job == null) continue;
 				
 				// this is a new thread and thus has no tenant info loaded. we set it up
 				// here so things like app and system lookups will stay local to the 
