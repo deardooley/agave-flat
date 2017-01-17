@@ -373,9 +373,12 @@ public abstract class AbstractPhaseScheduler
         
         // Get the next available recovery thread number.
         AbstractPhaseWorker oldWorker = (AbstractPhaseWorker) t;
-        int newThreadNum = _threadSeqno.incrementAndGet();
+        
+        // Do our best to release any jobs listed in the published table.
+        releasePublishedJob(oldWorker);
         
         // Create the new thread object.
+        int newThreadNum = _threadSeqno.incrementAndGet();
         AbstractPhaseWorker newWorker = createWorkerThread(oldWorker.getThreadGroup(), 
                                                    oldWorker.getTenantId(), 
                                                    oldWorker.getQueueName(), 
@@ -1715,6 +1718,31 @@ public abstract class AbstractPhaseScheduler
             _log.error(msg, e);
         }
         return matched;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* releasePublishedJob:                                                   */
+    /* ---------------------------------------------------------------------- */
+    /** Make a best effort attempt to remove a job that was being serviced by 
+     * a thread that died unexpectedly.  The thread may not have working on 
+     * a job, in which case we don't do anything.  Otherwise, we fire and
+     * forget a database delete command.
+     * 
+     * @param deadWorker a worker thread that died unexpectedly.
+     */
+    private void releasePublishedJob(AbstractPhaseWorker deadWorker)
+    {
+        // Should we even try?
+        if (deadWorker == null || 
+            deadWorker.getJob() == null || 
+            deadWorker.getPhaseType() == null) 
+           return;
+        
+        // Try to remove the job the dead worker was processing from the
+        // published table so that the job may be rescheduled if necessary.
+        try {JobPublishedDao.deletePublishedJob(deadWorker.getPhaseType(), 
+                                                deadWorker.getJob().getUuid());}
+            catch (Exception e) {/* do nothing */}
     }
     
     /* ---------------------------------------------------------------------- */

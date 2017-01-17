@@ -169,6 +169,10 @@ public final class MonitoringWorker
                 _job = getWorkerAction().getJob();
                 
                 // Allow scheduler to reschedule monitoring if state hasn't changed.
+                // Note that if this thread dies unexpectedly before finishing the 
+                // delete operation, the scheduler would never reschedule another
+                // monitor thread for this job.  This thread's uncaughtException handler
+                // will also try the deletion, but that can also fail.
                 try {JobPublishedDao.deletePublishedJob(JobPhaseType.MONITORING, _job.getUuid());}
                 catch (Exception e) {
                     // Just record the incident.

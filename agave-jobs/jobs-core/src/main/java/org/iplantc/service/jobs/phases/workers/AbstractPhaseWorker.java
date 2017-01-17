@@ -533,6 +533,10 @@ public abstract class AbstractPhaseWorker
         this._workerAction = _workerAction;
     }
     
+    public Job getJob() {
+        return _job;
+    }
+    
     /* ---------------------------------------------------------------------- */
     /* checkStopped:                                                          */
     /* ---------------------------------------------------------------------- */
