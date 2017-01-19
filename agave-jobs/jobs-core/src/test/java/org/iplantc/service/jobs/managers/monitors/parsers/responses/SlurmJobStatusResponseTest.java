@@ -21,6 +21,7 @@ public class SlurmJobStatusResponseTest {
 		}
 		testCases.add(new Object[]{ "10974959|UNKNOWN|0:0|", "UNKNOWN" });
 		testCases.add(new Object[]{ "10974959|asdfasdfasdfadfa|0:0|", "asdfasdfasdfadfa" });
+		testCases.add(new Object[]{ "620162|PENDING|0:0|", "PENDING"});
 		
 		return testCases.toArray(new Object[][]{});
 	}

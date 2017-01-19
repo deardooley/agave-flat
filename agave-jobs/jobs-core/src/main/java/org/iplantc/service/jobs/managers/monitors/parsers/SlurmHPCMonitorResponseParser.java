@@ -90,14 +90,11 @@ public class SlurmHPCMonitorResponseParser implements JobMonitorResponseParser {
 			boolean activeStatus = false;
 			switch (this) {
 				case PENDING:
-				case CANCELLED:
-				case DEADLINE:
-				case FAILED:
-				case NODE_FAIL:
-				case TIMEOUT:
-				case COMPLETED:
-				case PREEMPTED:
-					activeStatus = false;
+				case RUNNING:
+				case RESIZING:
+				case COMPLETING:
+				case CONFIGURING:
+					activeStatus = true;
 				break;
 				
 			default:
@@ -198,7 +195,7 @@ public class SlurmHPCMonitorResponseParser implements JobMonitorResponseParser {
 					throw new RemoteJobUnrecoverableStateException(statusType.getDescription());
 				}
 				// is it in a known active state?
-				else if (SlurmStatusType.isActiveStatus(statusResponse.getStatus())) {
+				else if (statusType.isActiveStatus()) {
 					// raise a RemoteJobUnknownStateException exception here because the job 
 					// will remain in that state without being killed by our monitors.
 					if (statusType == SlurmStatusType.SUSPENDED) {
