@@ -42,8 +42,8 @@ public class JobEventSearchFilter extends AgaveResourceSearchFilter
 			searchTermMappings.put("status", "%sstatus");
 			searchTermMappings.put("created", "%screated");
 			searchTermMappings.put("description", "%sdescription");
-			searchTermMappings.put("ipaddress", "%sipAddress");
-			searchTermMappings.put("createdBy", "%screatedBy");
+			searchTermMappings.put("ipaddress", "%sip_address");
+			searchTermMappings.put("createdBy", "%screated_by");
 		}
 		
 		return searchTermMappings;

@@ -3,6 +3,7 @@
  */
 package org.iplantc.service.jobs.dao;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ import org.apache.log4j.Logger;
 import org.hibernate.CacheMode;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
+import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.persistence.HibernateUtil;
@@ -23,6 +25,7 @@ import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.search.JobEventSearchFilter;
 import org.iplantc.service.jobs.search.JobSearchFilter;
+import org.joda.time.DateTime;
 
 /**
  * Model class for interacting with job events. JobEvents are
@@ -120,7 +123,7 @@ public class JobEventDao {
 		}
 		
 		if (orderBy == null) {
-			orderBy = new JobEventSearchFilter().filterAttributeName("id");
+			orderBy = new JobEventSearchFilter().filterAttributeName("created");
 		}
 		
 	
@@ -325,49 +328,40 @@ public class JobEventDao {
 		}
 		
 		if (orderBy == null) {
-			orderBy = new JobSearchFilter().filterAttributeName("lastupdated");
+			orderBy = new JobEventSearchFilter().filterAttributeName("created");
 		}
 		
 		try
 		{
 			Session session = getSession();
 			session.clear();
-			String hql = "FROM JobEvent e \n" +
-					" WHERE e.job.id = :jobid \n" +
-					"        e.tenant_id = :tenantid \n "; 
+			String hql = "SELECT * \n" +
+					" FROM jobevents e \n" +
+					" WHERE e.job_id = :jobid \n" +
+					"       AND e.tenant_id = :tenantid \n "; 
 			
 			for (SearchTerm searchTerm: searchCriteria.keySet()) 
 			{
-				hql += "\n       AND       " + searchTerm.getExpression();
-			}
-			
-			if (!hql.contains("e.visible")) {
-				hql +=  "\n       AND e.visible = :visiblebydefault ";
+				hql += "\n       AND " + searchTerm.getExpression();
 			}
 			
 			hql +=	"\n ORDER BY " + String.format(orderBy.getMappedField(), orderBy.getPrefix()) + " " +  order.toString() + " \n";
 			
 			String q = hql;
 			//log.debug(q);
-			Query query = session.createQuery(hql)
-					.setLong("jobid", jobId)
-					.setString("tenantid", TenancyHelper.getCurrentTenantId());
+			SQLQuery query = (SQLQuery)session.createSQLQuery(hql);
+			query.setLong("jobid", jobId)
+				 .setString("tenantid", TenancyHelper.getCurrentTenantId());
 			
 			q = StringUtils.replace(q, ":jobid", String.valueOf(jobId));
 			q = StringUtils.replace(q, ":tenantid", "'" + TenancyHelper.getCurrentTenantId() + "'");
 			
-			if (hql.contains(":visiblebydefault") ) {
-				query.setBoolean("visiblebydefault", Boolean.TRUE);
-				
-				q = StringUtils.replace(q, ":visiblebydefault", "1");
-			}
-			
-		 	for (SearchTerm searchTerm: searchCriteria.keySet()) 
+			for (SearchTerm searchTerm: searchCriteria.keySet()) 
 			{
 			    if (searchTerm.getOperator() == SearchTerm.Operator.BETWEEN) {
 			        List<String> formattedDates = (List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm));
 			        for(int i=0;i<formattedDates.size(); i++) {
-			            query.setString(searchTerm.getSearchField()+i, formattedDates.get(i));
+			            query.setDate(searchTerm.getSearchField()+i, new DateTime(formattedDates.get(i)).toDate());
 			            q = StringUtils.replace(q, ":" + searchTerm.getSearchField() + i, "'" + formattedDates.get(i) + "'");
 			        }
 			    }
@@ -376,7 +370,7 @@ public class JobEventDao {
 					query.setParameterList(searchTerm.getSearchField(), (List<Object>)searchCriteria.get(searchTerm));
 					q = StringUtils.replace(q, ":" + searchTerm.getSearchField(), "('" + StringUtils.join((List<String>)searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm)), "','") + "')" );
 				}
-				else 
+			    else 
 				{
 					query.setParameter(searchTerm.getSearchField(), 
 							searchTerm.getOperator().applyWildcards(searchCriteria.get(searchTerm)));
@@ -385,9 +379,10 @@ public class JobEventDao {
 			    
 			}
 			
-//			log.debug(q);
+			log.debug(q);
 			
 			List<JobEvent> events = query
+					.addEntity(JobEvent.class)
 					.setFirstResult(offset)
 					.setMaxResults(limit)
 					.setCacheable(false)
