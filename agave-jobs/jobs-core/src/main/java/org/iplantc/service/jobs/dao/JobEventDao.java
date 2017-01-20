@@ -123,7 +123,7 @@ public class JobEventDao {
 		}
 		
 		if (orderBy == null) {
-			orderBy = new JobEventSearchFilter().filterAttributeName("created");
+			orderBy = new JobEventSearchFilter().filterAttributeName("id");
 		}
 		
 	
@@ -328,7 +328,7 @@ public class JobEventDao {
 		}
 		
 		if (orderBy == null) {
-			orderBy = new JobEventSearchFilter().filterAttributeName("created");
+			orderBy = new JobEventSearchFilter().filterAttributeName("id");
 		}
 		
 		try

@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 - POSTITS: AD-1029 Adding response filtering to customize the response objects.
 
 ### Changed
+- JOBS: Fixed bug in job history searches. Temporal queries now work as expected.
+- JOBS: Changed default sort order of job history to sort by event creation order.
 - JOBS: Fixed bug causing monitoring of SLRUM jobs to report back failed on PENDING status from the scheduler.
 - JOBS: AH-165 Fixed a bug preventing startupScript from being sourced on connection to remote systems. Startup script is now sourced as the first command when remoting to any system. The path is an actual system path, so tilda and environment variables will work as expected. 
 - JOBS: Fixed a bug launching jobs on LSF and parsing potentially different scheduler responses.  
