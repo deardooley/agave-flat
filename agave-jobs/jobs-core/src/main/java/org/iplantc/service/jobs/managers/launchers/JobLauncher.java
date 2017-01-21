@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.channels.ClosedByInterruptException;
 
+import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwareInput;
 import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.jobs.exceptions.JobException;
@@ -12,6 +13,7 @@ import org.iplantc.service.jobs.exceptions.QuotaViolationException;
 import org.iplantc.service.jobs.exceptions.SchedulerException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
+import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.transfer.URLCopy;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -155,5 +157,30 @@ public interface JobLauncher
 	 * filtered with job and system macros otherwise.
 	 */
 	public String resolveStartupScriptMacros(String startupScript);
+	
+	/**
+	 * @return the executionSystem
+	 */
+	public ExecutionSystem getExecutionSystem();
+
+	/**
+	 * @param executionSystem the executionSystem to set
+	 */
+	public void setExecutionSystem(ExecutionSystem executionSystem);
+
+	/**
+	 * @return the software
+	 */
+	public Software getSoftware();
+
+	/**
+	 * @param software the software to set
+	 */
+	public void setSoftware(Software software);
+
+	/**
+	 * @param job the job to set
+	 */
+	public void setJob(Job job);
 
 }

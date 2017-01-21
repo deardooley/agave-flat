@@ -1,0 +1,21 @@
+package org.iplantc.service.jobs.managers.launchers;
+
+import org.iplantc.service.systems.model.enumerations.SchedulerType;
+import org.testng.annotations.Test;
+
+/**
+ * Test template validation and remote fork job submission 
+ * with the {@link CLILauncher} class.
+ */
+@Test(groups={"job","launcher"})
+public class JobLauncherTest2 extends JobLauncherTest
+{
+	public JobLauncherTest2(SchedulerType schedulerType) {
+		super(schedulerType);
+	}
+	
+	@Override
+	protected SchedulerType getExectionSystemSchedulerType() {
+		return this.schedulerType;
+	}
+}

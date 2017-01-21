@@ -7,8 +7,9 @@ import java.io.OutputStream;
 import org.iplantc.service.transfer.RemoteOutputStream;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
 
-import com.maverick.sftp.SftpStatusException;
+import com.sshtools.sftp.SftpStatusException;
 import com.sshtools.sftp.SftpClient;
+import com.sshtools.ssh.SshException;
 
 public class MaverickSFTPOutputStream extends RemoteOutputStream<MaverickSFTP> {
 
@@ -23,6 +24,7 @@ public class MaverickSFTPOutputStream extends RemoteOutputStream<MaverickSFTP> {
 		{
 			this.client = client; 
 			this.out = client.getOutputStream(remotefile);
+			
 		}
 		catch (SftpStatusException e) {
 			if (e.getMessage().toLowerCase().contains("no such file")) {
@@ -35,7 +37,7 @@ public class MaverickSFTPOutputStream extends RemoteOutputStream<MaverickSFTP> {
 				throw new RemoteDataException("Failed to obtain output stream for " + remotefile, e);
 			}
 		}
-		catch (Exception e)
+		catch (SshException e)
 		{
 			throw new IOException("Failed to obtain output stream for " + remotefile, e);
 		}

@@ -25,6 +25,13 @@ public class CLILauncher extends HPCLauncher
 	private static final Logger log = Logger.getLogger(CLILauncher.class);
 	
 	/**
+	 * Default no-args constructor for mock testing
+	 */
+	protected CLILauncher() {
+		super();
+	}
+	
+	/**
 	 * Creates an instance of a JobLauncher capable of submitting jobs to
 	 * Atmosphere VMs.
 	 */

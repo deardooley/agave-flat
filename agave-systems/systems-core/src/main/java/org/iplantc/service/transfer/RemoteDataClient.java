@@ -294,7 +294,7 @@ public interface RemoteDataClient extends RemoteDataClientPermissionProvider {
 	 * systems. Only possible when both {@link RemoteDataClient#isThirdPartyTransferSupported()}
 	 * calls return true
 	 * @return true if possible, false otherwise.
-	 * @see {@link GridFTP}, {@link SFTP}
+	 * @see {@link GridFTP}, {@link MaverickSFTP}
 	 */
 	public abstract boolean isThirdPartyTransferSupported();
 	

@@ -2,8 +2,8 @@ package org.iplantc.service.transfer.sftp;
 
 import org.apache.log4j.Logger;
 
-import com.maverick.ssh2.KBIPrompt;
-import com.maverick.ssh2.KBIRequestHandler;
+import com.sshtools.ssh2.KBIPrompt;
+import com.sshtools.ssh2.KBIRequestHandler;
 
 public class PublicKeyKBIRequestHandler implements KBIRequestHandler {
 		

@@ -1,6 +1,7 @@
 package org.iplantc.service.jobs.managers.launchers;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -39,22 +40,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
-public abstract class AbstractJobLauncherTest extends AbstractJobSubmissionTest {
+public class JobLauncherTest extends AbstractJobSubmissionTest {
 
 	private String remoteFilePath;
-
-	public AbstractJobLauncherTest() {
-		super();
+	protected Software software;
+	protected SchedulerType schedulerType;
+	protected ObjectMapper mapper = new ObjectMapper();
+	
+	public JobLauncherTest(SchedulerType schedulerType) {
+		this.schedulerType = schedulerType;
 	}
-
+	
 	@BeforeClass
 	@Override
-	public void beforeClass() throws Exception {
+	protected void beforeClass() throws Exception {
 		super.beforeClass();
 	}
 
 	@AfterClass
-	public void afterClass() throws Exception {
+	protected void afterClass() throws Exception {
 		
 		try {
 			RemoteDataClient remoteDataClient = null;
@@ -97,6 +101,24 @@ public abstract class AbstractJobLauncherTest extends AbstractJobSubmissionTest 
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.jobs.submission.AbstractJobSubmissionTest#clearSystems()
+	 */
+	@Override
+	protected void clearSystems() {
+		SystemDao dao = new SystemDao();
+		try { dao.remove(executionSystem); } catch (Exception e){}
+		try { dao.remove(storageSystem); } catch (Exception e){}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.jobs.submission.AbstractJobSubmissionTest#clearSoftware()
+	 */
+	@Override
+	protected void clearSoftware() throws Exception {
+		try { SoftwareDao.delete(software); } catch (Exception e){}
+	}
+
 	@Override
 	protected void initSystems() throws Exception {
 	    storageSystem = (StorageSystem) getNewInstanceOfRemoteSystem(RemoteSystemType.STORAGE, 
@@ -121,7 +143,9 @@ public abstract class AbstractJobLauncherTest extends AbstractJobSubmissionTest 
 	 * as systems/execution/{@link SchedulerType#name()}.example.com.json
 	 * @return the scheduler to use for the storage system
 	 */
-	protected abstract SchedulerType getExectionSystemSchedulerType();
+	protected SchedulerType getExectionSystemSchedulerType() {
+		return this.schedulerType;
+	}
 	
 	/**
 	 * Specifies the type of storage system we'll use in this test. 
@@ -142,7 +166,7 @@ public abstract class AbstractJobLauncherTest extends AbstractJobSubmissionTest 
 		
 		json.put("deploymentSystem", storageSystem.getSystemId());
 		
-		Software software = Software.fromJSON(json, SYSTEM_OWNER);
+		software = Software.fromJSON(json, SYSTEM_OWNER);
 		software.setOwner(SYSTEM_OWNER);
 		
 		SoftwareDao.persist(software);
@@ -174,9 +198,10 @@ public abstract class AbstractJobLauncherTest extends AbstractJobSubmissionTest 
 
 	@DataProvider(name = "submitJobProvider")
 	protected Object[][] submitJobProvider() throws Exception {
-		List<Software> testApps = SoftwareDao.getUserApps(SYSTEM_OWNER, false);
-		
-		Object[][] testData = new Object[testApps.size()][3];
+//		List<Software> testApps = SoftwareDao.getUserApps(SYSTEM_OWNER, false);
+		List<Software> testApps = new ArrayList<Software>();
+		testApps.add(software);
+		Object[][] testData = new Object[testApps.size()][];
 		for(int i=0; i< testApps.size(); i++) {
 			testData[i] = new Object[] { testApps.get(i), "Submission to " + testApps.get(i).getExecutionSystem().getSystemId() + " failed.", false };
 		}
@@ -185,9 +210,6 @@ public abstract class AbstractJobLauncherTest extends AbstractJobSubmissionTest 
 	}
 
 	protected Job createAndPersistJob(Software software) throws Exception {
-		//RemoteDataClient remoteDataClient = null;
-		ObjectMapper mapper = new ObjectMapper();
-		
 		Job job = new Job();
 		job.setName( software.getExecutionSystem().getScheduler().name() + " test");
 		job.setArchiveOutput(false);
@@ -239,84 +261,10 @@ public abstract class AbstractJobLauncherTest extends AbstractJobSubmissionTest 
 		return job;
 	}
 
-	@DataProvider
-	protected Object[][] resolveMacrosProvider() throws Exception {
-		List<Software> testApps = SoftwareDao.getUserApps(SYSTEM_OWNER, false);
-		
-		job = createAndPersistJob(testApps.get(0));
-		
-		Object[][] testData = new Object[WrapperTemplateAttributeVariableType.values().length + WrapperTemplateStatusVariableType.values().length + 1][3];
-		int i = 0;
-		for (WrapperTemplateAttributeVariableType macro: WrapperTemplateAttributeVariableType.values()) {
-			testData[i++] = new Object[] { job, macro.name(), macro.resolveForJob(job), true };
-		}
-		
-		for (WrapperTemplateStatusVariableType macro: WrapperTemplateStatusVariableType.values()) {
-			testData[i++] = new Object[] { job, macro.name(), macro.resolveForJob(job), true };
-		}
-		
-		testData[i++] = new Object[] { job, WrapperTemplateAttributeVariableType.AGAVE_JOB_ARCHIVE_URL.name(), "", false  };
-		
-		return testData;
-	}
-
-	@Test(groups = { "submission" }, dataProvider = "resolveMacrosProvider", enabled = true)
-	public void resolveMacros(Job job, String macro, String expectedValue, boolean archive) 
-	throws JobException, SystemUnavailableException, SoftwareUnavailableException 
-	{
-		JobLauncher launcher = new HPCLauncher(job);
-		Assert.assertEquals(launcher.resolveMacros("${" + macro + "}"), expectedValue, "Launcher did not resolve wrapper template macro " + macro + " properly.");
-	}
-	
-
-//	@Test (groups={"submission"}, dataProvider="processApplicationTemplateProvider", dependsOnMethods={"resolveMacros"})
-//	public void processApplicationTemplate(Software software, String message, boolean shouldThrowException) 
-//	throws Exception 
-//	{
-//		job = createAndPersistJob(software);
-//		super.genericProcessApplicationTemplate(job, message, shouldThrowException);
-//	}
-	
-
-	@DataProvider
-	protected Object[][] resolveNotificationsMacrosProvider() throws Exception {
-		List<Software> testApps = SoftwareDao.getUserApps(SYSTEM_OWNER, false);
-		
-		job = createAndPersistJob(testApps.get(0));
-		
-		return new Object[][] { 
-			{job, "", 
-				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, null), 
-				false  },
-			{job, "HOME", 
-				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, new String[]{"HOME"}), 
-				false  },
-			{job, "HOME,HOSTNAME,SHELL", 
-				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, null, new String[]{"HOME","HOSTNAME","SHELL"}), 
-				false  },
-			{job, "MY_EVENT|", 
-				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, "MY_EVENT", new String[]{}), 
-				false  },
-			{job, "MY_EVENT|HOME", 
-				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, "MY_EVENT", new String[]{"HOME"}), 
-				false  },
-			{job, "MY_EVENT|HOME,HOSTNAME,SHELL", 
-				WrapperTemplateStatusVariableType.resolveNotificationEventMacro(job, "MY_EVENT", new String[]{"HOME","HOSTNAME","SHELL"}), 
-				false  },
-		};
-	}
-
-	@Test(groups = { "submission" }, dataProvider = "resolveNotificationsMacrosProvider", dependsOnMethods = { "resolveMacros" }, enabled = true)
-	public void resolveNotificationMacros(Job job, String macroVars, String expectedValue, boolean archive) 
-	throws JobException, SystemUnavailableException, SoftwareUnavailableException 
-	{
-		JobLauncher launcher = new HPCLauncher(job);
-		Assert.assertEquals(launcher.resolveRuntimeNotificationMacros("${AGAVE_JOB_CALLBACK_NOTIFICATION|" + macroVars + "}"), expectedValue, "Launcher did not resolve wrapper template notification macro properly.");
-	}
-
-	@Test(groups = { "submission" }, dataProvider = "submitJobProvider", dependsOnMethods = { "resolveMacros" }, enabled = true)
+	@Test(groups = { "job", "launcher", "submission" }, dataProvider = "submitJobProvider", enabled = true)
 	public void submitJob(Software software, String message, boolean shouldThrowException)
 	throws Exception {
+		Job job = null;
 		try {
 			job = createAndPersistJob(software);
 		
@@ -328,22 +276,21 @@ public abstract class AbstractJobLauncherTest extends AbstractJobSubmissionTest 
 		}
 		finally {
 			try { JobDao.delete(job); } catch (Exception e) {}
-			try { SoftwareDao.delete(software); } catch (Exception e) {}
-			try { new SystemDao().remove(executionSystem); } catch (Exception e) {}
+			
 		}
 	}
-
+	
 	/**
 	 * @return the remoteFilePath
 	 */
-	public String getRemoteFilePath() {
+	protected String getRemoteFilePath() {
 		return remoteFilePath;
 	}
 
 	/**
 	 * @param remoteFilePath the remoteFilePath to set
 	 */
-	public void setRemoteFilePath(String remoteFilePath) {
+	protected void setRemoteFilePath(String remoteFilePath) {
 		this.remoteFilePath = remoteFilePath;
 	}
 

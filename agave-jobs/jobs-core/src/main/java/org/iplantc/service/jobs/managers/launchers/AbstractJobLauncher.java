@@ -75,15 +75,17 @@ public abstract class AbstractJobLauncher implements JobLauncher
     
 	protected File 						tempAppDir = null;
 	protected String 					step;
-    private Job							job;
-    private Software 					software;
-	private ExecutionSystem 			executionSystem;
+    protected Job						job;
+    protected Software 					software;
+    protected ExecutionSystem 			executionSystem;
 //	protected RemoteDataClient	 		remoteExecutionDataClient;
 //	protected RemoteDataClient	 		remoteSoftwareDataClient;
 	protected RemoteDataClient          localDataClient;
 	protected RemoteSubmissionClient 	submissionClient = null;
 	protected URLCopy                   urlCopy;
 	protected TransferTask              transferTask;
+	
+	protected AbstractJobLauncher() {}
 	
 	public AbstractJobLauncher(Job job) {
 		this.setJob(job);

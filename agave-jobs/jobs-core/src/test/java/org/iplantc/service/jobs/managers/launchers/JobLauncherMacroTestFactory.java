@@ -4,17 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.iplantc.service.systems.model.enumerations.SchedulerType;
+import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 
 /**
  * This class is a TestNG factory class which generates and 
- * runs a matrix of tests to test validation and remote job 
- * submission of all {@link JobLauncher} classes.
+ * runs a matrix of tests to test validation and {@link JobLauncher} 
+ * macro parsing in the job wrapper scripts.
  * .
  * @author dooley
  *
  */
-public class JobLauncherTestFactory
+public class JobLauncherMacroTestFactory
 {
 	@Factory
     public Object[] createInstances() {
@@ -27,7 +29,7 @@ public class JobLauncherTestFactory
     			// don't have containers for them yet.
     			continue;
     		}
-    		testCases.add(new JobLauncherTest(scheduler));
+    		testCases.add(new JobLauncherMacroTest(scheduler));
     	}
     	
         return testCases.toArray();
