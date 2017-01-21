@@ -1,6 +1,21 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.1.10 - 2017-01-21
+
+### Added
+- nothing
+
+### Changed
+- JOBS: AH-167 Fixed bug in job submission command when the execution system `startupScript` field has a blank value. A placeholder command is now put in place logging that no startup script was run.  
+- JOBS: Fixed sort order of history items. We were previously sorting off the event id. This is actually filtered to the UUID filed during request URL query parsing, so the response was sorted by uuid, which appeared to be random. The actual table id is now used to sort the repsonse, which maintains our original intent of preventing against precision rounding errors. 
+- SYSTEMS: AH-166 Swapped SSH library to use Maverick J2SSH open source version of the previous library.  
+- APPS: Fixed a bug in app cloning between systems with different `executionType` values. No the `executionType` of the cloned app is set to match the target execution system. This prevents issues monitoring jobs run on what would have been an invalid app execution type had it been registered directly.  
+- 
+
+### Removed
+- nothing
+
 
 ## 2.1.10 - 2017-01-19
 

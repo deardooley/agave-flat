@@ -268,6 +268,11 @@ public abstract class AbstractJobLauncher implements JobLauncher
 						absoluteRemoteWorkPath);
 			}
 		}
+		
+		if (StringUtils.isEmpty(startupScriptCommand)) {
+			startupScriptCommand = String.format("printf \"[%%s] %%b\\n\" $(date '+%%Y-%%m-%%dT%%H:%%M:%%S%%z') \"$(echo 'No startup script defined. Skipping...')\" >> %s/.agave.log ",
+					absoluteRemoteWorkPath);
+		}
 		return startupScriptCommand;
 	}
 	

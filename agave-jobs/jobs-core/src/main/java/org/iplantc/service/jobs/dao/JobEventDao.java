@@ -121,9 +121,9 @@ public class JobEventDao {
 		if (order == null) {
 			order = AgaveResourceResultOrdering.ASCENDING;
 		}
-		
-		if (orderBy == null) {
-			orderBy = new JobEventSearchFilter().filterAttributeName("id");
+		String sortField = "id";
+		if (orderBy != null) {
+			sortField = String.format(orderBy.getMappedField(), orderBy.getPrefix());
 		}
 		
 	
@@ -136,7 +136,7 @@ public class JobEventDao {
 			
 			String hql = "FROM JobEvent e \n"
 					+ "WHERE e.job.id = :jobid \n"
-					+ "ORDER BY " + String.format(orderBy.getMappedField(), orderBy.getPrefix()) + " " +  order.toString() + " \n";
+					+ "ORDER BY " + sortField + " " +  order.toString() + " \n";
 			List<JobEvent> events = session.createQuery(hql)
 					.setLong("jobid", jobId)
 					.setFirstResult(offset)
