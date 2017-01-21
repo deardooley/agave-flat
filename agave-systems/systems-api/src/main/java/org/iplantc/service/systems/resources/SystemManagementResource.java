@@ -120,7 +120,7 @@ public class SystemManagementResource extends AbstractSystemListResource
 					JSONObject jSystem = new JSONObject(system.toJSON());
 					
 					// determine at run time if this is the user's default system of this type
-					jSystem.put("default", system.equals(systemManager.getUserDefaultStorageSystem(username)));
+					jSystem.put("default", system.equals(systemManager.getUserDefaultStorageSystem(username, system.getType())));
 					
 					if (system.isAvailable() || userRole.canUse()) {
 					
