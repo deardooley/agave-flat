@@ -148,6 +148,11 @@ public abstract class AbstractJobKiller implements JobKiller {
 						resolvedstartupScript);
 			}
 		}
+		
+		if (StringUtils.isEmpty(startupScriptCommand)) {
+			startupScriptCommand = String.format("echo 'No startup script defined. Skipping...' >> /dev/null ");
+		}
+		
 		return startupScriptCommand;
 	}
 	
