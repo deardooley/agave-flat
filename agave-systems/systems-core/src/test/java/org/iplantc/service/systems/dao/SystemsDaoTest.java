@@ -417,12 +417,13 @@ public class SystemsDaoTest extends SystemsModelTestCommon {
 			Assert.assertTrue(system.getRoles().size() == 1, "Failed to save permission.");
 			// Assert.assertTrue(system.getRoles().contains(new SystemRole("bob", originalType)), "Permission was not saved.");
 			
-			system.getRoles().remove(0);
-			system.getRoles().add(new SystemRole("bob", updateType));
+			system.getRoles().remove(role);
+//			dao.persist(system);
+			system.addRole(new SystemRole("bob", updateType));
 			dao.persist(system);
 			
 			system = dao.findById(system.getId());
-			Assert.assertTrue(system.getRoles().size() == 1, "update did not created a new entry.");
+			Assert.assertEquals(system.getRoles().size(), 1, "Deleting one role and inserting another should result in a single role.");
 			Assert.assertEquals(system.getRoles().iterator().next().getRole(), updateType, "updated role was not saved.");
 			
 		} 

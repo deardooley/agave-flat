@@ -11,14 +11,19 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.exceptions.SystemException;
@@ -42,6 +47,7 @@ public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 	private Long				id;
 	private String				username;
 	private RoleType			role;
+	private RemoteSystem		remoteSystem;
 	private Date				lastUpdated = new Date();
 	private Date				created = new Date();
 	
@@ -52,6 +58,13 @@ public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 	{
 		this.username = username;
 		this.role = roleType;
+	}
+	
+	public SystemRole(String username, RoleType roleType, RemoteSystem remoteSystem)
+	{
+		this.username = username;
+		this.role = roleType;
+		this.remoteSystem = remoteSystem;
 	}
 
 	/**
@@ -212,11 +225,98 @@ public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 		return username + " " + role;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SystemRole other = (SystemRole) obj;
+		
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		if (role != other.role)
+			return false;
+		if (username == null) {
+			if (other.username != null)
+				return false;
+		} else if (!username.equals(other.username))
+			return false;
+		return true;
+	}
+
 
 	@Override
 	public int compareTo(SystemRole o) {
-		return this.username.compareTo(o.username);
+		int result = 0;
+		
+		if (this == o)
+			return 0;
+		if (o == null)
+			return 1;
+		if (username == null) {
+			if (o.username != null)
+				return -1;
+		}
+		else if (o.username == null) {
+			return 1;
+		}
+		else {
+			result = username.compareTo(o.username);
+		}
+		
+		if (result != 0) {
+			return result;
+		}
+		else {
+			if (role == null) {
+				if (o.role != null) {
+					return -1;
+				}
+				else {
+					return 0;
+				}
+			}
+			else {
+				if (this.role == null) {
+					if (o.role != null)
+						return -1;
+					else
+						return 0;
+				}
+				else if (o.role == null) {
+					return 1;
+				}
+				else {
+					return new Integer(role.intVal()).compareTo(new Integer(o.role.intVal()));
+				}
+			}
+		}
 	}
-	
-	
+
+
+	/**
+	 * @return the remoteSystem
+	 */
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "remote_system_id")
+	public RemoteSystem getRemoteSystem() {
+		return remoteSystem;
+	}
+
+
+	/**
+	 * @param remoteSystem the remoteSystem to set
+	 */
+	public void setRemoteSystem(RemoteSystem remoteSystem) {
+		this.remoteSystem = remoteSystem;
+	}
 }

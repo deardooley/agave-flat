@@ -83,38 +83,17 @@ public class SystemRoleManager {
 				return;
 			} else {
 			    SystemRole newRole = new SystemRole(username, type);
-				system.getRoles().add(newRole);
+				system.addRole(newRole);
 				
 				this.eventProcessor.processPermissionEvent(system, newRole, createdBy);
-//				NotificationManager.process(system.getUuid(), SystemEventType.ROLES_GRANT.name(),
-//				        TenancyHelper.getCurrentEndUser(), newRole.toJSON(system));
-				
-				
-//				String json;
-//				try {
-//					json = "{\"system\":" + system.toJSON() + ",\"role\":" + newRole.toJSON(system) + "}";
-//					NotificationManager.process(system.getUuid(), SystemEventType.ROLES_GRANT.name(), 
-//					        TenancyHelper.getCurrentEndUser(), json);
-//				} catch (JSONException e) {
-//					log.error("Failed to send role revoke event for system " + system.getUuid(), e);
-//				}
 			}
 		} 
 		else 
 		{
 			if (type.equals(RoleType.NONE)) {
-				system.getRoles().remove(currentRole);
+				system.removeRole(currentRole);
 				
 				this.eventProcessor.processPermissionEvent(system, new SystemRole(username, RoleType.NONE), createdBy);
-				
-//				String json;
-//				try {
-//					json = "{\"system\":" + system.toJSON() + ",\"role\":" + currentRole.toJSON(system) + "}";
-//					NotificationManager.process(system.getUuid(), SystemEventType.ROLES_REVOKE.name(), 
-//					        TenancyHelper.getCurrentEndUser(), json);
-//				} catch (JSONException e) {
-//					log.error("Failed to send role revoke event for system " + system.getUuid(), e);
-//				}
 				
 //				// now disable all apps for this system that were registered by 
 //				// the user who just had access revoked
@@ -133,25 +112,14 @@ public class SystemRoleManager {
 ////					}
 //				}
 				
-				// send the notifications in bulk
-//				sendApplicationDisabledMessage(currentRole.getUsername(), appIds, system);
 			} 
 			else if (!ServiceUtils.isAdmin(username)) 
 			{
-				system.getRoles().remove(currentRole);
+				system.removeRole(currentRole);
 				SystemRole newRole = new SystemRole(username, type);
 				system.addRole(newRole);
 				
 				this.eventProcessor.processPermissionEvent(system, newRole, createdBy);
-//				String json;
-//				try {
-//					json = "{\"system\":" + system.toJSON() + ",\"role\":" + newRole.toJSON(system) + "}";
-//					NotificationManager.process(system.getUuid(), SystemEventType.ROLES_GRANT.name(), 
-//					        TenancyHelper.getCurrentEndUser(), json);
-//				} catch (JSONException e) {
-//					log.error("Failed to send role grant event for system " + system.getUuid(), e);
-//				}
-//				
 			}
 		}
 		
@@ -168,6 +136,10 @@ public class SystemRoleManager {
 	{   
 	    Set<SystemRole> currentRoles = system.getRoles();
 		SystemRole[] deletedRoles = currentRoles.toArray(new SystemRole[] {});
+		
+		for (SystemRole role: system.getRoles()) {
+			role.setRemoteSystem(null);
+		}
 		
 		system.getRoles().clear();
 		

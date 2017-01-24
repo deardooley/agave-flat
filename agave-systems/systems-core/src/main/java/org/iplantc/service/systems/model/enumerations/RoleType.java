@@ -1,6 +1,8 @@
 package org.iplantc.service.systems.model.enumerations;
 
-public enum RoleType
+import org.iplantc.service.systems.model.SystemRole;
+
+public enum RoleType implements Comparable<RoleType>
 {
 	NONE, GUEST, USER, PUBLISHER, ADMIN, OWNER;
 	
