@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.iplantc.service.systems.model.enumerations.SchedulerType;
-import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
+import org.testng.annotations.Factory;
 
 /**
  * This class is a TestNG factory class which generates and 
@@ -14,40 +14,22 @@ import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
  * @author dooley
  *
  */
-public class JobLauncherTestFactory extends AbstractJobLauncherTest
+public class JobLauncherTestFactory
 {
-    private SchedulerType schedulerType;
-    private StorageProtocolType storageProtocol;
- 
-//    @Factory(dataProvider = "jobSubmissionSchedulerMatrixGenerator")
-    public JobLauncherTestFactory(SchedulerType schedulerType, StorageProtocolType storageProtocol) {
-        this.schedulerType = schedulerType;
-        this.storageProtocol = storageProtocol;
-    }
- 
-//    @DataProvider(parallel=false)
-    public static Object[][] jobSubmissionSchedulerMatrixGenerator() {
-    	List<Object[]> testCases = new ArrayList<Object[]>();
+	@Factory
+    public Object[] createInstances() {
+    	List<Object> testCases = new ArrayList<Object>();
 
-//    	for (SchedulerType scheduler: SchedulerType.values()) {
-//    		if (SchedulerType.LOADLEVELER == scheduler || 
-//    				SchedulerType.UNKNOWN == scheduler || 
-//    				scheduler.name().startsWith("CUSTOM")) {
-//    			// don't have containers for them yet.
-//    			continue;
-//    		}
-//    		testCases.add(new Object[] { scheduler, StorageProtocolType.SFTP });
-//    	}
-        return testCases.toArray(new Object[][]{});
+    	for (SchedulerType scheduler: SchedulerType.values()) {
+    		if (SchedulerType.LOADLEVELER == scheduler || 
+    				SchedulerType.UNKNOWN == scheduler || 
+    				scheduler.name().startsWith("CUSTOM")) {
+    			// don't have containers for them yet.
+    			continue;
+    		}
+    		testCases.add(new JobLauncherTest(scheduler));
+    	}
+    	
+        return testCases.toArray();
     }
-    
-	@Override
-	public SchedulerType getExectionSystemSchedulerType() {
-		return schedulerType;
-	}
-	
-	@Override
-	public StorageProtocolType getStorageSystemProtocolType() {
-		return storageProtocol;
-	}
 }

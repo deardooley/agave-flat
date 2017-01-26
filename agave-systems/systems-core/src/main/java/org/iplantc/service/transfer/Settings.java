@@ -89,22 +89,6 @@ public class Settings {
 	
 	static
 	{
-		com.maverick.ssh.LicenseManager.addLicense("----BEGIN 3SP LICENSE----\r\n"
-                + "Product : J2SSH Maverick\r\n"
-                + "Licensee: dooley@tacc.utexas.edu\r\n"
-                + "Comments: 129.114.13.56\r\n"
-                + "Type    : Evaluation License\r\n"
-                + "Created : 23-Jun-2013\r\n"
-                + "Expires : 07-Aug-2013\r\n"
-                + "\r\n"
-                + "378720362A1D8FDBD9FF0D703523BB376B56F9B4DC983584\r\n"
-                + "E66A3681B76553C88E3C7B7975F2BC04EBA5D768A71ABD82\r\n"
-                + "C40FA60D59227606E1F367FC932B9F890E2D4C238D82D05C\r\n"
-                + "628471A63B600B3DDE686AC232199FBC049A3E914F984534\r\n"
-                + "845890B484213484B726ECD0F1E0794C8CA8DA56EFF87DDE\r\n"
-                + "18EEFE85FFFE20BA2C54B7AEB087904C04BD70F812699587\r\n"
-                + "----END 3SP LICENSE----\r\n");
-		
 		try
 		{
 			props.load(Settings.class.getClassLoader().getResourceAsStream(

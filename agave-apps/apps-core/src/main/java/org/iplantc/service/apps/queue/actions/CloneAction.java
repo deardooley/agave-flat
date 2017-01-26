@@ -210,6 +210,7 @@ public class CloneAction extends AbstractWorkerAction<Software> {
             clonedSoftware.setRevisionCount(1);
             clonedSoftware.setStorageSystem(clonedSoftwareStorageSystem);
             clonedSoftware.setExecutionSystem(clonedSoftwareExecutionSystem);
+            clonedSoftware.setExecutionType(clonedSoftwareExecutionSystem.getExecutionType());
             
             // check for name conflict in new system
             if (SoftwareDao.getSoftwareByUniqueName(clonedSoftware.getUniqueName()) != null) {
@@ -312,6 +313,7 @@ public class CloneAction extends AbstractWorkerAction<Software> {
             clonedSoftware.setRevisionCount(1);
             clonedSoftware.setStorageSystem(clonedSoftwareStorageSystem);
             clonedSoftware.setExecutionSystem(clonedSoftwareExecutionSystem);
+            clonedSoftware.setExecutionType(clonedSoftwareExecutionSystem.getExecutionType());
             
             if (SoftwareDao.getSoftwareByUniqueName(clonedSoftware.getUniqueName()) != null) {
                 throw new SoftwareException("An app identified by " + clonedSoftware.getUniqueName() 

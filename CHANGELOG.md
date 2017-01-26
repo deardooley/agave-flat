@@ -1,8 +1,24 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.1.10 - 2017-01-21
 
-## 2.1.10 - 2017-01-13
+### Added
+- nothing
+
+### Changed
+- JOBS: AH-167 Fixed bug in job submission command when the execution system `startupScript` field has a blank value. A placeholder command is now put in place logging that no startup script was run.  
+- JOBS: Fixed bug in job termination command when the execution system `startupScript` field has a blank value. A placeholder command is now put in place logging that no startup script was run.  
+- JOBS: Fixed sort order of history items. We were previously sorting off the event id. This is actually filtered to the UUID filed during request URL query parsing, so the response was sorted by uuid, which appeared to be random. The actual table id is now used to sort the repsonse, which maintains our original intent of preventing against precision rounding errors. 
+- SYSTEMS: AH-166 Swapped SSH library to use Maverick J2SSH open source version of the previous library.  
+- SYSTEMS: Fixed bug setting a default execution system for non-privileged users. 
+- APPS: Fixed a bug in app cloning between systems with different `executionType` values. No the `executionType` of the cloned app is set to match the target execution system. This prevents issues monitoring jobs run on what would have been an invalid app execution type had it been registered directly.  
+
+### Removed
+- nothing
+
+
+## 2.1.10 - 2017-01-19
 
 ### Added
 - JOBS: Added logging of the startupScript to the job’s `.agave.log` file on job execution and termination. Monitoring does not log the output as it could potentially explode the log file size for long-running jobs. 
@@ -16,6 +32,9 @@ All notable changes to this project will be documented in this file.
 - POSTITS: AD-1029 Adding response filtering to customize the response objects.
 
 ### Changed
+- JOBS: Fixed bug in job history searches. Temporal queries now work as expected.
+- JOBS: Changed default sort order of job history to sort by event creation order.
+- JOBS: Fixed bug causing monitoring of SLRUM jobs to report back failed on PENDING status from the scheduler.
 - JOBS: AH-165 Fixed a bug preventing startupScript from being sourced on connection to remote systems. Startup script is now sourced as the first command when remoting to any system. The path is an actual system path, so tilda and environment variables will work as expected. 
 - JOBS: Fixed a bug launching jobs on LSF and parsing potentially different scheduler responses.  
 - JOBS: Fixed a bug launching jobs on PBS/MOAB/TORQUE and parsing potentially different scheduler responses.  

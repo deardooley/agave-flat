@@ -14,6 +14,7 @@ import org.iplantc.service.systems.model.StorageSystem;
 import org.iplantc.service.transfer.BaseTransferTestCase;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.iplantc.service.transfer.sftp.MaverickSFTP;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;

@@ -7,6 +7,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.exceptions.JobTerminationException;
+import org.iplantc.service.jobs.managers.monitors.JobMonitor;
+import org.iplantc.service.jobs.managers.monitors.JobMonitorFactory;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.StartupScriptJobVariableType;
 import org.iplantc.service.remote.RemoteSubmissionClient;
@@ -65,7 +67,7 @@ public abstract class AbstractJobKiller implements JobKiller {
 				if (StringUtils.isBlank(altCommand)) {
 					log.debug("Empty response found when checking remote execution system of agave job " 
 							+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
-							+ ". No numeric job id found in the batch job id for remtoe system. "
+							+ ". No numeric job id found in the batch job id for remote system. "
 							+ "No further attempt will be made.");
 				}
 				else {
@@ -77,6 +79,8 @@ public abstract class AbstractJobKiller implements JobKiller {
 			}
 			
 			if (StringUtils.isEmpty(result) && getExecutionSystem().getScheduler() != SchedulerType.FORK) {
+				// TODO: maybe the scheduler was shy. we should check the job status directly to see 
+				// if it's killed
 				throw new RemoteExecutionException(result); 
 			}
 			else {
@@ -144,6 +148,11 @@ public abstract class AbstractJobKiller implements JobKiller {
 						resolvedstartupScript);
 			}
 		}
+		
+		if (StringUtils.isEmpty(startupScriptCommand)) {
+			startupScriptCommand = String.format("echo 'No startup script defined. Skipping...' >> /dev/null ");
+		}
+		
 		return startupScriptCommand;
 	}
 	

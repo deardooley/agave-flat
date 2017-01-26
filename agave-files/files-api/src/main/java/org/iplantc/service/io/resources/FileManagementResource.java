@@ -1800,7 +1800,14 @@ public class FileManagementResource extends AbstractFileResource
 		}
 
 		// move is essentially just a rename on the same system
-		remoteDataClient.doRename(path, destPath);
+		try {
+			remoteDataClient.doRename(path, destPath);
+		} catch (RemoteDataException e) {
+			if (e.getMessage().contains("Destination already exists")) {
+				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, e.getMessage(), e);
+			}
+		}
+		
 		message = "Move success";
 		if (remoteDataClient.isPermissionMirroringRequired())
 		{

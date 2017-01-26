@@ -134,7 +134,7 @@ public class JobHistoryResource extends SearchableAgaveResource<JobEventSearchFi
 								.put("totalBytes", summary.getTotalBytes().longValue())
 								.put("averageRate", summary.getAverageTransferRate());
 							
-							jsonEvent.put("progress", jsonTransferTask);
+							jsonEvent.set("progress", jsonTransferTask);
 						} 
 						catch (TransferException e) {
 							jsonEvent.put("progress", (String) null);

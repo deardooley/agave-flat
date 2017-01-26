@@ -18,8 +18,8 @@ import org.jclouds.blobstore.domain.BlobMetadata;
 import org.jclouds.blobstore.domain.StorageMetadata;
 import org.jclouds.blobstore.domain.StorageType;
 
-import com.maverick.sftp.SftpFile;
-import com.maverick.sftp.SftpFileAttributes;
+import com.sshtools.sftp.SftpFile;
+import com.sshtools.sftp.SftpFileAttributes;
 
 //import com.sshtools.j2ssh.sftp.FileAttributes;
 //import com.sshtools.j2ssh.sftp.SftpFile;

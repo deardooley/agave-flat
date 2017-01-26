@@ -68,9 +68,6 @@ public class BaseTransferTestCase {
 	protected URI s3Uri;
 	protected URI sftpUri;
 
-	/* (non-Javadoc)
-	 * @see junit.framework.TestCase#setUp()
-	 */
 	@BeforeClass
 	protected void beforeClass() throws Exception
 	{

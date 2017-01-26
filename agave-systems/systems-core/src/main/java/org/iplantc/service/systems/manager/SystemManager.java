@@ -469,6 +469,31 @@ public class SystemManager {
 	}
 	
 	/**
+	 * Returns the default system of the given {@link RemoteSystemType} for the given api user. If they have
+	 * not defined one of their own, it defaults to the API default storage system,
+	 * currently the iPlant Data Store.
+	 * 
+	 * @param apiUsername
+	 * @return StorageSystem
+	 * @throws SystemException
+	 */
+	public RemoteSystem getUserDefaultStorageSystem(String apiUsername, RemoteSystemType type)
+	throws SystemException
+	{
+		if (StringUtils.isEmpty(apiUsername)) {
+			return getDefaultStorageSystem();
+			//throw new SystemException("No username provided.");
+		}
+		
+		RemoteSystem system = getDao().findUserDefaultSystem(apiUsername, type);
+		if (system == null) {
+			system = getDao().getGlobalDefaultSystemForTenant(type, TenancyHelper.getCurrentTenantId());
+		}
+		
+		return system;
+	}
+	
+	/**
 	 * Returns the default execution system for the given api user. If they have
 	 * not defined one of their own, it defaults to the API default execution system,
 	 * currently Lonestar.

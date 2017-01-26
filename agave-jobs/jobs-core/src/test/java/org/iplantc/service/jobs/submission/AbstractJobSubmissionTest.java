@@ -86,7 +86,8 @@ public class AbstractJobSubmissionTest {
 	protected StorageSystem storageSystem = null;
 	protected ExecutionSystem executionSystem = null;
 	protected SystemManager systemManager = new SystemManager();
-    
+	protected ObjectMapper mapper = new ObjectMapper();
+	
 	/**
 	 * Initalizes the test db and adds the test app 
 	 */
@@ -655,9 +656,8 @@ public class AbstractJobSubmissionTest {
 	 */
 	public Job createJob(JobStatusType status, Software software, ExecutionSystem executionSystem, BatchQueue queue, String username, StorageSystem archiveSystem)
     throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
         
-        Job job = new Job();
+		Job job = new Job();
         job.setName("test-" + executionSystem.getName() + "_" + queue.getName());
         job.setWorkPath(executionSystem.getScratchDir() + "/" + username + "job-" + job.getUuid());
         job.setOwner(username);

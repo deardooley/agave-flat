@@ -54,6 +54,13 @@ public class HPCLauncher extends AbstractJobLauncher
 	protected String batchScriptName = null;
     
 	/**
+	 * Default no-args constructor for mock testing
+	 */
+	protected HPCLauncher() {
+		super();
+	}
+	
+	/**
 	 * Creates an instance of a JobLauncher capable of submitting jobs to batch
 	 * queuing systems on HPC resources.
 	 */

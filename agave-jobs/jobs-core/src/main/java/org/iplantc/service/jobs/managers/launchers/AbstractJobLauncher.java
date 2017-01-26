@@ -72,13 +72,15 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	
 	protected File 						tempAppDir = null;
 	protected String 					step;
-    private   Job						job;
+    protected Job						job;
     protected IPhaseWorker              worker;
-    private   Software 					software;
-	private   ExecutionSystem 			executionSystem;
+    protected Software 					software;
+    protected ExecutionSystem 			executionSystem;
 	protected RemoteDataClient          localDataClient;
 	protected RemoteSubmissionClient 	submissionClient = null;
 	protected TransferTask              transferTask;
+	
+	protected AbstractJobLauncher() {}
 	
 	public AbstractJobLauncher(Job job, IPhaseWorker worker) {
 		this.setJob(job);
@@ -226,6 +228,11 @@ public abstract class AbstractJobLauncher implements JobLauncher
 						resolvedstartupScript,
 						absoluteRemoteWorkPath);
 			}
+		}
+		
+		if (StringUtils.isEmpty(startupScriptCommand)) {
+			startupScriptCommand = String.format("printf \"[%%s] %%b\\n\" $(date '+%%Y-%%m-%%dT%%H:%%M:%%S%%z') \"$(echo 'No startup script defined. Skipping...')\" >> %s/.agave.log ",
+					absoluteRemoteWorkPath);
 		}
 		return startupScriptCommand;
 	}

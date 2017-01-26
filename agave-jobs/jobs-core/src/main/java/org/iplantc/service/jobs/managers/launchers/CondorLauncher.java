@@ -59,6 +59,13 @@ public class CondorLauncher extends AbstractJobLauncher {
     
 	private boolean jobFailed = false;
 
+	/**
+	 * Default no-args constructor for mock testing
+	 */
+	protected CondorLauncher() {
+		super();
+	}
+	
     /**
      * Creates an instance of a JobLauncher capable of submitting jobs to batch
      * queuing systems on Condor resources.

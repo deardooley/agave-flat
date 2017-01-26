@@ -16,7 +16,6 @@ import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.AuthConfigException;
 import org.iplantc.service.systems.exceptions.EncryptionException;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
-import org.iplantc.service.systems.exceptions.SystemException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.model.AuthConfig;
 import org.iplantc.service.systems.model.RemoteSystem;

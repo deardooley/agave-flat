@@ -7,8 +7,8 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
-import com.maverick.ssh2.KBIPrompt;
-import com.maverick.ssh2.KBIRequestHandler;
+import com.sshtools.ssh2.KBIPrompt;
+import com.sshtools.ssh2.KBIRequestHandler;
 
 public class MultiFactorKBIRequestHandler implements KBIRequestHandler {
 		

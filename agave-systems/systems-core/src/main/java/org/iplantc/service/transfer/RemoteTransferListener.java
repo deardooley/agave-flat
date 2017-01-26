@@ -20,10 +20,10 @@ import org.irods.jargon.core.exception.JargonException;
 import org.irods.jargon.core.transfer.TransferStatus;
 import org.irods.jargon.core.transfer.TransferStatusCallbackListener;
 
-import com.maverick.sftp.FileTransferProgress;
+import com.sshtools.sftp.FileTransferProgress;
 
 public class RemoteTransferListener extends Observable  
-implements MarkerListener, FileTransferProgress, TransferStatusCallbackListener
+implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 {	
 	private static final Logger log = Logger.getLogger(RemoteTransferListener.class);
 	

@@ -4,8 +4,11 @@
 <mapEntry key="AGAVE_VERSION" value="2.1.8"/>
 <mapEntry key="PATH" value="${env_var:PATH}:/usr/local/bin"/>
 </mapAttribute>
+<listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+<listEntry value="org.eclipse.ui.externaltools.launchGroup"/>
+</listAttribute>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LAUNCH_CONFIGURATION_BUILD_SCOPE" value="${none}"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="/bin/sh"/>
-<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-l -i -c &quot;cd proxy &amp;&amp; docker-compose stop proxy &amp;&amp; docker-compose rm -f proxy &amp;&amp; cd ../static &amp;&amp; docker-compose stop &amp;&amp; docker-compose rm -f&quot;"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-l -i -c &quot;cd proxy &amp;&amp; docker-compose stop devproxy &amp;&amp; docker-compose rm -f devproxy&quot;"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/agave/compose}"/>
 </launchConfiguration>
