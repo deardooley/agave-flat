@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.phases.schedulers.Strategies;
+package org.iplantc.service.jobs.phases.schedulers.strategies;
 
 /** This interface defines the strategy accessors used by phase schedulers
  * to order and filter the tenants, users or jobs to process.

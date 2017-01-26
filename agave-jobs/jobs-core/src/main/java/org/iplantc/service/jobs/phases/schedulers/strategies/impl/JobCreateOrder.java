@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.phases.schedulers.Strategies.impl;
+package org.iplantc.service.jobs.phases.schedulers.strategies.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.iplantc.service.jobs.model.Job;
-import org.iplantc.service.jobs.phases.schedulers.Strategies.IJobStrategy;
+import org.iplantc.service.jobs.phases.schedulers.strategies.IJobStrategy;
 
 /**
  * @author rcardone

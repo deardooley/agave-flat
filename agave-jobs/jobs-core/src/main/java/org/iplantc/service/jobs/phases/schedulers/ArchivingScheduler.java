@@ -10,9 +10,9 @@ import org.iplantc.service.jobs.exceptions.JobSchedulerException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.schedulers.Strategies.impl.JobCreateOrder;
-import org.iplantc.service.jobs.phases.schedulers.Strategies.impl.TenantRandom;
-import org.iplantc.service.jobs.phases.schedulers.Strategies.impl.UserRandom;
+import org.iplantc.service.jobs.phases.schedulers.strategies.impl.JobCreateOrder;
+import org.iplantc.service.jobs.phases.schedulers.strategies.impl.TenantRandom;
+import org.iplantc.service.jobs.phases.schedulers.strategies.impl.UserRandom;
 
 /** Concrete job phase scheduler
  * 

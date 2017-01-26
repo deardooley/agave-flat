@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.phases.schedulers.Strategies;
+package org.iplantc.service.jobs.phases.schedulers.strategies;
 
 import java.util.HashMap;
 import java.util.Iterator;
