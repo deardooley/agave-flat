@@ -16,6 +16,7 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobQueueException;
 import org.iplantc.service.jobs.model.JobPublished;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
+import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 
 
 /** Data access object for the job_interrupts table.
@@ -278,7 +279,7 @@ public final class JobPublishedDao {
      * 
      * @param phase the phase in which the job was published
      * @param jobUuid the job id
-     * @return the number of records affect (0 or 1)
+     * @return the number of records affected (0 or 1)
      * @throws JobException on error
      */
     public static int deletePublishedJob(JobPhaseType phase, String jobUuid)
@@ -337,6 +338,94 @@ public final class JobPublishedDao {
             {
                 String msg = "Unable to commit job published record deletion for phase " + 
                              phase.name() + " and job " + jobUuid + ".";
+                _log.error(msg);
+                throw new JobException(msg, e);
+            }
+        }
+        
+        // Return the number of rows affected.
+        return rows;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* cleanPublishedJobs:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Clean up all publications whose jobs are no longer in the phase's
+     * publish statuses.
+     * 
+     * @param phase the phase in which the job was published
+     * @param statuses the phase's trigger statuses
+     * @return the number of records affected 
+     * @throws JobException on error
+     */
+    public static int cleanPublishedJobs(JobPhaseType phase, List<JobStatusType> statuses)
+     throws JobException
+    {
+        // ------------------------- Check Input -------------------------
+        // Null/empty checks.
+        if (phase == null) {
+            String msg = "Null job phase received when cleaning published jobs.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        if (statuses == null || statuses.isEmpty()) {
+            String msg = "Invalid statuses list received when cleaning published jobs.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Create the status where clause.
+        String statusClause = " jobs.status in (";
+        for (int i = 0; i < statuses.size(); i++)
+        {
+            // Single quote each status and add comma where needed.
+            statusClause += "'" + statuses.get(i).name() + "'";
+            if (i < statuses.size() - 1)
+                statusClause += ", ";
+        }
+        statusClause += ") ";
+        
+        // ------------------------- Call SQL ----------------------------
+        int rows = 0; // rows affected
+        try
+        {
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Create the insert command.
+            String sql = "delete from job_published " +
+                         "where phase = :phase " +
+                             "and job_uuid not in " + 
+                                 "(select jobs.uuid from jobs " +
+                                     "where " + statusClause + ")";
+            
+            // Fill in the placeholders.           
+            Query qry = session.createSQLQuery(sql);
+            qry.setString("phase", phase.name());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            
+            // Issue the call.
+            rows = qry.executeUpdate();
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to clean job published records for phase " + 
+                         phase.name() + ".";
+            _log.error(msg);
+            throw new JobException(msg, e);
+        }
+        finally {
+            try {HibernateUtil.commitTransaction();} 
+            catch (Exception e) 
+            {
+                String msg = "Unable to commit job published record clean up for phase " + 
+                             phase.name() + ".";
                 _log.error(msg);
                 throw new JobException(msg, e);
             }

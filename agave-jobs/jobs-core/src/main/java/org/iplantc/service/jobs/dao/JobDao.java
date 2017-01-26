@@ -35,8 +35,11 @@ import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobActiveCount;
+import org.iplantc.service.jobs.model.JobQuotaInfo;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.dto.JobDTO;
+import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
 import org.iplantc.service.jobs.search.JobSearchFilter;
@@ -50,6 +53,14 @@ import org.joda.time.DateTime;
 public class JobDao
 {
     private static final Logger log = Logger.getLogger(JobDao.class);
+    
+    // Limit the number of uuids allowed in a query request to avoid exceeding
+    // the packet request bound configured in the database.  Issue this
+    // command to discover the database's current configuration:
+    //
+    //     SHOW VARIABLES LIKE 'max_allowed_packet';
+    // 
+    private static final int UUID_QUERY_LIMIT = 1000;
 	
 	protected static Session getSession() {
 		Session session = HibernateUtil.getSession();
@@ -253,8 +264,7 @@ public class JobDao
 			throw new JobException(ex);
 		}
 		finally {
-//		    if (forceFlush)
-		        try { HibernateUtil.commitTransaction();} catch (Exception e) {}
+		    try { HibernateUtil.commitTransaction();} catch (Exception e) {}
 		}
 	}
 	
@@ -402,7 +412,7 @@ public class JobDao
 	}
 
     /** 
-     * Convenience method that returns a {@link List} of {@link Job}s belonging 
+     * Convenience method that returns a {@link List} of visible {@link Job}s 
      * with the given status.
      * 
      * @param status a job status
@@ -419,7 +429,7 @@ public class JobDao
     }
     
     /**
-     * Returns a {@link List} of {@link Job}s belonging with the given statuses.
+     * Returns a {@link List} of visible {@link Job}s with the given statuses.
      * 
      * @param statuses the non-empty list of status filters
      * @return the job list
@@ -463,7 +473,6 @@ public class JobDao
             session.flush();
             
             return jobs;
-
         }
         catch (ObjectNotFoundException e) {
             return new ArrayList<Job>();
@@ -879,10 +888,12 @@ public class JobDao
 			Session session = getSession();
 			session.clear();
 			String hql = "select count(*) from Job " +
-					"where system = :jobsystem and " +
-					"status in (" + JobStatusType.getActiveStatusValues() + ")";
+					"where system = :jobsystem " +
+					"and visible = :visible " +
+					"and status in (" + JobStatusType.getActiveStatusValues() + ")";
 			
 			long currentUserJobCount = ((Long)session.createQuery(hql)
+			        .setBoolean("visible", true)
 					.setString("jobsystem", system)
 					.uniqueResult()).longValue();
 			
@@ -2022,6 +2033,501 @@ public class JobDao
             try { HibernateUtil.commitTransaction();} catch (Exception e) {}
         }
 	}
+	
+    /** Multi-tenant retrieval of jobs with the specified UUIDs.  This method
+     * should only be called by schedulers that need to service job across tenants.
+     * 
+     * This method limits the number of UUIDs that it includes in the query to 
+     * no more than the first UUID_QUERY_LIMIT entries in the input list.  This
+     * is to avoid exceeding the allowed request buffer size on the server.
+     * 
+     * Returns a {@link List} of visible {@link Job}s with the specified uuids.
+     * 
+     * @param uuids the non-empty list of job uuids
+     * @return the job list
+     * @throws JobException on error
+     */
+    @SuppressWarnings("unchecked")
+    public static List<Job> getSchedulerJobsByUuids(List<String> uuids) 
+    throws JobException
+    {
+        // At least one status must be specified.
+        if (uuids == null || uuids.isEmpty())
+        {
+            String msg = "At least one uuid must be specified for job search.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Bound the number of uuids that we put in the sql statement so
+        // that we don't exceed max_allowed_packet size.
+        int limit = Math.min(uuids.size(), UUID_QUERY_LIMIT);
+        
+        // Create the where clause.
+        String uuidClause = "uuid in (";
+        for (int i = 0; i < limit; i++)
+        {
+            // Single quote each uuid and add comma where needed.
+            uuidClause += "'" + uuids.get(i) + "'";
+            if (i < limit - 1)
+                uuidClause += ", ";
+        }
+        uuidClause += ") ";
+        
+        // Make the database call for visible jobs with requested uuids.
+        try
+        {
+            // We intentionally bypass tenant filtering by going calling the utility
+            // methods directly.  This approach allows queries across tenants.  
+            Session session = HibernateUtil.getSession();
+            HibernateUtil.beginTransaction();
+            session.clear();
+            
+            String sql = "select * from jobs where " + uuidClause +
+                         "and visible = :visible";
+            List<Job> jobs = session.createSQLQuery(sql).addEntity(Job.class)
+                    .setBoolean("visible", true)
+                    .setCacheable(false)
+                    .setCacheMode(CacheMode.REFRESH)
+                    .list();
+
+            session.flush();
+            
+            return jobs;
+        }
+        catch (ObjectNotFoundException e) {
+            return new ArrayList<Job>();
+        }
+        catch (Exception ex)
+        {
+            try {HibernateUtil.rollbackTransaction();}
+            catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to retrieve jobs by UUID.";
+            throw new JobException(msg, ex);
+        }
+        finally {
+            try { HibernateUtil.commitTransaction();} catch (Exception e) {}
+        }
+    }
+
+    /** This method is intended to only be called from a phase scheduler.  It retrieves 
+     * information pertinent to quota checking on all active jobs.   
+     * 
+     * @return a list of active job records
+     */
+    public static List<JobActiveCount> getSchedulerActiveJobCount()
+     throws JobException
+    {
+        // Build the query without creating so many temporary strings.
+        // Since none of the returned can be null, every row is completely
+        // filled in with concrete values.
+        StringBuilder buf = new StringBuilder(512);
+        buf.append("select ");
+        buf.append("tenant_id, owner, execution_system, queue_request, sum(1) ");
+        buf.append("from jobs ");
+        buf.append("where status in (");
+        buf.append(JobStatusType.getActiveStatusValues());
+        buf.append(") ");
+        buf.append("and visible = 1 ");
+        buf.append("group by tenant_id, execution_system, queue_request, owner");
+       
+        // Result list.
+        List<JobActiveCount> result = new ArrayList<>();
+        
+        // Dump the complete table..
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Issue the call and populate the lease object.
+            Query qry = session.createSQLQuery(buf.toString());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            @SuppressWarnings("rawtypes")
+            List qryResuts = qry.list();
+            
+            // Commit the transaction.
+            HibernateUtil.commitTransaction();
+            
+            // Populate the list.
+            populateActiveCountList(result, qryResuts);
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to retrieve active job information.";
+            log.error(msg, e);
+        }
+        
+        return result;
+    }
+
+    /** Called by getSchedulerActiveJobCount() to populate a list of job active
+     * count object from rows returned from the database.
+     * 
+     * @param outList the result JobActiveCount list that gets populated
+     * @param qryResults the raw list of row objects from the database
+     */
+    @SuppressWarnings("rawtypes")
+    private static void populateActiveCountList(List<JobActiveCount> outList, List qryResults)
+    {
+        // Maybe there's nothing to do.
+        if (qryResults == null || qryResults.isEmpty()) return;
+       
+        // Marshal each row from the query results.
+        for (Object rowobj : qryResults)
+        {
+            // Access row as an array and create a new active object.
+            Object[] row = (Object[]) rowobj;
+            JobActiveCount activeCount = new JobActiveCount();
+            
+            // Marshal fields in result order.  
+            // Note that no value can be null. 
+            activeCount.setTenantId((String) row[0]);
+            activeCount.setOwner((String) row[1]);
+            activeCount.setExecutionSystem((String) row[2]);
+            activeCount.setQueueRequest((String) row[3]);
+            activeCount.setCount(Integer.parseInt((String) row[4]));
+
+            // Add the lease to the result list.
+            outList.add(activeCount);
+        }
+    }
+
+	/** This method is intended to only be called from a phase scheduler.  It retrieves the uuid's 
+	 * of jobs that may be ready to be scheduled along with quota information for those jobs.  
+	 * The statuses represent the triggers for the phase.  The query issued by this method skips 
+	 * jobs that have already been published in the job_published table for the phase.
+	 * 
+	 * The job quota records returned identify jobs via their UUIDs. These jobs are in one of the trigger 
+	 * statuses and do not have a publish record for the specified phase.  The quota records contain 
+	 * all the information needed to determine if any system, tenant, batchqueue or user quota has 
+	 * been exceeded.
+	 * 
+	 * @param phase the phase of the calling scheduler
+	 * @param statuses the trigger statuses for the phase scheduler
+	 * @return a list of job quota records
+	 */
+	public static List<JobQuotaInfo> getSchedulerJobQuotaInfo(JobPhaseType phase,
+	                                                          List<JobStatusType> statuses)
+	 throws JobException
+	{
+	    // ------------------- Check Input -------------------
+	    // We need a phase.
+        if (phase == null)
+        {
+            String msg = "Missing phase parameter in scheduler job quota retrieval.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+	    
+        // At least one status must be specified.
+        if (statuses == null || statuses.isEmpty())
+        {
+            String msg = "Missing statuses parameter in scheduler job quota retrieval.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Create the status where clause.
+        String statusClause = " j.status in (";
+        for (int i = 0; i < statuses.size(); i++)
+        {
+            // Single quote each status and add comma where needed.
+            statusClause += "'" + statuses.get(i).name() + "'";
+            if (i < statuses.size() - 1)
+                statusClause += ", ";
+        }
+        statusClause += ") ";
+        
+        // ------------------- Get Configured Input ----------
+        // Retrieve information that may have been set in configuration files and
+        // incorporate them into SQL clauses.  None of these calls throw exceptions.
+        String dedicatedTenantIdClause = getDedicatedTenantIdClause();
+        String dedicatedUsersClause = getDedicatedUsersClause();
+        String dedicatedSystemIdsClause = getDedicatedSystemIdsClause();
+        
+        // ------------------- Get Quota Info ----------------
+        // Put together the sql statement.  The basic idea is to retrieve all job UUIDs along
+        // with the quota information from the jobs table that have quotas defined.  Specifically,
+        // the execution system and the batchqueue have limits defined on a per tenant basis.
+        // These limits include the maximum number of jobs overall and the maximum number per user.
+        //
+        // To get the required four maximum bounds we join the jobs table to the systems table, 
+        // which allows us to then join the executionsystems and batchqueue tables that contain the 
+        // bounds.  All join fields are indexed.  The only values that can be null are the 
+        // batchqueues.execution_system_id fields and jobs.visible (though never is). 
+        //
+        // The distinct keyword is used to remove duplicates that can be returned for the chosen
+        // field selection.  We use the systems.available field to skip over jobs targeting 
+        // unavailable systems.  We also avoid returning uuids for jobs that have been published
+        // in this phase or that are not visible.
+        // 
+        // Build the query without creating so many temporary strings.
+        StringBuilder buf = new StringBuilder(512);
+        buf.append("select distinct ");
+        buf.append("j.uuid, j.tenant_id, j.owner, j.execution_system, j.queue_request, ");
+        buf.append("b.max_jobs max_queue_jobs_, b.max_user_jobs max_queue_user_jobs, ");
+        buf.append("e.max_system_jobs, e.max_system_jobs_per_user ");
+        buf.append("from jobs j ");
+        
+        buf.append("left join (systems s, executionsystems e, batchqueues b) ");
+        buf.append(  "on (j.execution_system = s.system_id ");
+        buf.append(      "and s.id = b.execution_system_id ");
+        buf.append(      "and s.id = e.id ");
+        buf.append(      "and j.queue_request = b.name ");
+        buf.append(      "and j.tenant_id = s.tenant_id) ");
+        
+        buf.append("where ");
+        buf.append(statusClause);
+        buf.append("and j.visible = 1 ");
+        buf.append("and s.available = 1 ");
+        buf.append("and s.type = 'EXECUTION' ");
+        buf.append(dedicatedTenantIdClause);
+        buf.append(dedicatedUsersClause);
+        buf.append(dedicatedSystemIdsClause);
+        buf.append("and not exists ");
+        buf.append(  "(select jp.job_uuid from job_published jp ");
+        buf.append(     "where jp.phase = :phase and jp.job_uuid = j.uuid)");
+        
+        // Result list.
+        List<JobQuotaInfo> result = new ArrayList<>();
+        
+        // Dump the complete table..
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Issue the call and populate the lease object.
+            Query qry = session.createSQLQuery(buf.toString());
+            qry.setString("phase", phase.name());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            @SuppressWarnings("rawtypes")
+            List qryResuts = qry.list();
+            
+            // Commit the transaction.
+            HibernateUtil.commitTransaction();
+            
+            // Populate the list.
+            populateQuotaInfoList(result, qryResuts);
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to retrieve job quota information.";
+            log.error(msg, e);
+        }
+	    
+	    return result;
+	}
+
+    /** Called by getSchedulerJobQuotaInfo() to populate a list of job quota
+     * information objects from rows returned from the database.
+     * 
+     * @param outList the result JobQuotaInfo list that gets populated
+     * @param qryResults the raw list of row objects from the database
+     */
+    @SuppressWarnings("rawtypes")
+    private static void populateQuotaInfoList(List<JobQuotaInfo> outList, List qryResults)
+    {
+        // Maybe there's nothing to do.
+        if (qryResults == null || qryResults.isEmpty()) return;
+       
+        // Marshal each row from the query results.
+        for (Object rowobj : qryResults)
+        {
+            // Access row as an array and create new lease.
+            Object[] row = (Object[]) rowobj;
+            JobQuotaInfo quotaInfo = new JobQuotaInfo();
+            
+            // Marshal fields in result order.
+            quotaInfo.setUuid((String) row[0]);
+            quotaInfo.setTenantId((String) row[1]);
+            quotaInfo.setOwner((String) row[2]);
+            quotaInfo.setExecutionSystem((String) row[3]);
+            quotaInfo.setQueueRequest((String) row[4]);
+            
+            // These values should never be null, but since we are dealing
+            // joined tables, we check anyway.
+            if (row[5] == null) quotaInfo.setMaxQueueJobs(-1L);
+              else quotaInfo.setMaxQueueJobs(((BigInteger)row[5]).longValue());
+            if (row[6] == null) quotaInfo.setMaxQueueUserJobs(-1L);
+              else quotaInfo.setMaxQueueUserJobs(((BigInteger)row[6]).longValue());
+            
+            // Unfortunately, these fields can be null in the database.
+            if (row[7] == null) quotaInfo.setMaxSystemJobs(-1L);
+              else quotaInfo.setMaxSystemJobs(((Integer)row[7]).longValue());
+            if (row[8] == null) quotaInfo.setMaxSystemUserJobs(-1L);
+              else quotaInfo.setMaxSystemUserJobs(((Integer)row[8]).longValue());
+
+            // Add the lease to the result list.
+            outList.add(quotaInfo);
+        }
+    }
+    
+    /** Create a properly formed where clause for the jobs table query using the table  alias "j".
+     * If a tenant id restriction is configured, create a like clause that may be a negation if the 
+     * id starts with an exclamation point.
+     * 
+     * If the returned string is not empty it should be padded with a space at the end.
+     * 
+     * Security Note: The result clause embeds values read directly from a configuration file installed  
+     *                on server, which is assumed to be trustworthy.  
+     * 
+     * @return a non-null tenant id where clause that may be empty
+     */
+    private static String getDedicatedTenantIdClause()
+    {
+        // Read in the configuration string if it exists.
+        String dedicatedTenantId = TenancyHelper.getDedicatedTenantIdForThisService();
+        if (StringUtils.isBlank(dedicatedTenantId)) return "";
+        
+        // The string can be an assertion or a negation.
+        // Return a clause with a trailing space.
+        if (dedicatedTenantId.startsWith("!"))
+            return "and j.tenant_id not like '" + StringUtils.removeStart(dedicatedTenantId, "!") + "' ";
+         else return "and j.tenant_id like '" + dedicatedTenantId + "' ";
+    }
+    
+    /** Create a properly formed where clause for the jobs table query using the table alias "j".  
+     * If owner (i.e., user) restrictions are configured, create a clause that may be a mix of 
+     * assertions and negations.
+     * 
+     * If the returned string is not empty it should be padded with a space at the end.
+     * 
+     * Security Note: The result clause embeds values read directly from a configuration file installed  
+     *                on server, which is assumed to be trustworthy.  
+     * 
+     * @return a non-null owners where clause that may be empty
+     */
+    private static String getDedicatedUsersClause()
+    {
+        // Read in the configuration string if it exists.
+        String[] dedicatedUsers = 
+                org.iplantc.service.common.Settings.getDedicatedUsernamesFromServiceProperties();
+        if (dedicatedUsers == null || dedicatedUsers.length == 0) return "";
+        
+        // Initialize the positive and negative clause info.
+        String posClause = "and j.owner in (";
+        String negClause = "and j.owner not in (";
+        boolean pos = false;
+        boolean neg = false;
+        
+        // Work through the list of owners.
+        for (String user : dedicatedUsers)
+        {
+            // Skip bad input.
+            if (StringUtils.isBlank(user)) continue;
+            
+            // Determine polarity and add to proper clause
+            if (user.startsWith("!")) {
+                if (!neg) neg = true;
+                 else negClause += ", ";
+                negClause += "'" + StringUtils.removeStart(user, "!") + "'";
+            }
+            else {
+               if (!pos) pos = true;
+                else posClause += ", ";
+               posClause += "'" + user + "'";
+            }
+        }
+        
+        // Add closing parentheses and trailing spaces.
+        if (pos) posClause += ") ";
+        if (neg) negClause += ") ";
+        
+        // Determine what to return.
+        if (!pos && !neg) return "";
+        else if (pos && neg) return posClause + negClause;
+        else if (pos) return posClause;
+        else return negClause;
+    }
+    
+    /** Create a properly formed where clause for the jobs table query using the table alias "j".  
+     * If system id restrictions are configured, create a clause that may be a mix of 
+     * assertions and negations.  
+     * 
+     * If the returned string is not empty it should be padded with a space at the end.
+     * 
+     * Security Note: The result clause embeds values read directly from a configuration file installed  
+     *                on server, which is assumed to be trustworthy.  
+     * 
+     * @return a non-null systems where clause that may be empty
+     */
+    private static String getDedicatedSystemIdsClause()
+    {
+        // Read in the configuration string if it exists.
+        String[] dedicatedSystemIds = 
+                org.iplantc.service.common.Settings.getDedicatedSystemIdsFromServiceProperties();
+        if (dedicatedSystemIds == null || dedicatedSystemIds.length == 0) return "";
+        
+        // Initialize the positive and negative clause info.
+        String clause = "";
+        
+        // Work through the list of owners.
+        for (String systemEntry : dedicatedSystemIds)
+        {
+            // Skip bad input.
+            if (StringUtils.isBlank(systemEntry)) continue;
+            
+            // See if we have a queuename attached to the sysytem.
+            String systemId = null;
+            String queueName = null;
+            if (StringUtils.contains(systemEntry, "#")) {
+                String[] tokens = systemEntry.split("#");
+                if (tokens.length > 0) systemId = tokens[0];
+                if (tokens.length > 1) queueName = tokens[1];
+            }
+            else systemId = systemEntry;
+            
+            // We better have a system id.
+            if (StringUtils.isBlank(systemId)) continue;
+            
+            // Use polarity to determine which operators to use inside each
+            // parenthesized subclause and also strip out the leading   
+            // exclamation point if it exists.
+            String equalOp;
+            String connectOp;
+            if (systemId.startsWith("!")) {
+                equalOp = "!=";
+                connectOp = "or"; // inner disjunction
+                systemId = StringUtils.removeStart(systemId, "!");
+            }
+            else {
+                equalOp = "=";
+                connectOp = "and"; // inner conjunction
+            }
+            
+            // Only on the first time through do we define the outer conjunct.
+            // Otherwise, we connect the different system specs with a disjunction.
+            if (clause.isEmpty()) clause = "and (";
+              else clause += " or ";
+            
+            // Build clause.  Note that when queue names are present this inner clause
+            // becomes a disjunction which will evaluate to true if either the system
+            // id or the queue name is not equal to the configured values.
+            clause += "(j.execution_system " + equalOp + " '" + systemId + "'"; 
+            if (!StringUtils.isBlank(queueName))
+                clause += " " + connectOp + " j.queue_request " + equalOp + " '" + queueName + "'";
+            clause += ") ";
+        }
+        
+        // Terminate the outer conjunct if any systems were specified.
+        if (!clause.isEmpty()) clause += ") ";
+        return clause;
+    }
 
 	/**
      * Selects a job at random from the population of jobs of the given {@code status}. This method

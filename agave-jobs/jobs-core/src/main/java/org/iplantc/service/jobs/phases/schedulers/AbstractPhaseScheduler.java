@@ -6,10 +6,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -29,7 +27,6 @@ import org.iplantc.service.jobs.exceptions.JobQueueFilterException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobInterrupt;
-import org.iplantc.service.jobs.model.JobPublished;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
@@ -40,6 +37,11 @@ import org.iplantc.service.jobs.phases.queuemessages.DeleteJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.PauseJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.StopJobMessage;
+import org.iplantc.service.jobs.phases.schedulers.Strategies.IJobStrategy;
+import org.iplantc.service.jobs.phases.schedulers.Strategies.IStrategyAccessors;
+import org.iplantc.service.jobs.phases.schedulers.Strategies.ITenantStrategy;
+import org.iplantc.service.jobs.phases.schedulers.Strategies.IUserStrategy;
+import org.iplantc.service.jobs.phases.schedulers.Strategies.PrioritizedJobs;
 import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
@@ -163,7 +165,7 @@ import com.rabbitmq.client.Envelope;
  */
 
 public abstract class AbstractPhaseScheduler 
-  implements Runnable, Thread.UncaughtExceptionHandler
+  implements Runnable, Thread.UncaughtExceptionHandler, IStrategyAccessors
 {
     /* ********************************************************************** */
     /*                               Constants                                */
@@ -202,6 +204,11 @@ public abstract class AbstractPhaseScheduler
     // The only job phase that this instance services.
     protected final JobPhaseType _phaseType;
     
+    // Strategy fields.
+    private final ITenantStrategy _tenantStrategy;
+    private final IUserStrategy   _userStrategy;
+    private final IJobStrategy    _jobStrategy;
+
     // A unique name for this scheduler.
     private final String _name;
     
@@ -250,15 +257,38 @@ public abstract class AbstractPhaseScheduler
      * @param phaseType the phase that this scheduler services
      * @throws JobException on error
      */
-    protected AbstractPhaseScheduler(JobPhaseType phaseType)
+    protected AbstractPhaseScheduler(JobPhaseType phaseType,
+                                     ITenantStrategy tenantStrategy,
+                                     IUserStrategy userStrategy,
+                                     IJobStrategy jobStrategy)
      throws JobException
     {
         // Check input.
         if (phaseType == null) {
-            String msg = "A non-null phase type is required PhaseScheduler initialization.";
+            String msg = "A non-null phase type is required for PhaseScheduler initialization.";
             _log.error(msg);
             throw new JobException(msg);
         }
+        if (tenantStrategy == null) {
+            String msg = "A non-null tenant strategy is required for PhaseScheduler initialization.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        if (userStrategy == null) {
+            String msg = "A non-null user strategy is required for PhaseScheduler initialization.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        if (jobStrategy == null) {
+            String msg = "A non-null job strategy is required for PhaseScheduler initialization.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Set the strategy fields.
+        _tenantStrategy = tenantStrategy;
+        _userStrategy = userStrategy;
+        _jobStrategy = jobStrategy;
         
         // Assign our phase identity.
         _phaseType = phaseType;
@@ -277,11 +307,26 @@ public abstract class AbstractPhaseScheduler
     /* getPhaseTriggerStatus:                                                 */
     /* ---------------------------------------------------------------------- */
     /** Define the status that causes this phase scheduler to begin processing
-     * a job.  The returned status is how the scheduler identifies new work. 
+     * a job.  The returned status list is the first filter the scheduler
+     * uses to identify new work. 
      * 
      * @return the trigger status for new work in this phase.
      */
     protected abstract List<JobStatusType> getPhaseTriggerStatuses();
+    
+    /* ---------------------------------------------------------------------- */
+    /* getPhaseCandidateJobs:                                                 */
+    /* ---------------------------------------------------------------------- */
+    /** Get a list of jobs that might be ready to run in this phase.  Some 
+     * initial filtering that takes advantage of database access should take 
+     * place here.   
+     * 
+     * @param statuses this phase's trigger statuses 
+     * @return the initial list of vetted jobs from the database
+     * @throws JobSchedulerException on error
+     */
+    protected abstract List<Job> getPhaseCandidateJobs(List<JobStatusType> statuses)
+      throws JobSchedulerException;
     
     /* ---------------------------------------------------------------------- */
     /* isFilteringPublishedJobs:                                              */
@@ -393,6 +438,18 @@ public abstract class AbstractPhaseScheduler
         newWorker.start();
     }
     
+    /* ********************************************************************** */
+    /*                           Strategy Accessors                           */
+    /* ********************************************************************** */
+    @Override
+    public ITenantStrategy getTenantStrategy(){return _tenantStrategy;}
+    
+    @Override
+    public IUserStrategy getUserStrategy(){return _userStrategy;}
+    
+    @Override
+    public IJobStrategy getJobStrategy(){return _jobStrategy;}
+
     /* ********************************************************************** */
     /*                           Protected Methods                            */
     /* ********************************************************************** */
@@ -1193,12 +1250,15 @@ public abstract class AbstractPhaseScheduler
         // Enter infinite scheduling loop.
         try {
             for (;;) {
-                
+                // ------------------- Acquire Lease ----------------------------
                 // Acquire or reacquire the lease that grants this scheduler
                 // instance the permission to query the jobs table.  If we don't
                 // get the lease, we keep retrying until we do or are interrupted.
+                // There should only be one active scheduler for each phase in
+                // the system at a time.
                 if (!jobLeaseDao.acquireLease()) waitToAcquireLease(jobLeaseDao);
                 
+                // ------------------- Begin Job Processing ---------------------
                 // Only the staging scheduler can start an interrupt clean up thread.
                 // There's nothing special about the staging scheduler; we only need
                 // one clean up thread in the whole system.
@@ -1226,6 +1286,7 @@ public abstract class AbstractPhaseScheduler
                     _log.debug(_phaseType.name() + " scheduler retrieved " +
                                jobs.size() + " jobs.");
             
+                // ------------------- Check for Interrupts ---------------------
                 // See if this thread was interrupted before doing a lot of processing.
                 // The interrupt status gets cleared as a side-effect.
                 if (Thread.interrupted()) {
@@ -1235,59 +1296,24 @@ public abstract class AbstractPhaseScheduler
                     throw new InterruptedException(msg);
                 }
                 
-                // Select a tenant to process.
-            
-                // Select a user to process.
-            
-                // Select a job to process.
-            
-                // Process the selected job.
-                // TODO: Replace scaffolding code with real job selection code.
+                // ------------------- Prioritize and Publish -------------------
+                // We need to pick a tenant, pick a user, and then pick a job.  
+                // We use plugable strategies for flexibility.  The default strategy
+                // choices are to randomly pick a tenant, randomly pick a user, and
+                // and then pick jobs from oldest to newest with regard to create time.
                 if (!jobs.isEmpty()) {
-                    Job job = jobs.get(0); // temp code
+                    PrioritizedJobs prioritizedJobs = 
+                        new PrioritizedJobs(getTenantStrategy(), getUserStrategy(), 
+                                            getJobStrategy(), jobs);
                 
-                    // Select a target queue name for this job.
-                    // The name is used as the routing key to a 
-                    // direct exchange.
-                    String routingKey = selectQueueName(job);
-                    try {
-                        // Write the job to the selected worker queue.
-                        _schedulerChannel.basicPublish(QueueConstants.WORKER_EXCHANGE_NAME, 
-                            routingKey, QueueConstants.PERSISTENT_JSON, 
-                            toQueueableJSON(job).getBytes("UTF-8"));
-                       
-                        // Let's not publish this job to a queue more than once in this phase.
-                        // NOTE: A failure between the last statement leaves information about this
-                        //       job in an inconsistent state.  The worker thread that eventually
-                        //       services this job can resolve the situation.  See 
-                        //       AbstractPhaseWorker.detectDuplicateJob() for details.
-                        if (!allowsRepublishing())
-                            try {JobPublishedDao.publish(_phaseType, job.getUuid(), getSchedulerName());}
-                            catch (Exception e) {
-                                String msg = _phaseType.name() + " scheduler failed to insert " +
-                                    job.getName() + " (" + job.getUuid() + ") into published jobs table. " + 
-                                    "It is possible that this job will be processed multiple times by the " +
-                                    _phaseType.name() + " scheduler.";
-                                _log.error(msg, e);
-                            }
-                    
-                        // Tracing.
-                        if (_log.isDebugEnabled()) {
-                            String msg = _phaseType.name() + " scheduler published " +
-                                job.getName() + " (" + job.getUuid() + ") to queue " + 
-                                routingKey + ".";
-                            _log.debug(msg);
-                        }
-                    }
-                    catch (Exception e) {
-                        // TODO: Probably need better failure remedy when publish fails.
-                        String msg = _phaseType.name() + " scheduler failed to publish " +
-                            job.getName() + " (" + job.getUuid() + ") to queue " + 
-                            routingKey + ".  Retrying later.";
-                        _log.warn(msg, e);
+                    // Publish the jobs in priority order as defined in the priority job object.
+                    Iterator<Job> jobIterator = prioritizedJobs.iterator();
+                    while (jobIterator.hasNext()) {
+                        Job job = jobIterator.next();
+                        publishJob(job);
                     }
                 }
-            
+                
                 // Wait for more jobs to accumulate
                 // while maintaining our job lease.
                 waitForWork(jobLeaseDao, POLLING_NORMAL_DELAY);
@@ -1317,6 +1343,99 @@ public abstract class AbstractPhaseScheduler
                 _log.info(msg);
             }
         }
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* publishJob:                                                            */
+    /* ---------------------------------------------------------------------- */
+    /** Determine on which queue the job should be published and insert a 
+     * job request message on that queue. 
+     * 
+     * @param job the job to be published
+     */
+    private void publishJob(Job job)
+    {
+        // Select a target queue name for this job.
+        // The name is used as the routing key to a 
+        // direct exchange.
+        String routingKey = selectQueueName(job);
+        
+        // Publish the job.
+        try {
+            // Write the job to the selected worker queue.
+            _schedulerChannel.basicPublish(QueueConstants.WORKER_EXCHANGE_NAME, 
+                routingKey, QueueConstants.PERSISTENT_JSON, 
+                toQueueableJSON(job).getBytes("UTF-8"));
+           
+            // Let's not publish this job to a queue more than once in this phase.
+            // NOTE: A failure between the last statement leaves information about this
+            //       job in an inconsistent state.  The worker thread that eventually
+            //       services this job can resolve the situation.  See 
+            //       AbstractPhaseWorker.detectDuplicateJob() for details.
+            if (!allowsRepublishing())
+                try {JobPublishedDao.publish(_phaseType, job.getUuid(), getSchedulerName());}
+                catch (Exception e) {
+                    String msg = _phaseType.name() + " scheduler failed to insert " +
+                        job.getName() + " (" + job.getUuid() + ") into published jobs table. " + 
+                        "It is possible that this job will be processed multiple times by the " +
+                        _phaseType.name() + " scheduler.";
+                    _log.error(msg, e);
+                }
+        
+            // Tracing.
+            if (_log.isDebugEnabled()) {
+                String msg = _phaseType.name() + " scheduler published " +
+                    job.getName() + " (" + job.getUuid() + ") to queue " + 
+                    routingKey + ".";
+                _log.debug(msg);
+            }
+        }
+        catch (Exception e) {
+            // TODO: Probably need better failure remedy when publish fails.
+            String msg = _phaseType.name() + " scheduler failed to publish " +
+                job.getName() + " (" + job.getUuid() + ") to queue " + 
+                routingKey + ".  Retrying later.";
+            _log.warn(msg, e);
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getTenantUserJobMap:                                                   */
+    /* ---------------------------------------------------------------------- */
+    /** Create a map of tenants->users->jobs for use by scheduling algorithms.
+     * The outermost keys are tenant IDs and their values is a map with user
+     * keys.  The value associated with each user key is a list of jobs ready
+     * to be processed for that user.
+     * 
+     * @param jobs all jobs ready to process in this phase
+     * @return the ready jobs reorganized into a 2-level hash map
+     */
+    private HashMap<String,HashMap<String,List<Job>>> getTenantUserJobMap(List<Job> jobs)
+    {
+        // A map of tenants->users->jobs.
+        HashMap<String,HashMap<String,List<Job>>> tenantMap = new HashMap<>();
+        
+        // Cycle through all the jobs placing them in their proper place in the map.
+        for (Job job : jobs) {
+            // Get the tenant bucket for this job.
+            HashMap<String,List<Job>> userMap = tenantMap.get(job.getTenantId());
+            if (userMap == null) {
+                userMap = new HashMap<>();
+                tenantMap.put(job.getTenantId(), userMap);
+            }
+            
+            // Get the user bucket for this job.
+            List<Job> userJobList = userMap.get(job.getOwner());
+            if (userJobList == null) {
+                userJobList = new ArrayList<Job>();
+                userMap.put(job.getOwner(), userJobList);
+            }
+            
+            // Add the job to its list.
+            userJobList.add(job);
+        }
+        
+        return tenantMap;
     }
 
     /* ---------------------------------------------------------------------- */
@@ -1533,68 +1652,41 @@ public abstract class AbstractPhaseScheduler
             return jobs;
         }
         
+        // -------------------- Clean Published Jobs -----------
+        // Remove jobs from the published table that are no longer in one of this phase's 
+        // trigger's statuses.  Note that jobs may change status between this call and 
+        // the next query call.
+        // 
+        // When a job exits a trigger status for this phase, but its published record still 
+        // exists for this phase, the next query will not return the job and the record 
+        // will be removed in the next clean.  On the other hand, if a job moves into a 
+        // trigger status of this phase, it will be picked up in the query below as long as 
+        // it doesn't have a publish record.
+        //
+        // It is possible for a job to regress to an earlier status after it has advanced
+        // to a later status.  For example, from staged to pending.  If this rollback
+        // occurs before an execution of cleanPublishedJob occurs, the job will become
+        // orphaned (i.e., have a published record but not actually be posted in any worker
+        // queue).  If this becomes a problem in practice, the remedy would be to remove
+        // any publish record for a job being rolled back. 
+        try {JobPublishedDao.cleanPublishedJobs(_phaseType, getPhaseTriggerStatuses());}
+            catch (Exception e)
+            {
+                String msg = _phaseType.name() + " scheduler unable clean job_published table.";
+                _log.error(msg, e);
+                throw new JobSchedulerException(msg, e);
+            }
+        
         // -------------------- Query Jobs ---------------------
         // Query all jobs that are ready for this state.
-        try {jobs = JobDao.getByStatus(getPhaseTriggerStatuses());}
+        try {jobs = getPhaseCandidateJobs(getPhaseTriggerStatuses());}
             catch (Exception e)
             {
                 String msg = _phaseType.name() + " scheduler unable to retrieve jobs.";
                 _log.error(msg, e);
                 throw new JobSchedulerException(msg, e);
             }
-        
-        // We're done if the phase reschedules the same job until
-        // its status changes.
-        if (allowsRepublishing()) return jobs;
-        
-        // -------------------- Filter Jobs --------------------
-        // Put the job uuids in an easily searched set.
-        HashSet<String> jobUuids = new HashSet<>((jobs.size() * 2) + 1);
-        for (Job job : jobs)  jobUuids.add(job.getUuid());
-            
-        // Maintain the published job set by removing obsolete jobs from the set.
-        // Obsolete jobs are those that are no longer in any of this phase's trigger
-        // states.  We do not need to guard against republishing jobs that progressed
-        // beyond this phase's purview, so we remove them from the publish job set.
-        List<JobPublished> publishedJobs = null;
-        try {publishedJobs = JobPublishedDao.getPublishedJobs(_phaseType);}
-        catch (Exception e) {
-            String msg = _phaseType.name() + " scheduler unable to retrieve published job list.";
-            _log.error(msg, e);
-            throw new JobSchedulerException(msg, e);
-        }
-        
-        // Put the published job uuids in an easily searched set.
-        HashSet<String> publishedJobUuids = new HashSet<>((publishedJobs.size() * 2) + 1);
-        for (JobPublished jobPublished : publishedJobs) publishedJobUuids.add(jobPublished.getJobUuid());
-        
-        // Remove uuids in the published set those that are no longer in the current job set.
-        String publishedUuid = null;
-        try {
-            Iterator<String> publishedIt = publishedJobUuids.iterator();
-            while (publishedIt.hasNext()) {
-                publishedUuid = publishedIt.next();
-                if (!jobUuids.contains(publishedUuid))
-                    JobPublishedDao.deletePublishedJob(_phaseType, publishedUuid);
-            }
-        }
-        catch (Exception e) {
-            String msg = _phaseType.name() + " scheduler unable to delete published job " +
-                         publishedUuid + ".";
-            _log.error(msg, e);
-            throw new JobSchedulerException(msg, e);
-        }
-        
-        // Remove jobs that have already been published to a RabbitMQ queue
-        // and are still in one of this phase's trigger states.
-        ListIterator<Job> jobIt = jobs.listIterator();
-        while (jobIt.hasNext()) {
-            // Remove the job if it has been published.
-            Job job = jobIt.next();
-            if (publishedJobUuids.contains(job.getUuid()))
-                jobIt.remove();
-        }
-        
+                
         return jobs;
     }
 
