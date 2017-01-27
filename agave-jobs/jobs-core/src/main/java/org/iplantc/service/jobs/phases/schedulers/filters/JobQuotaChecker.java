@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.phases;
+package org.iplantc.service.jobs.phases.schedulers.filters;
 
 import java.util.HashMap;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobActiveCount;
 import org.iplantc.service.jobs.model.JobQuotaInfo;
 
@@ -18,6 +19,7 @@ import org.iplantc.service.jobs.model.JobQuotaInfo;
  * @author rcardone
  */
 public final class JobQuotaChecker
+ implements IPostPriorityJobFilter
 {
     /* ********************************************************************** */
     /*                                Constants                               */
@@ -419,6 +421,27 @@ public final class JobQuotaChecker
                        " queue of " + info.getExecutionSystem() + ".");
              return true; // exceeded quota
          }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* keep:                                                                  */
+    /* ---------------------------------------------------------------------- */
+    /** Post-priority check to determine if job should be scheduled now or if
+     * scheduling it would exceed some quota.  Before this method is called
+     * with the given job, it was called once for all higher priority jobs. 
+     * This method tracks that history by updating internal counters that 
+     * indicate when a threshold would be exceeded given prior decisions on
+     * whether to schedule higer priority jobs.
+     * 
+     * @param job the job that was preceded by all higher priority jobs
+     * @return true if this job should be scheduled, false if scheduling this
+     *         job could cause a quota to be exceeded
+     */
+    @Override
+    public boolean keep(Job job)
+    {
+        // TODO Auto-generated method stub
+        return true;
     }
     
     /* ********************************************************************** */

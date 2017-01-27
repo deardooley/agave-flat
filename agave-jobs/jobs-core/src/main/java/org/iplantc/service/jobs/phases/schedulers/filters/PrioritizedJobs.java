@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.phases.schedulers.strategies;
+package org.iplantc.service.jobs.phases.schedulers.filters;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -8,6 +8,9 @@ import java.util.NoSuchElementException;
 
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.phases.schedulers.strategies.IJobStrategy;
+import org.iplantc.service.jobs.phases.schedulers.strategies.ITenantStrategy;
+import org.iplantc.service.jobs.phases.schedulers.strategies.IUserStrategy;
 
 /** Concrete strategies use this class to store their prioritized
  * tenants, users, and jobs.
@@ -27,16 +30,17 @@ public final class PrioritizedJobs
     /*                                 Fields                                 */
     /* ********************************************************************** */
     // Input strategies.
-    private final ITenantStrategy _tenantStrategy;
-    private final IUserStrategy   _userStrategy;
-    private final IJobStrategy    _jobStrategy;
+    private final ITenantStrategy        _tenantStrategy;
+    private final IUserStrategy          _userStrategy;
+    private final IJobStrategy           _jobStrategy;
     
-    // Input jobs.
-    private final List<Job>       _unprioritizedJobs;
+    // Input ready job information.
+    private final List<Job>              _unprioritizedJobs;
+    private final IPostPriorityJobFilter _jobFilter;
     
     // Prioritized list that provides root
     // nodes for ordered navigation.
-    private List<String>          _tenants;
+    private List<String>                 _tenants;
     
     // Maps from prioritized list elements.
     //  key = tenant name, value = users
@@ -53,14 +57,14 @@ public final class PrioritizedJobs
     public PrioritizedJobs(ITenantStrategy tenantStrategy,
                            IUserStrategy   userStrategy,
                            IJobStrategy    jobStrategy,
-                           List<Job>       unprioritizedJobs)
+                           ReadyJobs       readyJobs)
     {
         // Check input.
-        if (tenantStrategy == null    ||
-            userStrategy == null      || 
-            jobStrategy  == null      ||
-            unprioritizedJobs == null ||
-            unprioritizedJobs.isEmpty())
+        if (tenantStrategy == null       ||
+            userStrategy == null         || 
+            jobStrategy  == null         ||
+            readyJobs.getJobs() == null  ||
+            readyJobs.getJobs().isEmpty())
         {
             String msg = "Invalid initialization parameter for job prioritization.";
             _log.error(msg);
@@ -71,10 +75,14 @@ public final class PrioritizedJobs
         _tenantStrategy    = tenantStrategy;
         _userStrategy      = userStrategy;
         _jobStrategy       = jobStrategy;
-        _unprioritizedJobs = unprioritizedJobs;
+        _unprioritizedJobs = readyJobs.getJobs();
+        _jobFilter         = readyJobs.getJobFilter();
         
         // Prioritize the jobs according to the supplied strategies.
         prioritize();
+        
+        // Filter the after priorization.
+        filter();
     }
 
     /* ********************************************************************** */
@@ -116,6 +124,26 @@ public final class PrioritizedJobs
                 List<Job> jobs = _jobStrategy.prioritizeJobs(tenantId, user, _unprioritizedJobs);
                 _userToJobsMap.put(user, jobs);
             }
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* filter:                                                                */
+    /* ---------------------------------------------------------------------- */
+    /** After we prioritize the jobs, we can optionally filter them to remove 
+     * the lowest priority jobs that violate some condition.  
+     * 
+     */
+    private void filter()
+    {
+        // Maybe there's nothing to do.
+        if (_jobFilter == null) return;
+        
+        // Stream the jobs to the filter provider in priority order
+        Iterator<Job> it = iterator();
+        while (it.hasNext()) {
+            Job job = it.next();
+            if (!_jobFilter.keep(job)) it.remove();
         }
     }
     
@@ -205,11 +233,10 @@ public final class PrioritizedJobs
         @Override
         public void remove()
         {
-            String msg = "JobIterator does not implement the remove method.";
-            throw new UnsupportedOperationException(msg);
+            if (_itJobs != null) _itJobs.remove();
         }
         
-        // ------------------ Public Methods
+        // ------------------ Private Methods
         /** Advance to the next user's job iterator.  The the tenant
          * has no more users, then advance to the next tenant.  If there
          * are no more tenants, were done. 

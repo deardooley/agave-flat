@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
-import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.schedulers.filters.ReadyJobs;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.JobCreateOrder;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.TenantRandom;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.UserRandom;
@@ -74,7 +73,7 @@ public final class SubmittingScheduler
      * @throws JobSchedulerException on error
      */
     @Override
-    protected List<Job> getPhaseCandidateJobs(List<JobStatusType> statuses) 
+    protected ReadyJobs getPhaseCandidateJobs(List<JobStatusType> statuses) 
       throws JobSchedulerException
     {
         // Staging and Submitting phases perform the same 

@@ -10,6 +10,7 @@ import org.iplantc.service.jobs.exceptions.JobSchedulerException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.schedulers.filters.ReadyJobs;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.JobCreateOrder;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.TenantRandom;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.UserRandom;
@@ -66,7 +67,7 @@ public final class ArchivingScheduler
     /* getPhaseCandidateJobs:                                                 */
     /* ---------------------------------------------------------------------- */
     @Override
-    protected List<Job> getPhaseCandidateJobs(List<JobStatusType> statuses) 
+    protected ReadyJobs getPhaseCandidateJobs(List<JobStatusType> statuses) 
       throws JobSchedulerException
     {
         // Initialize result list.
@@ -81,6 +82,6 @@ public final class ArchivingScheduler
                 throw new JobSchedulerException(msg, e);
             }
         
-        return jobs;
+        return new ReadyJobs(jobs);
     }
 }

@@ -33,19 +33,20 @@ import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.JobQuotaInfo;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.JobQuotaChecker;
 import org.iplantc.service.jobs.phases.QueueConstants;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
-import org.iplantc.service.jobs.phases.schedulers.strategies.IJobStrategy;
-import org.iplantc.service.jobs.phases.schedulers.strategies.IStrategyAccessors;
-import org.iplantc.service.jobs.phases.schedulers.strategies.ITenantStrategy;
-import org.iplantc.service.jobs.phases.schedulers.strategies.IUserStrategy;
-import org.iplantc.service.jobs.phases.schedulers.strategies.PrioritizedJobs;
 import org.iplantc.service.jobs.phases.queuemessages.DeleteJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.PauseJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.StopJobMessage;
+import org.iplantc.service.jobs.phases.schedulers.filters.JobQuotaChecker;
+import org.iplantc.service.jobs.phases.schedulers.filters.PrioritizedJobs;
+import org.iplantc.service.jobs.phases.schedulers.filters.ReadyJobs;
+import org.iplantc.service.jobs.phases.schedulers.strategies.IJobStrategy;
+import org.iplantc.service.jobs.phases.schedulers.strategies.IStrategyAccessors;
+import org.iplantc.service.jobs.phases.schedulers.strategies.ITenantStrategy;
+import org.iplantc.service.jobs.phases.schedulers.strategies.IUserStrategy;
 import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
@@ -323,13 +324,16 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /** Get a list of jobs that might be ready to run in this phase.  Some 
      * initial filtering that takes advantage of database access should take 
-     * place here.   
+     * place here.  In addition the job list, the result object may contain
+     * a post priority filter class used to further reduce the number of 
+     * candidate jobs.   
      * 
      * @param statuses this phase's trigger statuses 
-     * @return the initial list of vetted jobs from the database
+     * @return the initial list of vetted jobs from the database plus an optional
+     *         post-priority filter
      * @throws JobSchedulerException on error
      */
-    protected abstract List<Job> getPhaseCandidateJobs(List<JobStatusType> statuses)
+    protected abstract ReadyJobs getPhaseCandidateJobs(List<JobStatusType> statuses)
       throws JobSchedulerException;
     
     /* ---------------------------------------------------------------------- */
@@ -752,7 +756,7 @@ public abstract class AbstractPhaseScheduler
      * @return the list of jobs that do not violate any quotas
      * @throws JobSchedulerException on error
      */
-    protected List<Job> getQuotaCheckedJobs(List<JobStatusType> statuses) 
+    protected ReadyJobs getQuotaCheckedJobs(List<JobStatusType> statuses) 
       throws JobSchedulerException
     {
         // Get candidate job uuids with quota information.
@@ -765,9 +769,10 @@ public abstract class AbstractPhaseScheduler
         }
         
         // Retrieve active job summary information to check quotas.
+        JobQuotaChecker quotaChecker = null;
         try {
             // Create the checker object used to check quotas.
-            JobQuotaChecker quotaChecker = new JobQuotaChecker();
+            quotaChecker = new JobQuotaChecker();
         
             // Remove records that exceed their quotas.
             ListIterator<JobQuotaInfo> it = quotaInfoList.listIterator();
@@ -786,7 +791,7 @@ public abstract class AbstractPhaseScheduler
         }
         
         // Quit now if there's nothing to do.
-        if (quotaInfoList.isEmpty()) return new LinkedList<Job>();
+        if (quotaInfoList.isEmpty()) return new ReadyJobs(new LinkedList<Job>());
         
         // Create list of job uuids still in play. 
         List<String> uuids = new ArrayList<String>(quotaInfoList.size());
@@ -807,7 +812,7 @@ public abstract class AbstractPhaseScheduler
                 _log.error(msg, e);
             }
         
-        return jobs;
+        return new ReadyJobs(jobs, quotaChecker);
     }
     
     /* ********************************************************************** */
@@ -1340,8 +1345,8 @@ public abstract class AbstractPhaseScheduler
                 // Query the database for all candidate jobs for this phase.  This
                 // method also maintains the published jobs set and filters the list
                 // of candidate jobs using that set.
-                List<Job> jobs = null;
-                try {jobs = getJobsReadyForPhase();}
+                ReadyJobs readyJobs = null;
+                try {readyJobs = getJobsReadyForPhase();}
                     catch (Exception e) 
                     {
                         String msg = _phaseType.name() + " scheduler database polling " +
@@ -1356,7 +1361,7 @@ public abstract class AbstractPhaseScheduler
             
                 if (_log.isDebugEnabled())
                     _log.debug(_phaseType.name() + " scheduler retrieved " +
-                               jobs.size() + " jobs.");
+                               readyJobs.getJobs().size() + " jobs.");
             
                 // ------------------- Check for Interrupts ---------------------
                 // See if this thread was interrupted before doing a lot of processing.
@@ -1373,10 +1378,10 @@ public abstract class AbstractPhaseScheduler
                 // We use plugable strategies for flexibility.  The default strategy
                 // choices are to randomly pick a tenant, randomly pick a user, and
                 // and then pick jobs from oldest to newest with regard to create time.
-                if (!jobs.isEmpty()) {
+                if (!readyJobs.getJobs().isEmpty()) {
                     PrioritizedJobs prioritizedJobs = 
                         new PrioritizedJobs(getTenantStrategy(), getUserStrategy(), 
-                                            getJobStrategy(), jobs);
+                                            getJobStrategy(), readyJobs);
                 
                     // Publish the jobs in priority order as defined in the priority job object.
                     Iterator<Job> jobIterator = prioritizedJobs.iterator();
@@ -1712,16 +1717,13 @@ public abstract class AbstractPhaseScheduler
      * @return the list of jobs that have yet to be published in this phase
      * @throws JobSchedulerException
      */
-    private List<Job> getJobsReadyForPhase()
+    private ReadyJobs getJobsReadyForPhase()
       throws JobSchedulerException
     {
-        // Initialize result list.
-        List<Job> jobs = null;
-        
         // Is new work being accepted?
         if (org.iplantc.service.common.Settings.isDrainingQueuesEnabled()) {
             _log.debug("Queue draining is enabled. Skipping " + _phaseType + " tasks." );
-            return jobs;
+            return new ReadyJobs(new LinkedList<Job>());
         }
         
         // -------------------- Clean Published Jobs -----------
@@ -1751,7 +1753,8 @@ public abstract class AbstractPhaseScheduler
         
         // -------------------- Query Jobs ---------------------
         // Query all jobs that are ready for this state.
-        try {jobs = getPhaseCandidateJobs(getPhaseTriggerStatuses());}
+        ReadyJobs readyJobs = null;
+        try {readyJobs = getPhaseCandidateJobs(getPhaseTriggerStatuses());}
             catch (Exception e)
             {
                 String msg = _phaseType.name() + " scheduler unable to retrieve jobs.";
@@ -1759,7 +1762,7 @@ public abstract class AbstractPhaseScheduler
                 throw new JobSchedulerException(msg, e);
             }
                 
-        return jobs;
+        return readyJobs;
     }
 
     /* ---------------------------------------------------------------------- */

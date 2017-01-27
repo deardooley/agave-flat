@@ -11,6 +11,8 @@ import java.util.TreeMap;
 
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.phases.schedulers.filters.PrioritizedJobs;
+import org.iplantc.service.jobs.phases.schedulers.filters.ReadyJobs;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.JobCreateOrder;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.TenantRandom;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.UserRandom;
@@ -93,7 +95,7 @@ public class PrioritizedJobsTest
                 new PrioritizedJobs(new TenantRandom(), 
                                     new UserRandom(), 
                                     new JobCreateOrder(), 
-                                    _unprioritizedJobs);
+                                    new ReadyJobs(_unprioritizedJobs));
             
             // Get the jobs with the current prioritization.
             Iterator<Job> it = prioritizedJobs.iterator();
