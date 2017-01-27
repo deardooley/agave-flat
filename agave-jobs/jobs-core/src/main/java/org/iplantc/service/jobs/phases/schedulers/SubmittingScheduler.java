@@ -66,22 +66,19 @@ public final class SubmittingScheduler
     /* ---------------------------------------------------------------------- */
     /* getPhaseCandidateJobs:                                                 */
     /* ---------------------------------------------------------------------- */
+    /** Provide in a phase-specific way a list of candidate jobs to be processed
+     * the superclass's generic scheduling code. 
+     * 
+     * @param statuses phase-specific trigger statuses
+     * @return the list of jobs that do not violate any quotas
+     * @throws JobSchedulerException on error
+     */
     @Override
     protected List<Job> getPhaseCandidateJobs(List<JobStatusType> statuses) 
       throws JobSchedulerException
     {
-        // Initialize result list.
-        List<Job> jobs = null;
-        
-        // Query all jobs that are ready for this state.
-        try {jobs = JobDao.getByStatus(statuses);}
-            catch (Exception e)
-            {
-                String msg = _phaseType.name() + " scheduler unable to retrieve jobs.";
-                _log.error(msg, e);
-                throw new JobSchedulerException(msg, e);
-            }
-        
-        return jobs;
+        // Staging and Submitting phases perform the same 
+        // quota filtering before scheduling jobs.
+        return getQuotaCheckedJobs(statuses);
     }
 }

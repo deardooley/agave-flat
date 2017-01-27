@@ -2273,7 +2273,7 @@ public class JobDao
         StringBuilder buf = new StringBuilder(512);
         buf.append("select distinct ");
         buf.append("j.uuid, j.tenant_id, j.owner, j.execution_system, j.queue_request, ");
-        buf.append("b.max_jobs max_queue_jobs_, b.max_user_jobs max_queue_user_jobs, ");
+        buf.append("b.max_jobs max_queue_jobs, b.max_user_jobs max_queue_user_jobs, ");
         buf.append("e.max_system_jobs, e.max_system_jobs_per_user ");
         buf.append("from jobs j ");
         

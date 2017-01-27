@@ -106,7 +106,10 @@ public final class JobQuotaChecker
         // -------------------------- Simple Checks ------------------------
         // Check to see if there's any set limit.
         if (info.getMaxSystemJobs() < 0)  return false; // no limit
-        if (info.getMaxSystemJobs() == 0) return true;  // no capacity
+        if (info.getMaxSystemJobs() == 0) {
+            _log.warn(info.getExecutionSystem() + " has no capacity for new jobs.");
+            return true;  // no capacity
+        }
         
         // -------------------------- Cache Check --------------------------
         // Check the cache in case we already counted the required information.
@@ -119,7 +122,10 @@ public final class JobQuotaChecker
             
             // Compare this job's information with the calculated count.
             if (cacheValue < info.getMaxSystemJobs()) return false;
-              else return true;
+              else {
+                  _log.warn(info.getExecutionSystem() + " is currently at capacity for new jobs.");
+                  return true;
+              }
         }
         
         // -------------------------- Count Calculation --------------------
@@ -156,7 +162,10 @@ public final class JobQuotaChecker
         
         // Check the quota.
         if (jobCount < info.getMaxSystemJobs()) return false;
-         else return true; // exceeded quota
+         else {
+             _log.warn(info.getExecutionSystem() + " is currently at capacity for new jobs.");
+             return true; // exceeded quota
+         }
     }
 
     /* ---------------------------------------------------------------------- */
@@ -173,7 +182,11 @@ public final class JobQuotaChecker
         // -------------------------- Simple Checks ------------------------
         // Check to see if there's any set limit.
         if (info.getMaxSystemUserJobs() < 0)  return false; // no limit
-        if (info.getMaxSystemUserJobs() == 0) return true;  // no capacity 
+        if (info.getMaxSystemUserJobs() == 0) {
+            _log.warn("User " + info.getOwner() + " has no capacity for jobs on " +
+                      info.getExecutionSystem() + ".");
+            return true;  // no capacity 
+        }
         
         // -------------------------- Cache Check --------------------------
         // Check the cache in case we already counted the required information.
@@ -187,7 +200,11 @@ public final class JobQuotaChecker
             
             // Compare this job's information with the calculated count.
             if (cacheValue < info.getMaxSystemUserJobs()) return false;
-              else return true;
+              else {
+                  _log.warn("User " + info.getOwner() + " has reached its quota for " +
+                            "concurrent active jobs on " + info.getExecutionSystem() + ".");
+                  return true;
+              }
         }
         
         // -------------------------- Count Calculation --------------------
@@ -224,7 +241,11 @@ public final class JobQuotaChecker
         
         // Check the quota.
         if (jobCount < info.getMaxSystemUserJobs()) return false;
-         else return true; // exceeded quota
+         else {
+             _log.warn("User " + info.getOwner() + " has reached its quota for " +
+                       "concurrent active jobs on " + info.getExecutionSystem() + ".");
+             return true; // exceeded quota
+         }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -241,7 +262,11 @@ public final class JobQuotaChecker
         // -------------------------- Simple Checks ------------------------
         // Check to see if there's any set limit.
         if (info.getMaxQueueJobs() < 0)  return false; // no limit
-        if (info.getMaxQueueJobs() == 0) return true;  // no capacity
+        if (info.getMaxQueueJobs() == 0) {
+            _log.warn("System " + info.getExecutionSystem() + 
+                      " has no capacity for jobs on queue " + info.getQueueRequest() + ".");
+            return true;  // no capacity
+        }
         
         // -------------------------- Cache Check --------------------------
         // Check the cache in case we already counted the required information.
@@ -255,7 +280,11 @@ public final class JobQuotaChecker
             
             // Compare this job's information with the calculated count.
             if (cacheValue < info.getMaxQueueJobs()) return false;
-              else return true;
+              else {
+                  _log.warn("System " + info.getExecutionSystem() + " is currently at maximum capacity for " +
+                            "concurrent active jobs on queue " + info.getQueueRequest() + ".");
+                  return true;
+              }
         }
         
         // -------------------------- Count Calculation --------------------
@@ -298,7 +327,11 @@ public final class JobQuotaChecker
         
         // Check the quota.
         if (jobCount < info.getMaxQueueJobs()) return false;
-         else return true; // exceeded quota
+         else {
+             _log.warn("System " + info.getExecutionSystem() + " is currently at maximum capacity for " +
+                       "concurrent active jobs on queue " + info.getQueueRequest() + ".");
+             return true; // exceeded quota
+         }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -315,7 +348,11 @@ public final class JobQuotaChecker
         // -------------------------- Simple Checks ------------------------
         // Check to see if there's any set limit.
         if (info.getMaxQueueUserJobs() < 0)  return false; // no limit
-        if (info.getMaxQueueUserJobs() == 0) return true;  // no capacity
+        if (info.getMaxQueueUserJobs() == 0) {
+            _log.warn("User " + info.getOwner() + " has no capacity for jobs on the " +
+                      info.getQueueRequest() + " queue of " + info.getExecutionSystem() + ".");
+            return true;  // no capacity
+        }
         
         // -------------------------- Cache Check --------------------------
         // Check the cache in case we already counted the required information.
@@ -329,7 +366,12 @@ public final class JobQuotaChecker
             
             // Compare this job's information with the calculated count.
             if (cacheValue < info.getMaxQueueUserJobs()) return false;
-              else return true;
+              else {
+                  _log.warn("User " + info.getOwner() + " has reached its quota for " +
+                            "concurrent active jobs on the " + info.getQueueRequest() + 
+                            " queue of " + info.getExecutionSystem() + ".");
+                  return true;
+              }
         }
         
         // -------------------------- Count Calculation --------------------
@@ -371,7 +413,12 @@ public final class JobQuotaChecker
         
         // Check the quota.
         if (jobCount < info.getMaxQueueUserJobs()) return false;
-         else return true; // exceeded quota
+         else {
+             _log.warn("User " + info.getOwner() + " has reached its quota for " +
+                       "concurrent active jobs on the " + info.getQueueRequest() + 
+                       " queue of " + info.getExecutionSystem() + ".");
+             return true; // exceeded quota
+         }
     }
     
     /* ********************************************************************** */
