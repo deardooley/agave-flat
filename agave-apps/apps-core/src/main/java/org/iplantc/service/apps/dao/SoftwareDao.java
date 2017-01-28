@@ -24,7 +24,6 @@ import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.search.SearchTerm;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
-import org.joda.time.DateTime;
 
 
 public class SoftwareDao
@@ -429,6 +428,44 @@ public class SoftwareDao
 			try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
 		}
 	}
+
+	/** Delete the old software record and add the new software record in one transaction. */
+    public static void replace(Software oldSoftware, Software newSoftware) throws SoftwareException
+    {
+
+        if (oldSoftware == null)
+            throw new SoftwareException("Existing Software cannot be null");
+        if (newSoftware == null)
+            throw new SoftwareException("New Software cannot be null");
+
+        try
+        {
+            Session session = getSession();
+            session.disableFilter("softwareTenantFilter");
+            session.delete(oldSoftware);
+            session.flush();
+            session.saveOrUpdate(newSoftware);
+            session.flush();
+        }
+        catch (HibernateException ex)
+        {
+            try
+            {
+                if (HibernateUtil.getSession().isOpen())
+                {
+                    HibernateUtil.rollbackTransaction();
+                }
+            }
+            catch (Exception e)
+            {
+            }
+            throw new SoftwareException("Failed to replace application", ex);
+        }
+        finally
+        {
+            try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
+        }
+    }
 
 	public static List<Software> getAllPublicByName(String name) {
 		return getByName(name, true, false);
