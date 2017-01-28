@@ -19,8 +19,8 @@ public class ReadyJobs
     public ReadyJobs(List<Job> jobs){this(jobs, null);}
     public ReadyJobs(List<Job> jobs, IPostPriorityJobFilter filter)
     {
-        this.jobs = jobs;
-        this.jobFilter = filter;
+        setJobs(jobs);
+        setJobFilter(filter);
     }
     
     // -- Acessors
@@ -30,6 +30,10 @@ public class ReadyJobs
     }
     public void setJobs(List<Job> jobs)
     {
+        if (jobs == null) {
+            String msg = "ReadyJobs does not accept a null job list.";
+            throw new RuntimeException(msg);
+        }
         this.jobs = jobs;
     }
     public IPostPriorityJobFilter getJobFilter()
