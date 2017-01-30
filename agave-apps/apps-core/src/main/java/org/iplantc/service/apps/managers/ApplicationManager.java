@@ -187,6 +187,7 @@ public class ApplicationManager
 			// they can't upload a partial description...
 	        if (existingSoftware != null) 
             {
+	            newSoftware.setUuid(existingSoftware.getUuid());
 				newSoftware.setRevisionCount(existingSoftware.getRevisionCount() + 1);
 				for (SoftwarePermission pem: existingSoftware.getPermissions()) {
 					SoftwarePermission newPem = pem.clone();
