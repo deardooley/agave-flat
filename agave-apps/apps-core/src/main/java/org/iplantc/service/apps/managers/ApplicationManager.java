@@ -395,12 +395,12 @@ public class ApplicationManager
 			SoftwareEventProcessor eventProcessor = new SoftwareEventProcessor();
 			eventProcessor.processSoftwareContentEvent(software, 
 					SoftwareEventType.DELETED,
-					"App was disabled by user " + username, 
+					"App was deleted by user " + username, 
 					username);
 			
 		} catch (Throwable e) {
-			throw new SoftwareResourceException(400,
-					"Failed to erase app. Unable to delete associated jobs.", e);
+			throw new SoftwareResourceException(500,
+					"Unexpected error deleting app.", e);
 		}
 	}
 	
