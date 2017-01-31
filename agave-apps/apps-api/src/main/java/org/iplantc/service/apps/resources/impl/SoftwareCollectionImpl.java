@@ -239,7 +239,7 @@ public class SoftwareCollectionImpl extends AbstractSoftwareCollection implement
                 }
             }
             
-            Software newSoftware = ApplicationManager.processSoftware(existingSoftware, json, getAuthenticatedUsername());
+            Software newSoftware = new ApplicationManager().processSoftware(existingSoftware, json, getAuthenticatedUsername());
             
             if (existingSoftware == null) 
             {

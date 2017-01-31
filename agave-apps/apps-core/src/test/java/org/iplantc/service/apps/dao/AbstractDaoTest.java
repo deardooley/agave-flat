@@ -41,6 +41,7 @@ public class AbstractDaoTest
 	public static final String EXECUTION_SYSTEM_TEMPLATE_DIR = "src/test/resources/systems/execution";
 	public static final String STORAGE_SYSTEM_TEMPLATE_DIR = "src/test/resources/systems/storage";
 	public static final String SOFTWARE_SYSTEM_TEMPLATE_DIR = "src/test/resources/software";
+	public static final String FORK_SOFTWARE_TEMPLATE_FILE = SOFTWARE_SYSTEM_TEMPLATE_DIR + "/fork-1.0.0/app.json";
 	public static final String INTERNAL_USER_TEMPLATE_DIR = "src/test/resources/internal_users";
 	public static final String CREDENTIALS_TEMPLATE_DIR = "src/test/resources/credentials";
 	
@@ -49,7 +50,7 @@ public class AbstractDaoTest
 	protected SystemDao systemDao;
 	protected StorageSystem privateStorageSystem;
 	protected ExecutionSystem privateExecutionSystem;
-	public Software software;
+	protected Software software;
 	
 	@BeforeClass
 	protected void beforeClass() throws Exception

@@ -131,14 +131,14 @@ public class SoftwareResourceImpl extends AbstractSoftwareResource implements So
             
             JSONObject json = super.getPostedContentAsJsonObject(input);
             
-            Software newSoftware = ApplicationManager.processSoftware(existingSoftware, json, getAuthenticatedUsername());
+            Software newSoftware = new ApplicationManager().processSoftware(existingSoftware, json, getAuthenticatedUsername());
             
-            SoftwareDao.delete(existingSoftware);
+            SoftwareDao.replace(existingSoftware, newSoftware);
             
             // maintain the uuid of the previous app for history tracking
-            newSoftware.setUuid(existingSoftware.getUuid());
+//            newSoftware.setUuid(existingSoftware.getUuid());
             
-            SoftwareDao.persist(newSoftware);
+//            SoftwareDao.persist(newSoftware);
             
             eventProcessor.processSoftwareContentEvent(existingSoftware, 
                                         SoftwareEventType.UPDATED, 

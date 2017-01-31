@@ -9,6 +9,8 @@ import static org.iplantc.service.apps.exceptions.SoftwareResourceException.CLIE
 import static org.iplantc.service.apps.exceptions.SoftwareResourceException.SERVER_ERROR_INTERNAL;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -22,12 +24,14 @@ import org.iplantc.service.apps.model.SoftwarePermission;
 import org.iplantc.service.apps.model.enumerations.SoftwareEventType;
 import org.iplantc.service.apps.queue.actions.PublishAction;
 import org.iplantc.service.apps.util.ServiceUtils;
+import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.io.dao.LogicalFileDao;
 import org.iplantc.service.io.model.LogicalFile;
 import org.iplantc.service.io.permissions.PermissionManager;
 import org.iplantc.service.notification.dao.NotificationDao;
 import org.iplantc.service.notification.model.Notification;
+import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
@@ -44,6 +48,11 @@ public class ApplicationManager
 {
 	private static final Logger	log	= Logger.getLogger(ApplicationManager.class.getName());
 
+	/**
+	 * No-args constructor for testing
+	 */
+	public ApplicationManager() {}
+	
 	public static Software getApplication(String appName)
 	{
 		Software software = SoftwareDao.get(appName);
@@ -81,10 +90,9 @@ public class ApplicationManager
 	 * @return
 	 * @throws SoftwareResourceException
 	 */
-	public static Software processSoftware(Software existingSoftware, JSONObject json, String username) 
+	public Software processSoftware(Software existingSoftware, JSONObject json, String username) 
 	throws SoftwareResourceException
 	{
-		RemoteDataClient remoteDataClient = null;
 		String owner = (existingSoftware == null ? username : existingSoftware.getOwner());
 		
 		try 
@@ -121,61 +129,7 @@ public class ApplicationManager
 	        
 	        if (ApplicationManager.userCanPublish(username, newSoftware)) 
 	        {	
-	        	remoteDataClient = newSoftware.getStorageSystem().getRemoteDataClient();
-	        	remoteDataClient.authenticate();
-	        	
-	        	String checkPath = newSoftware.getDeploymentPath();
-	        	LogicalFile logicalFile = null;
-            	PermissionManager pm = null;
-                
-            	try { logicalFile=LogicalFileDao.findBySystemAndPath(newSoftware.getStorageSystem(), checkPath); } catch(Exception e) {}
-            	
-            	pm = new PermissionManager(newSoftware.getStorageSystem(), remoteDataClient, logicalFile, username);
-                
-            	if (!remoteDataClient.doesExist(checkPath)) {
-            		throw new SoftwareResourceException(CLIENT_ERROR_BAD_REQUEST,
-							"Invalid deploymentPath value. " + checkPath + 
-							" does not exist on deploymentSystem " + newSoftware.getStorageSystem().getSystemId() + 
-							". Please specify a valid deploymentPath.");
-            	}
-            	else if (!pm.canRead(remoteDataClient.resolvePath(checkPath))) {
-	        		throw new SoftwareResourceException(CLIENT_ERROR_FORBIDDEN,
-							"Permission denied. You do not have permission to access the deployment path " + checkPath);
-	        	}
-	        	
-            	checkPath = newSoftware.getDeploymentPath() + "/" + newSoftware.getExecutablePath();
-            	
-            	try { logicalFile=LogicalFileDao.findBySystemAndPath(newSoftware.getStorageSystem(), checkPath); } catch(Exception e) {}
-            	
-            	pm = new PermissionManager(newSoftware.getStorageSystem(), remoteDataClient, logicalFile, username);
-                
-            	if (!remoteDataClient.doesExist(checkPath)) {
-            		throw new SoftwareResourceException(CLIENT_ERROR_BAD_REQUEST,
-            				"Invalid templatePath value. " + checkPath + 
-							" does not exist on the deploymentSystem " + newSoftware.getStorageSystem().getSystemId() + 
-							". Please specify a valid templatePath.");
-            	}
-            	else if (!pm.canRead(remoteDataClient.resolvePath(checkPath))) {
-	        		throw new SoftwareResourceException(CLIENT_ERROR_FORBIDDEN,
-							"Permission denied. You do not have permission to access the wrapper script " + checkPath);
-	        	}
-	        	
-            	checkPath = newSoftware.getDeploymentPath() + "/" + newSoftware.getTestPath();
-            	
-            	try { logicalFile=LogicalFileDao.findBySystemAndPath(newSoftware.getStorageSystem(), checkPath); } catch(Exception e) {}
-            	
-            	pm = new PermissionManager(newSoftware.getStorageSystem(), remoteDataClient, logicalFile, username);
-                
-            	if (!remoteDataClient.doesExist(checkPath)) {
-            		throw new SoftwareResourceException(CLIENT_ERROR_BAD_REQUEST,
-            				"Invalid testPath value. " + checkPath + 
-							" does not exist on the deploymentSystem " + newSoftware.getStorageSystem().getSystemId() + 
-							". Please specify a valid testPath.");
-            	}
-            	else if (!pm.canRead(remoteDataClient.resolvePath(checkPath))) {
-	        		throw new SoftwareResourceException(CLIENT_ERROR_FORBIDDEN,
-							"Permission denied. You do not have permission to access the test script " + checkPath);
-	        	}
+	        	validateSoftwareDependencies(username, newSoftware);
 	        	
 	        } else {
 	        	throw new SoftwareResourceException(CLIENT_ERROR_FORBIDDEN,
@@ -188,6 +142,8 @@ public class ApplicationManager
 	        if (existingSoftware != null) 
             {
 	            newSoftware.setUuid(existingSoftware.getUuid());
+	            newSoftware.setCreated(existingSoftware.getCreated());
+	            newSoftware.setLastUpdated(new Date());
 				newSoftware.setRevisionCount(existingSoftware.getRevisionCount() + 1);
 				for (SoftwarePermission pem: existingSoftware.getPermissions()) {
 					SoftwarePermission newPem = pem.clone();
@@ -221,9 +177,89 @@ public class ApplicationManager
 			throw new SoftwareResourceException(SERVER_ERROR_INTERNAL,
 					"Failed to update application: " + e.getMessage(), e);
 		}
+	}
+
+	/**
+	 * Checks that the app dependencies are present on the remote system as 
+	 * part of the validation process.
+	 * 
+	 * @param username
+	 * @param newSoftware
+	 * @return true unless dependencies are not supported for the {@link Software#getExecutionType()}
+	 * @throws RemoteDataException
+	 * @throws RemoteCredentialException
+	 * @throws IOException
+	 * @throws SoftwareResourceException
+	 * @throws PermissionException
+	 * @throws FileNotFoundException
+	 */
+	protected boolean validateSoftwareDependencies(String username, Software newSoftware) 
+	throws RemoteDataException, RemoteCredentialException, IOException, SoftwareResourceException,
+			PermissionException, FileNotFoundException 
+	{
+		RemoteDataClient remoteDataClient = null;
+		try {
+			remoteDataClient = newSoftware.getStorageSystem().getRemoteDataClient();
+			remoteDataClient.authenticate();
+			
+			String checkPath = newSoftware.getDeploymentPath();
+			LogicalFile logicalFile = null;
+			PermissionManager pm = null;
+			
+			try { logicalFile=LogicalFileDao.findBySystemAndPath(newSoftware.getStorageSystem(), checkPath); } catch(Exception e) {}
+			
+			pm = new PermissionManager(newSoftware.getStorageSystem(), remoteDataClient, logicalFile, username);
+			
+			if (!remoteDataClient.doesExist(checkPath)) {
+				throw new SoftwareResourceException(CLIENT_ERROR_BAD_REQUEST,
+						"Invalid deploymentPath value. " + checkPath + 
+						" does not exist on deploymentSystem " + newSoftware.getStorageSystem().getSystemId() + 
+						". Please specify a valid deploymentPath.");
+			}
+			else if (!pm.canRead(remoteDataClient.resolvePath(checkPath))) {
+				throw new SoftwareResourceException(CLIENT_ERROR_FORBIDDEN,
+						"Permission denied. You do not have permission to access the deployment path " + checkPath);
+			}
+			
+			checkPath = newSoftware.getDeploymentPath() + "/" + newSoftware.getExecutablePath();
+			
+			try { logicalFile=LogicalFileDao.findBySystemAndPath(newSoftware.getStorageSystem(), checkPath); } catch(Exception e) {}
+			
+			pm = new PermissionManager(newSoftware.getStorageSystem(), remoteDataClient, logicalFile, username);
+			
+			if (!remoteDataClient.doesExist(checkPath)) {
+				throw new SoftwareResourceException(CLIENT_ERROR_BAD_REQUEST,
+						"Invalid templatePath value. " + checkPath + 
+						" does not exist on the deploymentSystem " + newSoftware.getStorageSystem().getSystemId() + 
+						". Please specify a valid templatePath.");
+			}
+			else if (!pm.canRead(remoteDataClient.resolvePath(checkPath))) {
+				throw new SoftwareResourceException(CLIENT_ERROR_FORBIDDEN,
+						"Permission denied. You do not have permission to access the wrapper script " + checkPath);
+			}
+			
+			checkPath = newSoftware.getDeploymentPath() + "/" + newSoftware.getTestPath();
+			
+			try { logicalFile=LogicalFileDao.findBySystemAndPath(newSoftware.getStorageSystem(), checkPath); } catch(Exception e) {}
+			
+			pm = new PermissionManager(newSoftware.getStorageSystem(), remoteDataClient, logicalFile, username);
+			
+			if (!remoteDataClient.doesExist(checkPath)) {
+				throw new SoftwareResourceException(CLIENT_ERROR_BAD_REQUEST,
+						"Invalid testPath value. " + checkPath + 
+						" does not exist on the deploymentSystem " + newSoftware.getStorageSystem().getSystemId() + 
+						". Please specify a valid testPath.");
+			}
+			else if (!pm.canRead(remoteDataClient.resolvePath(checkPath))) {
+				throw new SoftwareResourceException(CLIENT_ERROR_FORBIDDEN,
+						"Permission denied. You do not have permission to access the test script " + checkPath);
+			}
+			
+			return true;
+		}
 		finally {
-        	try { remoteDataClient.disconnect(); } catch (Exception e) {}
-        }
+			try { remoteDataClient.disconnect();} catch (Exception e) {}
+		}
 	}
 
 	/**
@@ -293,9 +329,6 @@ public class ApplicationManager
 								software.getUniqueName() + "(" + software.getId() + ") due to missing wrapper script." );
 						software.setAvailable(false);
 						SoftwareDao.persist(software);
-						
-						
-//						NotificationManager.process(software.getUuid(), "DISABLED", username);
 						
 						String message = "Unable to locate app templatePath at " + 
 								software.getDeploymentPath() + "/" + software.getExecutablePath() +
@@ -404,267 +437,7 @@ public class ApplicationManager
 					"Unexpected error deleting app.", e);
 		}
 	}
-	
-//	/**
-//	 * Creates a private copy of a public application. Uses the default storage system of the user 
-//	 * if none is specified to store the uncompressed copy of the public application assets. App
-//	 * name and version will be updated as provided in the arguments.
-//	 *  
-//	 * @param software
-//	 * @param username
-//	 * @param name
-//	 * @param version
-//	 * @param clonedSoftwareExecutionSystem
-//	 * @return
-//	 * @throws SoftwareResourceException
-//	 */
-//	public static Software clonePublicApplication(Software software, 
-//												  String username, 
-//												  String name, 
-//												  String version, 
-//												  String deploymentPath, 
-//												  StorageSystem clonedSoftwareStorageSystem,
-//												  ExecutionSystem clonedSoftwareExecutionSystem) 
-//	throws SoftwareResourceException
-//	{
-//		RemoteDataClient publicSoftwareDataClient = null;
-//		RemoteDataClient clonedSoftwareDataClient = null;
-//		RemoteDataClientFactory factory = new RemoteDataClientFactory();
-//		File tempAppDir = null;
-//		String remoteCloneApplicationFolderPath = null;
-//		String remoteCloneDeploymentPath = null;
-//		try
-//		{
-//			// get users' default storage system
-//			if (clonedSoftwareStorageSystem == null) {
-//				clonedSoftwareStorageSystem = (StorageSystem)new SystemManager().getUserDefaultStorageSystem(username);
-//			}
-//			
-//			if (clonedSoftwareStorageSystem == null) {
-//				throw new SoftwareResourceException(400, "No storage system specified for cloned application "
-//						+ "assets and the user has no default storage system. Please specify a storage "
-//						+ "system on which to store the cloned app or define a default storage system.");
-//			}
-//			
-//			Software clonedSoftware = software.clone();
-//			clonedSoftware.setName(name);
-//			clonedSoftware.setVersion(version);
-//			clonedSoftware.setOwner(username);
-//			clonedSoftware.setPubliclyAvailable(false);
-//			clonedSoftware.setAvailable(true);
-//			clonedSoftware.setRevisionCount(1);
-//			clonedSoftware.setStorageSystem((StorageSystem)clonedSoftwareStorageSystem);
-//			clonedSoftware.setExecutionSystem(clonedSoftwareExecutionSystem);
-//			
-//			// if the old app had a default queue that does not exist on the new execution
-//			// system, set the default queue to the new system default queue  
-//			if (!StringUtils.isEmpty(software.getDefaultQueue()) &&  
-//					clonedSoftwareExecutionSystem.getQueue(clonedSoftware.getDefaultQueue()) == null) {
-//				clonedSoftware.setDefaultQueue(clonedSoftwareExecutionSystem.getDefaultQueue().getName());
-//			}
-//			
-//			if (!ApplicationManager.userCanPublish(username, clonedSoftware)) {
-//				throw new SoftwareResourceException(403, 
-//						"User does not have permission to publish applications on the target " + 
-//						"storage and execution systems. Verify you have been granted a PUBLISH " +
-//						"role on the execution system and at least USER role on the storage system.");
-//			}
-//			
-//			publicSoftwareDataClient = factory.getInstance(new SystemManager().getDefaultStorageSystem(), null);
-//			
-//			tempAppDir = new File(Settings.TEMP_DIRECTORY,software.getName() + "-clone-" + username + "-" + System.currentTimeMillis());
-//			
-//			if (tempAppDir.mkdirs()) 
-//			{
-//				// copy the public app binary over
-//				publicSoftwareDataClient.authenticate();
-//				publicSoftwareDataClient.get(software.getDeploymentPath(), tempAppDir.getAbsolutePath());
-//				
-//				// now copy the contents of the deployment folder to the parent dir, which is tempAppDir
-//        		File copiedDeploymentFolder = new File(tempAppDir, FilenameUtils.getName(software.getDeploymentPath()));
-//        		if (!copiedDeploymentFolder.getAbsoluteFile().equals(tempAppDir) && copiedDeploymentFolder.exists() && copiedDeploymentFolder.isDirectory()) {
-//        			FileUtils.copyDirectory(copiedDeploymentFolder, tempAppDir, null, true);
-//	        		// now delete the redundant deployment folder
-//	        		FileUtils.deleteQuietly(copiedDeploymentFolder);
-//        		}
-//        		
-//				// validate the checksum to make sure the app itself hasn't  changed
-//				File zippedFile = new File(tempAppDir, FilenameUtils.getName(software.getDeploymentPath()));
-//				String checksum = MD5Checksum.getMD5Checksum(zippedFile);
-//				if (software.getChecksum() == null || StringUtils.equals(checksum, software.getChecksum()))
-//				{
-//					ZipUtil.unzip(zippedFile, tempAppDir);
-//					if (tempAppDir.list().length > 1) {
-//						zippedFile.delete();
-//					} else {
-//						throw new SoftwareException("Failed to unpack the application bundle.");
-//					}
-//				} else {
-//					software.setAvailable(false);
-//					SoftwareDao.persist(software);
-//					Tenant tenant = new TenantDao().findByTenantId(TenancyHelper.getCurrentTenantId());
-//					String message = "While submitting a job, the Job Service noticed that the checksum " +
-//                            "of the public app " + software.getUniqueName() + " had changed. This " +
-//                            "will impact provenance and could impact experiment reproducability. " +
-//                            "Please restore the application zip bundle from archive and re-enable " + 
-//                            "the application via the admin console.";
-//					EmailMessage.send(tenant.getContactName(), 
-//							tenant.getContactEmail(), 
-//							"Public app " + software.getUniqueName() + " has been corrupted.", 
-//							message, HTMLizer.htmlize(message));
-//					throw new SoftwareException("Public application bundle has changed. " +
-//							"This application will be disabled. Please contact an admin for " +
-//							"further information.");
-//				}
-//				
-//				File standardLocation = new File(tempAppDir, new File(software.getDeploymentPath()).getName());
-//				if (standardLocation.exists()) 
-//				{
-//					tempAppDir = standardLocation.getAbsoluteFile();
-//				} 
-//				else 
-//				{
-//					standardLocation = new File(tempAppDir, software.getExecutablePath());
-//					
-//					if (!standardLocation.exists()) {
-//						// need to go searching for the path. no idea how this could happen
-//						boolean foundDeploymentPath = false;
-//						for (File child: tempAppDir.listFiles()) 
-//						{
-//							if (child.isDirectory()) {
-//								standardLocation = new File(child, software.getExecutablePath());
-//								if (standardLocation.exists()) {
-//									File copyDir = new File(tempAppDir.getAbsolutePath()+".copy");
-//									FileUtils.moveDirectory(child, copyDir);
-//									FileUtils.deleteDirectory(tempAppDir);
-//									copyDir.renameTo(tempAppDir);
-//									//tempAppDir = child;
-//									foundDeploymentPath = true;
-//									break;
-//								}
-//							}
-//						}
-//						
-//						if (!foundDeploymentPath) {
-//							log.error("Unable to find app path for public app " + software.getUniqueName() + " for cloning");
-//							throw new SoftwareException("Unable to find the deployment path for the public app " + software.getUniqueName() + " for cloning");
-//						}
-//					}
-//				}
-//				
-//				// copy unpacked archive to user's app folder in their app home
-//				if (StringUtils.isEmpty(deploymentPath)) {
-//					remoteCloneDeploymentPath = String.format("/%s/applications/%s-%s", username, name, version); 
-//				} else {
-//					remoteCloneDeploymentPath = deploymentPath;
-//				}
-//				
-//				// get users' default storage system
-//				clonedSoftwareDataClient = clonedSoftwareStorageSystem.getRemoteDataClient();
-//				
-//				// auth to the new storage system
-//				clonedSoftwareDataClient.authenticate();
-//				
-//				// push data there			
-//				clonedSoftwareDataClient.put(tempAppDir.getAbsolutePath(), new File(remoteCloneDeploymentPath).getParent());
-//				
-//				// update remote paths -- copied folder should have the correct name at this point
-//				clonedSoftwareDataClient.doRename(new File(remoteCloneDeploymentPath).getParent() + "/" + tempAppDir.getName(), remoteCloneDeploymentPath);
-//				if (clonedSoftwareDataClient.isPermissionMirroringRequired()) {
-//					clonedSoftwareDataClient.setOwnerPermission(username, remoteCloneDeploymentPath, true);
-//				}
-//				
-//				// update the software description with the new deployment path
-//				clonedSoftware.setDeploymentPath(remoteCloneDeploymentPath);
-//				
-//				SoftwareDao.persist(clonedSoftware);
-//				
-//				ApplicationManager.addEvent(software, 
-//                        SoftwareEventType.CLONED, 
-//                        "App was cloned by user " + username + " as " + clonedSoftware.getUniqueName(), 
-//                        username);
-//				
-//				ApplicationManager.addEvent(clonedSoftware, 
-//                        SoftwareEventType.REGISTERED, 
-//                        "App was originally created as a clone of " + software.getUniqueName(), 
-//                        username);
-//				NotificationManager.process(clonedSoftware.getExecutionSystem().getUuid(), "APP_CREATED", username);
-//                
-//				return clonedSoftware;
-//				
-//			} else {
-//				throw new SoftwareResourceException(500, 
-//						"Failed to create new destination path for application assets");
-//			}
-//		}
-//		catch (SoftwareResourceException e) {
-//			throw e;
-//		}
-//		catch (Exception e)
-//		{
-//			// try to clean up the remote deployment path
-//			try { clonedSoftwareDataClient.delete(remoteCloneApplicationFolderPath); } catch (Exception e1) {}
-//			try { clonedSoftwareDataClient.delete(remoteCloneDeploymentPath); } catch (Exception e1) {}
-//			throw new SoftwareResourceException(500, e.getMessage(), e);
-//		} 
-//		finally 
-//		{
-//			try { FileUtils.deleteDirectory(tempAppDir); } catch (Exception e) {}
-//			try { clonedSoftwareDataClient.disconnect(); } catch (Exception e) {}
-//			try { clonedSoftwareDataClient.disconnect(); } catch (Exception e) {}
-//		}
-//	}
-//	
-//	public static Software clonePrivateApplication(Software software, String username, String name, String version, ExecutionSystem executionSystem) 
-//	throws SoftwareResourceException
-//	{
-//		// update the software description
-//		Software clonedSoftware = software.clone();
-//		clonedSoftware.setName(name);
-//		clonedSoftware.setVersion(version);
-//		clonedSoftware.setOwner(username);
-//		clonedSoftware.setExecutionSystem(executionSystem);
-//		clonedSoftware.setPubliclyAvailable(false);
-//		clonedSoftware.setAvailable(true);
-//		clonedSoftware.setRevisionCount(1);
-//		
-//		// if the old app had a default queue that does not exist on the new execution
-//		// system, set the default queue to the new system default queue  
-//		if (!StringUtils.isEmpty(software.getDefaultQueue()) &&  
-//				executionSystem.getQueue(clonedSoftware.getDefaultQueue()) == null) {
-//			clonedSoftware.setDefaultQueue(executionSystem.getDefaultQueue().getName());
-//		}
-//		
-//		try {
-//    		if (!ApplicationManager.userCanPublish(username, clonedSoftware)) {
-//    			throw new SoftwareResourceException(403, 
-//    					"User does not have permission to publish applications on the target " + 
-//    					"storage and execution systems. Verify you have been granted a PUBLISH " +
-//    					"role on the execution system and at least USER role on the storage system.");
-//    		} else {
-//    			
-//    			SoftwareDao.persist(clonedSoftware);
-//    			
-//    			ApplicationManager.addEvent(software, 
-//                        SoftwareEventType.CLONED, 
-//                        "App was cloned by user " + username + " as " + clonedSoftware.getUniqueName(), 
-//                        username);
-//                
-//                ApplicationManager.addEvent(clonedSoftware, 
-//                        SoftwareEventType.REGISTERED, 
-//                        "App was originally created as a clone of " + software.getUniqueName(), 
-//                        username);
-//    			
-//    			return clonedSoftware;
-//    		}
-//		}
-//		catch (SystemUnknownException e) { 
-//		    throw new SoftwareResourceException(403,
-//		            "Please specify an execution system on which the cloned application should run", e);
-//		}
-//		
-//	}
-	
+
 	/**
 	 * Verifies that the given user can publish the given Software. Requirements 
 	 * are that the user must have RoleType.PUBLISH on the Software.executionSystem
@@ -766,9 +539,6 @@ public class ApplicationManager
 			return software;
 		}
 		
-//		ApplicationManager.addEvent(software, SoftwareEventType.RESTORED, 
-//                "App was restored by " + username , username);
-		
 		software.setAvailable(true);
 		SoftwareDao.persist(software);
 		
@@ -798,9 +568,6 @@ public class ApplicationManager
 			return software;
 		}
 		
-//		ApplicationManager.addEvent(software, SoftwareEventType.DISABLED, 
-//                "App was disabled by " + username , username);
-		
 		software.setAvailable(false);
 		SoftwareDao.persist(software);
 		
@@ -813,59 +580,4 @@ public class ApplicationManager
 		
 		return software;
 	}
-
-//    /**
-//     * Creates a new {@link SoftwareEvent} and fires off a notification. 
-//     * 
-//     * @param software the target of the event
-//     * @param eventType the event to be thrown
-//     * @param createdBy the username of the user who created this event
-//     */
-//    public static void addEvent(Software software, SoftwareEventType eventType, String createdBy)
-//    {
-//        addEvent(software, eventType, eventType.getDescription(), createdBy);
-//    }
-//    
-//    /**
-//     * Creates a new {@link SoftwareEvent} and fires off an event for the software.
-//     * When the {@code eventType} is a {@link SoftwareEventType#REGISTERED}, 
-//     * {@link SoftwareEventType#REGISTERED}, or {@link SoftwareEventType#REGISTERED},
-//     * a corresponding system event is also fired.
-//     * 
-//     * @param software the target of the event
-//     * @param eventType the event to be thrown
-//     * @param description the event description
-//     * @param createdBy the username of the user who created this event
-//     * 
-//     */
-//    public static void addEvent(Software software, SoftwareEventType eventType, String description, String createdBy)
-//    {
-//        // don't persist failed events in the history
-//        if (SoftwareEventType.CLONING_FAILED != eventType && 
-//                SoftwareEventType.PUBLISHING_FAILED != eventType) {
-//            SoftwareEvent event = new SoftwareEvent(software, eventType, description, createdBy);
-//            SoftwareEventDao.persist(event);
-//        }
-//        
-//        String softwareJson = null;
-//        ObjectMapper mapper = new ObjectMapper();
-//        ObjectNode json = mapper.createObjectNode();
-//        try { 
-//        	json.put("software", mapper.readTree(software.toJSON()));
-//        	json.put("system", mapper.readTree(software.getExecutionSystem().toJSON()));
-//        } 
-//        catch (IOException | JSONException e) {
-//        	log.error("Unable to serialize app for for even processing");
-//        }
-//        
-//        NotificationManager.process(software.getUuid(), eventType.name(), createdBy, softwareJson);
-//        
-//        if (eventType == SoftwareEventType.REGISTERED) {
-//            NotificationManager.process(software.getExecutionSystem().getUuid(), "APP_CREATED", createdBy, softwareJson);
-//        } else if (eventType == SoftwareEventType.DELETED) {
-//            NotificationManager.process(software.getExecutionSystem().getUuid(), "APP_DELETED", createdBy, softwareJson);
-//        } else if (eventType == SoftwareEventType.UPDATED) {
-//            NotificationManager.process(software.getExecutionSystem().getUuid(), "APP_UPDATED", createdBy, softwareJson);
-//        }
-//    }
 }
