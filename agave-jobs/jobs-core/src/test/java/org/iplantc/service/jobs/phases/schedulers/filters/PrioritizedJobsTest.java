@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.phases.schedulers.strategies;
+package org.iplantc.service.jobs.phases.schedulers.filters;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,6 +11,7 @@ import java.util.TreeMap;
 
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.phases.schedulers.filters.IPostPriorityJobFilter;
 import org.iplantc.service.jobs.phases.schedulers.filters.PrioritizedJobs;
 import org.iplantc.service.jobs.phases.schedulers.filters.ReadyJobs;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.JobCreateOrder;
@@ -21,14 +22,10 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-/** Very basic test program to see if we can read and write topics and queues.
- * This program depends on certain queues existing in the server and the 
- * server running.
- * 
- * This test needs to be formalized as part of a test suite that checks that
- * the positive and negative behaviors are exhibited as expected.  Currently, 
- * one checks that the tests passed by looking at the server logs to
- * see what requests were processed.
+/** Basic job prioritization tests.  The nested ErsatzJobFilter class implements
+ * the IPostPriorityJobFilter interface replacing the JobQuotaCheck implementation.
+ * This substitution allows us to avoid interacting with the database, but the 
+ * real IPostPriorityJobFilter.keep() method is not exercised. 
  * 
  * @author rcardone
  *
@@ -75,6 +72,9 @@ public class PrioritizedJobsTest
     @Test(enabled=true)
     public void randomStategy() 
     {   
+        // Announce ourselves.
+        System.out.println("-------- Running randomStategy");
+        
         // Create a map to tally the job ordering.
         // The keys are job ordering strings and the values
         // the number of times that ordering appeared.
@@ -116,6 +116,71 @@ public class PrioritizedJobsTest
                 else if (job.getUuid().equals("job6"))
                     Assert.assertTrue(seenJob5, "Job 6 appeared before Job5!");
                 
+                // Accumulate the ordering string.
+                jobOrder += job.getUuid() + " ";
+            }
+            
+            // Add the new ordering to the tally map.
+            Integer count = tallyMap.get(jobOrder);
+            if (count == null) tallyMap.put(jobOrder, 1);
+             else tallyMap.put(jobOrder, count + 1);
+        }
+        
+        // Print tally. The 6 jobs that we define have their ordering constrained
+        // by their create times. The first element in each pair ((1,2), (3,4), (5,6)) 
+        // must appear before the second element, and pair elements appear consectutively.
+        // The pairs themselves can occur in any order.  Since there are 3 pairs,
+        // there are 6 possible permutations.  It is very likely that all 6 permutations
+        // will appear in the tally map as long as the number of iterations is fairly
+        // large (on the order of 1000).
+        Set<Entry<String, Integer>> entries = tallyMap.entrySet();
+        for (Entry<String, Integer> entry : entries)
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        
+        // Play the odds.
+        Assert.assertEquals(tallyMap.size(), 6, 
+                            "Run again to see if we don't get all 6 permutations.");
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* filteredRandomStategy:                                                 */
+    /* ---------------------------------------------------------------------- */
+    @Test(enabled=true)
+    public void filteredRandomStategy() 
+    {   
+        // Announce ourselves.
+        System.out.println("-------- Running filteredRandomStategy");
+        
+        // Create a map to tally the job ordering.
+        // The keys are job ordering strings and the values
+        // the number of times that ordering appeared.
+        TreeMap<String,Integer> tallyMap = new TreeMap<>();
+        
+        for (int i = 0; i < NUM_ITERATIONS; i++)
+        {
+            // Create other result fields.
+            String jobOrder = "";
+            
+            // Create job prioritizer. Each new instance randomizes
+            // in its own way, so we'd expect to see a distribution
+            // across different orderings.
+            PrioritizedJobs prioritizedJobs = 
+                new PrioritizedJobs(new TenantRandom(), 
+                                    new UserRandom(), 
+                                    new JobCreateOrder(), 
+                                    new ReadyJobs(_unprioritizedJobs,
+                                                  new ErsatzJobFilter()));
+            
+            // Get the jobs with the current prioritization.
+            Iterator<Job> it = prioritizedJobs.iterator();
+            while (it.hasNext()) {
+                Job job = it.next();
+                
+                // Make sure the filtered jobs don't appear.
+                String uuid = job.getUuid();
+                Assert.assertFalse(uuid.equals("job1") || uuid.equals("job3") || uuid.equals("job5"), 
+                                   "At least one filtered job was not filtered.");
+                               
                 // Accumulate the ordering string.
                 jobOrder += job.getUuid() + " ";
             }
@@ -214,4 +279,29 @@ public class PrioritizedJobsTest
         return jobs;
     }
 
+    /* ********************************************************************** */
+    /*                         ErsatzJobFilter Class                          */
+    /* ********************************************************************** */
+    /** This class substitutes for JobQuotaChecker in the actual code by simply
+     * filtering out some test jobs by hardcoding those jobs into the keep() method.
+     * The idea is to simulate the effect of tallying active jobs plus previously
+     * scheduled jobs as is done in JobQuotaChecker.keep().  
+     */
+    private static final class ErsatzJobFilter
+     implements IPostPriorityJobFilter
+    {
+        @Override
+        public boolean keep(Job job)
+        {
+            // Filter out some of the jobs.
+            String uuid = job.getUuid();
+            if (uuid.equals("job1") || uuid.equals("job3") || uuid.equals("job5"))
+                return false;
+            
+            return true;
+        }
+
+        @Override
+        public void resetCounters() {}
+    }
 }

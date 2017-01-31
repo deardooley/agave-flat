@@ -768,13 +768,16 @@ public abstract class AbstractPhaseScheduler
             throw new JobSchedulerException(msg, e);
         }
         
+        // Quit now if there's nothing to do.
+        if (quotaInfoList.isEmpty()) return new ReadyJobs(new LinkedList<Job>());
+        
         // Retrieve active job summary information to check quotas.
         JobQuotaChecker quotaChecker = null;
         try {
             // Create the checker object used to check quotas.
-            quotaChecker = new JobQuotaChecker();
+            quotaChecker = new JobQuotaChecker(quotaInfoList);
         
-            // Remove records that exceed their quotas.
+            // Remove records that already exceed their quotas.
             ListIterator<JobQuotaInfo> it = quotaInfoList.listIterator();
             while (it.hasNext()) {
                 JobQuotaInfo info = it.next();

@@ -1,7 +1,9 @@
 package org.iplantc.service.jobs.phases.schedulers.filters;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.dao.JobDao;
@@ -50,15 +52,52 @@ public final class JobQuotaChecker
     // quota limit.
     private final HashMap<String,Long> _countCache = new HashMap<String,Long>();
     
+    // The input quota information used in prioritized filtering. During that 
+    // filtering phase, jobs are passed in without their quota information.  We
+    // use this mapping from job uuid to info object to reconnect a job to its
+    // quota bounds.
+    private final HashMap<String, JobQuotaInfo> _quotaInfoMap;
+    
+    // Counters used to filter low priority jobs from being scheduled by
+    // PrioritizedJobs.  See keep() method.
+    private ActiveAndScheduledJobCounters _counters;
+    
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
-    public JobQuotaChecker() 
+    /** Extract active job information from the database and populate data
+     * structures with that information for convenient searching.  The quota
+     * information list should contain all quota information for all jobs that
+     * may be passed to any public method of this class.
+     * 
+     * Note that we could have collected the JobQuotaInfo objects dynamically on
+     * exceedsQuota() calls, but bulk load on construction offers the advantage
+     * of avoiding any rehashing. The dynamic approach would also have to contend
+     * with the fact that the public interface includes several exceeds*() calls.
+     * Finally, no extra burden is placed on the caller since the complete 
+     * JobQuotaInfo list available when constructing this object.
+     * 
+     * @param quotaInfoList the quota objects for all jobs that will be submitted
+     *                      to this class instance 
+     * @throws JobException on error
+     */
+    public JobQuotaChecker(List<JobQuotaInfo> quotaInfoList) 
      throws JobException 
     {
+        // Make sure we have a non-empty input list.
+        if (quotaInfoList == null || quotaInfoList.isEmpty()) {
+            String msg = "Invalid quota information list used to initialize quota checker.";
+            _log.error(msg);
+            throw new JobException(msg);
+        } 
+        
+        // Save the quota information for the final filtering stage.
+        _quotaInfoMap = new HashMap<>(1 + quotaInfoList.size() * 2);
+        for (JobQuotaInfo info : quotaInfoList) _quotaInfoMap.put(info.getUuid(), info);
+        
         // Retrieve the active job count from the database.
         List<JobActiveCount> activeCountList;
         try {activeCountList = JobDao.getSchedulerActiveJobCount();}
@@ -125,7 +164,8 @@ public final class JobQuotaChecker
             // Compare this job's information with the calculated count.
             if (cacheValue < info.getMaxSystemJobs()) return false;
               else {
-                  _log.warn(info.getExecutionSystem() + " is currently at capacity for new jobs.");
+                  _log.warn("> System " + info.getExecutionSystem() + 
+                            " is currently at capacity for new jobs.");
                   return true;
               }
         }
@@ -165,7 +205,7 @@ public final class JobQuotaChecker
         // Check the quota.
         if (jobCount < info.getMaxSystemJobs()) return false;
          else {
-             _log.warn(info.getExecutionSystem() + " is currently at capacity for new jobs.");
+             _log.warn("System " + info.getExecutionSystem() + " is currently at capacity for new jobs.");
              return true; // exceeded quota
          }
     }
@@ -203,7 +243,7 @@ public final class JobQuotaChecker
             // Compare this job's information with the calculated count.
             if (cacheValue < info.getMaxSystemUserJobs()) return false;
               else {
-                  _log.warn("User " + info.getOwner() + " has reached its quota for " +
+                  _log.warn("> User " + info.getOwner() + " has reached its quota for " +
                             "concurrent active jobs on " + info.getExecutionSystem() + ".");
                   return true;
               }
@@ -283,7 +323,7 @@ public final class JobQuotaChecker
             // Compare this job's information with the calculated count.
             if (cacheValue < info.getMaxQueueJobs()) return false;
               else {
-                  _log.warn("System " + info.getExecutionSystem() + " is currently at maximum capacity for " +
+                  _log.warn("> System " + info.getExecutionSystem() + " is at maximum capacity for " +
                             "concurrent active jobs on queue " + info.getQueueRequest() + ".");
                   return true;
               }
@@ -330,7 +370,7 @@ public final class JobQuotaChecker
         // Check the quota.
         if (jobCount < info.getMaxQueueJobs()) return false;
          else {
-             _log.warn("System " + info.getExecutionSystem() + " is currently at maximum capacity for " +
+             _log.warn("System " + info.getExecutionSystem() + " is at maximum capacity for " +
                        "concurrent active jobs on queue " + info.getQueueRequest() + ".");
              return true; // exceeded quota
          }
@@ -352,7 +392,7 @@ public final class JobQuotaChecker
         if (info.getMaxQueueUserJobs() < 0)  return false; // no limit
         if (info.getMaxQueueUserJobs() == 0) {
             _log.warn("User " + info.getOwner() + " has no capacity for jobs on the " +
-                      info.getQueueRequest() + " queue of " + info.getExecutionSystem() + ".");
+                      info.getQueueRequest() + " queue on system " + info.getExecutionSystem() + ".");
             return true;  // no capacity
         }
         
@@ -369,9 +409,9 @@ public final class JobQuotaChecker
             // Compare this job's information with the calculated count.
             if (cacheValue < info.getMaxQueueUserJobs()) return false;
               else {
-                  _log.warn("User " + info.getOwner() + " has reached its quota for " +
+                  _log.warn("> User " + info.getOwner() + " has reached its quota for " +
                             "concurrent active jobs on the " + info.getQueueRequest() + 
-                            " queue of " + info.getExecutionSystem() + ".");
+                            " queue on system " + info.getExecutionSystem() + ".");
                   return true;
               }
         }
@@ -418,7 +458,7 @@ public final class JobQuotaChecker
          else {
              _log.warn("User " + info.getOwner() + " has reached its quota for " +
                        "concurrent active jobs on the " + info.getQueueRequest() + 
-                       " queue of " + info.getExecutionSystem() + ".");
+                       " queue on system " + info.getExecutionSystem() + ".");
              return true; // exceeded quota
          }
     }
@@ -429,9 +469,9 @@ public final class JobQuotaChecker
     /** Post-priority check to determine if job should be scheduled now or if
      * scheduling it would exceed some quota.  Before this method is called
      * with the given job, it was called once for all higher priority jobs. 
-     * This method tracks that history by updating internal counters that 
-     * indicate when a threshold would be exceeded given prior decisions on
-     * whether to schedule higer priority jobs.
+     * We update internal counters that indicate when a threshold would be exceeded 
+     * given the number of higher priority jobs.  Basically, we cut off lower
+     * priority jobs once the higher priority ones have filled a quota.
      * 
      * @param job the job that was preceded by all higher priority jobs
      * @return true if this job should be scheduled, false if scheduling this
@@ -440,8 +480,68 @@ public final class JobQuotaChecker
     @Override
     public boolean keep(Job job)
     {
-        // TODO Auto-generated method stub
+        // Make sure we have an initialized counter object.
+        if (_counters == null) resetCounters();
+        
+        // Get the job's quota information before doing anything.
+        JobQuotaInfo info = _quotaInfoMap.get(job.getUuid());
+        if (info == null) {
+            String msg = "Did not find job " + job.getUuid() + 
+               " in quota info mapping.  Scheduling this job without quota checking.";
+            _log.warn(msg);
+            return true;  // Cause this unknown job to be scheduled.
+        }
+        
+        // Generate the keys for each of the four quota values.
+        String systemKey = getCacheKey(job.getTenantId(), job.getSystem());
+        String systemUserKey = getCacheKey(job.getTenantId(), job.getSystem(),
+                                           ALL_QUEUES, job.getOwner());
+        String queueKey = getCacheKey(job.getTenantId(), job.getSystem(),
+                                      job.getBatchQueue());
+        String queueUserKey = getCacheKey(job.getTenantId(), job.getSystem(),
+                                      job.getBatchQueue(), job.getOwner());
+        
+        // Check each quota.  Nulls shouldn't happen, 
+        // but we correct them if they do.
+        Long systemValue = _counters.getKey(systemKey);
+        if (systemValue == null) systemValue = 0L;
+        if (systemValue >= info.getMaxSystemJobs())
+            return false;
+        Long systemUserValue = _counters.getKey(systemUserKey);
+        if (systemUserValue == null) systemUserValue = 0L;
+        if (systemUserValue >= info.getMaxSystemUserJobs())
+            return false;
+        Long queueValue = _counters.getKey(queueKey);
+        if (queueValue == null) queueValue = 0L;
+        if (queueValue >= info.getMaxQueueJobs())
+            return false;
+        Long queueUserValue = _counters.getKey(queueUserKey);
+        if (queueUserValue == null) queueUserValue = 0L;
+        if (queueUserValue >= info.getMaxQueueUserJobs())
+            return false;
+        
+        // Increment and replace each running quota value.
+        HashMap<String, Long> countMap = _counters.getCountMap();
+        countMap.put(systemKey, systemValue + 1);
+        countMap.put(systemUserKey, systemUserValue + 1);
+        countMap.put(queueKey, queueValue + 1);
+        countMap.put(queueUserKey, queueUserValue + 1);
+        
+        // Allow this job to be scheduled.
         return true;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* resetCounters:                                                         */
+    /* ---------------------------------------------------------------------- */
+    /** Reset the quota counters to zero before filtering.
+     */
+    @Override
+    public void resetCounters()
+    {
+        // Reset the counters object to only include the active jobs 
+        // we obtained on construction from the database.
+        _counters = new ActiveAndScheduledJobCounters();
     }
     
     /* ********************************************************************** */
@@ -531,4 +631,160 @@ public final class JobQuotaChecker
              else s += PATH_SEPARATOR + component;
         return s;
     }
+
+    /* ********************************************************************** */
+    /*                    ActiveAndScheduledJobCounters Class                 */
+    /* ********************************************************************** */
+    /** Track currently scheduled jobs plus jobs that are candidates for
+     * scheduling.  Jobs passed to the keep() method are identified as candidates
+     * for scheduling.
+     */
+    private final class ActiveAndScheduledJobCounters
+    {
+        // --- Fields
+        private final HashMap<String,Long> _countMap = new HashMap<>();
+        
+        // --- Constructor
+        private ActiveAndScheduledJobCounters()
+        {
+            // Initialize with active job counts.
+            initActiveSystemCounts(_countMap);
+        }
+        
+        // Accessor.
+        private HashMap<String,Long> getCountMap(){return _countMap;}
+        
+        /* ---------------------------------------------------------------------- */
+        /* getKey:                                                                */
+        /* ---------------------------------------------------------------------- */
+        /** Get the count associated with the specified key.  The key represents 
+         * one of the four quotas for a job.  The count value represents the active
+         * jobs contributing to that quota plus the number of jobs recommended for
+         * scheduling in this round of quota checking (i.e., this object's filter
+         * processing).  
+         * 
+         * If the job was represented with a job quota information object when the
+         * enclosing class object was instantiated, then a non-null numeric value
+         * will be returned.  We don't strictly enforce this initialization 
+         * requirement, so when it is not observed, this method returns null. 
+         * 
+         * @param key a quota key (same as cache key in parent class)
+         * @return a numeric value or null 
+         */
+        private Long getKey(String key)
+        {
+            return _countMap.get(key);
+        }
+        
+        /* ---------------------------------------------------------------------- */
+        /* initActiveSystemCounts:                                                */
+        /* ---------------------------------------------------------------------- */
+        /** Get the count of active and provisionally scheduled jobs for a system.  
+         * 
+         * This method will hit the cache if the info record has been seen before.  
+         * Cache hits are the usual case since quotas are checked before any filtering 
+         * is done, and this methodis only called by the filtering code (i.e., keep()).
+         * 
+         * @param info job quota information
+         * @return the count of active and prospectively scheduled jobs.
+         */
+        private void initActiveSystemCounts(HashMap<String,Long> countMap)
+        {
+            // The tenants occupy the top level of the tree (tenant->system->queue->user).
+            Collection<Entry<String, HashMap<String, HashMap<String, HashMap<String, JobActiveCount>>>>> tenants =
+                _tree.entrySet();
+            
+            // Iterate through each of the tenants.
+            for (Entry<String, HashMap<String, HashMap<String, HashMap<String, JobActiveCount>>>> tenantEntry : tenants)
+            {
+                // Unpack the entry.
+                HashMap<String, HashMap<String, HashMap<String, JobActiveCount>>> systems = tenantEntry.getValue();
+                
+                // Iterate through systems.
+                for (Entry<String, HashMap<String, HashMap<String, JobActiveCount>>> systemEntry : systems.entrySet())
+                {
+                    // Unpack the entry.
+                    HashMap<String, HashMap<String, JobActiveCount>> queues = systemEntry.getValue();
+                    
+                    // Iterate through queues.
+                    for (Entry<String, HashMap<String, JobActiveCount>> queueEntry : queues.entrySet())
+                    {
+                        // Unpack the entry.
+                        HashMap<String, JobActiveCount> users = queueEntry.getValue();
+                        
+                        // Iterate through users.
+                        for (Entry<String, JobActiveCount> userEntry : users.entrySet())
+                        {
+                            // Unpack the entry.
+                            JobActiveCount activeCount = userEntry.getValue();
+                            
+                            // Increment the system count.
+                            String systemKey = getCacheKey(activeCount.getTenantId(), activeCount.getExecutionSystem());
+                            Long count = countMap.get(systemKey);
+                            if (count == null) countMap.put(systemKey, 1L);
+                             else countMap.put(systemKey, count + 1);
+                            
+                            // Increment the system/user count.
+                            String systemUserKey = getCacheKey(activeCount.getTenantId(), activeCount.getExecutionSystem(),
+                                                               ALL_QUEUES, activeCount.getOwner());
+                            count = countMap.get(systemUserKey);
+                            if (count == null) countMap.put(systemUserKey, 1L);
+                             else countMap.put(systemUserKey, count + 1);
+
+                            // Increment the queue count.
+                            String queueKey = getCacheKey(activeCount.getTenantId(), activeCount.getExecutionSystem(),
+                                                          activeCount.getQueueRequest());
+                            count = countMap.get(queueKey);
+                            if (count == null) countMap.put(queueKey, 1L);
+                             else countMap.put(queueKey, count + 1);
+
+                            // Increment the queue/user count.
+                            String queueUserKey = getCacheKey(activeCount.getTenantId(), activeCount.getExecutionSystem(),
+                                                              activeCount.getQueueRequest(), activeCount.getOwner());
+                            count = countMap.get(queueUserKey);
+                            if (count == null) countMap.put(queueUserKey, 1L);
+                             else countMap.put(queueUserKey, count + 1);
+                        }
+                        
+                    }
+                }
+            }
+        }
+    }
+    
+    /* ********************************************************************** */
+    /*                            Test Constructor                            */
+    /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* Constructor:                                                           */
+    /* ---------------------------------------------------------------------- */
+    /**   ****** TEST-ONLY CONSTRUCTOR  --  NOT FOR PRODUCTION USE ******s 
+     * 
+     * This package scope test-only constructor can be called by unit tests
+     * that are in the same package (split directories).  It allows the test
+     * program to pass in an already populated active job count list to avoid
+     * making a database call.  The 
+     * 
+     * @param quotaInfoList the quota objects for all jobs that will be submitted
+     *                      to this class instance
+     * @param activeCountList the prefabricated, non-null, active job count list
+     * @throws JobException on error
+     */
+    JobQuotaChecker(List<JobQuotaInfo> quotaInfoList, List<JobActiveCount> activeCountList) 
+            throws JobException 
+           {
+               // Make sure we have a non-empty input list.
+               if (quotaInfoList == null || quotaInfoList.isEmpty()) {
+                   String msg = "Invalid quota information list used to initialize quota checker.";
+                   _log.error(msg);
+                   throw new JobException(msg);
+               } 
+               
+               // Save the quota information for the final filtering stage.
+               _quotaInfoMap = new HashMap<>(1 + quotaInfoList.size() * 2);
+               for (JobQuotaInfo info : quotaInfoList) _quotaInfoMap.put(info.getUuid(), info);
+               
+               // Populate the quota search tree..
+               populateTree(activeCountList);
+           }
 }

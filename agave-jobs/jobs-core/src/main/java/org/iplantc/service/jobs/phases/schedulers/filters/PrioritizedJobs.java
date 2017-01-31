@@ -139,6 +139,9 @@ public final class PrioritizedJobs
         // Maybe there's nothing to do.
         if (_jobFilter == null) return;
         
+        // Reset all filter counters.
+        _jobFilter.resetCounters();
+        
         // Stream the jobs to the filter provider in priority order
         Iterator<Job> it = iterator();
         while (it.hasNext()) {
