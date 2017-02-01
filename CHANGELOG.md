@@ -1,6 +1,21 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.1.10 - 2017-01-31
+
+### Added
+- nothing
+
+### Changed
+- APPS: AH-170 Fixed bug in app updating causing by duplicate rows getting written to the db. This was a regression bug introduced when switching to journaled app entries.
+- APPS: Changed the response when deleting an app from 204 to 200. This removes an issue with the node request library and the Agave CLI where responses couldn't be parsed because 204 responses should be empty. Now that a 200 is returned, responses are parsed as expected.
+- SYSTEMS: Changed the mapping of systems to roles from a unidirectional one-to-many relationship to a bidirectional one-to-many relationship. This allows independent management of the roles and systems as well as proper orphan cleanup. A db migration is required for this update.
+
+
+### Removed
+- MIGRATIONS: Dropping the `systems_systemroles` table since the one-to-many relationship is now bidirectional.
+
+
 ## 2.1.10 - 2017-01-21
 
 ### Added
