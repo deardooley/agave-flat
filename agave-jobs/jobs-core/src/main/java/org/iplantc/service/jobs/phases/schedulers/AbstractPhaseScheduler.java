@@ -750,7 +750,26 @@ public abstract class AbstractPhaseScheduler
     /* getQuotaCheckedJobs:                                                   */
     /* ---------------------------------------------------------------------- */
     /** Get jobs for Staging and Submitting phases and perform quota checks on
-     * them.
+     * them. Quota checking only considers visible jobs, available systems and
+     * dedicated configuration information, so these types of filtering are 
+     * implicit in quota checking (see JobDao quota call for details).
+     * 
+     * All quota checking is performed here by schedulers.  Once a scheduler
+     * determines that a candidate job would not exceed a quota if it were
+     * scheduled, the job is allowed to proceed.  Quota checking uses a data
+     * snapshot that is only an approximation of the number of jobs that could
+     * be active when a worker starts processing a newly scheduled job.  For
+     * example, queued jobs that have not yet been seen by a worker are not
+     * counted as "active" by JobQuotaChecker and, therefore, are not included
+     * in the quota check.
+     * 
+     * In the pathological case, a large number of jobs can be queued and not
+     * counted as active during quota checking.  The number of jobs in any
+     * quota category that could concurrently run is bounded by the number of 
+     * all workers on all queues assigned to that phase, a number which has
+     * no relationship to any quota.  If such pathological cases are actually
+     * seen in practice, then a mechanism to track both the number of active
+     * jobs plus the number of queue jobs might be needed.
      * 
      * @param statuses phase-specific trigger statuses
      * @return the list of jobs that do not violate any quotas

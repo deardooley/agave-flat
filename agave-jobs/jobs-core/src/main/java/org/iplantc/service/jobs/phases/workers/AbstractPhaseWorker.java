@@ -17,7 +17,7 @@ import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.exceptions.QuotaViolationException;
 import org.iplantc.service.jobs.managers.JobManager;
-import org.iplantc.service.jobs.managers.JobQuotaCheck;
+import org.iplantc.service.jobs.managers.SystemAvailabilityCheck;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
@@ -713,34 +713,18 @@ public abstract class AbstractPhaseWorker
     }
 
     /* ---------------------------------------------------------------------- */
-    /* checkJobQuota:                                                         */
+    /* checkSystemAvailability:                                               */
     /* ---------------------------------------------------------------------- */
-    protected void checkJobQuota(int days) throws JobWorkerException
+    protected void checkSystemAvailability(int days) throws JobWorkerException
     {
         // verify the user is within quota to run the job before staging the data.
         // this should have been caught by the original job selection, but could change
         // due to high concurrency. 
         try 
         {
-            JobQuotaCheck quotaValidator = new JobQuotaCheck(_job);
-            quotaValidator.check();
+            SystemAvailabilityCheck systemCheck = new SystemAvailabilityCheck(_job);
+            systemCheck.check();
         } 
-        catch (QuotaViolationException e) 
-        {
-            try
-            {
-                if (_log.isDebugEnabled())
-                    _log.debug("Input staging for job " + _job.getUuid() + 
-                               " is current paused due to quota restrictions. " + e.getMessage());
-                _job = JobManager.updateStatus(_job, JobStatusType.PENDING, 
-                    "Input staging for job is current paused due to quota restrictions. " + 
-                    e.getMessage() + ". This job will resume staging once one or more current jobs complete.");
-            }
-            catch (Throwable e1) {
-                _log.error("Failed to update job " + _job.getUuid() + " status to PENDING", e1);
-            }   
-            throw new JobWorkerException(e);
-        }
         catch (SystemUnavailableException e) 
         {
             try

@@ -59,11 +59,11 @@ public final class StagingWorker
         // Exceptions thrown by any of the called methods abort processing.
         // This structure maintains compatibility with legacy code.
         try {
-            // ----- Check the job quota.
+            // ----- Check the execution system availability.
             checkStopped(true, JobStatusType.PENDING);
-            checkJobQuota(7);
+            checkSystemAvailability(7);
         
-            // ----- Check storage locality
+            // ----- Check storage locality.
             checkStopped(true, JobStatusType.PENDING);
             checkSoftwareLocality();
             
