@@ -390,7 +390,7 @@ public class SoftwareResourceImpl extends AbstractSoftwareResource implements So
                         "App was deleted by " + getAuthenticatedUsername(), 
                         getAuthenticatedUsername());
                 
-                return Response.noContent().build();
+                return Response.ok(new AgaveSuccessRepresentation()).build();
             } else {
                 throw new ResourceException(Status.CLIENT_ERROR_UNAUTHORIZED,
                         "User does not have permission to delete this app",

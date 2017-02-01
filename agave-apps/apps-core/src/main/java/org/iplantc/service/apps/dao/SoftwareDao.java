@@ -441,6 +441,7 @@ public class SoftwareDao
         try
         {
             Session session = getSession();
+            session.clear();
             session.disableFilter("softwareTenantFilter");
             session.delete(oldSoftware);
             session.flush();
