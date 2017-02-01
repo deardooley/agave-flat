@@ -9,7 +9,7 @@
 </listAttribute>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LAUNCH_CONFIGURATION_BUILD_SCOPE" value="${none}"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="/bin/sh"/>
-<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-l -i -c &quot;docker-compose -f third-party.yml up -d pushpin beanstalkd redis mongodb mysql sftp&quot;"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-l -i -c &quot;docker-compose -f third-party.yml up -d pushpin beanstalkd redis mongodb mysql &amp;&amp; docker-compose -f data.yml up -d sftp&quot;"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/agave/config/testbed}"/>
 <booleanAttribute key="xrebel.delayedApply" value="true"/>
 </launchConfiguration>

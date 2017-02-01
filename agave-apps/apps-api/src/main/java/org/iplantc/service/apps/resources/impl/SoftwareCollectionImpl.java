@@ -239,7 +239,7 @@ public class SoftwareCollectionImpl extends AbstractSoftwareCollection implement
                 }
             }
             
-            Software newSoftware = ApplicationManager.processSoftware(existingSoftware, json, getAuthenticatedUsername());
+            Software newSoftware = new ApplicationManager().processSoftware(existingSoftware, json, getAuthenticatedUsername());
             
             if (existingSoftware == null) 
             {
@@ -252,9 +252,8 @@ public class SoftwareCollectionImpl extends AbstractSoftwareCollection implement
             }
             else 
             {
-                ApplicationManager.deleteApplication(existingSoftware, getAuthenticatedUsername());
-                
-                SoftwareDao.persist(newSoftware);
+                // Delete the old software record and add the new one.
+                SoftwareDao.replace(existingSoftware, newSoftware);
                 
                 eventProcessor.processSoftwareContentEvent(existingSoftware, 
                         SoftwareEventType.UPDATED, 

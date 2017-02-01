@@ -63,6 +63,9 @@
 					<suiteXmlFiles>
 						<suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
 					</suiteXmlFiles>
+					<systemPropertyVariables>
+	                    <log4j.configuration>file:${basedir}/src/test/resources/log4j.properties</log4j.configuration>
+	                </systemPropertyVariables>
 				</configuration>
 			</plugin>
 			<!-- Attach testng to the surefire execution -->

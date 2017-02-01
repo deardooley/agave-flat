@@ -22,7 +22,7 @@
         <!--<property name="hbm2ddl.auto">create</property>-->
         <!-- Disabling bean validation so we can properly test situation where we need to inject 
         	test data that would not otherwise be allowed to be persisted -->
-        <property name="hibernate.show_sql">true</property>
+        <property name="hibernate.show_sql">false</property>
         <property name="javax.persistence.validation.mode">none</property>
 		<property name="hibernate.validator.autoregister_listeners">false</property>  
 		<property name="hibernate.validator.apply_to_ddl">false</property>

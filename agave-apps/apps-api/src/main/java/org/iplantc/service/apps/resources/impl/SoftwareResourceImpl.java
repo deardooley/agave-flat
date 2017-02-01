@@ -131,14 +131,14 @@ public class SoftwareResourceImpl extends AbstractSoftwareResource implements So
             
             JSONObject json = super.getPostedContentAsJsonObject(input);
             
-            Software newSoftware = ApplicationManager.processSoftware(existingSoftware, json, getAuthenticatedUsername());
+            Software newSoftware = new ApplicationManager().processSoftware(existingSoftware, json, getAuthenticatedUsername());
             
-            SoftwareDao.delete(existingSoftware);
+            SoftwareDao.replace(existingSoftware, newSoftware);
             
             // maintain the uuid of the previous app for history tracking
-            newSoftware.setUuid(existingSoftware.getUuid());
+//            newSoftware.setUuid(existingSoftware.getUuid());
             
-            SoftwareDao.persist(newSoftware);
+//            SoftwareDao.persist(newSoftware);
             
             eventProcessor.processSoftwareContentEvent(existingSoftware, 
                                         SoftwareEventType.UPDATED, 
@@ -390,7 +390,7 @@ public class SoftwareResourceImpl extends AbstractSoftwareResource implements So
                         "App was deleted by " + getAuthenticatedUsername(), 
                         getAuthenticatedUsername());
                 
-                return Response.noContent().build();
+                return Response.ok(new AgaveSuccessRepresentation()).build();
             } else {
                 throw new ResourceException(Status.CLIENT_ERROR_UNAUTHORIZED,
                         "User does not have permission to delete this app",

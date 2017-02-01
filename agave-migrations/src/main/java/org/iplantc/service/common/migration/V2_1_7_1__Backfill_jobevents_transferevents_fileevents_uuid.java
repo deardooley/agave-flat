@@ -42,7 +42,7 @@ public class V2_1_7_1__Backfill_jobevents_transferevents_fileevents_uuid impleme
     	connection.setAutoCommit(false);
     	
     	System.out.println("Starting to backfill jobevents table.");
-//    	BackfillUtil.backfillAgaveUUID(connection, "jobevents", UUIDType.JOB_EVENT);
+    	BackfillUtil.backfillAgaveUUID(connection, "jobevents", UUIDType.JOB_EVENT);
     	System.out.println("Finished backfilling jobevents table.");
     	
     	

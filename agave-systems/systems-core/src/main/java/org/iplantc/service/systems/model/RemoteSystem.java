@@ -366,31 +366,46 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 	/**
 	 * @return the permissions
 	 */
-	@OneToMany (cascade = CascadeType.ALL, orphanRemoval = true)
-	@LazyCollection(LazyCollectionOption.FALSE)
-	@JoinTable(
-		name="systems_systemroles",
-		joinColumns={ @JoinColumn(name="systems", referencedColumnName="id") },
-		inverseJoinColumns={ @JoinColumn(name="roles", referencedColumnName="id", unique=true) }
-	)
+//	@OneToMany (cascade = CascadeType.ALL, orphanRemoval=true)
+//	@org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
+//	@LazyCollection(LazyCollectionOption.FALSE)
+//	@JoinTable(
+//		name="systems_systemroles",
+//		joinColumns={ @JoinColumn(name="systems", referencedColumnName="id") },
+//		inverseJoinColumns={ @JoinColumn(name="roles", referencedColumnName="id", unique=true) }
+//	)
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "remoteSystem", fetch=FetchType.EAGER, orphanRemoval=true)
+	@org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
 	public Set<SystemRole> getRoles()
 	{
 		return roles;
+	}
+	
+	@Transient
+	public boolean removeRole(SystemRole role)
+	{
+		if (getRoles().remove(role)) {
+			role.setRemoteSystem(null);
+			return true;
+		}
+		else {
+			return false;
+		}	
 	}
 
 	@Transient
 	public SystemRole getUserRole(String username)
 	{
 		if (StringUtils.isEmpty(username)) {
-			return new SystemRole(username, RoleType.NONE);
+			return new SystemRole(username, RoleType.NONE, this);
 		}
 		else if (username.equals(owner))
 		{
-			return new SystemRole(username, RoleType.OWNER);
+			return new SystemRole(username, RoleType.OWNER, this);
 		}
 		else if (ServiceUtils.isAdmin(username))
 		{
-			return new SystemRole(username, RoleType.ADMIN);
+			return new SystemRole(username, RoleType.ADMIN, this);
 		}
 		else
 		{
@@ -399,7 +414,7 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 			for(SystemRole role: getRoles()) {
 				if(role.getUsername().equals(username)) {
 					if (role.getRole() == RoleType.PUBLISHER && getType() == RemoteSystemType.STORAGE) {
-						return new SystemRole(username, RoleType.USER);
+						return new SystemRole(username, RoleType.USER, this);
 					} else {
 						return role;
 					}
@@ -414,7 +429,7 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 			{
 				if (!getType().equals(RemoteSystemType.EXECUTION) && worldRole.canRead())
 				{
-					return new SystemRole(username, RoleType.GUEST);
+					return new SystemRole(username, RoleType.GUEST, this);
 				}
 //				else if (worldRole.canRead() || publicRole.canRead())
 //				{
@@ -430,26 +445,30 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 //				}
 				else
 				{
-					return new SystemRole(username, RoleType.USER);
+					return new SystemRole(username, RoleType.USER, this);
 				}
 			}
 			else
 			{
-				return new SystemRole(username, RoleType.NONE);
+				return new SystemRole(username, RoleType.NONE, this);
 			}
 		}
 	}
 
 	/**
 	 * @param role the roles to add
+	 * @return true if the role was uniquely added to the set
 	 */
-	public void addRole(SystemRole role)
+	public boolean addRole(SystemRole role)
 	{
-		if (role == null) return;
-
-		this.roles.remove(role);
-		this.roles.add(role);
-		NotificationManager.process(uuid, "ROLE_UPDATE", role.getUsername());
+		if (role == null) return false;
+		
+		role.setRemoteSystem(this);
+		
+		// set will catch duplicates, return the whether a 
+		// change was made.
+		return this.roles.add(role);
+		
 	}
 
 	/**

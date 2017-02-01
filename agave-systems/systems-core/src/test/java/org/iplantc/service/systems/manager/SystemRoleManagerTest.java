@@ -95,11 +95,7 @@ public class SystemRoleManagerTest extends SystemsModelTestCommon {
     
     @DataProvider
     public Object[][] clearRolesProvider() throws Exception {
-//        List<SystemRole> roles = new ArrayList<SystemRole>();
         SystemRole[] roles = new SystemRole[]{ new SystemRole(SYSTEM_SHARE_USER, RoleType.USER), new SystemRole(SYSTEM_SHARE_USER, RoleType.USER) };
-        
-//        roles.add(new SystemRole(SYSTEM_SHARE_USER, RoleType.USER));
-//        roles.add(new SystemRole(SYSTEM_UNSHARED_USER, RoleType.GUEST));
         
         return new Object[][] {
                 {getStorageSystem(true, Arrays.copyOf(roles, 2)), false, "System roles were not cleared on public storage system"},
@@ -184,7 +180,7 @@ public class SystemRoleManagerTest extends SystemsModelTestCommon {
         };
     }
     
-    @Test(dataProvider="setPublisherRoleFailsOnStorageSystemProvider")
+    @Test(dependsOnMethods={"clearRoles"}, dataProvider="setPublisherRoleFailsOnStorageSystemProvider")
     public void setPublisherRoleFailsOnStorageSystem(RemoteSystem system, String requestingUser, String message) {
         try {
             dao.persist(system);
@@ -222,7 +218,7 @@ public class SystemRoleManagerTest extends SystemsModelTestCommon {
         return testCases.toArray(new Object[][] {});
     }
     
-    @Test(dataProvider="setRoleDoesNotChangeExistingOwnerRoleProvider")
+    @Test(dependsOnMethods={"setPublisherRoleFailsOnStorageSystem"}, dataProvider="setRoleDoesNotChangeExistingOwnerRoleProvider")
     public void setRoleDoesNotChangeExistingOwnerRole(RemoteSystem system, String requestingUser, String roleUsername, RoleType roleType, RoleType expectedRoleType, boolean shouldThrowException, String message) {
         try {
             system.addRole(new SystemRole(roleUsername, roleType));
@@ -266,6 +262,7 @@ public class SystemRoleManagerTest extends SystemsModelTestCommon {
         return testCases.toArray(new Object[][] {});
     }
     
+//    @Test(dependsOnMethods={"setRoleDoesNotChangeExistingOwnerRole"}, dataProvider="setRoleDoesNotChangeExistingSuperAdminRoleProvider")
     @Test(dataProvider="setRoleDoesNotChangeExistingSuperAdminRoleProvider")
     public void setRoleDoesNotChangeExistingSuperAdminRole(RemoteSystem system, String requestingUser, String roleUsername, RoleType roleType, RoleType expectedRoleType, boolean shouldThrowException, String message) {
         try {
@@ -418,7 +415,7 @@ public class SystemRoleManagerTest extends SystemsModelTestCommon {
         };
     }
     
-    @Test(dataProvider="getRolesSetByTenantAdminProvider")
+    @Test(dependsOnMethods={"setRoleDoesNotChangeExistingSuperAdminRole"}, dataProvider="getRolesSetByTenantAdminProvider")
     public void setNewRoleForUser(RemoteSystem system, String requestingUser, String roleUsername, RoleType roleType, RoleType expectedRoleType, boolean shouldThrowException, String message) {
         
         try {
@@ -445,7 +442,7 @@ public class SystemRoleManagerTest extends SystemsModelTestCommon {
         }
     }
     
-    @Test(dataProvider="getRolesSetByTenantAdminProvider")
+    @Test(dependsOnMethods={"setNewRoleForUser"}, dataProvider="getRolesSetByTenantAdminProvider")
     public void setDuplicateRoleForUserReturnsSameRole(RemoteSystem system, String requestingUser, String roleUsername, RoleType roleType, RoleType expectedRoleType, boolean shouldThrowException, String message) {
         
         try {
