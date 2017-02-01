@@ -769,7 +769,7 @@ public abstract class AbstractPhaseScheduler
      * all workers on all queues assigned to that phase, a number which has
      * no relationship to any quota.  If such pathological cases are actually
      * seen in practice, then a mechanism to track both the number of active
-     * jobs plus the number of queue jobs might be needed.
+     * jobs plus the number of queued jobs might be needed.
      * 
      * @param statuses phase-specific trigger statuses
      * @return the list of jobs that do not violate any quotas

@@ -596,7 +596,7 @@ public class JobDao
 	}
 	
 	
-	/**
+    /**
 	 * Returns the number of jobs in an active state for a given user 
 	 * on a given system. Active states are defined by 
 	 * JobStatusType.getActiveStatuses().
@@ -605,7 +605,12 @@ public class JobDao
 	 * @param system
 	 * @return
 	 * @throws JobException
-	 */
+     * @deprecated This method is preserved for testing purposes and is not used  
+     *             for quota checking or any other runtime purpose.  See methods
+     *             getSchedulerActiveJobCount and getSchedulerJobQuotaInfo and their
+     *             calling code for more information.
+     */
+    @Deprecated
 	public static long countActiveUserJobsOnSystem(String username, String system) throws JobException
 	{
 		try
@@ -872,7 +877,7 @@ public class JobDao
 		}
 	}
 	
-	/**
+    /** 
 	 * Returns the total number of jobs in an active state 
 	 * on a given system. Active states are defined by 
 	 * JobStatusType.getActiveStatuses().
@@ -881,7 +886,13 @@ public class JobDao
 	 * @param system
 	 * @return jobCount 
 	 * @throws JobException
+	 * 
+	 * @deprecated This method is preserved for testing purposes and is not used  
+     *             for quota checking or any other runtime purpose.  See methods
+     *             getSchedulerActiveJobCount and getSchedulerJobQuotaInfo and their
+     *             calling code for more information.
 	 */
+	@Deprecated
 	public static long countActiveJobsOnSystem(String system) throws JobException
 	{
 		try
@@ -2662,6 +2673,17 @@ public class JobDao
 		}
 	}
 
+	/** NOTE: This method is preserved for testing purposes and is not used  
+	 * for quota checking or any other runtime purpose.  See methods
+	 * getSchedulerActiveJobCount and getSchedulerJobQuotaInfo and their
+	 * calling code for more information.
+	 * 
+     * @deprecated This method is preserved for testing purposes and is not used  
+     *             for quota checking or any other runtime purpose.  See methods
+     *             getSchedulerActiveJobCount and getSchedulerJobQuotaInfo and their
+     *             calling code for more information.
+     */
+    @Deprecated
 	public static Integer countTotalActiveJobs() throws JobException
 	{
 		try
@@ -2759,6 +2781,13 @@ public class JobDao
 //		}
 //	}
 
+    /**  
+     * @deprecated This method is preserved for testing purposes and is not used  
+     *             for quota checking or any other runtime purpose.  See methods
+     *             getSchedulerActiveJobCount and getSchedulerJobQuotaInfo and their
+     *             calling code for more information.
+     */
+    @Deprecated
 	public static Long countActiveJobsOnSystemQueue(String system, String queueName) 
 	throws JobException
 	{
@@ -2796,6 +2825,13 @@ public class JobDao
 		}
 	}
 
+    /** 
+     * @deprecated This method is preserved for testing purposes and is not used  
+     *             for quota checking or any other runtime purpose.  See methods
+     *             getSchedulerActiveJobCount and getSchedulerJobQuotaInfo and their
+     *             calling code for more information.
+     */
+    @Deprecated
 	public static Long countActiveUserJobsOnSystemQueue(String owner, String system, String queueName) 
 	throws JobException
 	{
