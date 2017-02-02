@@ -143,14 +143,17 @@ public final class MonitoringScheduler
             DateTime now = new DateTime();
             
             // Check each condition that would allow this job to be monitored now.
+            boolean keep = false;
             for (int[] intervalCheck : _timeCheckArray) {
                 // The first element is the number of previous checks,
                 // the second is the time period that has to elapse 
                 // for the job to be monitored again.
                 if ((statusChecks < intervalCheck[0]) && 
                     now.isAfter(lastUpdated.plusSeconds(intervalCheck[1])))
-                   continue; // do not remove this job from the list
+                   keep = true; // do not remove this job from the list
+                   break; 
             }
+            if (keep) continue;
             
             // One last test only checks the time since the last monitoring attempt.
             if (now.isAfter(lastUpdated.plusHours(1))) continue; // keep job
