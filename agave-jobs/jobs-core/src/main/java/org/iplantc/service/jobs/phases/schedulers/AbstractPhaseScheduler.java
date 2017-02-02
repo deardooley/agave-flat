@@ -832,6 +832,7 @@ public abstract class AbstractPhaseScheduler
                              " is unable to retrieve jobs by UUID for " + 
                              jobs.size() + " jobs.";
                 _log.error(msg, e);
+                throw new JobSchedulerException(msg, e);
             }
         
         return new ReadyJobs(jobs, quotaChecker);
@@ -1751,20 +1752,20 @@ public abstract class AbstractPhaseScheduler
         // -------------------- Clean Published Jobs -----------
         // Remove jobs from the published table that are no longer in one of this phase's 
         // trigger's statuses.  Note that jobs may change status between this call and 
-        // the next query call.
+        // the next call to get candidate jobs.
         // 
         // When a job exits a trigger status for this phase, but its published record still 
         // exists for this phase, the next query will not return the job and the record 
-        // will be removed in the next clean.  On the other hand, if a job moves into a 
+        // will be removed in the next clean cycle.  On the other hand, if a job moves into a 
         // trigger status of this phase, it will be picked up in the query below as long as 
         // it doesn't have a publish record.
         //
-        // It is possible for a job to regress to an earlier status after it has advanced
-        // to a later status.  For example, from staged to pending.  If this rollback
-        // occurs before an execution of cleanPublishedJob occurs, the job will become
-        // orphaned (i.e., have a published record but not actually be posted in any worker
-        // queue).  If this becomes a problem in practice, the remedy would be to remove
-        // any publish record for a job being rolled back. 
+        // It is possible for a job to regress from a later status to an earlier one.
+        // For example, from staged to pending.  If this rollback occurs before an execution 
+        // of cleanPublishedJobs occurs, the job will become orphaned (i.e., it will have a 
+        // published record but not actually be posted in any worker queue).  If this becomes 
+        // a problem in practice, the remedy would be to remove publish records for jobs 
+        // being rolled back. 
         try {JobPublishedDao.cleanPublishedJobs(_phaseType, getPhaseTriggerStatuses());}
             catch (Exception e)
             {

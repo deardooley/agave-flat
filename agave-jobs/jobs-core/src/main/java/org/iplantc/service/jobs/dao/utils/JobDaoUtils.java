@@ -1,12 +1,17 @@
 package org.iplantc.service.jobs.dao.utils;
 
 import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.Query;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.model.JobActiveCount;
+import org.iplantc.service.jobs.model.JobMonitorInfo;
 import org.iplantc.service.jobs.model.JobQuotaInfo;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
 
@@ -368,14 +373,18 @@ public final class JobDaoUtils
     /** Called by getSchedulerActiveJobCount() to populate a list of job active
      * count objects from rows returned from the database.
      * 
-     * @param outList the result JobActiveCount list that gets populated
      * @param qryResults the raw list of row objects from the database
+     * @return a non-null but possibly empty list
      */
     @SuppressWarnings("rawtypes")
-    public static void populateActiveCountList(List<JobActiveCount> outList, List qryResults)
+    public static List<JobActiveCount> populateActiveCountList(List qryResults)
     {
         // Maybe there's nothing to do.
-        if (qryResults == null || qryResults.isEmpty()) return;
+        if (qryResults == null || qryResults.isEmpty()) 
+            return new LinkedList<JobActiveCount>();
+       
+        // Create output list of proper size.
+        ArrayList<JobActiveCount> outList = new ArrayList<>(qryResults.size());
        
         // Marshal each row from the query results.
         for (Object rowobj : qryResults)
@@ -395,6 +404,8 @@ public final class JobDaoUtils
             // Add the lease to the result list.
             outList.add(activeCount);
         }
+        
+        return outList;
     }
 
     /* ---------------------------------------------------------------------- */
@@ -403,14 +414,18 @@ public final class JobDaoUtils
     /** Called by getSchedulerJobQuotaInfo() to populate a list of job quota
      * information objects from rows returned from the database.
      * 
-     * @param outList the result JobQuotaInfo list that gets populated
      * @param qryResults the raw list of row objects from the database
+     * @return a non-null but possibly empty list
      */
     @SuppressWarnings("rawtypes")
-    public static void populateQuotaInfoList(List<JobQuotaInfo> outList, List qryResults)
+    public static List<JobQuotaInfo> populateQuotaInfoList(List qryResults)
     {
         // Maybe there's nothing to do.
-        if (qryResults == null || qryResults.isEmpty()) return;
+        if (qryResults == null || qryResults.isEmpty()) 
+           return new LinkedList<JobQuotaInfo>();
+        
+        // Create output list of proper size.
+        ArrayList<JobQuotaInfo> outList = new ArrayList<>(qryResults.size());
        
         // Marshal each row from the query results.
         for (Object rowobj : qryResults)
@@ -442,6 +457,46 @@ public final class JobDaoUtils
             // Add the lease to the result list.
             outList.add(quotaInfo);
         }
+        
+        return outList;
     }
     
+    /* ---------------------------------------------------------------------- */
+    /* populateMonitorInfoList:                                               */
+    /* ---------------------------------------------------------------------- */
+    /** Called by the monitoring scheduler to populate a list of job monitor
+     * information objects from rows returned from the database.
+     * 
+     * @param qryResults the raw list of row objects from the database
+     * @return a non-null but possibly empty list
+     */
+    @SuppressWarnings("rawtypes")
+    public static List<JobMonitorInfo> populateMonitorInfoList(List qryResults)
+    {
+        // Maybe there's nothing to do.
+        if (qryResults == null || qryResults.isEmpty()) 
+            return new LinkedList<JobMonitorInfo>();;
+       
+        // Create output list of proper size.
+        ArrayList<JobMonitorInfo> outList = new ArrayList<>(qryResults.size());
+           
+        // Marshal each row from the query results.
+        for (Object rowobj : qryResults)
+        {
+            // Access row as an array and create new lease.
+            Object[] row = (Object[]) rowobj;
+            JobMonitorInfo monitorInfo = new JobMonitorInfo();
+            
+            // Marshal fields in result order.
+            monitorInfo.setUuid((String) row[0]);
+            monitorInfo.setStatusChecks((Integer) row[1]);
+            Timestamp lastUpdatedTS = (Timestamp) row[2];
+            monitorInfo.setLastUpdated(new Date(lastUpdatedTS.getTime()));
+
+            // Add the lease to the result list.
+            outList.add(monitorInfo);
+        }
+        
+        return outList;
+    }
 }
