@@ -37,14 +37,15 @@ import org.iplantc.service.jobs.dao.utils.JobDaoUtils;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.model.Job;
-import org.iplantc.service.jobs.model.JobActiveCount;
-import org.iplantc.service.jobs.model.JobMonitorInfo;
-import org.iplantc.service.jobs.model.JobQuotaInfo;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.dto.JobDTO;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobActiveCount;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobArchiveInfo;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobMonitorInfo;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
 import org.iplantc.service.jobs.search.JobSearchFilter;
 import org.iplantc.service.jobs.statemachine.JobFSMUtils;
 import org.joda.time.DateTime;
@@ -2246,6 +2247,116 @@ public class JobDao
             
             // Populate the list.
             result = JobDaoUtils.populateMonitorInfoList(qryResuts);
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to retrieve job quota information.";
+            log.error(msg, e);
+            throw new JobException(msg, e);
+        }
+        
+        return result;
+    }
+
+    /** This method is intended to only be called from a phase scheduler.  It retrieves the uuid's 
+     * of jobs that may be ready to be scheduled along with monitoring information for those jobs.  
+     * The statuses represent the triggers for the phase.  The query issued by this method skips 
+     * jobs that have already been published in the job_published table for the phase.
+     * 
+     * The job monitor records returned identify jobs via their UUIDs. These jobs are in one of the 
+     * trigger statuses and do not have a publish record for the specified phase.  The quota records 
+     * contain all the information needed to determine if a job is ready to be monitored.
+     * 
+     * @param phase the phase of the calling scheduler
+     * @param statuses the trigger statuses for the phase scheduler
+     * @return a non-null list of job monitor records
+     * @throws JobException on error
+     */
+    public static List<JobArchiveInfo> getSchedulerJobArchiveInfo(JobPhaseType phase,
+                                                                  List<JobStatusType> statuses)
+     throws JobException
+    {
+        // ------------------- Check Input -------------------
+        // We need a phase.
+        if (phase == null)
+        {
+            String msg = "Missing phase parameter in scheduler job archive information retrieval.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // At least one status must be specified.
+        if (statuses == null || statuses.isEmpty())
+        {
+            String msg = "Missing statuses parameter in scheduler job archive information retrieval.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Create the status where clause.
+        String statusClause = " j.status in (";
+        for (int i = 0; i < statuses.size(); i++)
+        {
+            // Single quote each status and add comma where needed.
+            statusClause += "'" + statuses.get(i).name() + "'";
+            if (i < statuses.size() - 1)
+                statusClause += ", ";
+        }
+        statusClause += ") ";
+        
+        // ------------------- Get Configured Input ----------
+        // Retrieve information that may have been set in configuration files and
+        // incorporate them into SQL clauses.  None of these calls throw exceptions.
+        String dedicatedTenantIdClause = JobDaoUtils.getDedicatedTenantIdClause();
+        String dedicatedUsersClause = JobDaoUtils.getDedicatedUsersClause();
+        String dedicatedSystemIdsClause = JobDaoUtils.getDedicatedSystemIdsClause();
+        
+        // ------------------- Get Monitor Info --------------
+        // Put together the sql statement.  The basic idea is to retrieve all job UUIDs
+        // that represent jobs in an archiving trigger state.
+        // 
+        // Build the query without creating so many temporary strings.
+        StringBuilder buf = new StringBuilder(512);
+        buf.append("select j.uuid ");
+        buf.append("from jobs j ");
+        
+        buf.append("where ");
+        buf.append(statusClause);
+        buf.append("and j.visible = 1 ");
+        buf.append(dedicatedTenantIdClause);
+        buf.append(dedicatedUsersClause);
+        buf.append(dedicatedSystemIdsClause);
+        buf.append("and not exists ");
+        buf.append(  "(select jp.job_uuid from job_published jp ");
+        buf.append(     "where jp.phase = :phase and jp.job_uuid = j.uuid)");
+        
+        // Result list.
+        List<JobArchiveInfo> result = null;
+        
+        // Dump the complete table..
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Issue the call and populate the lease object.
+            Query qry = session.createSQLQuery(buf.toString());
+            qry.setString("phase", phase.name());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            @SuppressWarnings("rawtypes")
+            List qryResuts = qry.list();
+            
+            // Commit the transaction.
+            HibernateUtil.commitTransaction();
+            
+            // Populate the list.
+            result = JobDaoUtils.populateArchiveInfoList(qryResuts);
         }
         catch (Exception e)
         {

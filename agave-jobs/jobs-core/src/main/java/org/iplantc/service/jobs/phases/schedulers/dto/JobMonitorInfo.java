@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.model;
+package org.iplantc.service.jobs.phases.schedulers.dto;
 
 import java.util.Date;
 

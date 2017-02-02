@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.iplantc.service.jobs.exceptions.JobException;
-import org.iplantc.service.jobs.model.JobActiveCount;
-import org.iplantc.service.jobs.model.JobQuotaInfo;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobActiveCount;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

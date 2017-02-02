@@ -9,8 +9,8 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.Job;
-import org.iplantc.service.jobs.model.JobActiveCount;
-import org.iplantc.service.jobs.model.JobQuotaInfo;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobActiveCount;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
 
 /** This class initializes with a list of JobActionCount objects, which is a
  * snapshot of the active jobs in the system at instance creation time.  The

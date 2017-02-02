@@ -10,10 +10,11 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.Query;
 import org.iplantc.service.common.persistence.TenancyHelper;
-import org.iplantc.service.jobs.model.JobActiveCount;
-import org.iplantc.service.jobs.model.JobMonitorInfo;
-import org.iplantc.service.jobs.model.JobQuotaInfo;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobActiveCount;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobArchiveInfo;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobMonitorInfo;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
 
 /** This file contains auxiliary methods used by JobDao.  The methods here
  * manipulate data structures and perform other tasks in support of SQL calls
@@ -492,6 +493,43 @@ public final class JobDaoUtils
             monitorInfo.setStatusChecks((Integer) row[1]);
             Timestamp lastUpdatedTS = (Timestamp) row[2];
             monitorInfo.setLastUpdated(new Date(lastUpdatedTS.getTime()));
+
+            // Add the lease to the result list.
+            outList.add(monitorInfo);
+        }
+        
+        return outList;
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* populateArchiveInfoList:                                               */
+    /* ---------------------------------------------------------------------- */
+    /** Called by the archiving scheduler to populate a list of job archive
+     * information objects from rows returned from the database.
+     * 
+     * @param qryResults the raw list of row objects from the database
+     * @return a non-null but possibly empty list
+     */
+    @SuppressWarnings("rawtypes")
+    public static List<JobArchiveInfo> populateArchiveInfoList(List qryResults)
+    {
+        // Maybe there's nothing to do.
+        if (qryResults == null || qryResults.isEmpty()) 
+            return new LinkedList<JobArchiveInfo>();;
+       
+        // Create output list of proper size.
+        ArrayList<JobArchiveInfo> outList = new ArrayList<>(qryResults.size());
+           
+        // Marshal each row from the query results.  Since only one field is 
+        // returned per row, hibernate returns simple objects not object
+        // arrays (thanks hibernate for not documenting this!).
+        for (Object rowobj : qryResults)
+        {
+            // Access row as an array and create new lease.
+            JobArchiveInfo monitorInfo = new JobArchiveInfo();
+            
+            // Marshal fields in result order.
+            monitorInfo.setUuid((String) rowobj);
 
             // Add the lease to the result list.
             outList.add(monitorInfo);

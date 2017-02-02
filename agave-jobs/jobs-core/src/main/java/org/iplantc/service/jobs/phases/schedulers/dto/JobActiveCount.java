@@ -1,36 +1,23 @@
-package org.iplantc.service.jobs.model;
+package org.iplantc.service.jobs.phases.schedulers.dto;
 
-/** This class holds the UUID of a job along with other information needed
- * to check quotas related to the job.
+/** This class holds information about active jobs needed to check job quotas.
  * 
  * @author rcardone
  */
-public final class JobQuotaInfo
+public final class JobActiveCount
 {
     /* ********************************************************************** */
     /*                                 Fields                                 */
     /* ********************************************************************** */
-    private String uuid;
     private String tenantId;
     private String owner;
     private String executionSystem;
     private String queueRequest;
-    private long   maxQueueJobs;
-    private long   maxQueueUserJobs;
-    private long   maxSystemJobs;      // when null in database, set to -1 here
-    private long   maxSystemUserJobs;  // when null in database, set to -1 here
+    private int    count;
     
     /* ********************************************************************** */
     /*                               Accessors                                */
     /* ********************************************************************** */
-    public String getUuid()
-    {
-        return uuid;
-    }
-    public void setUuid(String uuid)
-    {
-        this.uuid = uuid;
-    }
     public String getTenantId()
     {
         return tenantId;
@@ -63,36 +50,12 @@ public final class JobQuotaInfo
     {
         this.queueRequest = queueRequest;
     }
-    public long getMaxQueueJobs()
+    public int getCount()
     {
-        return maxQueueJobs;
+        return count;
     }
-    public void setMaxQueueJobs(long maxQueueJobs)
+    public void setCount(int count)
     {
-        this.maxQueueJobs = maxQueueJobs;
-    }
-    public long getMaxQueueUserJobs()
-    {
-        return maxQueueUserJobs;
-    }
-    public void setMaxQueueUserJobs(long maxQueueUserJobs)
-    {
-        this.maxQueueUserJobs = maxQueueUserJobs;
-    }
-    public long getMaxSystemJobs()
-    {
-        return maxSystemJobs;
-    }
-    public void setMaxSystemJobs(long maxSystemJobs)
-    {
-        this.maxSystemJobs = maxSystemJobs;
-    }
-    public long getMaxSystemUserJobs()
-    {
-        return maxSystemUserJobs;
-    }
-    public void setMaxSystemUserJobs(long maxSystemUserJobs)
-    {
-        this.maxSystemUserJobs = maxSystemUserJobs;
+        this.count = count;
     }
 }
