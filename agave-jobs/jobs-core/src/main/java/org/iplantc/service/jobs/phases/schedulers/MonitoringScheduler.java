@@ -63,10 +63,11 @@ public final class MonitoringScheduler
     {
         if (_phaseTriggerStatuses == null)
         {
-            // Populate trigger statuses from active statuses.
-            JobStatusType[] activeStatuses = JobStatusType.getActiveStatuses();
-            _phaseTriggerStatuses = new ArrayList<>(activeStatuses.length);
-            for (JobStatusType status : activeStatuses) _phaseTriggerStatuses.add(status);
+            // Populate trigger statuses from executing statuses.
+            _phaseTriggerStatuses = new ArrayList<>(3);
+            _phaseTriggerStatuses.add(JobStatusType.QUEUED);
+            _phaseTriggerStatuses.add(JobStatusType.RUNNING);
+            _phaseTriggerStatuses.add(JobStatusType.PAUSED);
         }
         return _phaseTriggerStatuses;
     }

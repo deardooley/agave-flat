@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -28,9 +29,12 @@ import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.jobs.dao.utils.DedicatedConfig;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
+import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobMonitorInfo;
 import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.RemoteSystem;
@@ -43,6 +47,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -57,6 +62,17 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
     String[] usernames = new String[] {"user-0", "user-1", "user-2"};
     String[] systemsIds = new String[] {"execute1.example.com", "execute2.example.com", "execute3.example.com"};
     String[] queues = new String[] {"short", "medium", "long"};
+    
+    @BeforeSuite
+    public void beforeSuite()
+    {
+        // Initialize the singleton instance of DedicatedConfig to use
+        // a test provider whose state we can change.  By creating the 
+        // singleton here, we control the configuration parameters that 
+        // JobDao methods use in queries.  See DedicatedConfig for details.
+        SimpleDedicatedProvider provider = new SimpleDedicatedProvider();
+        DedicatedConfig.getInstance(provider);
+    }
     
 	@BeforeClass
 	@Override
@@ -167,6 +183,19 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
     @Test()
 	public void getNextExecutingJobUuidReturnsEmptyWhenNotExecutingJobs() 
 	{
+        // Initialize the reusable variables.  During monitoring,
+        // we only check the executing states.
+        LinkedList<JobStatusType> statusList = new LinkedList<>();
+        statusList.add(JobStatusType.QUEUED);
+        statusList.add(JobStatusType.RUNNING);
+        statusList.add(JobStatusType.PAUSED);
+        JobPhaseType phase = JobPhaseType.MONITORING; 
+        List<JobMonitorInfo> monitorInfoList = null;
+        
+        // Get the provider for dedicated configuration information created during set up.
+        SimpleDedicatedProvider dedicatedProvider = 
+            (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+        
 		try 
 		{	
 			DateTime dummyLastUpdated = new DateTime();
@@ -185,9 +214,13 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 				}
 			}
 			
-			String nextJob = JobDao.getNextExecutingJobUuid(null, null, null);
-			
-			Assert.assertNull(nextJob, "No job should be returned when calling next running job and there are no running jobs.");
+	        // --- Set dedicated configuration information and then run query.
+	        dedicatedProvider.tenantId  = null;
+	        dedicatedProvider.userNames = null;
+	        dedicatedProvider.systemIds = null;
+	        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+	        Assert.assertTrue(monitorInfoList.isEmpty(),
+	                "No job should be returned when calling next running job and there are no running jobs.");
 		} 
 		catch (Exception e) {
 			Assert.fail("Unexpected error occurred running test for next running job with status QUEUED", e);
@@ -216,6 +249,19 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 	@Test(dataProvider="getNextExecutingJobUuidOnlyReturnsJobsWithExecutingStatusesProvider", dependsOnMethods={"getNextExecutingJobUuidReturnsEmptyWhenNotExecutingJobs"})
 	public void getNextExecutingJobUuidOnlyReturnsJobsWithExecutingStatuses(JobStatusType testStatus, String message) 
 	{
+        // Initialize the reusable variables.  During monitoring,
+        // we only check the executing states.
+        LinkedList<JobStatusType> statusList = new LinkedList<>();
+        statusList.add(JobStatusType.QUEUED);
+        statusList.add(JobStatusType.RUNNING);
+        statusList.add(JobStatusType.PAUSED);
+        JobPhaseType phase = JobPhaseType.MONITORING; 
+        List<JobMonitorInfo> monitorInfoList = null;
+        
+        // Get the provider for dedicated configuration information created during set up.
+        SimpleDedicatedProvider dedicatedProvider = 
+            (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+        
 		try 
 		{
 			DateTime dummyLastUpdated = new DateTime();
@@ -241,9 +287,14 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 			executingJob.setStatusChecks(0);
 			JobDao.create(executingJob, false);
 			
-			String nextJobUuid = JobDao.getNextExecutingJobUuid(null, null, null);
-			Assert.assertNotNull(nextJobUuid, message);
-			Assert.assertEquals(nextJobUuid, executingJob.getUuid(), "Executing job was not returned on call to nextExecutingJob");
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = null;
+            dedicatedProvider.userNames = null;
+            dedicatedProvider.systemIds = null;
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertFalse(monitorInfoList.isEmpty(), message);
+			Assert.assertEquals(monitorInfoList.get(0).getUuid(), executingJob.getUuid(), 
+			                    "Executing job was not returned on call to getSchedulerJobMonitorInfo");
 			
 		} catch (Exception e) {
 			Assert.fail("Unexpected error occurred running test for next running job with status QUEUED", e);
@@ -279,6 +330,19 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 	@Test(dataProvider="getNextExecutingJobUuidProvider", dependsOnMethods={"getNextExecutingJobUuidOnlyReturnsJobsWithExecutingStatuses"})
 	public void getNextExecutingJobUuid(DateTime lastUpdated, int numberOfChecks, boolean shouldReturnValue, String message) 
 	{
+        // Initialize the reusable variables.  During monitoring,
+        // we only check the executing states.
+        LinkedList<JobStatusType> statusList = new LinkedList<>();
+        statusList.add(JobStatusType.QUEUED);
+        statusList.add(JobStatusType.RUNNING);
+        statusList.add(JobStatusType.PAUSED);
+        JobPhaseType phase = JobPhaseType.MONITORING; 
+        List<JobMonitorInfo> monitorInfoList = null;
+        
+        // Get the provider for dedicated configuration information created during set up.
+        SimpleDedicatedProvider dedicatedProvider = 
+            (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+        
 		// create job with status RUNNING
 		Job executingJob;
 		try 
@@ -290,8 +354,12 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 			JobDao.create(executingJob, false);
 			Assert.assertNotNull(executingJob.getId(), "Failed to persist test job");
 			
-			String nextJob = JobDao.getNextExecutingJobUuid(null, null, null);
-			Assert.assertNotNull(nextJob, message);
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = null;
+            dedicatedProvider.userNames = null;
+            dedicatedProvider.systemIds = null;
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertFalse(monitorInfoList.isEmpty(), message);
 		} 
 		catch (Exception e) {
 			Assert.fail("Unexpected error occurred running test for next running job with status QUEUED", e);
@@ -327,6 +395,19 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 	@Test(dataProvider="getNextExecutingJobUuidRespectsTenancyProvider", dependsOnMethods={"getNextExecutingJobUuid"})
     public void getNextExecutingJobUuidRespectsTenancyCheck(DateTime lastUpdated, int numberOfChecks, boolean shouldReturnValue, String message) 
     {
+        // Initialize the reusable variables.  During monitoring,
+        // we only check the executing states.
+        LinkedList<JobStatusType> statusList = new LinkedList<>();
+        statusList.add(JobStatusType.QUEUED);
+        statusList.add(JobStatusType.RUNNING);
+        statusList.add(JobStatusType.PAUSED);
+        JobPhaseType phase = JobPhaseType.MONITORING; 
+        List<JobMonitorInfo> monitorInfoList = null;
+        
+        // Get the provider for dedicated configuration information created during set up.
+        SimpleDedicatedProvider dedicatedProvider = 
+            (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+        
         // create job with status RUNNING
         Job executingJob;
         try 
@@ -341,15 +422,17 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
             
                 Assert.assertNotNull(executingJob.getId(), "Failed to persist test job");
                 
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = TenancyHelper.getCurrentTenantId();
+                dedicatedProvider.userNames = null;
+                dedicatedProvider.systemIds = null;
+                monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                Assert.assertFalse(monitorInfoList.isEmpty(), message);
+                Assert.assertTrue(monitorInfoList.size() > 1, "Multiple executing job should return ");
                 
-                String nextJob = JobDao.getNextExecutingJobUuid(TenancyHelper.getCurrentTenantId(), null, null);
-                Assert.assertNotNull(nextJob, message);
-                
-                String explicitTenantJob = JobDao.getNextExecutingJobUuid(TenancyHelper.getCurrentTenantId(), null, null);
-                Assert.assertNotNull(explicitTenantJob, "Next executing job should return ");
-                
-                String emptyTenantJob = JobDao.getNextExecutingJobUuid("foobar", null, null);
-                Assert.assertNull(emptyTenantJob, "Next executing job for a tenant without any jobs should return null");
+                dedicatedProvider.tenantId = "foobar";
+                monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                Assert.assertTrue(monitorInfoList.isEmpty(), "Next executing job for a tenant without any jobs should return null");
             }
         } 
         catch (Exception e) {
@@ -363,6 +446,19 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
     @Test(dependsOnMethods={"getNextExecutingJobUuidRespectsTenancyCheck"})
     public void getNextExecutingJobUuidSelectsRandomly() 
     {
+        // Initialize the reusable variables.  During monitoring,
+        // we only check the executing states.
+        LinkedList<JobStatusType> statusList = new LinkedList<>();
+        statusList.add(JobStatusType.QUEUED);
+        statusList.add(JobStatusType.RUNNING);
+        statusList.add(JobStatusType.PAUSED);
+        JobPhaseType phase = JobPhaseType.MONITORING; 
+        List<JobMonitorInfo> monitorInfoList = null;
+        
+        // Get the provider for dedicated configuration information created during set up.
+        SimpleDedicatedProvider dedicatedProvider = 
+            (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+        
         Hashtable<String, Hashtable<String, Integer>> tenantJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
         Hashtable<String, Hashtable<String, Integer>> userJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
         Hashtable<String, Hashtable<String, Integer>> systemJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
@@ -418,11 +514,21 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                 
                 tenantJobSelections.put(tenantId, tenantJobHits);
             }
+            
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = null;
+            dedicatedProvider.userNames = null;
+            dedicatedProvider.systemIds = null;
+            
             int TEST_COUNT = 1000;
             for (int i=0;i<TEST_COUNT; i++)
             {
-                String nextJobUuid = JobDao.getNextExecutingJobUuid(null, null, null);
-                Assert.assertNotNull(nextJobUuid, "Vanilla getNextExecutingJobUuid should never return null when valid jobs exist.");
+                // Note that the default result ordering is to randomize by tenant and user and 
+                // then order by job create date.  So we would expect only the oldest jobs for
+                // any tenant/user combination ever to be at the head of the list.
+                monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                Assert.assertFalse(monitorInfoList.isEmpty(), "Vanilla getSchedulerJobMonitorInfo should never return null when valid jobs exist.");
+                String nextJobUuid = monitorInfoList.get(0).getUuid();
                 uuidSelections.put(nextJobUuid, uuidSelections.get(nextJobUuid)+1);
             }
             
@@ -454,6 +560,19 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
     @Test(dependsOnMethods={"getNextExecutingJobUuidSelectsRandomly"})
     public void getNextExecutingJobUuidSelectsFailsOnMismatchedDependencies() 
     {
+        // Initialize the reusable variables.  During monitoring,
+        // we only check the executing states.
+        LinkedList<JobStatusType> statusList = new LinkedList<>();
+        statusList.add(JobStatusType.QUEUED);
+        statusList.add(JobStatusType.RUNNING);
+        statusList.add(JobStatusType.PAUSED);
+        JobPhaseType phase = JobPhaseType.MONITORING; 
+        List<JobMonitorInfo> monitorInfoList = null;
+        
+        // Get the provider for dedicated configuration information created during set up.
+        SimpleDedicatedProvider dedicatedProvider = 
+            (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+        
         Hashtable<String, Hashtable<String, Integer>> tenantJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
         Hashtable<String, Hashtable<String, Integer>> userJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
         Hashtable<String, Hashtable<String, Integer>> systemJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
@@ -525,39 +644,75 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                 tenantJobSelections.put(tenantId, tenantJobHits);
             }
             
-            String nextJob;
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = "someotherclient";
+            dedicatedProvider.userNames = null;
+            dedicatedProvider.systemIds = null;
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with mismatched tenant id and empty usernames(s) & systemIds should always return null.");
             
-            nextJob = JobDao.getNextExecutingJobUuid("someotherclient", null, null);
-            Assert.assertNull(nextJob, "getNextExecutingJobUuid with mismatched tenant id and empty usernames(s) & systemIds should always return null.");
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = "someotherclient";
+            dedicatedProvider.userNames = new String[] {tenantIds[0] + "@" + usernames[0]};
+            dedicatedProvider.systemIds = null;
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with mismatched tenant id and valid username(s) should always return null.");
             
-            nextJob = JobDao.getNextExecutingJobUuid("someotherclient", new String[] {tenantIds[0] + "@" + usernames[0]}, null);
-            Assert.assertNull(nextJob, "getNextExecutingJobUuid with mismatched tenant id and valid username(s) should always return null.");
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = "someotherclient";
+            dedicatedProvider.userNames = new String[] {tenantIds[0] + "@" + usernames[0]};
+            dedicatedProvider.systemIds = new String[] {tenantIds[0] + "-" + systemsIds[0]};
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with mismatched tenant id and valid username and systemIds should always return null.");
             
-            nextJob = JobDao.getNextExecutingJobUuid("someotherclient", new String[] {tenantIds[0] + "@" + usernames[0]}, new String[] {tenantIds[0] + "-" + systemsIds[0]});
-            Assert.assertNull(nextJob, "getNextExecutingJobUuid with mismatched tenant id and valid username and systemIds should always return null.");
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = "someotherclient";
+            dedicatedProvider.userNames = new String[] {tenantIds[0] + "@" + usernames[0]};
+            dedicatedProvider.systemIds = new String[] {tenantIds[0] + "-" + systemsIds[0] + "#" + queues[0]};
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with mismatched tenant id and valid username, systemIds, and queues should always return null.");
             
-            nextJob = JobDao.getNextExecutingJobUuid("someotherclient", new String[] {tenantIds[0] + "@" + usernames[0]}, new String[] {tenantIds[0] + "-" + systemsIds[0] + "#" + queues[0]});
-            Assert.assertNull(nextJob, "getNextExecutingJobUuid with mismatched tenant id and valid username, systemIds, and queues should always return null.");
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = null;
+            dedicatedProvider.userNames = new String[] {"bullwinkle"};
+            dedicatedProvider.systemIds = null;
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with mismatched username and empty tenantId and systemIds should always return null.");
             
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = null;
+            dedicatedProvider.userNames = new String[] {"bullwinkle"};
+            dedicatedProvider.systemIds = new String[] {tenantIds[0] + "-" + systemsIds[0] + "#" + queues[0]};
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with mismatched tenant id and valid systemIds, and queues should always return null.");
             
-            nextJob = JobDao.getNextExecutingJobUuid(null, new String[] {"bullwinkle"}, null);
-            Assert.assertNull(nextJob, "getNextExecutingJobUuid with mismatched username and empty tenantId and systemIds should always return null.");
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = null;
+            dedicatedProvider.userNames = new String[] {"bullwinkle"};
+            dedicatedProvider.systemIds = new String[] {tenantIds[0] + "-" + systemsIds[0]};
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with mismatched tenant id and valid systemIds should always return null.");
             
-            nextJob = JobDao.getNextExecutingJobUuid(null, new String[] {"bullwinkle"}, new String[] {tenantIds[0] + "-" + systemsIds[0] + "#" + queues[0]});
-            Assert.assertNull(nextJob, "getNextExecutingJobUuid with mismatched tenant id and valid systemIds, and queues should always return null.");
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = tenantIds[0];
+            dedicatedProvider.userNames = new String[] {"bullwinkle"};
+            dedicatedProvider.systemIds = null;
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with invalid user and valid tenant, system, and queue list should always return null.");
             
-            nextJob = JobDao.getNextExecutingJobUuid(null, new String[] {"bullwinkle"}, new String[] {tenantIds[0] + "-" + systemsIds[0]});
-            Assert.assertNull(nextJob, "getNextExecutingJobUuid with mismatched tenant id and valid systemIds should always return null.");
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = tenantIds[0];
+            dedicatedProvider.userNames = new String[] {"bullwinkle"};
+            dedicatedProvider.systemIds = new String[] {tenantIds[0] + "-" + systemsIds[0] + "#" + queues[0]};
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with invalid user and valid tenant, system, and queue list should always return null.");
             
-            
-            nextJob = JobDao.getNextExecutingJobUuid(tenantIds[0], new String[] {"bullwinkle"}, null);
-            Assert.assertNull(nextJob, "getNextExecutingJobUuid with invalid user and valid tenant, system, and queue list should always return null.");
-            
-            nextJob = JobDao.getNextExecutingJobUuid(tenantIds[0], new String[] {"bullwinkle"}, new String[] {tenantIds[0] + "-" + systemsIds[0] + "#" + queues[0]});
-            Assert.assertNull(nextJob, "getNextExecutingJobUuid with invalid user and valid tenant, system, and queue list should always return null.");
-            
-            nextJob = JobDao.getNextExecutingJobUuid(tenantIds[0], new String[] {"bullwinkle"}, new String[] {tenantIds[0] + "-" + systemsIds[0]});
-            Assert.assertNull(nextJob, "getNextExecutingJobUuid with invalid user and valid system list should always return null.");
+            // --- Set dedicated configuration information and then run query.
+            dedicatedProvider.tenantId  = tenantIds[0];
+            dedicatedProvider.userNames = new String[] {"bullwinkle"};
+            dedicatedProvider.systemIds = new String[] {tenantIds[0] + "-" + systemsIds[0]};
+            monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+            Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with invalid user and valid system list should always return null.");
             
         }
         catch (Exception e) {
@@ -571,6 +726,19 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
 	@Test(dependsOnMethods={"getNextExecutingJobUuidSelectsRandomly"})
     public void getNextExecutingJobUuidSelectsHonorsDedicatedParameters() 
     {
+        // Initialize the reusable variables.  During monitoring,
+        // we only check the executing states.
+        LinkedList<JobStatusType> statusList = new LinkedList<>();
+        statusList.add(JobStatusType.QUEUED);
+        statusList.add(JobStatusType.RUNNING);
+        statusList.add(JobStatusType.PAUSED);
+        JobPhaseType phase = JobPhaseType.MONITORING; 
+        List<JobMonitorInfo> monitorInfoList = null;
+        
+        // Get the provider for dedicated configuration information created during set up.
+        SimpleDedicatedProvider dedicatedProvider = 
+            (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+        
         Hashtable<String, Hashtable<String, Integer>> tenantJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
         Hashtable<String, Hashtable<String, Integer>> userJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
         Hashtable<String, Hashtable<String, Integer>> systemJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
@@ -642,31 +810,19 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                 
                 tenantJobSelections.put(tenantId, tenantJobHits);
             }
-            
-//            double[] doubles = new double[uuidSelections.size()];
-//            double mean = 0;
-//            int i = 0;
-//            for(Long assignedJobs: uuidSelections.values()) {
-//                doubles[i] = assignedJobs;
-//                mean += doubles[i];
-//                i++;
-//            }
-//            mean = mean / uuidSelections.size();
-//            
-//            StandardDeviation stdev = new StandardDeviation();
-//            double sd = stdev.evaluate(doubles, mean);
-//            System.out.println("{standardDeviation: " + sd + ", mean: " + mean + "}");
-            
+                        
             Job nextJob = null;
-            String nextJobUuid;
-//            for (int i=0;i<100; i++)
-//            {
             for (final String tenantId: tenantIds) {
                 
-                nextJobUuid = JobDao.getNextExecutingJobUuid(tenantId, null, null);
-                nextJob = JobDao.getByUuid(nextJobUuid);
-                Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with specified tenant should never return null when valid jobs exist.");
-                Assert.assertEquals(nextJob.getTenantId(), tenantId, "getNextExecutingJobUuid with specified tenant should never return a job from another tenant.");
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = tenantId;
+                dedicatedProvider.userNames = null;
+                dedicatedProvider.systemIds = null;
+                monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                Assert.assertEquals(nextJob.getTenantId(), tenantId, "getSchedulerJobMonitorInfo with specified tenant should never return a job from another tenant.");
                 Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                 
                 @SuppressWarnings("unchecked")
@@ -678,17 +834,27 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                         }));
                 for (final List<String> userPermutation: userPermutations) {
                     
-                    nextJobUuid = JobDao.getNextExecutingJobUuid(tenantId, userPermutation.toArray(new String[]{}), null);
-                    nextJob = JobDao.getByUuid(nextJobUuid);
-                    Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with specified tenant and user list should never return null when valid jobs exist.");
-                    Assert.assertEquals(nextJob.getTenantId(), tenantId, "getNextExecutingJobUuid with specified tenant should never return a job from another tenant.");
-                    Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified tenant and user list should never return a job from another user.");
+                    // --- Set dedicated configuration information and then run query.
+                    dedicatedProvider.tenantId  = tenantId;
+                    dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                    dedicatedProvider.systemIds = null;
+                    monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                    Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                    nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                    Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with specified tenant and user list should never return null when valid jobs exist.");
+                    Assert.assertEquals(nextJob.getTenantId(), tenantId, "getSchedulerJobMonitorInfo with specified tenant should never return a job from another tenant.");
+                    Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified tenant and user list should never return a job from another user.");
                     Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                     
-                    nextJobUuid = JobDao.getNextExecutingJobUuid(null, userPermutation.toArray(new String[]{}), null);
-                    nextJob = JobDao.getByUuid(nextJobUuid);
-                    Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with valid user list should never return null when valid values exist.");
-                    Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified tenant and user list should never return a job from another user.");
+                    // --- Set dedicated configuration information and then run query.
+                    dedicatedProvider.tenantId  = null;
+                    dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                    dedicatedProvider.systemIds = null;
+                    monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                    Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                    nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                    Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with valid user list should never return null when valid values exist.");
+                    Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified tenant and user list should never return a job from another user.");
                     Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                     
                     Collection<List<String>> systemPermutations = Collections2.permutations(
@@ -698,39 +864,43 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                                 }
                             }));
                     
-//                        Collection<List<String>> systemPermutations = Collections2.permutations(Arrays.asList(systemsIds));
                     
                     for (final List<String> systemPermutation: systemPermutations) {
                         
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(null, null, systemPermutation.toArray(new String[]{}));
-                        nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with valid system list should never rturn null when valid values exist.");
-                        Assert.assertTrue(systemPermutation.contains(nextJob.getSystem()), "getNextExecutingJobUuid with specified system list should never return a job from another system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = null;
+                        dedicatedProvider.userNames = null;
+                        dedicatedProvider.systemIds = systemPermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with valid system list should never rturn null when valid values exist.");
+                        Assert.assertTrue(systemPermutation.contains(nextJob.getSystem()), "getSchedulerJobMonitorInfo with specified system list should never return a job from another system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
                         Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                         
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(null, userPermutation.toArray(new String[]{}), systemPermutation.toArray(new String[]{}));
-                        nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with valid user, system, and queue list should never return null when valid values exist.");
-                        Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified user and system list should never return a job from another user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
-                        Assert.assertTrue(systemPermutation.contains(nextJob.getSystem()), "getNextExecutingJobUuid with specified user, and system list should never return a job from another system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = null;
+                        dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                        dedicatedProvider.systemIds = systemPermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with valid user, system, and queue list should never return null when valid values exist.");
+                        Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified user and system list should never return a job from another user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
+                        Assert.assertTrue(systemPermutation.contains(nextJob.getSystem()), "getSchedulerJobMonitorInfo with specified user, and system list should never return a job from another system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
                         Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                         
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(tenantId, userPermutation.toArray(new String[]{}), systemPermutation.toArray(new String[]{}));
-                        nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with specified tenant, user, and system list should never return null when valid jobs exist.");
-                        Assert.assertEquals(nextJob.getTenantId(), tenantId, "getNextExecutingJobUuid with specified tenant, user, and system should never return a job from another tenant. " + nextJob.getOwner() + " !in " + nextJob.getTenantId() + " != " + tenantId);
-                        Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified tenant, user, and system list should never return a job from another user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
-                        Assert.assertTrue(systemPermutation.contains(nextJob.getSystem()), "getNextExecutingJobUuid with specified tenant, user, and system list should never return a job from another system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
-                        
-//                              tenantJobSelections.get(nextJob.getTenantId())
-//                                .put(nextJob.getUuid(), tenantJobSelections.get(nextJob.getTenantId()).get(nextJob.getUuid())+1);
-//                            userJobSelections.get(nextJob.getOwner())
-//                                .put(nextJob.getUuid(), userJobSelections.get(nextJob.getOwner()).get(nextJob.getUuid())+1);
-//                            systemJobSelections.get(nextJob.getSystem())
-//                                .put(nextJob.getUuid(), systemJobSelections.get(nextJob.getSystem()).get(nextJob.getUuid())+1);
-////                                systemQueueJobSelection.get(nextJob.getBatchQueue())
-////                                    .put(nextJob.getUuid(), systemQueueJobSelection.get(nextJob.getBatchQueue()).get(nextJob.getUuid())+1);
-//                            uuidSelections.put(nextJob.getUuid(), uuidSelections.get(nextJob.getUuid())+1);
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = tenantId;
+                        dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                        dedicatedProvider.systemIds = systemPermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with specified tenant, user, and system list should never return null when valid jobs exist.");
+                        Assert.assertEquals(nextJob.getTenantId(), tenantId, "getSchedulerJobMonitorInfo with specified tenant, user, and system should never return a job from another tenant. " + nextJob.getOwner() + " !in " + nextJob.getTenantId() + " != " + tenantId);
+                        Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified tenant, user, and system list should never return a job from another user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
+                        Assert.assertTrue(systemPermutation.contains(nextJob.getSystem()), "getSchedulerJobMonitorInfo with specified tenant, user, and system list should never return a job from another system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
                     }
                     
                     
@@ -745,56 +915,72 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                         
                     for (final List<String> systemAndQueuePermutation: systemAndQueuePermutations) 
                     {
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(null, null, systemAndQueuePermutation.toArray(new String[]{}));
-                        nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with valid tenant to valid system+queue list should never return null when valid values exist.");
-                        Assert.assertTrue(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getNextExecutingJobUuid with specified system+queue list should never return a job from another system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = null;
+                        dedicatedProvider.userNames = null;
+                        dedicatedProvider.systemIds = systemAndQueuePermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with valid tenant to valid system+queue list should never return null when valid values exist.");
+                        Assert.assertTrue(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getSchedulerJobMonitorInfo with specified system+queue list should never return a job from another system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
                         Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                         
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(null, userPermutation.toArray(new String[]{}), systemAndQueuePermutation.toArray(new String[]{}));
-                        nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with valid user and system+queue list should never return null when valid values exist.");
-                        Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified user and system+queue list should never return a job from another user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
-                        Assert.assertTrue(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getNextExecutingJobUuid with specified user and system+queue list should never return a job from another system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = null;
+                        dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                        dedicatedProvider.systemIds = systemAndQueuePermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with valid user and system+queue list should never return null when valid values exist.");
+                        Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified user and system+queue list should never return a job from another user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
+                        Assert.assertTrue(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getSchedulerJobMonitorInfo with specified user and system+queue list should never return a job from another system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
                         Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                         
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(tenantId, userPermutation.toArray(new String[]{}), systemAndQueuePermutation.toArray(new String[]{}));
-                        nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with specified tenant, user, system, and queue list should never return null when valid jobs exist.");
-                        Assert.assertEquals(nextJob.getTenantId(), tenantId, "getNextExecutingJobUuid with specified tenant, user, and system+queue should never return a job from another tenant.");
-                        Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified tenant, user, and system+queue list should never return a job from another user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
-                        Assert.assertTrue(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getNextExecutingJobUuid with specified tenant, user, and system+queue list should never return a job from another system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = tenantId;
+                        dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                        dedicatedProvider.systemIds = systemAndQueuePermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with specified tenant, user, system, and queue list should never return null when valid jobs exist.");
+                        Assert.assertEquals(nextJob.getTenantId(), tenantId, "getSchedulerJobMonitorInfo with specified tenant, user, and system+queue should never return a job from another tenant.");
+                        Assert.assertTrue(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified tenant, user, and system+queue list should never return a job from another user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
+                        Assert.assertTrue(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getSchedulerJobMonitorInfo with specified tenant, user, and system+queue list should never return a job from another system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
                         Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                         
-//                            tenantJobSelections.get(nextJob.getTenantId())
-//                                .put(nextJob.getUuid(), tenantJobSelections.get(nextJob.getTenantId()).get(nextJob.getUuid())+1);
-//                            userJobSelections.get(nextJob.getOwner())
-//                                .put(nextJob.getUuid(), userJobSelections.get(nextJob.getOwner()).get(nextJob.getUuid())+1);
-////                                systemJobSelections.get(nextJob.getSystem())
-////                                    .put(nextJob.getUuid(), systemJobSelections.get(nextJob.getSystem()).get(nextJob.getUuid())+1);
-//                            systemQueueJobSelection.get(nextJob.getSystem() + "#" + nextJob.getBatchQueue())
-//                                .put(nextJob.getUuid(), systemQueueJobSelection.get(nextJob.getSystem() + "#" + nextJob.getBatchQueue()).get(nextJob.getUuid())+1);
-//                            uuidSelections.put(nextJob.getUuid(), uuidSelections.get(nextJob.getUuid())+1);
                     }
             
                 }
             
             }
                 
-//            }
             
         }
         catch (Exception e) {
             Assert.fail("Unexpected error occurred running test for next running job with status QUEUED", e);
         }
         finally {
-//            try { clearJobs(); } catch (Exception e) {}
         }
     }
 	
 	@Test(dependsOnMethods={"getNextExecutingJobUuidSelectsHonorsDedicatedParameters"})
     public void getNextExecutingJobUuidSelectsHonorsNegatedDedicatedParameters() 
     {
+        // Initialize the reusable variables.  During monitoring,
+        // we only check the executing states.
+        LinkedList<JobStatusType> statusList = new LinkedList<>();
+        statusList.add(JobStatusType.QUEUED);
+        statusList.add(JobStatusType.RUNNING);
+        statusList.add(JobStatusType.PAUSED);
+        JobPhaseType phase = JobPhaseType.MONITORING; 
+        List<JobMonitorInfo> monitorInfoList = null;
+        
+        // Get the provider for dedicated configuration information created during set up.
+        SimpleDedicatedProvider dedicatedProvider = 
+            (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+        
         Hashtable<String, Hashtable<String, Integer>> tenantJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
         Hashtable<String, Hashtable<String, Integer>> userJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
         Hashtable<String, Hashtable<String, Integer>> systemJobSelections = new Hashtable<String, Hashtable<String, Integer>>();
@@ -868,13 +1054,17 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
             }
             
             Job nextJob = null;
-            String nextJobUuid;
             for (final String tenantId: tenantIds) {
                 
-                nextJobUuid = JobDao.getNextExecutingJobUuid("!" + tenantId, null, null);
-                nextJob = JobDao.getByUuid(nextJobUuid);
-                Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with specified tenant should never return null when valid jobs exist.");
-                Assert.assertNotEquals(nextJob.getTenantId(), tenantId, "getNextExecutingJobUuid with negated tenant should never return a job from a negated tenant.");
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = "!" + tenantId;
+                dedicatedProvider.userNames = null;
+                dedicatedProvider.systemIds = null;
+                monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                Assert.assertNotEquals(nextJob.getTenantId(), tenantId, "getSchedulerJobMonitorInfo with negated tenant should never return a job from a negated tenant.");
                 Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                 
                 @SuppressWarnings("unchecked")
@@ -886,21 +1076,31 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                         }));
                 for (final List<String> userPermutation: userPermutations) {
                     
-                    nextJobUuid = JobDao.getNextExecutingJobUuid(tenantId, userPermutation.toArray(new String[]{}), null);
+                    // --- Set dedicated configuration information and then run query.
+                    dedicatedProvider.tenantId  = tenantId;
+                    dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                    dedicatedProvider.systemIds = null;
+                    monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                    Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
                     if (userPermutation.size() == usernames.length) {
-                        Assert.assertNull(nextJobUuid, "getNextExecutingJobUuid with all users in exclusion list should always return null.");
+                        Assert.assertNull(monitorInfoList.get(0).getUuid(), "getSchedulerJobMonitorInfo with all users in exclusion list should always return null.");
                     } else  {
-                        nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with specified tenant and user list should never return null when valid jobs exist.");
-                        Assert.assertEquals(nextJob.getTenantId(), tenantId, "getNextExecutingJobUuid with specified tenant should never return a job from another tenant.");
-                        Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified tenant and negated user list should never return a job from the negated user.");
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with specified tenant and user list should never return null when valid jobs exist.");
+                        Assert.assertEquals(nextJob.getTenantId(), tenantId, "getSchedulerJobMonitorInfo with specified tenant should never return a job from another tenant.");
+                        Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified tenant and negated user list should never return a job from the negated user.");
                         Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                     }
                     
-                    nextJobUuid = JobDao.getNextExecutingJobUuid(null, userPermutation.toArray(new String[]{}), null);
-                    nextJob = JobDao.getByUuid(nextJobUuid);
-                    Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with valid user list should never return null when valid values exist.");
-                    Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified tenant and negated user list should never return a job from the negated user.");
+                    // --- Set dedicated configuration information and then run query.
+                    dedicatedProvider.tenantId  = null;
+                    dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                    dedicatedProvider.systemIds = null;
+                    monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                    Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                    nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                    Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with valid user list should never return null when valid values exist.");
+                    Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified tenant and negated user list should never return a job from the negated user.");
                     Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                     
                     Collection<List<String>> systemPermutations = Collections2.permutations(
@@ -910,34 +1110,47 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                                 }
                             }));
                     
-//                        Collection<List<String>> systemPermutations = Collections2.permutations(Arrays.asList(systemsIds));
-                    
                     for (final List<String> systemPermutation: systemPermutations) {
                         
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(null, null, systemPermutation.toArray(new String[]{}));
-                        nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with valid system list should never rturn null when valid values exist.");
-                        Assert.assertFalse(systemPermutation.contains(nextJob.getSystem()), "getNextExecutingJobUuid with negated system list should never return a job from the negated system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = null;
+                        dedicatedProvider.userNames = null;
+                        dedicatedProvider.systemIds = systemPermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with valid system list should never rturn null when valid values exist.");
+                        Assert.assertFalse(systemPermutation.contains(nextJob.getSystem()), "getSchedulerJobMonitorInfo with negated system list should never return a job from the negated system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
                         Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                         
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(null, userPermutation.toArray(new String[]{}), systemPermutation.toArray(new String[]{}));
-                         nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with valid user, system, and queue list should never return null when valid values exist.");
-                        Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified user and negated system list should never return a job from the negated user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
-                        Assert.assertFalse(systemPermutation.contains(nextJob.getSystem()), "getNextExecutingJobUuid with specified user, and negated system list should never return a job from the negated system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = null;
+                        dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                        dedicatedProvider.systemIds = systemPermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with valid user, system, and queue list should never return null when valid values exist.");
+                        Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified user and negated system list should never return a job from the negated user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
+                        Assert.assertFalse(systemPermutation.contains(nextJob.getSystem()), "getSchedulerJobMonitorInfo with specified user, and negated system list should never return a job from the negated system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
                         Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                         
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(tenantId, userPermutation.toArray(new String[]{}), systemPermutation.toArray(new String[]{}));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = tenantId;
+                        dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                        dedicatedProvider.systemIds = systemPermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
                         if (systemPermutation.size() == systemsIds.length) {
-                            Assert.assertNull(nextJobUuid, "getNextExecutingJobUuid with all systems in exclusion list should always return null.");
+                            Assert.assertNull(monitorInfoList.get(0).getUuid(), "getSchedulerJobMonitorInfo with all systems in exclusion list should always return null.");
                         } else if (userPermutation.size() == usernames.length) {
-                            Assert.assertNull(nextJobUuid, "getNextExecutingJobUuid with all users in exclusion list should always return null.");
+                            Assert.assertNull(monitorInfoList.get(0).getUuid(), "getSchedulerJobMonitorInfo with all users in exclusion list should always return null.");
                         } else {
-                            nextJob = JobDao.getByUuid(nextJobUuid);
-                            Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with specified tenant, user, and system list should never return null when valid jobs exist.");
-                            Assert.assertEquals(nextJob.getTenantId(), tenantId, "getNextExecutingJobUuid with specified tenant, user, and system should never return a job from another tenant. " + nextJob.getOwner() + " !in " + nextJob.getTenantId() + " != " + tenantId);
-                            Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified tenant, user, and negated system list should never return a job from the negated user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
-                            Assert.assertFalse(systemPermutation.contains(nextJob.getSystem()), "getNextExecutingJobUuid with specified tenant, user, and negated system list should never return a job from the negated system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
+                            nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                            Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with specified tenant, user, and system list should never return null when valid jobs exist.");
+                            Assert.assertEquals(nextJob.getTenantId(), tenantId, "getSchedulerJobMonitorInfo with specified tenant, user, and system should never return a job from another tenant. " + nextJob.getOwner() + " !in " + nextJob.getTenantId() + " != " + tenantId);
+                            Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified tenant, user, and negated system list should never return a job from the negated user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
+                            Assert.assertFalse(systemPermutation.contains(nextJob.getSystem()), "getSchedulerJobMonitorInfo with specified tenant, user, and negated system list should never return a job from the negated system. " + nextJob.getSystem() + " !in " + StringUtils.join(systemPermutation, ","));
                         }
                     }
                     
@@ -953,28 +1166,43 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                         
                     for (final List<String> systemAndQueuePermutation: systemAndQueuePermutations) 
                     {
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(null, null, systemAndQueuePermutation.toArray(new String[]{}));
-                        nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with valid tenant to valid system+queue list should never return null when valid values exist.");
-                        Assert.assertFalse(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getNextExecutingJobUuid with negated system+queue list should never return a job from the negated system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = null;
+                        dedicatedProvider.userNames = null;
+                        dedicatedProvider.systemIds = systemAndQueuePermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with valid tenant to valid system+queue list should never return null when valid values exist.");
+                        Assert.assertFalse(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getSchedulerJobMonitorInfo with negated system+queue list should never return a job from the negated system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
                         Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                         
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(null, userPermutation.toArray(new String[]{}), systemAndQueuePermutation.toArray(new String[]{}));
-                        nextJob = JobDao.getByUuid(nextJobUuid);
-                        Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with valid user and system+queue list should never return null when valid values exist.");
-                        Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified user and system+queue list should never return a job from the negated user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
-                        Assert.assertFalse(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getNextExecutingJobUuid with negated specified user and system+queue list should never return a job from the negated system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = null;
+                        dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                        dedicatedProvider.systemIds = systemAndQueuePermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
+                        nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                        Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with valid user and system+queue list should never return null when valid values exist.");
+                        Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified user and system+queue list should never return a job from the negated user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
+                        Assert.assertFalse(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getSchedulerJobMonitorInfo with negated specified user and system+queue list should never return a job from the negated system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
                         Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                 
-                        nextJobUuid = JobDao.getNextExecutingJobUuid(tenantId, userPermutation.toArray(new String[]{}), systemAndQueuePermutation.toArray(new String[]{}));
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = tenantId;
+                        dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                        dedicatedProvider.systemIds = systemAndQueuePermutation.toArray(new String[]{});
+                        monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                        Assert.assertFalse(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
                         if (userPermutation.size() == usernames.length) {
-                            Assert.assertNull(nextJobUuid, "getNextExecutingJobUuid with all users in exclusion list should always return null.");
+                            Assert.assertNull(monitorInfoList.get(0).getUuid(), "getNextExecutingJobUuid with all users in exclusion list should always return null.");
                         } else  {
-                            nextJob = JobDao.getByUuid(nextJobUuid);
-                            Assert.assertNotNull(nextJob, "getNextExecutingJobUuid with specified tenant, user, system, and queue list should never return null when valid jobs exist.");
-                            Assert.assertEquals(nextJob.getTenantId(), tenantId, "getNextExecutingJobUuid with specified tenant, user, and negated system+queue should never return a job from another tenant.");
-                            Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getNextExecutingJobUuid with specified tenant, user, and negated system+queue list should never return a job from the negated user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
-                            Assert.assertFalse(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getNextExecutingJobUuid with specified tenant, user, and negated system+queue list should never return a job from the negated system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
+                            nextJob = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
+                            Assert.assertNotNull(nextJob, "getSchedulerJobMonitorInfo with specified tenant, user, system, and queue list should never return null when valid jobs exist.");
+                            Assert.assertEquals(nextJob.getTenantId(), tenantId, "getSchedulerJobMonitorInfo with specified tenant, user, and negated system+queue should never return a job from another tenant.");
+                            Assert.assertFalse(userPermutation.contains(nextJob.getOwner()), "getSchedulerJobMonitorInfo with specified tenant, user, and negated system+queue list should never return a job from the negated user. " + nextJob.getOwner() + " !in " +  StringUtils.join(userPermutation, ","));
+                            Assert.assertFalse(systemAndQueuePermutation.contains(nextJob.getSystem() + "#" + nextJob.getBatchQueue()), "getSchedulerJobMonitorInfo with specified tenant, user, and negated system+queue list should never return a job from the negated system. " + nextJob.getSystem() + "#" + nextJob.getBatchQueue() + " !in " + StringUtils.join(systemAndQueuePermutation, ","));
                             Assert.assertTrue(nextJob.getStatus() == QUEUED || nextJob.getStatus() == RUNNING || nextJob.getStatus() == PAUSED, "Job with invalid status was returned");
                         }
                     }
@@ -986,13 +1214,16 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
                         }
                     }
                     
-                    nextJobUuid = JobDao.getNextExecutingJobUuid(tenantId, userPermutation.toArray(new String[]{}), systemQueueFQNs.toArray(new String[]{}));
-                    Assert.assertNull(nextJobUuid, "getNextExecutingJobUuid with all systems+queue in exclusion list should always return null.");
+                    // --- Set dedicated configuration information and then run query.
+                    dedicatedProvider.tenantId  = tenantId;
+                    dedicatedProvider.userNames = userPermutation.toArray(new String[]{});
+                    dedicatedProvider.systemIds = systemQueueFQNs.toArray(new String[]{});
+                    monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                    Assert.assertTrue(monitorInfoList.isEmpty(), "getSchedulerJobMonitorInfo with specified tenant should never return null when valid jobs exist.");
                 }
             
             }
                 
-//            }
             
         }
         catch (Exception e) {
@@ -1024,8 +1255,27 @@ public class ProgressiveMonitoringBackoffTest extends AbstractDaoTest
             Callable<Void> callable = new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
-                	String nextJobUuid= JobDao.getNextExecutingJobUuid(null, null, null);
-                	Job job = JobDao.getByUuid(nextJobUuid);
+                    // Initialize the reusable variables.
+                    LinkedList<JobStatusType> statusList = new LinkedList<>();
+                    statusList.add(JobStatusType.QUEUED);
+                    statusList.add(JobStatusType.RUNNING);
+                    statusList.add(JobStatusType.PAUSED);
+                    JobPhaseType phase = JobPhaseType.MONITORING; 
+                    List<JobMonitorInfo> monitorInfoList = null;
+                    
+                    // Get the provider for dedicated configuration information created during set up.
+                    SimpleDedicatedProvider dedicatedProvider = 
+                        (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+                    
+                    // --- Set dedicated configuration information and then run query.
+                    dedicatedProvider.tenantId  = null;
+                    dedicatedProvider.userNames = null;
+                    dedicatedProvider.systemIds = null;
+                    monitorInfoList = JobDao.getSchedulerJobMonitorInfo(phase, statusList);
+                    Assert.assertFalse(monitorInfoList.isEmpty(),
+                            "Expected to retrieve executing job.");
+                    
+                	Job job = JobDao.getByUuid(monitorInfoList.get(0).getUuid());
                     
                 	job.setRetries(job.getRetries()+1);
                 	//(JobStatusType.RUNNING, "Updating from the future");

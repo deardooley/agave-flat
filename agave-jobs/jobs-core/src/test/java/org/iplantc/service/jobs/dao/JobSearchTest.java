@@ -302,7 +302,6 @@ public class JobSearchTest  extends AbstractDaoTest {
         map.put("id.eq", jobUuid);
         map.put(searchTerm, searchValue);
         
-        log.debug("Total active jobs at time of search: " + JobDao.countTotalActiveJobs());
         List<JobDTO> searchJobs = JobDao.findMatching(jobOwner, new JobSearchFilter().filterCriteria(map));
         Assert.assertNotNull(searchJobs, "findMatching should never return null");
         

@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -24,8 +25,11 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.jobs.dao.utils.DedicatedConfig;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
 import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.StorageSystem;
@@ -37,6 +41,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.Collections2;
@@ -62,6 +67,17 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
     private String[] tenantIds = new String[] { "alpha", "beta", "gamma" };
     private String[] usernames = new String[] { "user-0", "user-1", "user-2" };
 
+    @BeforeSuite
+    public void beforeSuite()
+    {
+        // Initialize the singleton instance of DedicatedConfig to use
+        // a test provider whose state we can change.  By creating the 
+        // singleton here, we control the configuration parameters that 
+        // JobDao methods use in queries.  See DedicatedConfig for details.
+        SimpleDedicatedProvider provider = new SimpleDedicatedProvider();
+        DedicatedConfig.getInstance(provider);
+    }
+    
     @BeforeClass
     public void beforeClass() throws Exception {
         super.beforeClass();
@@ -260,69 +276,96 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                 break;
             }
 
-            String nextJobUuid;
+            // Get the provider for dedicated configuration information created during set up.
+            SimpleDedicatedProvider dedicatedProvider = 
+                (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+            
             for (JobStatusType testStatus : new JobStatusType[] { PENDING, STAGED }) {
-                nextJobUuid = JobDao
-                        .getNextQueuedJobUuid(testStatus, "someotherclient", null, null);
-                Assert.assertNull(
-                        nextJobUuid,
+                
+                // Initialize the reusable variables.
+                LinkedList<JobStatusType> statusList = new LinkedList<>();
+                statusList.add(testStatus);
+                JobPhaseType phase = (testStatus == PENDING) ? JobPhaseType.STAGING : JobPhaseType.SUBMITTING; 
+                List<JobQuotaInfo> quotaInfoList = null;
+                
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = "someotherclient";
+                dedicatedProvider.userNames = null;
+                dedicatedProvider.systemIds = null;
+                quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                Assert.assertTrue(quotaInfoList.isEmpty(),
                         "getNextQueuedJobUuid with mismatched tenant id and empty usernames(s) & systemIds should always return null.");
 
-                nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, "someotherclient",
-                        new String[] { tenantIds[0] + "@" + usernames[0] }, null);
-                Assert.assertNull(nextJobUuid,
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = "someotherclient";
+                dedicatedProvider.userNames = new String[] { tenantIds[0] + "@" + usernames[0] };
+                dedicatedProvider.systemIds = null;
+                quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                Assert.assertTrue(quotaInfoList.isEmpty(),
                         "getNextQueuedJobUuid with mismatched tenant id and valid username(s) should always return null.");
 
-                nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, "someotherclient",
-                        new String[] { tenantIds[0] + "@" + usernames[0] },
-                        new String[] { tenantIds[0] + "/" + systemsIds[0] });
-                Assert.assertNull(
-                        nextJobUuid,
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = "someotherclient";
+                dedicatedProvider.userNames = new String[] { tenantIds[0] + "@" + usernames[0] };
+                dedicatedProvider.systemIds = new String[] { tenantIds[0] + "/" + systemsIds[0] };
+                quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                Assert.assertTrue(quotaInfoList.isEmpty(),
                         "getNextQueuedJobUuid with mismatched tenant id and valid username and systemIds should always return null.");
 
-                nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, "someotherclient",
-                        new String[] { tenantIds[0] + "@" + usernames[0] },
-                        new String[] { tenantIds[0] + "/" + systemsIds[0] + "#" + queues[0] });
-                Assert.assertNull(
-                        nextJobUuid,
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = "someotherclient";
+                dedicatedProvider.userNames = new String[] { tenantIds[0] + "@" + usernames[0] };
+                dedicatedProvider.systemIds = new String[] { tenantIds[0] + "/" + systemsIds[0] + "#" + queues[0] };
+                quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                Assert.assertTrue(quotaInfoList.isEmpty(),
                         "getNextQueuedJobUuid with mismatched tenant id and valid username, systemIds, and queues should always return null.");
 
-                nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, null,
-                        new String[] { "bullwinkle" }, null);
-                Assert.assertNull(
-                        nextJobUuid,
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = null;
+                dedicatedProvider.userNames = new String[] { "bullwinkle" };
+                dedicatedProvider.systemIds = null;
+                quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                Assert.assertTrue(quotaInfoList.isEmpty(),
                         "getNextQueuedJobUuid with mismatched username and empty tenantId and systemIds should always return null.");
 
-                nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, null,
-                        new String[] { "bullwinkle" }, new String[] { tenantIds[0] + "/"
-                                + systemsIds[0] + "#" + queues[0] });
-                Assert.assertNull(
-                        nextJobUuid,
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = null;
+                dedicatedProvider.userNames = new String[] { "bullwinkle" };
+                dedicatedProvider.systemIds = new String[] { tenantIds[0] + "/" + systemsIds[0] + "#" + queues[0] };
+                quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                Assert.assertTrue(quotaInfoList.isEmpty(),
                         "getNextQueuedJobUuid with mismatched tenant id and valid systemIds, and queues should always return null.");
 
-                nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, null,
-                        new String[] { "bullwinkle" }, new String[] { tenantIds[0] + "/"
-                                + systemsIds[0] });
-                Assert.assertNull(nextJobUuid,
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = null;
+                dedicatedProvider.userNames = new String[] { "bullwinkle" };
+                dedicatedProvider.systemIds = new String[] { tenantIds[0] + "/" + systemsIds[0] };
+                quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                Assert.assertTrue(quotaInfoList.isEmpty(),
                         "getNextQueuedJobUuid with mismatched tenant id and valid systemIds should always return null.");
 
-                nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, tenantIds[0],
-                        new String[] { "bullwinkle" }, null);
-                Assert.assertNull(
-                        nextJobUuid,
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = tenantIds[0];
+                dedicatedProvider.userNames = new String[] { "bullwinkle" };
+                dedicatedProvider.systemIds = null;
+                quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                Assert.assertTrue(quotaInfoList.isEmpty(),
                         "getNextQueuedJobUuid with invalid user and valid tenant, system, and queue list should always return null.");
 
-                nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, tenantIds[0],
-                        new String[] { "bullwinkle" }, new String[] { tenantIds[0] + "/"
-                                + systemsIds[0] + "#" + queues[0] });
-                Assert.assertNull(
-                        nextJobUuid,
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = tenantIds[0];
+                dedicatedProvider.userNames = new String[] { "bullwinkle" };
+                dedicatedProvider.systemIds = new String[] { tenantIds[0] + "/" + systemsIds[0] + "#" + queues[0] };
+                quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                Assert.assertTrue(quotaInfoList.isEmpty(),
                         "getNextQueuedJobUuid with invalid user and valid tenant, system, and queue list should always return null.");
 
-                nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, tenantIds[0],
-                        new String[] { "bullwinkle" }, new String[] { tenantIds[0] + "/"
-                                + systemsIds[0] });
-                Assert.assertNull(nextJobUuid,
+                // --- Set dedicated configuration information and then run query.
+                dedicatedProvider.tenantId  = tenantIds[0];
+                dedicatedProvider.userNames = new String[] { "bullwinkle" };
+                dedicatedProvider.systemIds = new String[] { tenantIds[0] + "/" + systemsIds[0] };
+                quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                Assert.assertTrue(quotaInfoList.isEmpty(),
                         "getNextQueuedJobUuid with invalid user and valid system list should always return null.");
             }
         } catch (Exception e) {
@@ -406,13 +449,30 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                 tenantJobSelections.put(tenantId, tenantJobHits);
             }
 
+            // Get the provider for dedicated configuration information created during set up.
+            SimpleDedicatedProvider dedicatedProvider = 
+                (SimpleDedicatedProvider) DedicatedConfig.getInstance().getDedicatedProvider();
+            
             Job nextJob = null;
-            String nextJobUuid;
             for (JobStatusType testStatus : new JobStatusType[] { PENDING, STAGED }) {
+                
+                // Initialize the reusable variables.
+                LinkedList<JobStatusType> statusList = new LinkedList<>();
+                statusList.add(testStatus);
+                JobPhaseType phase = (testStatus == PENDING) ? JobPhaseType.STAGING : JobPhaseType.SUBMITTING; 
+                List<JobQuotaInfo> quotaInfoList = null;
+                
                 for (final String tenantId : tenantIds) {
-
-                    nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, tenantId, null, null);
-                    nextJob = JobDao.getByUuid(nextJobUuid);
+                    
+                    // --- Set dedicated configuration information and then run query.
+                    dedicatedProvider.tenantId  = tenantId;
+                    dedicatedProvider.userNames = null;
+                    dedicatedProvider.systemIds = null;
+                    quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                    Assert.assertFalse(quotaInfoList.isEmpty(),
+                                       "Expected quota information for tenant " + tenantId + ".");
+                    
+                    nextJob = JobDao.getByUuid(quotaInfoList.get(0).getUuid());
                     Assert.assertNotNull(
                             nextJob,
                             "getNextQueuedJobUuid of status "
@@ -438,9 +498,15 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
 
                     for (final List<String> userPermutation : userPermutations) {
 
-                        nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, tenantId,
-                                userPermutation.toArray(new String[] {}), null);
-                        nextJob = JobDao.getByUuid(nextJobUuid);
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = tenantId;
+                        dedicatedProvider.userNames = userPermutation.toArray(new String[] {});
+                        dedicatedProvider.systemIds = null;
+                        quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                        Assert.assertFalse(quotaInfoList.isEmpty(),
+                                "Expected quota information for tenant " + tenantId + ".");
+                        
+                        nextJob = JobDao.getByUuid(quotaInfoList.get(0).getUuid());
                         Assert.assertNotNull(
                                 nextJob,
                                 "getNextQueuedJobUuid with specified tenant and user list should never return null when valid jobs exist.");
@@ -453,9 +519,15 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                                 || nextJob.getStatus() == STAGED,
                                 "Job with invalid status was returned");
 
-                        nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, null,
-                                userPermutation.toArray(new String[] {}), null);
-                        nextJob = JobDao.getByUuid(nextJobUuid);
+                        // --- Set dedicated configuration information and then run query.
+                        dedicatedProvider.tenantId  = tenantId;
+                        dedicatedProvider.userNames = userPermutation.toArray(new String[] {});
+                        dedicatedProvider.systemIds = null;
+                        quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                        Assert.assertFalse(quotaInfoList.isEmpty(),
+                                "Expected quota information for tenant " + tenantId + ".");
+                        
+                        nextJob = JobDao.getByUuid(quotaInfoList.get(0).getUuid());
                         Assert.assertNotNull(nextJob,
                                 "getNextQueuedJobUuid with valid user list should never return null when valid values exist.");
                         Assert.assertTrue(
@@ -475,9 +547,15 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
 
                         for (final List<String> systemPermutation : systemPermutations) {
 
-                            nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, null, null,
-                                    systemPermutation.toArray(new String[] {}));
-                            nextJob = JobDao.getByUuid(nextJobUuid);
+                            // --- Set dedicated configuration information and then run query.
+                            dedicatedProvider.tenantId  = null;
+                            dedicatedProvider.userNames = null;
+                            dedicatedProvider.systemIds = systemPermutation.toArray(new String[] {});
+                            quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                            Assert.assertFalse(quotaInfoList.isEmpty(),
+                                    "Expected quota information.");
+                            
+                            nextJob = JobDao.getByUuid(quotaInfoList.get(0).getUuid());
                             Assert.assertNotNull(
                                     nextJob,
                                     "getNextQueuedJobUuid with valid tenant to valid user, system, and queue list should never rturn null when valid values exist.");
@@ -488,10 +566,15 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                                     || nextJob.getStatus() == STAGED,
                                     "Job with invalid status was returned");
 
-                            nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, null,
-                                    userPermutation.toArray(new String[] {}),
-                                    systemPermutation.toArray(new String[] {}));
-                            nextJob = JobDao.getByUuid(nextJobUuid);
+                            // --- Set dedicated configuration information and then run query.
+                            dedicatedProvider.tenantId  = null;
+                            dedicatedProvider.userNames = userPermutation.toArray(new String[] {});
+                            dedicatedProvider.systemIds = systemPermutation.toArray(new String[] {});
+                            quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                            Assert.assertFalse(quotaInfoList.isEmpty(),
+                                    "Expected quota information.");
+                            
+                            nextJob = JobDao.getByUuid(quotaInfoList.get(0).getUuid());
                             Assert.assertNotNull(
                                     nextJob,
                                     "getNextQueuedJobUuid with valid user, system, and queue list should never return null when valid values exist.");
@@ -505,10 +588,15 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                                     || nextJob.getStatus() == STAGED,
                                     "Job with invalid status was returned");
 
-                            nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, tenantId,
-                                    userPermutation.toArray(new String[] {}),
-                                    systemPermutation.toArray(new String[] {}));
-                            nextJob = JobDao.getByUuid(nextJobUuid);
+                            // --- Set dedicated configuration information and then run query.
+                            dedicatedProvider.tenantId  = tenantId;
+                            dedicatedProvider.userNames = userPermutation.toArray(new String[] {});
+                            dedicatedProvider.systemIds = systemPermutation.toArray(new String[] {});
+                            quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                            Assert.assertFalse(quotaInfoList.isEmpty(),
+                                    "Expected quota information for tenant " + tenantId + ".");
+                            
+                            nextJob = JobDao.getByUuid(quotaInfoList.get(0).getUuid());
                             Assert.assertNotNull(
                                     nextJob,
                                     "getNextQueuedJobUuid with specified tenant, user, and system list should never return null when valid jobs exist.");
@@ -535,9 +623,16 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                                 .permutations(systemQueueFQNs);
 
                         for (final List<String> systemAndQueuePermutation : systemAndQueuePermutations) {
-                            nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, null, null,
-                                    systemAndQueuePermutation.toArray(new String[] {}));
-                            nextJob = JobDao.getByUuid(nextJobUuid);
+                            
+                            // --- Set dedicated configuration information and then run query.
+                            dedicatedProvider.tenantId  = null;
+                            dedicatedProvider.userNames = null;
+                            dedicatedProvider.systemIds = systemAndQueuePermutation.toArray(new String[] {});
+                            quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                            Assert.assertFalse(quotaInfoList.isEmpty(),
+                                    "Expected quota information.");
+                            
+                            nextJob = JobDao.getByUuid(quotaInfoList.get(0).getUuid());
                             Assert.assertNotNull(
                                     nextJob,
                                     "getNextQueuedJobUuid with valid tenant to valid user, system, and queue list should never rturn null when valid values exist.");
@@ -549,10 +644,15 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                                     || nextJob.getStatus() == STAGED,
                                     "Job with invalid status was returned");
 
-                            nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, null,
-                                    userPermutation.toArray(new String[] {}),
-                                    systemAndQueuePermutation.toArray(new String[] {}));
-                            nextJob = JobDao.getByUuid(nextJobUuid);
+                            // --- Set dedicated configuration information and then run query.
+                            dedicatedProvider.tenantId  = null;
+                            dedicatedProvider.userNames = userPermutation.toArray(new String[] {});
+                            dedicatedProvider.systemIds = systemAndQueuePermutation.toArray(new String[] {});
+                            quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                            Assert.assertFalse(quotaInfoList.isEmpty(),
+                                    "Expected quota information.");
+                            
+                            nextJob = JobDao.getByUuid(quotaInfoList.get(0).getUuid());
                             Assert.assertNotNull(
                                     nextJob,
                                     "getNextQueuedJobUuid with valid user, system, and queue list should never return null when valid values exist.");
@@ -567,10 +667,15 @@ public class FairShareJobSelectionTest extends AbstractDaoTest {
                                     || nextJob.getStatus() == STAGED,
                                     "Job with invalid status was returned");
 
-                            nextJobUuid = JobDao.getNextQueuedJobUuid(testStatus, tenantId,
-                                    userPermutation.toArray(new String[] {}),
-                                    systemAndQueuePermutation.toArray(new String[] {}));
-                            nextJob = JobDao.getByUuid(nextJobUuid);
+                            // --- Set dedicated configuration information and then run query.
+                            dedicatedProvider.tenantId  = tenantId;
+                            dedicatedProvider.userNames = userPermutation.toArray(new String[] {});
+                            dedicatedProvider.systemIds = systemAndQueuePermutation.toArray(new String[] {});
+                            quotaInfoList = JobDao.getSchedulerJobQuotaInfo(phase, statusList);
+                            Assert.assertFalse(quotaInfoList.isEmpty(),
+                                    "Expected quota information for tenant " + tenantId + ".");
+                            
+                            nextJob = JobDao.getByUuid(quotaInfoList.get(0).getUuid());
                             Assert.assertNotNull(
                                     nextJob,
                                     "getNextQueuedJobUuid with specified tenant, user, system, and queue list should never return null when valid jobs exist.");

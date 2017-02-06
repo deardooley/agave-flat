@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.iplantc.service.apps.dao.SoftwareDao;
@@ -14,7 +15,9 @@ import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
+import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -74,88 +77,6 @@ public class JobDaoTest extends AbstractDaoTest {
 		Assert.assertNull(deletedJob, "Failed to delete job.");
 	}
 
-	@Test(dependsOnMethods={"delete"})
-	public void countActiveUserJobsOnSystem() throws Exception
-	{
-		List<Job> testActiveJobs = new ArrayList<Job>();
-		List<Job> testInactiveJobs = new ArrayList<Job>();
-		Job otherUserJob = null; 
-		
-		for (JobStatusType status: JobStatusType.getActiveStatuses())
-		{	
-			Job testJob = createJob(status);
-			Assert.assertNotNull(testJob.getId(), 
-					"Failed to persist active job " + status.name() + ".");
-			testActiveJobs.add(testJob);
-		}
-		
-		for (JobStatusType status: JobStatusType.values())
-		{	
-			if (!Arrays.asList(JobStatusType.getActiveStatuses()).contains(status))
-			{
-				Job testJob = createJob(status);
-				Assert.assertNotNull(testJob.getId(), 
-						"Failed to persist inactive job " + status.name() + ".");
-				testInactiveJobs.add(testJob);
-			}
-		}
-		
-		otherUserJob = createJob(JobStatusType.RUNNING);
-		otherUserJob.setOwner(TEST_SHARED_OWNER);
-		
-		JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
-		jobUpdateParameters.setOwner(otherUserJob.getOwner());
-		JobDao.update(otherUserJob, jobUpdateParameters);
-		
-		Assert.assertNotNull(otherUserJob.getId(), "Failed to persist other user job.");
-		
-		long userSystemJobCount = JobDao.countActiveUserJobsOnSystem(TEST_OWNER, otherUserJob.getSystem());
-		Assert.assertEquals(userSystemJobCount, testActiveJobs.size(), 
-				"Number of user system jobs returned is not equal to the number " +
-				"of active jobs added in the test.");
-	}
-	
-	@Test(dependsOnMethods={"countActiveUserJobsOnSystem"})
-	public void countActiveJobsOnSystem() throws Exception
-	{
-		List<Job> testActiveJobs = new ArrayList<Job>();
-		List<Job> testInactiveJobs = new ArrayList<Job>();
-		Job otherUserJob = null; 
-		
-		for (JobStatusType status: JobStatusType.getActiveStatuses())
-		{	
-			Job testJob = createJob(status);
-			Assert.assertNotNull(testJob.getId(), 
-					"Failed to persist active job " + status.name() + ".");
-			testActiveJobs.add(testJob);
-		}
-		
-		for (JobStatusType status: JobStatusType.values())
-		{	
-			if (!Arrays.asList(JobStatusType.getActiveStatuses()).contains(status))
-			{
-				Job testJob = createJob(status);
-				Assert.assertNotNull(testJob.getId(), 
-						"Failed to persist inactive job " + status.name() + ".");
-				testInactiveJobs.add(testJob);
-			}
-		}
-		
-		otherUserJob = createJob(JobStatusType.RUNNING);
-		otherUserJob.setOwner(TEST_SHARED_OWNER);
-		
-        JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
-        jobUpdateParameters.setOwner(otherUserJob.getOwner());
-        JobDao.update(otherUserJob, jobUpdateParameters);
-        
-		Assert.assertNotNull(otherUserJob.getId(), "Failed to persist other user job.");
-		
-		long systemJobCount = JobDao.countActiveJobsOnSystem(otherUserJob.getSystem());
-		Assert.assertEquals(systemJobCount, testActiveJobs.size() + 1, 
-				"Number of user system jobs returned is not equal to the number " +
-				"of active jobs added in the test.");
-	}
-
 	@Test(dependsOnMethods={"countActiveJobsOnSystem"})
 	public void getById() throws Exception
 	{
@@ -165,17 +86,6 @@ public class JobDaoTest extends AbstractDaoTest {
 		
 		Job savedJob = JobDao.getById(job.getId());
 		Assert.assertNotNull(savedJob, "Failed to find job by id.");
-		Assert.assertNotNull(savedJob.getArchiveSystem(), "Failed to save archive system.");
-	}
-
-	@Test(dependsOnMethods={"getById"})
-	public void getByUserAndId() throws Exception
-	{
-		Job job = createJob(JobStatusType.PENDING);
-		Assert.assertNotNull(job.getId(), "Failed to generate a job ID.");
-		
-		Job savedJob = JobDao.getByUsernameAndId(job.getOwner(), job.getId());
-		Assert.assertNotNull(savedJob, "Failed to save job.");
 		Assert.assertNotNull(savedJob.getArchiveSystem(), "Failed to save archive system.");
 	}
 
@@ -228,11 +138,17 @@ public class JobDaoTest extends AbstractDaoTest {
             
 		Assert.assertNotNull(job4.getId(), "Failed to save job 4.");
 		
-		String nextRunningJob = JobDao.getNextQueuedJobUuid(JobStatusType.PENDING, 
-		        TenancyHelper.getDedicatedTenantIdForThisService(), null, null);
-		Assert.assertNotNull(nextRunningJob, "getNextQueuedJob failed to find any PENDING jobs.");
-		// we no longer get just the oldest job first
-		//Assert.assertEquals(nextRunningJob, job1, "getByUsernameAndStatus did not return the oldest job.");
+		LinkedList<JobStatusType> statusList = new LinkedList<>();
+		statusList.add(JobStatusType.PENDING);
+        List<JobQuotaInfo> quotaInfoList = 
+            JobDao.getSchedulerJobQuotaInfo(JobPhaseType.STAGING, statusList);
+		
+		Assert.assertEquals(2, quotaInfoList.size(), "Expected 2 jobs with quota information");
+		for (JobQuotaInfo info : quotaInfoList) {
+		    boolean found = info.getUuid().equals(job1.getUuid()) ||
+		                    info.getUuid().equals(job2.getUuid());
+		    Assert.assertTrue(found, "Unexpected job uuid encountered: " + info.getUuid());
+		}
 	}
 	
 	private String formatDate(Date date) {

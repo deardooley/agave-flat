@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.Query;
-import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobActiveCount;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobArchiveInfo;
@@ -24,6 +23,12 @@ import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
  */
 public final class JobDaoUtils
 {
+    /* ********************************************************************** */
+    /*                                 Fields                                 */
+    /* ********************************************************************** */
+    // Initialize the dedicated configuration once to avoid synchronization contention.
+    private static final DedicatedConfig _dedicatedConfig = DedicatedConfig.getInstance();
+    
     /* ********************************************************************** */
     /*                             Public Methods                             */
     /* ********************************************************************** */
@@ -222,7 +227,8 @@ public final class JobDaoUtils
     public static String getDedicatedTenantIdClause()
     {
         // Read in the configuration string if it exists.
-        String dedicatedTenantId = TenancyHelper.getDedicatedTenantIdForThisService();
+        IDedicatedProvider provider = _dedicatedConfig.getDedicatedProvider();
+        String dedicatedTenantId = provider.getDedicatedTenantIdForThisService();
         if (StringUtils.isBlank(dedicatedTenantId)) return "";
         
         // The string can be an assertion or a negation.
@@ -250,8 +256,8 @@ public final class JobDaoUtils
     public static String getDedicatedUsersClause()
     {
         // Read in the configuration string if it exists.
-        String[] dedicatedUsers = 
-                org.iplantc.service.common.Settings.getDedicatedUsernamesFromServiceProperties();
+        IDedicatedProvider provider = _dedicatedConfig.getDedicatedProvider();
+        String[] dedicatedUsers = provider.getDedicatedUsernamesFromServiceProperties();
         if (dedicatedUsers == null || dedicatedUsers.length == 0) return "";
         
         // Initialize the positive and negative clause info.
@@ -308,8 +314,8 @@ public final class JobDaoUtils
     public static String getDedicatedSystemIdsClause()
     {
         // Read in the configuration string if it exists.
-        String[] dedicatedSystemIds = 
-                org.iplantc.service.common.Settings.getDedicatedSystemIdsFromServiceProperties();
+        IDedicatedProvider provider = _dedicatedConfig.getDedicatedProvider();
+        String[] dedicatedSystemIds = provider.getDedicatedSystemIdsFromServiceProperties();
         if (dedicatedSystemIds == null || dedicatedSystemIds.length == 0) return "";
         
         // Initialize the positive and negative clause info.
