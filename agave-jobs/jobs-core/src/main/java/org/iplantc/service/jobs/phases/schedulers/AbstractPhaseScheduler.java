@@ -32,7 +32,6 @@ import org.iplantc.service.jobs.model.JobInterrupt;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.QueueConstants;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
 import org.iplantc.service.jobs.phases.queuemessages.DeleteJobMessage;
@@ -47,6 +46,7 @@ import org.iplantc.service.jobs.phases.schedulers.strategies.IJobStrategy;
 import org.iplantc.service.jobs.phases.schedulers.strategies.IStrategyAccessors;
 import org.iplantc.service.jobs.phases.schedulers.strategies.ITenantStrategy;
 import org.iplantc.service.jobs.phases.schedulers.strategies.IUserStrategy;
+import org.iplantc.service.jobs.phases.utils.QueueConstants;
 import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
@@ -195,6 +195,9 @@ public abstract class AbstractPhaseScheduler
     // Milliseconds between attempts to delete expired interrupts.
     private static final int INTERRUPT_DELETE_DELAY = 240000; // 4 minutes
     
+    // Milliseconds between attempts to roll back zombie jobs.
+    protected static final int ZOMBIE_MONITOR_DELAY = 600000; // 10 minutes
+    
     // Milliseconds to wait (or poll) for threads to terminate 
     // after being interrupted.
     private static final int THREAD_DEATH_DELAY = 10000;
@@ -242,6 +245,11 @@ public abstract class AbstractPhaseScheduler
     // This thread is only created and started on the single STAGING scheduler
     // that obtains a lease.
     private Thread _interruptCleanUpThread;
+    
+    // A thread that periodically detects and tries to recover jobs that are not
+    // making progress.  This thread is only created and started on the single
+    // MONITORING scheduler that obtains a lease.
+    private Thread _zombieCleanUpThread;
         
     // This phase's queuing artifacts.
     private ConnectionFactory    _factory;
@@ -528,6 +536,14 @@ public abstract class AbstractPhaseScheduler
     protected String getInterruptCleanUpThreadName()
     {
         return _phaseType.name() + "_interruptCleanUp" + THREAD_SUFFIX;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getZombieCleanUpThreadName:                                            */
+    /* ---------------------------------------------------------------------- */
+    protected String getZombieCleanUpThreadName()
+    {
+        return _phaseType.name() + "_zombieCleanUp" + THREAD_SUFFIX;
     }
     
     /* ---------------------------------------------------------------------- */
@@ -1300,12 +1316,10 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* startInterruptCleanUpThread:                                           */
     /* ---------------------------------------------------------------------- */
-    /** Start a thread to read from this phase's topic.
-     * 
-     */
+    /** Start a thread to indefinitely search and destroy stale interrupts. */
     private void startInterruptCleanUpThread()
     {
-        // Create the topic thread.
+        // Create the interrupt clean up thread.
         _interruptCleanUpThread = 
            new Thread(_phaseThreadGroup, getInterruptCleanUpThreadName()) {
             @Override
@@ -1332,6 +1346,38 @@ public abstract class AbstractPhaseScheduler
     }
     
     /* ---------------------------------------------------------------------- */
+    /* startZombieCleanUpThread:                                              */
+    /* ---------------------------------------------------------------------- */
+    /** Start a thread to indefinitely search and destroy zombie jobs. */
+    private void startZombieCleanUpThread()
+    {
+        // Create the zombie clean up thread.
+        _zombieCleanUpThread = 
+           new Thread(_phaseThreadGroup, getZombieCleanUpThreadName()) {
+            @Override
+            public void run() {
+                
+                // This thread is starting.
+                if (_log.isDebugEnabled())
+                    _log.debug("-> Starting zombie clean up thread " + getName() + ".");
+                
+                monitorZombies();
+                
+                // This thread is terminating.
+                if (_log.isDebugEnabled())
+                    _log.debug("<- Exiting zombie clean up thread " + getName() + ".");
+                
+                // Clear the thread reference.
+                _zombieCleanUpThread = null;
+            }
+        };
+        
+        // Configure and start the thread.
+        _zombieCleanUpThread.setDaemon(true);
+        _zombieCleanUpThread.start();
+    }
+    
+   /* ---------------------------------------------------------------------- */
     /* schedule:                                                              */
     /* ---------------------------------------------------------------------- */
     /** Main loop that polls database for new work for this phase.
@@ -1362,6 +1408,10 @@ public abstract class AbstractPhaseScheduler
                 // Only the staging scheduler can start an interrupt clean up thread.
                 // There's nothing special about the staging scheduler; we only need
                 // one clean up thread in the whole system.
+                if ((this instanceof StagingScheduler) && _interruptCleanUpThread == null)
+                    startInterruptCleanUpThread();
+                
+                // We assign zombie clean up to the monitoring scheduler.
                 if ((this instanceof StagingScheduler) && _interruptCleanUpThread == null)
                     startInterruptCleanUpThread();
                 
@@ -1727,6 +1777,16 @@ public abstract class AbstractPhaseScheduler
                 break;
             }
         }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* monitorZombies:                                                        */
+    /* ---------------------------------------------------------------------- */
+    /** Call the zombie detection method in our subclass. */
+    private void monitorZombies()
+    {
+        // Call down to our subclass where the real implementation is.
+        ((MonitoringScheduler)this).monitorZombies();
     }
     
     /* ---------------------------------------------------------------------- */

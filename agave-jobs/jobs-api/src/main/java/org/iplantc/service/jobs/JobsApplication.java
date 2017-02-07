@@ -41,9 +41,6 @@ public class JobsApplication extends AgaveApplication
 		// Define the resource for the static usage page
         router.attach(getStandalonePrefix() + "/usage", JobDocumentationResource.class);
         router.attach(getStandalonePrefix() + "/usage/", JobDocumentationResource.class);
-//        router.attach(getStandalonePrefix() + "/workers/{quartzaction}", QuartzUtilityResource.class);
-//        secureEndpoint(router, "/quartz", QuartzResource.class);
-//        secureEndpoint(router, "/quartz/", QuartzResource.class);
         
         if (!Settings.SLAVE_MODE)
 		{

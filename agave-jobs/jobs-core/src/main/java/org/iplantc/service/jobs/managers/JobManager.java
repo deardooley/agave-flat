@@ -37,9 +37,10 @@ import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.phases.TopicMessageSender;
 import org.iplantc.service.jobs.phases.queuemessages.StopJobMessage;
-import org.iplantc.service.jobs.queue.ZombieJobWatch;
+import org.iplantc.service.jobs.phases.schedulers.MonitoringScheduler;
+import org.iplantc.service.jobs.phases.utils.TopicMessageSender;
+import org.iplantc.service.jobs.phases.utils.ZombieJobUtils;
 import org.iplantc.service.jobs.util.Slug;
 import org.iplantc.service.remote.exceptions.RemoteExecutionException;
 import org.iplantc.service.systems.dao.SystemDao;
@@ -1217,10 +1218,9 @@ public class JobManager {
 			throw new JobException("Job cannot be null");
 		}
 		
-		ZombieJobWatch zombieJob = new ZombieJobWatch();
 		Job updatedJob = null;
 		try {
-			updatedJob = zombieJob.rollbackJob(job, requestedBy);
+			updatedJob = ZombieJobUtils.rollbackJob(job, requestedBy);
 			
 			JobEvent event = new JobEvent("RESET", "Job was manually reset to " + 
 					updatedJob.getStatus().name() + " by " + requestedBy, requestedBy);

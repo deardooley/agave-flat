@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.phases;
+package org.iplantc.service.jobs.phases.utils;
 
 import java.util.List;
 

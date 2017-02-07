@@ -208,20 +208,20 @@ public enum JobStatusType
 	{
 		// Begin again with staging inputs
 		if (this == PENDING || this == PROCESSING_INPUTS || 
-				this == STAGING_INPUTS || this == STAGED) 
+	        this == STAGING_INPUTS || this == STAGED) 
 		{
 			return PENDING;
 		} 
 		// Resubmit from current state
 		else if (this == STAGING_JOB || this == SUBMITTING || 
-				this == QUEUED || this == RUNNING || 
-				this == CLEANING_UP)
+				 this == QUEUED || this == RUNNING || 
+				 this == CLEANING_UP)
 		{
 			return STAGED;
 		} 
 		// Rerun archiving tasks
 		else if (this == ARCHIVING || this == ARCHIVING_FAILED || 
-				this == ARCHIVING_FINISHED) 
+				 this == ARCHIVING_FINISHED) 
 		{
 			return CLEANING_UP;
 		} 

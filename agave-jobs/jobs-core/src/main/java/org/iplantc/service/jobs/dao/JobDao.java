@@ -961,6 +961,7 @@ public class JobDao
         return jobs;
     }
 
+    
     /** This method is intended to only be called from a phase scheduler.  It retrieves 
      * information pertinent to quota checking on active jobs.   
      * 
@@ -1378,6 +1379,68 @@ public class JobDao
         return result;
     }
 
+    /** Query the database for jobs that have not progressed recently.
+     * 
+     * @return the list of zombie jobs.
+     * @throws JobException on error
+     */
+    @SuppressWarnings("unchecked")
+    public static List<Job> getSchedulerZombieJobs()
+     throws JobException
+    {
+        // Retrieve information that may have been set in configuration files and
+        // incorporate them into SQL clauses.  This call does not throw exceptions.
+        String dedicatedTenantIdClause = JobDaoUtils.getDedicatedTenantIdClause();
+        
+        // Build the query without creating so many temporary strings.
+        StringBuilder buf = new StringBuilder(512);
+        buf.append("select j.* ");
+        buf.append("from jobs j ");
+        buf.append("left join jobevents e on j.id = e.job_id ");
+        buf.append("where ");
+        buf.append("((");
+        buf.append("j.status in ('PROCESSING_INPUTS', 'STAGING_INPUTS', 'STAGING_JOB', 'SUBMITTING', 'ARCHIVING') ");
+        buf.append("and NOW() > DATE_ADD(j.last_updated, INTERVAL 15 minute) ");
+        buf.append("and e.transfertask is not null ");
+        buf.append(") or (");
+        buf.append("j.status in ('PROCESSING_INPUTS', 'STAGING_JOB', 'SUBMITTING') ");
+        buf.append("and NOW() > DATE_ADD(j.last_updated, INTERVAL 1 hour) ");
+        buf.append(")) ");
+        buf.append(dedicatedTenantIdClause);
+
+        // Result list.
+        List<Job> jobList = null;
+        
+        // Dump the complete table..
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Issue the call and populate the lease object.
+            // Implicit tenant filtering should be DISABLED
+            // since we got our session from HibernateUtil.
+            Query qry = session.createSQLQuery(buf.toString()).addEntity(Job.class);
+            jobList = (List<Job>) qry.list();
+            
+            // Commit the transaction.
+            HibernateUtil.commitTransaction();
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to retrieve job quota information.";
+            log.error(msg, e);
+            throw new JobException(msg, e);
+        }
+        
+        return jobList;
+    }
+    
 	/**
 	 * Performs a string replacement and update on the job with the 
 	 * given id. This is only needed because job inputs are not a 
