@@ -1392,7 +1392,7 @@ public class JobDao
         
         // Build the query without creating so many temporary strings.
         StringBuilder buf = new StringBuilder(512);
-        buf.append("select j.* ");
+        buf.append("select distinct j.* ");
         buf.append("from jobs j ");
         buf.append("left join jobevents e on j.id = e.job_id ");
         buf.append("where ");
