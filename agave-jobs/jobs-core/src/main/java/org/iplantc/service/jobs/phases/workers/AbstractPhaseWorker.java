@@ -15,7 +15,6 @@ import org.iplantc.service.jobs.dao.JobPublishedDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
-import org.iplantc.service.jobs.exceptions.QuotaViolationException;
 import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.SystemAvailabilityCheck;
 import org.iplantc.service.jobs.model.Job;
