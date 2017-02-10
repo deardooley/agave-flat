@@ -399,7 +399,7 @@
 
 				<!-- ************************ Monitor service ******************* -->
 
-				<foundation.service.monitor>${foundation.base.url}/monitor/v2</foundation.service.monitor>
+				<foundation.service.monitor>${foundation.base.url}/monitors/v2</foundation.service.monitor>
 				<foundation.service.monitor.queue>dev.monitors.queue</foundation.service.monitor.queue>
 				<foundation.service.monitor.topic>dev.monitors.topic</foundation.service.monitor.topic>
 				<foundation.service.montior.max.q.failures>5</foundation.service.montior.max.q.failures>
@@ -460,9 +460,9 @@
 				<foundation.service.systems.jetty.ajp.port>13072</foundation.service.systems.jetty.ajp.port>
 
 
-				<!-- ************************ Transforms service ********************* -->
+				<!-- ************************ Tags service ********************* -->
 
-				<foundation.service.transforms>${foundation.base.url}/tags/v2</foundation.service.transforms>
+				<foundation.service.tags>${foundation.base.url}/tags/v2</foundation.service.tags>
 				
 				
 				<!-- ************************ Transforms service ********************* -->
@@ -486,6 +486,12 @@
 				<foundation.service.transfers.jetty.ajp.port>13092</foundation.service.transfers.jetty.ajp.port>
 				<foundation.service.transfers.max.relay.size>2</foundation.service.transfers.max.relay.size>
 				<foundation.service.transfers.allow.relays>true</foundation.service.transfers.allow.relays>
+				
+				<!-- ************************ UUIDs service ********************** -->
+
+				<foundation.service.uuids>${foundation.base.url}/uuids/v2</foundation.service.uuids>
+				
+				
 			</properties>
 		</profile>
 	</profiles>

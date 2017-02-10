@@ -79,7 +79,7 @@ public class UUIDEntityLookup {
 		} else if (entityType.equals(UUIDType.TRANSFER)) {
 			return Settings.IPLANT_TRANSFER_SERVICE + uuid;
 		} else if (entityType.equals(UUIDType.SCHEMA)) {
-			return Settings.IPLANT_METADATA_SERVICE + "schema/" + uuid;
+			return Settings.IPLANT_METADATA_SERVICE + "schemas/" + uuid;
 		} else if (entityType.equals(UUIDType.METADATA)) {
 			return Settings.IPLANT_METADATA_SERVICE + "data/" + uuid;
 		} else if (entityType.equals(UUIDType.NOTIFICATION)) {
@@ -260,11 +260,11 @@ public class UUIDEntityLookup {
 		
 		absolutepath = absolutepath.replaceAll("/+", "/");
 		
-		if (StringUtils.startsWith(absolutepath, homeDir)) {
-			return StringUtils.substringAfter(absolutepath, homeDir);
-		} else {
+//		if (StringUtils.startsWith(absolutepath, homeDir)) {
+//			return StringUtils.substringAfter(absolutepath, homeDir);
+//		} else {
 			return "/" + StringUtils.substringAfter(absolutepath, rootDir);
-		}
+//		}
 	}
 
 }

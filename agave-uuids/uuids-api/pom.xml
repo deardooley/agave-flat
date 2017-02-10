@@ -5,12 +5,12 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.iplantc.agave</groupId>
-		<artifactId>uuid</artifactId>
+		<artifactId>uuids</artifactId>
 		<version>2.1.10</version>
 	</parent>
-	<artifactId>uuid-api</artifactId>
-	<name>Agave Core Science API UUID Service API Endpoints</name>
-	<description>Webapp that contains the REST endpoints for the UUID service</description>
+	<artifactId>uuids-api</artifactId>
+	<name>Agave Core Science API UUIDs Service API Endpoints</name>
+	<description>Webapp that contains the REST endpoints for the UUIDs service</description>
 	<packaging>war</packaging>
 
 	<scm>
@@ -21,7 +21,7 @@
 
 	<properties>
 		<force.check.version>false</force.check.version>
-		<service.war.name>uuid</service.war.name>
+		<service.war.name>uuids</service.war.name>
     <hibernate.hbm2ddl>update</hibernate.hbm2ddl>
     <jetty.daemon>true</jetty.daemon>
 	</properties>

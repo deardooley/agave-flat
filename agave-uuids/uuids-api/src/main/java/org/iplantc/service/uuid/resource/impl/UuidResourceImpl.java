@@ -12,10 +12,12 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.log4j.Logger;
+import org.codehaus.plexus.util.StringUtils;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.AgaveSuccessRepresentation;
 import org.iplantc.service.common.uuid.AgaveUUID;
+import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.uuid.exceptions.UUIDResolutionException;
 import org.iplantc.service.uuid.resource.UuidResource;
 import org.restlet.data.Status;
@@ -24,6 +26,7 @@ import org.restlet.resource.ResourceException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
@@ -66,8 +69,16 @@ public class UuidResourceImpl extends AbstractUuidResource implements
 				
 				Map<String,String> headerMap = getRequestAuthCredentials();
 				
-				JsonNode json = fetchResource(TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference()), filter, headerMap);
-	    		
+				String resourceUrl = TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference());
+				
+				// resolve the file media url to the file listing url as needed
+				JsonNode json = null;
+				if (UUIDType.FILE == agaveUuid.getResourceType()) {
+					resourceUrl = StringUtils.replaceOnce(resourceUrl,  "/media/", "/listings/") + "?limit=1";
+				}
+			
+				json = fetchResource(resourceUrl, filter, headerMap);
+				
 	    		return Response.ok(new AgaveSuccessRepresentation(json.toString())).build();
 	    	}
 			// otherwise, just return the metadata

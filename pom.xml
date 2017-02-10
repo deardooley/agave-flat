@@ -458,7 +458,7 @@
 		<module>agave-tags</module>
 		<module>agave-realtime</module>
 		<module>agave-stats</module>
-		<module>agave-uuid</module>
+		<module>agave-uuids</module>
 		<module>agave-apidocs</module>
 	</modules>
 </project>

@@ -18,6 +18,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContextBuilder;
@@ -43,6 +44,7 @@ import org.restlet.util.Series;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
@@ -185,7 +187,12 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 		{
 			String filteredResourceUrl = resourceUrl;
 			if (StringUtils.isNotEmpty(filter)) {
-				filteredResourceUrl += "?filter="+URLEncoder.encode(StringUtils.stripToEmpty(filter));
+				if (StringUtils.contains(filteredResourceUrl, "?")) {
+					filteredResourceUrl += "&filter="+URLEncoder.encode(StringUtils.stripToEmpty(filter));
+				}
+				else {
+					filteredResourceUrl += "?filter="+URLEncoder.encode(StringUtils.stripToEmpty(filter));
+				}
 			}
 			
 			URI escapedUri = URI.create(filteredResourceUrl);
@@ -222,6 +229,7 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 			    		.build();
 			}
 			
+//			HttpHead httpGet = new HttpHead(escapedUri);
 			HttpGet httpGet = new HttpGet(escapedUri);
 			CloseableHttpResponse response = null;
 			RequestConfig config = RequestConfig.custom()
@@ -255,7 +263,15 @@ public class AbstractUuidResource extends AbstractAgaveResource {
 						// if successful, just return the result from the response
 						if (statusCode >= 200 && statusCode <= 300) {
 							if (attemptResponse.hasNonNull("result")) {
-								return attemptResponse.get("result");
+								// calls to the files api will return an array. the first (and only 
+								// since we appended limit=1 to files api queries) object is
+								// always the one we're interested in.
+								if (attemptResponse.get("result").isArray()) {
+									return ((ArrayNode)attemptResponse.get("result")).get(0);
+								}
+								else {
+									return attemptResponse.get("result");
+								}
 							} else {
 								return mapper.createObjectNode();
 							}
