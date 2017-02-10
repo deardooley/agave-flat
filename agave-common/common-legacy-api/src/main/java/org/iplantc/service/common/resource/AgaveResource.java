@@ -22,7 +22,9 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.lf5.util.StreamUtils;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.auth.JWTClient;
+import org.iplantc.service.common.exceptions.SortSyntaxException;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.common.search.AgaveResourceResultOrdering;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.Context;
@@ -58,6 +60,9 @@ public abstract class AgaveResource extends Resource
             
     protected Integer limit = Settings.DEFAULT_PAGE_SIZE;
     protected Integer offset = 0;
+    private String orderBy = null;
+    private String sOrder = null;
+    private AgaveResourceResultOrdering order = AgaveResourceResultOrdering.DESC;
     protected boolean debugjwt = false;
     protected boolean forceDownload = false;
     protected String[] jsonPathFilters;
@@ -68,7 +73,11 @@ public abstract class AgaveResource extends Resource
         
         Form form = request.getOriginalRef().getQueryAsForm();
         if (form != null) {
-            limit = NumberUtils.toInt(form.getFirstValue("limit"),Settings.DEFAULT_PAGE_SIZE);
+        	orderBy = form.getFirstValue("orderBy");
+        	sOrder = form.getFirstValue("order", "DESC");
+        	
+        	
+        	limit = NumberUtils.toInt(form.getFirstValue("limit"),Settings.DEFAULT_PAGE_SIZE);
             limit = Math.abs(limit);
             limit = Math.min(limit, Settings.MAX_PAGE_SIZE);
             
@@ -451,5 +460,46 @@ public abstract class AgaveResource extends Resource
 
     public void setForceDownload(boolean forceDownload) {
         this.forceDownload = forceDownload;
-    }	
+    }
+
+	/**
+	 * @return the orderBy
+	 */
+	public String getOrderBy(String defaultField) {
+		return StringUtils.isBlank(orderBy) ? defaultField : orderBy;
+	}
+
+	/**
+	 * @param orderBy the orderBy to set
+	 */
+	public void setOrderBy(String orderBy) {
+		this.orderBy = orderBy;
+	}
+
+	/**
+	 * @return the order
+	 * @throws SortSyntaxException 
+	 */
+	public AgaveResourceResultOrdering getOrder(AgaveResourceResultOrdering defaultOrder) 
+	throws SortSyntaxException 
+	{
+		try {
+			if (StringUtils.isBlank(sOrder)) {
+				return defaultOrder;
+			}
+			else {
+				return AgaveResourceResultOrdering.getCaseInsensitiveValue(sOrder);
+			}
+		}
+		catch (IllegalArgumentException e) {
+			throw new SortSyntaxException("Invalid order value. Please specify one of: ASC, DESC");
+		}
+	}
+
+	/**
+	 * @param order the order to set
+	 */
+	public void setOrder(AgaveResourceResultOrdering order) {
+		this.order = order;
+	}	
 }
