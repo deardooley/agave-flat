@@ -10,7 +10,7 @@ basePath: /
 produces:
   - application/json
 paths:
-  /uuid/v2:
+  /uuids/v2:
     post:
       operationId: createUuid
       summary: Creat a new uuid
@@ -57,7 +57,7 @@ paths:
             - PRODUCTION
         - agavePassword:
             - PRODUCTION
-  '/uuid/v2/{uuid}':
+  '/uuids/v2/{uuid}':
     get:
       operationId: getResouceForUuid
       summary: Resolve UUID

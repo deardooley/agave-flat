@@ -67,6 +67,38 @@ services:
       - "traefik.enable=false"
     networks:
       - services   
+      
+      
+#  ##############################################################
+#  # MongoDB - 3.4
+#  ##############################################################
+#  mongodb34:
+#    image: agaveapi/mongodb:3.4
+#    hostname: mongodb
+#    mem_limit: 512m
+#    restart: on-failure
+#    environment:
+#      - MONGODB_ADMIN_PASS=changeit
+#      - MONGODB_PASSWORD=password
+#      - MONGODB_USERNAME=agaveuser
+#      - MONGODB_DATABASE=api
+#    volumes_from:
+#      - mongodbvol
+#    ports:
+#      - '27018:27017'
+#    labels:
+#      - "traefik.enable=false"
+#    networks:
+#      - services   
+#        
+#  mongodb34vol:
+#    image: agaveapi/mongodb:3.4
+#    command: sleep 120
+#    mem_limit: 64m
+#    labels:
+#      - "traefik.enable=false"
+#    networks:
+#      - services
         
   ##############################################################
   # Beanstalkd

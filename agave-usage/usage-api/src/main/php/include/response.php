@@ -16,7 +16,7 @@ function format_error_response($message, $http_response_code = ERROR_500)
 /* Print a default response */
 function format_response($status='success', $message='', $result='', $http_response_code = false)
 {
-	global $db;
+	global $db, $config;
 
 	if ($http_response_code) header($http_response_code);
 

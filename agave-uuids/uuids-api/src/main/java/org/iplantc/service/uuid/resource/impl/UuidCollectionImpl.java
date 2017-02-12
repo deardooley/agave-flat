@@ -181,7 +181,15 @@ public class UuidCollectionImpl extends AbstractUuidCollection implements UuidCo
     	for (String uuid: uuids) {
     		try {
 		    	AgaveUUID agaveUuid = getAgaveUUIDInPath(uuid);
-		    	urls.add(TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference()));
+		    	
+		    	String resourceUrl = TenancyHelper.resolveURLToCurrentTenant(agaveUuid.getObjectReference());
+				
+				// resolve the file media url to the file listing url as needed
+		    	if (UUIDType.FILE == agaveUuid.getResourceType()) {
+					resourceUrl = StringUtils.replaceOnce(resourceUrl,  "/media/", "/listings/") + "?limit=1";
+				}
+				
+		    	urls.add(resourceUrl);
 		    	
     		}
     		catch (UUIDException e) {
@@ -235,8 +243,7 @@ public class UuidCollectionImpl extends AbstractUuidCollection implements UuidCo
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 		List<Future<JsonNode>> results = executor.invokeAll(tasks);
 		for (Future<JsonNode> result : results) {
-			JsonNode resourceRepresentation = result.get();
-			jsonArray.add(resourceRepresentation);
+			jsonArray.add(result.get());
 		}
 		executor.shutdown(); // always reclaim resources
 		

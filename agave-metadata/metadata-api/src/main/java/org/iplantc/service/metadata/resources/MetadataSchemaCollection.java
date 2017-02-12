@@ -18,17 +18,20 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.auth.AuthorizationHelper;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
+import org.iplantc.service.common.exceptions.SortSyntaxException;
 import org.iplantc.service.common.exceptions.UUIDException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.common.resource.AgaveResource;
+import org.iplantc.service.common.search.AgaveResourceResultOrdering;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.metadata.MetadataApplication;
 import org.iplantc.service.metadata.Settings;
 import org.iplantc.service.metadata.dao.MetadataPermissionDao;
 import org.iplantc.service.metadata.dao.MetadataSchemaPermissionDao;
+import org.iplantc.service.metadata.exceptions.MetadataException;
 import org.iplantc.service.metadata.exceptions.MetadataSchemaValidationException;
 import org.iplantc.service.metadata.managers.MetadataSchemaPermissionManager;
 import org.iplantc.service.metadata.util.ServiceUtils;
@@ -231,8 +234,19 @@ public class MetadataSchemaCollection extends AgaveResource
                 }
             } 
 	       
+            List<String> sortableFields = Arrays.asList("uuid","tenantId", "schema","internalUsername","lastUpdated", "created", "owner");
+            
+            String orderField = getOrderBy("lastUpdated");
+            
+            if (StringUtils.isBlank(orderField) || !sortableFields.contains(orderField)) {
+            	throw new SortSyntaxException("Invalid order field. Please specify one of " + 
+            			StringUtils.join(sortableFields, ","), new MetadataException("Invalid sort field"));
+            }
+            
+            int orderDirection = getOrder(AgaveResourceResultOrdering.DESC).isAscending() ? 1 : -1;
+            
             cursor = collection.find(query, new BasicDBObject("_id", false))
-					.sort(new BasicDBObject("lastModified", -1))
+            		.sort(new BasicDBObject(orderField, orderDirection))
 					.skip(offset)
 					.limit(limit);
 

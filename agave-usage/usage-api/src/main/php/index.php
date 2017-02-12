@@ -33,7 +33,8 @@ else
 	}
 	else if (!is_valid_type($_GET['type']))
 	{
-		format_error_response('Unsupported usage type '.$_GET['type'], ERROR_501);
+		format_error_response('Unsupported usage type '.$_GET['type'].
+			'. Please specify one of: jobs, users, requests, hours, ip, or data' , ERROR_501);
 	}
 	else
 	{
@@ -52,21 +53,21 @@ function get_usage_by_type($type = 'requests', $timeframe = 'month')
 	$agave_usage = array();
 
 	// check for foundation cache
-	if (file_exists($foundation_cache_file) && filectime($foundation_cache_file) > strtotime("1 day ago"))
+	if (file_exists($foundation_cache_file))
 	{
 		$foundation_usage = file_get_contents($foundation_cache_file);
 		$foundation_usage = unserialize($foundation_usage);
 	}
 
-	// if not there, build one
-	if (empty($foundation_usage))
-	{
-		$foundation = new DatabaseUtil('foundation');
-
-		$foundation_usage = $foundation->$method();
-
-		file_put_contents($foundation_cache_file, serialize($foundation_usage));
-	}
+	// if not there, ingore, this is legacy data from a db that does not exist anymore
+	// if (empty($foundation_usage))
+// 	{
+// 		$foundation = new DatabaseUtil('foundation');
+// 
+// 		$foundation_usage = $foundation->$method();
+// 
+// 		file_put_contents($foundation_cache_file, serialize($foundation_usage));
+// 	}
 
 	// check for agave cache
 	if (file_exists($agave_cache_file) && filectime($agave_cache_file) > strtotime("1 day ago"))

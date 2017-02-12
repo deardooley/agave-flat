@@ -135,9 +135,13 @@ public class TagDao extends AbstractDao
 	}
 	
 	/**
-	 * Find a {@link Tag} by either name or uuid.
+	 * Finds a {@link Tag} for the given owner by name or uuid. UUID search  
+	 * results will always be unique. Name searches will not. In the event of a  
+	 * namespace conflict where the owner created a tag with the name of a tag
+	 * that was also shared with them, their personal tag is always returned.
 	 * 
-	 * @param uuid
+	 * @param uuidOrName
+	 * @param username
 	 * @return
 	 * @throws TagException
 	 */
@@ -163,6 +167,16 @@ public class TagDao extends AbstractDao
 		}
 	}
 		
+	/**
+	 * Finds a {@link Tag} for the given owner by name. In the event of a namespace 
+	 * conflict where the owner created a tag with the name of a tag that was
+	 * also shared with them, their personal tag is always returned.
+	 *  
+	 * @param name
+	 * @param owner
+	 * @return
+	 * @throws TagException
+	 */
 	@SuppressWarnings("unchecked")
 	public Tag findByNameAndOwner(String name, String owner) 
 	throws TagException 

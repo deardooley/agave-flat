@@ -4,6 +4,7 @@
 package org.iplantc.service.tags.resource.impl;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -96,10 +97,9 @@ public class TagsCollectionImpl extends AbstractTagCollection implements TagsCol
         try
         {
           	JsonNode contentJson = getPostedContentAsJsonNode(input);  	
-        	TagManager manager = new TagManager();
-        	Tag tag = manager.addTagForUser(contentJson, getAuthenticatedUsername());
-        	
-            return Response.ok().entity(new AgaveSuccessRepresentation(tag.toJSON().toString())).build();
+          	TagManager manager = new TagManager();
+          	Tag tag = manager.addTagForUser(contentJson, getAuthenticatedUsername());
+          	return Response.ok().entity(new AgaveSuccessRepresentation(tag.toJSON().toString())).build();
         }
         catch (TagException e) {
         	log.error(e);

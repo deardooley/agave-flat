@@ -9,9 +9,9 @@
 		<version>2.1.10</version>
 	</parent>
 	<groupId>org.iplantc.agave</groupId>
-	<artifactId>uuid</artifactId>
-	<name>Agave Core Science API UUID Service Parent POM</name>
-	<description>This is the parent project for the uuid service.</description>
+	<artifactId>uuids</artifactId>
+	<name>Agave Core Science API UUIDs Service Parent POM</name>
+	<description>This is the parent project for the UUIDs service.</description>
 	<packaging>pom</packaging>
 
 	<scm>
