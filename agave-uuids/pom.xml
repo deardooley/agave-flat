@@ -49,7 +49,7 @@
 	</build>
 
 	<modules>
-		<module>uuid-api</module>
+		<module>uuids-api</module>
 	</modules>
 
 </project>
