@@ -12,8 +12,10 @@ public final class DeleteJobMessage
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public DeleteJobMessage(){super(JobCommand.TPC_DELETE_JOB);}
+    // Constructor used for testing only.
+    DeleteJobMessage(){super(JobCommand.TPC_DELETE_JOB);}
     
+    // Real constructor.
     public DeleteJobMessage(String     jobName,
                             String     jobUuid,
                             String     tenantId)

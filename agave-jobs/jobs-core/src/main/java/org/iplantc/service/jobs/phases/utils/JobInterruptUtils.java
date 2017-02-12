@@ -63,10 +63,20 @@ public class JobInterruptUtils
     /* ---------------------------------------------------------------------- */
     /* processInterrupts:                                                     */
     /* ---------------------------------------------------------------------- */
+    /** Process a list of interrupts.  All interrupts have the effect of causing
+     * the worker thread to immediately stop processing the specified job.  Some
+     * interrupt put the job into a finished state, others reset the job to a
+     * different status so that process can continue at a later time.
+     * 
+     * @param job the job that was interrupted
+     * @param interrupts the ordered list of interrupts
+     * @return true if job processing should be discontinued by the worker thread;
+     *         false if the worker can continue processing the job
+     */
     private static boolean processInterrupts(Job job, List<JobInterrupt> interrupts)
     {
         // Assume we won't abort normal job processing.
-        boolean abortJob = false;
+        boolean abortProcessing = false;
         
         // Process each interrupt.
         for (JobInterrupt interrupt : interrupts)
@@ -76,14 +86,14 @@ public class JobInterruptUtils
             JobInterruptType interruptType = interrupt.getInterruptType();
             if (interruptType != JobInterruptType.DELETE &&
                 interruptType != JobInterruptType.PAUSE  &&
-                interruptType != JobInterruptType.STOP)
+                interruptType != JobInterruptType.STOP )
             {
                 _log.error("Invalid job interrupt type received: " + interruptType);
                 continue;
             }
             
             // We abort processing this job on any recognized interrupt type.
-            abortJob |= true;
+            abortProcessing |= true;
             
             // Remove the interrupt.
             int rows = 0;
@@ -106,6 +116,6 @@ public class JobInterruptUtils
             }
         }
         
-        return abortJob;
+        return abortProcessing;
     }
 }

@@ -39,7 +39,6 @@ import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobActiveCount;
-import org.iplantc.service.jobs.phases.schedulers.dto.JobArchiveInfo;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobMonitorInfo;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
 import org.iplantc.service.jobs.search.JobSearchFilter;
@@ -844,6 +843,176 @@ public class JobDao
 	    return rows;
 	}
 	
+	/** Rollback the specified by atomically updating the job status and deleting all
+	 * publish records for the job.  We also delete all interrupts that exist for this
+	 * job so that they don't get applied after the rollback occurs.  The idea is that
+	 * interrupts intended for the job before the rollback will interfere with the job
+	 * as it begins executing after the rollback.
+	 * 
+	 * @param job the job to be rolled back
+	 * @param rollbackMessage a message stored in the job with it new status
+	 * @return the 
+	 * @throws JobException
+	 */
+	public static Job rollback(Job job, String rollbackMessage)
+	 throws JobException
+	{
+        // ------------------- Check Input -------------------
+        // Make sure we have a job uuid.
+        if (job == null) {
+            String msg = "Null job received.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Use default message if necessary.
+        if (StringUtils.isBlank(rollbackMessage)) 
+           rollbackMessage = JobStatusType.ROLLINGBACK.getDescription();
+        
+        // -------------------- Permission Checks ------------
+        // We only allow users to create queues under their own tenant. 
+        String currentTenantId = TenancyHelper.getCurrentTenantId();
+        if (StringUtils.isBlank(currentTenantId)) {
+            String msg = "Unable to retrieve current tenant id.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        if (!currentTenantId.equals(job.getTenantId())) {
+            String msg = "Unable to update job because " +
+                         "the current tenant id (" + currentTenantId + ") does not match " +
+                         "the job tenant id (" + job.getTenantId() + ").";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // ------------------- Assign Parms ------------------
+        // Populate a parameters object.
+        JobUpdateParameters parms = new JobUpdateParameters();
+        parms.setStatus(JobStatusType.ROLLINGBACK);
+        parms.setErrorMessage(rollbackMessage);
+        parms.setLastUpdated(new Date());
+        
+        // Construct the set clause for the sql update statement.
+        String setClause = JobDaoUtils.createSetClause(parms);
+        if (setClause == null) {
+            String msg = "No field values to update.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // ------------------- Get Session -------------------
+        // Status changes require validation using the current status in the database
+        // and require us to lock the job record until this transaction completes.
+        // The lock method acquires the session for us and starts a transaction.
+        //
+        // A transaction is begun only if the lock method returns a non-null status.
+        JobStatusType curStatus = lockJobForStatus(job.getUuid());
+        if (curStatus == null) {
+            String msg = "Unable to query job record for current status.";
+            log.error(msg);
+            throw new JobException(msg);
+        }
+            
+        // Check if the status change is legal.
+        if (!JobFSMUtils.hasTransition(curStatus, parms.getStatus())) {
+                
+            // Abort the update since the attempted status 
+            // change is illegal, but first log the problem.
+            String msg = "Invalid transition from " + curStatus.name() +
+                         " to " + parms.getStatus().name() + " attempted for job " +
+                         job.getUuid() + ".";
+            log.error(msg);
+                
+            // Release the lock on the job record.
+            try {HibernateUtil.rollbackTransaction();}
+            catch (Exception e) {
+                String msg2 = "Failure rolling back transaction on locked job record.";
+                log.error(msg2, e);
+            }
+            
+            // Throw our exception.
+            if (JobStatusType.isFinished(curStatus)) throw new JobFinishedException(msg);
+              else throw new JobException(msg);
+        }
+            
+        // Get the thread-local session in which the lock routine began our transaction.
+        Session session = null;
+        try {session = HibernateUtil.getSession();}
+            catch (Exception e) {
+                String msg = "Unable to retrieve thread-local session.";
+                log.error(msg, e);
+                throw new JobException(msg);
+            }
+        
+        // ------------------- Issue Update ------------------
+        // Note from this point on we must close the transaction before returning.
+        int rows = 0;
+        try {
+            // ---- Update jobs table
+            // Construct the update statement.
+            String sql = "Update jobs " + setClause +
+                         " where uuid = :uuid and tenant_id = :tenantId";
+            Query qry = session.createSQLQuery(sql);
+            qry.setString("uuid", job.getUuid());
+            qry.setString("tenantId", job.getTenantId());
+            JobDaoUtils.setUpdatePlaceholders(qry, parms);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            rows = qry.executeUpdate();
+            
+            // Sanity check.
+            if (rows == 0)
+            {
+                // We expected something to happen...
+                String msg = "Nothing updated for job " + job.getUuid() + " under tenant " + job.getTenantId() + ".";
+                log.warn(msg);
+            }
+            
+            // ---- Delete from published table
+            // Delete all references to this job in the 
+            // job_published table across all phases.
+            sql = "delete from job_published where job_uuid = :job_uuid";
+            
+            // Fill in the placeholders.           
+            qry = session.createSQLQuery(sql);
+            qry.setString("job_uuid", job.getUuid());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            rows = qry.executeUpdate();
+            
+            // ---- Delete from interrupts table
+            // Delete all references to this job in the 
+            // job_interrupts table so that the job
+            // starts clean after the rollback.  
+            sql = "delete from job_interrupts where job_uuid = :job_uuid";
+            
+            // Fill in the placeholders.           
+            qry = session.createSQLQuery(sql);
+            qry.setString("job_uuid", job.getUuid());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            rows = qry.executeUpdate();
+            
+            // End the transaction.
+            HibernateUtil.commitTransaction();
+        }
+        catch (Exception e) {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            // Log original problem.
+            String msg = "Error rolling back job " + job.getUuid() + " for tenant " + job.getTenantId() + ".";
+            log.error(msg, e);
+            throw new JobException(msg, e);
+        }
+        
+        // Perform another database round trip
+        // just to keep hibernate up to date.
+        refresh(job);
+	    return job;
+	}
+	
 	/**
 	 * Deletes a job from the db.
 	 * @param job
@@ -1267,22 +1436,17 @@ public class JobDao
         return result;
     }
 
-    /** This method is intended to only be called from a phase scheduler.  It retrieves the uuid's 
-     * of jobs that may be ready to be scheduled along with monitoring information for those jobs.  
-     * The statuses represent the triggers for the phase.  The query issued by this method skips 
-     * jobs that have already been published in the job_published table for the phase.
-     * 
-     * The job monitor records returned identify jobs via their UUIDs. These jobs are in one of the 
-     * trigger statuses and do not have a publish record for the specified phase.  The quota records 
-     * contain all the information needed to determine if a job is ready to be monitored.
+    /** This method is intended to only be called from a phase scheduler.  It retrieves the
+     * jobs in the specified trigger statuses that have not been published for this phase.
      * 
      * @param phase the phase of the calling scheduler
      * @param statuses the trigger statuses for the phase scheduler
      * @return a non-null list of job monitor records
      * @throws JobException on error
      */
-    public static List<JobArchiveInfo> getSchedulerJobArchiveInfo(JobPhaseType phase,
-                                                                  List<JobStatusType> statuses)
+    @SuppressWarnings("unchecked")
+    public static List<Job> getSchedulerJobs(JobPhaseType phase,
+                                             List<JobStatusType> statuses)
      throws JobException
     {
         // ------------------- Check Input -------------------
@@ -1326,7 +1490,7 @@ public class JobDao
         // 
         // Build the query without creating so many temporary strings.
         StringBuilder buf = new StringBuilder(512);
-        buf.append("select j.uuid ");
+        buf.append("select j.* ");
         buf.append("from jobs j ");
         
         buf.append("where ");
@@ -1340,7 +1504,7 @@ public class JobDao
         buf.append(     "where jp.phase = :phase and jp.job_uuid = j.uuid)");
         
         // Result list.
-        List<JobArchiveInfo> result = null;
+        List<Job> jobList = null;
         
         // Dump the complete table..
         try {
@@ -1350,18 +1514,14 @@ public class JobDao
             HibernateUtil.beginTransaction();
 
             // Issue the call and populate the lease object.
-            Query qry = session.createSQLQuery(buf.toString());
+            Query qry = session.createSQLQuery(buf.toString()).addEntity(Job.class);
             qry.setString("phase", phase.name());
             qry.setCacheable(false);
             qry.setCacheMode(CacheMode.IGNORE);
-            @SuppressWarnings("rawtypes")
-            List qryResuts = qry.list();
+            jobList = (List<Job>) qry.list();
             
             // Commit the transaction.
             HibernateUtil.commitTransaction();
-            
-            // Populate the list.
-            result = JobDaoUtils.populateArchiveInfoList(qryResuts);
         }
         catch (Exception e)
         {
@@ -1374,7 +1534,7 @@ public class JobDao
             throw new JobException(msg, e);
         }
         
-        return result;
+        return jobList;
     }
 
     /** Query the database for jobs that have not progressed recently.
@@ -1420,6 +1580,8 @@ public class JobDao
             // Implicit tenant filtering should be DISABLED
             // since we got our session from HibernateUtil.
             Query qry = session.createSQLQuery(buf.toString()).addEntity(Job.class);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
             jobList = (List<Job>) qry.list();
             
             // Commit the transaction.

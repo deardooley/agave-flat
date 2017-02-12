@@ -44,7 +44,7 @@ public class JobCallbackTest extends AbstractDaoTest {
         ArrayList<Object[]> testCases = new ArrayList<Object[]>();
 
         for (JobStatusType status : JobStatusType.values()) {
-            testCases.add(new Object[] { status.previousState(), status,
+            testCases.add(new Object[] { previousState(status), status,
                     "Job should update to next natural state without an issue." });
         }
         return testCases.toArray(new Object[][] {});
@@ -227,6 +227,46 @@ public class JobCallbackTest extends AbstractDaoTest {
             } catch (JobCallbackException e) {
                 Assert.fail("Callback should succeed for valid uuid, status, updateToken, and empty localid", e);
             }
+        }
+    }
+    
+    /**
+     * The job state that logically comes directly before the 
+     * current state. Some states such as {@link PAUSED}, 
+     * {@link KILLED}, {@link STOPPED}, {@link FINISHED}, and
+     * {@link FAILED} do not have a well-defined predecessor
+     * so they fall back to {@link PENDING}.
+     * 
+     * Note that this method does not pull from the actual 
+     * job history, but rather represents the backward
+     * progression of a job in an ideal situation.
+     *   
+     * @return job state logically before this one.
+     */
+    private JobStatusType previousState(JobStatusType status)
+    {
+        if (status == JobStatusType.PENDING || status == JobStatusType.PROCESSING_INPUTS) {
+            return JobStatusType.PENDING;
+        } else if (status == JobStatusType.STAGING_INPUTS) {
+            return JobStatusType.PROCESSING_INPUTS; 
+        } else if (status == JobStatusType.STAGED) {
+            return JobStatusType.STAGING_INPUTS;
+        } else if (status == JobStatusType.STAGING_JOB) {
+            return JobStatusType.STAGED;
+        } else if (status == JobStatusType.SUBMITTING) {
+            return JobStatusType.STAGING_JOB;
+        } else if (status == JobStatusType.QUEUED) {
+            return JobStatusType.SUBMITTING;
+        } else if (status == JobStatusType.RUNNING) {
+            return JobStatusType.QUEUED;
+        } else if (status == JobStatusType.CLEANING_UP) {
+            return JobStatusType.RUNNING;
+        } else if (status == JobStatusType.ARCHIVING) {
+            return JobStatusType.CLEANING_UP;
+        } else if (status == JobStatusType.ARCHIVING_FAILED || status == JobStatusType.ARCHIVING_FINISHED) {
+            return JobStatusType.ARCHIVING;
+        } else { // PAUSED, KILLED, STOPPED, FINISHED, FAILED, ROLLINGBACK, HEARTBEAT
+            return JobStatusType.PENDING;
         }
     }
 }

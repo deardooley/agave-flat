@@ -63,6 +63,9 @@ public final class JobFSMStates
     public static final State<JobFSMStatefulEntity> Failed = 
             new StateImpl<JobFSMStatefulEntity>(JobStatusType.FAILED.name());
     
+    public static final State<JobFSMStatefulEntity> RollingBack = 
+            new StateImpl<JobFSMStatefulEntity>(JobStatusType.ROLLINGBACK.name());
+    
     // Create the unmodifiable list of all above defined states.
     private static final List<State<JobFSMStatefulEntity>> _states = createStateList(); 
     
@@ -101,7 +104,7 @@ public final class JobFSMStates
     private static List<State<JobFSMStatefulEntity>> createStateList()
     {
         // Don't forget to update the initial capacity to match the number of states.
-        List<State<JobFSMStatefulEntity>> states = new ArrayList<State<JobFSMStatefulEntity>>(17);
+        List<State<JobFSMStatefulEntity>> states = new ArrayList<State<JobFSMStatefulEntity>>(18);
         states.add(Paused);
         states.add(Pending);
         states.add(ProcessingInputs);
@@ -119,6 +122,7 @@ public final class JobFSMStates
         states.add(Killed);
         states.add(Stopped);
         states.add(Failed);
+        states.add(RollingBack);
         return Collections.unmodifiableList(states);
     }
     
@@ -166,6 +170,7 @@ public final class JobFSMStates
         JobFSMStates.Paused.addTransition(JobFSMEvents.TO_STAGING_JOB.name(), JobFSMStates.StagingJob);
         JobFSMStates.Paused.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
         JobFSMStates.Paused.addTransition(JobFSMEvents.TO_SUBMITTING.name(), JobFSMStates.Submitting);
+        JobFSMStates.Paused.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
                
         // ------ From Pending
         JobFSMStates.Pending.addTransition(JobFSMEvents.TO_FAILED.name(), JobFSMStates.Failed);
@@ -174,6 +179,7 @@ public final class JobFSMStates
         JobFSMStates.Pending.addTransition(JobFSMEvents.TO_PROCESSING_INPUTS.name(), JobFSMStates.ProcessingInputs);
         JobFSMStates.Pending.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged);
         JobFSMStates.Pending.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
+        JobFSMStates.Pending.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
                
         // ------ From ProcessingInputs
         JobFSMStates.ProcessingInputs.addTransition(JobFSMEvents.TO_FAILED.name(), JobFSMStates.Failed);
@@ -181,6 +187,7 @@ public final class JobFSMStates
         JobFSMStates.ProcessingInputs.addTransition(JobFSMEvents.TO_PROCESSING_INPUTS.name(), JobFSMStates.ProcessingInputs);
         JobFSMStates.ProcessingInputs.addTransition(JobFSMEvents.TO_STAGING_INPUTS.name(), JobFSMStates.StagingInputs);
         JobFSMStates.ProcessingInputs.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
+        JobFSMStates.ProcessingInputs.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
         
         // ------ From StagingInputs
         JobFSMStates.StagingInputs.addTransition(JobFSMEvents.TO_FAILED.name(), JobFSMStates.Failed);
@@ -188,6 +195,7 @@ public final class JobFSMStates
         JobFSMStates.StagingInputs.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged);
         JobFSMStates.StagingInputs.addTransition(JobFSMEvents.TO_STAGING_INPUTS.name(), JobFSMStates.StagingInputs);
         JobFSMStates.StagingInputs.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
+        JobFSMStates.StagingInputs.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
         
         // ------ From Staged
         JobFSMStates.Staged.addTransition(JobFSMEvents.TO_FAILED.name(), JobFSMStates.Failed);
@@ -195,6 +203,7 @@ public final class JobFSMStates
         JobFSMStates.Staged.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged);
         JobFSMStates.Staged.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
         JobFSMStates.Staged.addTransition(JobFSMEvents.TO_SUBMITTING.name(), JobFSMStates.Submitting);
+        JobFSMStates.Staged.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
         
         // ------ From StagingJob
         JobFSMStates.StagingJob.addTransition(JobFSMEvents.TO_FAILED.name(), JobFSMStates.Failed);
@@ -202,6 +211,7 @@ public final class JobFSMStates
         JobFSMStates.StagingJob.addTransition(JobFSMEvents.TO_STAGING_JOB.name(), JobFSMStates.StagingJob);
         JobFSMStates.StagingJob.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
         JobFSMStates.StagingJob.addTransition(JobFSMEvents.TO_SUBMITTING.name(), JobFSMStates.Submitting);
+        JobFSMStates.StagingJob.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
                        
         // ------ From Submitting
         JobFSMStates.Submitting.addTransition(JobFSMEvents.TO_FAILED.name(), JobFSMStates.Failed);
@@ -211,6 +221,7 @@ public final class JobFSMStates
         JobFSMStates.Submitting.addTransition(JobFSMEvents.TO_RUNNING.name(), JobFSMStates.Running);
         JobFSMStates.Submitting.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
         JobFSMStates.Submitting.addTransition(JobFSMEvents.TO_SUBMITTING.name(), JobFSMStates.Submitting);
+        JobFSMStates.Submitting.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
         
         // ------ From Queued
         JobFSMStates.Queued.addTransition(JobFSMEvents.TO_CLEANING_UP.name(), JobFSMStates.CleaningUp);
@@ -220,6 +231,7 @@ public final class JobFSMStates
         JobFSMStates.Queued.addTransition(JobFSMEvents.TO_QUEUED.name(), JobFSMStates.Queued);
         JobFSMStates.Queued.addTransition(JobFSMEvents.TO_RUNNING.name(), JobFSMStates.Running);
         JobFSMStates.Queued.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
+        JobFSMStates.Queued.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
         
         // ------ From Running
         JobFSMStates.Running.addTransition(JobFSMEvents.TO_CLEANING_UP.name(), JobFSMStates.CleaningUp);
@@ -228,6 +240,7 @@ public final class JobFSMStates
         JobFSMStates.Running.addTransition(JobFSMEvents.TO_PAUSED.name(), JobFSMStates.Paused);
         JobFSMStates.Running.addTransition(JobFSMEvents.TO_RUNNING.name(), JobFSMStates.Running);
         JobFSMStates.Running.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
+        JobFSMStates.Running.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
              
         // ------ From CleaningUp
         JobFSMStates.CleaningUp.addTransition(JobFSMEvents.TO_ARCHIVING.name(), JobFSMStates.Archiving);     
@@ -237,6 +250,7 @@ public final class JobFSMStates
         JobFSMStates.CleaningUp.addTransition(JobFSMEvents.TO_KILLED.name(), JobFSMStates.Killed);
         JobFSMStates.CleaningUp.addTransition(JobFSMEvents.TO_PAUSED.name(), JobFSMStates.Paused);
         JobFSMStates.CleaningUp.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
+        JobFSMStates.CleaningUp.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
         
         // ------ From Archiving
         JobFSMStates.Archiving.addTransition(JobFSMEvents.TO_ARCHIVING.name(), JobFSMStates.Archiving);     
@@ -246,45 +260,37 @@ public final class JobFSMStates
         JobFSMStates.Archiving.addTransition(JobFSMEvents.TO_KILLED.name(), JobFSMStates.Killed);
         JobFSMStates.Archiving.addTransition(JobFSMEvents.TO_PAUSED.name(), JobFSMStates.Paused);
         JobFSMStates.Archiving.addTransition(JobFSMEvents.TO_STOPPED.name(), JobFSMStates.Stopped);
+        JobFSMStates.Archiving.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
         
         // ------ From ArchivingFinished
         JobFSMStates.ArchivingFinished.addTransition(JobFSMEvents.TO_ARCHIVING_FINISHED.name(), JobFSMStates.ArchivingFinished);
         JobFSMStates.ArchivingFinished.addTransition(JobFSMEvents.TO_FAILED.name(), JobFSMStates.Failed);
         JobFSMStates.ArchivingFinished.addTransition(JobFSMEvents.TO_FINISHED.name(), JobFSMStates.Finished);
+        JobFSMStates.ArchivingFinished.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
         
         // ------ From ArchivingFailed
         JobFSMStates.ArchivingFailed.addTransition(JobFSMEvents.TO_ARCHIVING_FAILED.name(), JobFSMStates.ArchivingFailed);
         JobFSMStates.ArchivingFailed.addTransition(JobFSMEvents.TO_FAILED.name(), JobFSMStates.Failed);
+        JobFSMStates.ArchivingFailed.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
 
         // ------ From Finished, Killed, Stopped, Failed
-        // none
+        JobFSMStates.Finished.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
+        JobFSMStates.Killed.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
+        JobFSMStates.Stopped.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
+        JobFSMStates.Failed.addTransition(JobFSMEvents.TO_ROLLINGBACK.name(), JobFSMStates.RollingBack);
                
         /* ================================================================== */
         /* Rollback Processing Transitions                                    */
         /* ================================================================== */
-        // Create an action that just logs the rollback event when debugging.
-        RollbackAction<JobFSMStatefulEntity> rollbackAction = new RollbackAction<JobFSMStatefulEntity>();
-        
-        // ------ To Pending
-        JobFSMStates.ProcessingInputs.addTransition(JobFSMEvents.TO_PENDING.name(), JobFSMStates.Pending, rollbackAction);
-        JobFSMStates.Staged.addTransition(JobFSMEvents.TO_PENDING.name(), JobFSMStates.Pending, rollbackAction);
-        JobFSMStates.StagingInputs.addTransition(JobFSMEvents.TO_PENDING.name(), JobFSMStates.Pending, rollbackAction);
-        JobFSMStates.Failed.addTransition(JobFSMEvents.TO_PENDING.name(), JobFSMStates.Pending, rollbackAction);
-        JobFSMStates.Finished.addTransition(JobFSMEvents.TO_PENDING.name(), JobFSMStates.Pending, rollbackAction);
-        JobFSMStates.Killed.addTransition(JobFSMEvents.TO_PENDING.name(), JobFSMStates.Pending, rollbackAction);
-        JobFSMStates.Stopped.addTransition(JobFSMEvents.TO_PENDING.name(), JobFSMStates.Pending, rollbackAction);
-        
-        // ------ To Staged
-        //JobFSMStates.Staged.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged);
-        JobFSMStates.StagingJob.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged, rollbackAction);
-        JobFSMStates.Submitting.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged, rollbackAction);
-        JobFSMStates.Queued.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged, rollbackAction);
-        JobFSMStates.Running.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged, rollbackAction);
-        JobFSMStates.CleaningUp.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged, rollbackAction);
-        
-        // ------ To CleaningUp
-        JobFSMStates.Archiving.addTransition(JobFSMEvents.TO_CLEANING_UP.name(), JobFSMStates.CleaningUp, rollbackAction);
-        JobFSMStates.ArchivingFailed.addTransition(JobFSMEvents.TO_CLEANING_UP.name(), JobFSMStates.CleaningUp, rollbackAction);
-        JobFSMStates.ArchivingFinished.addTransition(JobFSMEvents.TO_CLEANING_UP.name(), JobFSMStates.CleaningUp, rollbackAction);
+        // ------ From Rollingback
+        // It's necessary that transitions from the rollback state target only
+        // states that are trigger states for some scheduler.  This allows the 
+        // job to be eventually picked up by some worker thread.  Every status
+        // that can be returned from JobStatusType.rollbackState() must define
+        // a transition from the rollingback state here.  Every status (other
+        // than heartbeat) must be able to transition to rollingback status.
+        JobFSMStates.RollingBack.addTransition(JobFSMEvents.TO_PENDING.name(), JobFSMStates.Pending);
+        JobFSMStates.RollingBack.addTransition(JobFSMEvents.TO_STAGED.name(), JobFSMStates.Staged);
+        JobFSMStates.RollingBack.addTransition(JobFSMEvents.TO_CLEANING_UP.name(), JobFSMStates.CleaningUp);
     }
 }

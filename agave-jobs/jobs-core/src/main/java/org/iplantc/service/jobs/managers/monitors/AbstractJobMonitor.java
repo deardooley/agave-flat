@@ -51,7 +51,7 @@ public abstract class AbstractJobMonitor implements JobMonitor {
      */
     @Override
     public synchronized boolean isStopped() {
-        return worker.isJobStopped();
+        return worker.isJobExecutionSuspended();
     }
 
     /* (non-Javadoc)

@@ -10,7 +10,6 @@ import static org.iplantc.service.jobs.model.enumerations.JobStatusType.STOPPED;
 
 import java.io.FileNotFoundException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.ObjectNotFoundException;
@@ -27,6 +26,7 @@ import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.statemachine.JobFSMUtils;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.enumerations.SystemEventType;
 
@@ -88,7 +88,7 @@ public class JobCallbackManager {
                 throw new JobCallbackException("Job " + job.getUuid()
                         + " is not configured for archive.");
             } 
-            else if (!ArrayUtils.contains(job.getStatus().getNextValidStates(), status)) 
+            else if (!JobFSMUtils.hasTransition(job.getStatus(), status)) 
             {
                 throw new JobCallbackException("Job " + job.getUuid()
                         + " cannot update status from " + job.getStatus().name() 

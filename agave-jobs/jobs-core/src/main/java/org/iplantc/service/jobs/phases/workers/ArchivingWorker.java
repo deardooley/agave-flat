@@ -242,7 +242,7 @@ public final class ArchivingWorker
         boolean archived = false;
 
         // Attempt to stage the job several times
-        while (!archived && !isJobStopped() && attempts <= Settings.MAX_SUBMISSION_RETRIES)
+        while (!archived && !isJobExecutionSuspended() && attempts <= Settings.MAX_SUBMISSION_RETRIES)
         {
             _job.setRetries(attempts++);
             _log.debug("Attempt " + attempts + " to archive job " + _job.getUuid() + " output");
@@ -290,7 +290,7 @@ public final class ArchivingWorker
                     throw t;
                 }
 
-                if (!isJobStopped() || _job.getStatus() == JobStatusType.ARCHIVING_FINISHED ||
+                if (!isJobExecutionSuspended() || _job.getStatus() == JobStatusType.ARCHIVING_FINISHED ||
                     _job.getStatus() == JobStatusType.ARCHIVING_FAILED)
                 {
                     archived = true;

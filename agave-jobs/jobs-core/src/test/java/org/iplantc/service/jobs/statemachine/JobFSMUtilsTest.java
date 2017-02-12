@@ -35,6 +35,15 @@ public class JobFSMUtilsTest
         result = JobFSMUtils.hasTransition(JobStatusType.RUNNING, JobStatusType.CLEANING_UP);
         Assert.assertTrue(result, "Failed on a legal transaction!");
 
+        result = JobFSMUtils.hasTransition(JobStatusType.ROLLINGBACK, JobStatusType.CLEANING_UP);
+        Assert.assertTrue(result, "Failed on a legal transaction!");
+
+        result = JobFSMUtils.hasTransition(JobStatusType.ROLLINGBACK, JobStatusType.PENDING);
+        Assert.assertTrue(result, "Failed on a legal transaction!");
+
+        result = JobFSMUtils.hasTransition(JobStatusType.ROLLINGBACK, JobStatusType.STAGED);
+        Assert.assertTrue(result, "Failed on a legal transaction!");
+
         // ----- Illegal transitions.
         result = JobFSMUtils.hasTransition(JobStatusType.PROCESSING_INPUTS, JobStatusType.KILLED);
         Assert.assertFalse(result, "Failed to identify an illegal transaction!");
@@ -43,6 +52,18 @@ public class JobFSMUtilsTest
         Assert.assertFalse(result, "Failed to identify an illegal transaction!");
 
         result = JobFSMUtils.hasTransition(JobStatusType.STAGED, JobStatusType.STAGING_INPUTS);
+        Assert.assertFalse(result, "Failed to identify an illegal transaction!");
+        
+        result = JobFSMUtils.hasTransition(JobStatusType.PAUSED, null);
+        Assert.assertFalse(result, "Failed to identify an illegal transaction!");
+        
+        result = JobFSMUtils.hasTransition(null, JobStatusType.ROLLINGBACK);
+        Assert.assertFalse(result, "Failed to identify an illegal transaction!");
+        
+        result = JobFSMUtils.hasTransition(JobStatusType.ROLLINGBACK, JobStatusType.STAGING_INPUTS);
+        Assert.assertFalse(result, "Failed to identify an illegal transaction!");
+        
+        result = JobFSMUtils.hasTransition(JobStatusType.ROLLINGBACK, JobStatusType.ROLLINGBACK);
         Assert.assertFalse(result, "Failed to identify an illegal transaction!");
         
         // ----- Junk.

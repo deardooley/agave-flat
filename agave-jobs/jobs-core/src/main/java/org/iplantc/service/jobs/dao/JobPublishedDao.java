@@ -275,7 +275,9 @@ public final class JobPublishedDao {
     /* ---------------------------------------------------------------------- */
     /* deletePublishedJob:                                                    */
     /* ---------------------------------------------------------------------- */
-    /** Delete specific published job for the name phase.
+    /** Delete specific published job for the name phase.  Note that 
+     * JobDao.rollback() is another place where publish records for a specific
+     * job are deleted.
      * 
      * @param phase the phase in which the job was published
      * @param jobUuid the job id

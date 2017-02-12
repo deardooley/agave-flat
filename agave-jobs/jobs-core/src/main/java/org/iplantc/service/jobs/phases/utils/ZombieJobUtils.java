@@ -139,8 +139,8 @@ public class ZombieJobUtils
                                    " becomes available.";
                     }
                     else
-                        msg += "archiving will resume when " + job.getArchiveSystem().getSystemId() +
-                               " the execution system becomes available.";
+                        msg += "archiving will resume when the execution system " + 
+                               executionSystem.getSystemId() + " becomes available.";
                     
                     // Update job status.
                     job = JobManager.updateStatus(job, JobStatusType.CLEANING_UP, msg);

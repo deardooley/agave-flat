@@ -26,7 +26,7 @@ public abstract class AbstractWorkerAction implements WorkerAction {
      */
     @Override
     public boolean isStopped() {
-        return worker.isJobStopped();
+        return worker.isJobExecutionSuspended();
     }
 
     /**

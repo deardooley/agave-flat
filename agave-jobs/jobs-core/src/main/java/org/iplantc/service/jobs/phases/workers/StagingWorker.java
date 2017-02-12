@@ -147,7 +147,7 @@ public final class StagingWorker
         boolean staged = false;
         
         // Main staging loop.
-        while (!staged && !isJobStopped() && attempts <= Settings.MAX_SUBMISSION_RETRIES)
+        while (!staged && !isJobExecutionSuspended() && attempts <= Settings.MAX_SUBMISSION_RETRIES)
         {
             // Set the number of retries and attempts.
             _job.setRetries(attempts++);
@@ -201,7 +201,7 @@ public final class StagingWorker
                 finally {_job = getWorkerAction().getJob();}
                 
                 // If we are stopped we will quietly exit the retry loop.
-                if (!isJobStopped() && _job.getStatus() == JobStatusType.STAGED)
+                if (!isJobExecutionSuspended() && _job.getStatus() == JobStatusType.STAGED)
                 {       
                     staged = true;
                     JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();

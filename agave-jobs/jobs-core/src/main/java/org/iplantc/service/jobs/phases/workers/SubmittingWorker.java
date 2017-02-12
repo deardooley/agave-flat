@@ -116,7 +116,7 @@ public final class SubmittingWorker
             }
             finally {_job = getWorkerAction().getJob();}
         
-            if (!isJobStopped() || _job.getStatus() == JobStatusType.QUEUED || 
+            if (!isJobExecutionSuspended() || _job.getStatus() == JobStatusType.QUEUED || 
                 _job.getStatus() == JobStatusType.RUNNING)
             {       
                 JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();

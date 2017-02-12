@@ -27,6 +27,7 @@ import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
+import org.iplantc.service.jobs.statemachine.JobFSMUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -111,16 +112,13 @@ public class JobCallbackManagerTest extends AbstractDaoTest {
         ArrayList<Object[]> testCases = new ArrayList<Object[]>();
         
         for(JobStatusType currentStatus: JobStatusType.values()) {
-//        for(JobStatusType currentStatus: Arrays.asList(PAUSED)) {
             if (currentStatus == HEARTBEAT) continue;
             
-            JobStatusType[] validNextStates = currentStatus.getNextValidStates();
             for(JobStatusType nextStatus: JobStatusType.values())
-//            for(JobStatusType nextStatus: Arrays.asList(CLEANING_UP))
             {
                 if (nextStatus == HEARTBEAT) continue;
                 
-                if (ArrayUtils.contains(validNextStates, nextStatus)) {
+                if (JobFSMUtils.hasTransition(currentStatus, nextStatus)) {
                     testCases.add(new Object[]{currentStatus, nextStatus, false, "Attempting to update status from " + currentStatus.name() + " to " + nextStatus.name() + " should succeed." });
                 } else {
                     testCases.add(new Object[]{currentStatus, nextStatus, true, "Attempting to update status from " + currentStatus.name() + " to " + nextStatus.name() + " should throw an exception" });
@@ -161,12 +159,11 @@ public class JobCallbackManagerTest extends AbstractDaoTest {
         {
             if (currentStatus == HEARTBEAT) continue;
             
-            JobStatusType[] validNextStates = currentStatus.getNextValidStates();
             for(JobStatusType nextStatus: JobStatusType.values())
             {
                 if (nextStatus == HEARTBEAT) continue;
                 
-                if (ArrayUtils.contains(validNextStates, nextStatus)) {
+                if (!JobFSMUtils.hasTransition(currentStatus, nextStatus)) {
                     testCases.add(new Object[]{currentStatus, nextStatus, 
                             "Attempting to update status from " + currentStatus.name() + " to " 
                             + nextStatus.name() + " should append matching job event to job history." });
@@ -221,12 +218,11 @@ public class JobCallbackManagerTest extends AbstractDaoTest {
         {
             if (HEARTBEAT == currentStatus || Arrays.asList(ARCHIVING, ARCHIVING_FINISHED, ARCHIVING_FAILED).contains(currentStatus)) continue;
             
-            JobStatusType[] validNextStates = currentStatus.getNextValidStates();
             for(JobStatusType nextStatus: JobStatusType.values())
             {
                 if (HEARTBEAT == nextStatus || !Arrays.asList(ARCHIVING, ARCHIVING_FINISHED, ARCHIVING_FAILED).contains(nextStatus)) continue;
                 
-                if (ArrayUtils.contains(validNextStates, nextStatus)) {
+                if (!JobFSMUtils.hasTransition(currentStatus, nextStatus)) {
                     testCases.add(new Object[]{currentStatus, nextStatus, 
                             "Attempting to update non-archiving job status from " + currentStatus.name() + " to " 
                             + nextStatus.name() + " should throw JobCallbackException." });
@@ -268,12 +264,11 @@ public class JobCallbackManagerTest extends AbstractDaoTest {
         {
             if (currentStatus == HEARTBEAT) continue;
             
-            JobStatusType[] validNextStates = currentStatus.getNextValidStates();
             for(JobStatusType nextStatus: JobStatusType.values())
             {
                 if (Arrays.asList(HEARTBEAT, ARCHIVING, ARCHIVING_FINISHED, ARCHIVING_FAILED).contains(nextStatus)) continue;
                 
-                if (ArrayUtils.contains(validNextStates, nextStatus)) {
+                if (!JobFSMUtils.hasTransition(currentStatus, nextStatus)) {
                     testCases.add(new Object[]{currentStatus, nextStatus, 
                             "Attempting to update status from " + currentStatus.name() + " to " 
                             + nextStatus.name() + " should append matching job event to job history." });
@@ -351,9 +346,7 @@ public class JobCallbackManagerTest extends AbstractDaoTest {
         {
             if (currentStatus == HEARTBEAT) continue;
             
-            JobStatusType[] validNextStates = currentStatus.getNextValidStates();
-            
-            if (ArrayUtils.contains(validNextStates, HEARTBEAT)) {
+            if (!JobFSMUtils.hasTransition(currentStatus, HEARTBEAT)) {
                 testCases.add(new Object[]{currentStatus, false, 
                         "Attempting to update status from " + currentStatus.name() + " to " 
                         + HEARTBEAT.name() + " should succeed." });

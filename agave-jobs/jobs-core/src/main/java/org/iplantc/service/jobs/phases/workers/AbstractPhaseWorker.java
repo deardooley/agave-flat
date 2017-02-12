@@ -82,7 +82,7 @@ public abstract class AbstractPhaseWorker
     
     // Sticky state variable indicating whether the job status
     // has been assigned a finished state.
-    private AtomicBoolean _jobStopped = new AtomicBoolean(false);
+    private AtomicBoolean _jobSuspended = new AtomicBoolean(false);
     
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -615,7 +615,7 @@ public abstract class AbstractPhaseWorker
         }
         
         // See if the job was stopped.
-        if (isJobStopped()) {
+        if (isJobExecutionSuspended()) {
             String msg = "Worker " + Thread.currentThread().getName() +
                          " stopping job " + _job.getUuid() + 
                          " (" + _job.getName() + ").";
@@ -627,27 +627,29 @@ public abstract class AbstractPhaseWorker
     }
     
     /* ---------------------------------------------------------------------- */
-    /* isJobStopped:                                                          */
+    /* isJobExecutionSuspended:                                               */
     /* ---------------------------------------------------------------------- */
-    /** Determine if the job was explicitly stopped using the topic interrupt
-     * mechanism.  If so, we set a sticky flag so that subsequent checks can
-     * quickly discover that the job was moved into a stopped state.
+    /** Determine if the job was explicitly stopped, rolled back or otherwise
+     * discontinued by a signal received through the topic interrupt mechanism.
+     * If so, we set a sticky flag so that subsequent checks can quickly discover 
+     * that the job was moved into a suspended state and the worker should 
+     * immediately stop processing the job..
      * 
-     * @return true if the job is in a finished state; false otherwise.
+     * @return true if the job processing should be suspended; false otherwise.
      */
     @Override
-    public boolean isJobStopped()
+    public boolean isJobExecutionSuspended()
     {
         // Did we previously encounter a job interrupt?
-        if (_jobStopped.get()) return true;
+        if (_jobSuspended.get()) return true;
         
         // We shouldn't be called when there's no 
         // current job, but we play it safe.
         if (_job == null) return false;
         
-        // Query the database for changes to a finished status.
+        // Query the database for changes to a finished or suspended status.
         boolean interrupted = JobInterruptUtils.isJobInterrupted(_job);
-        if (interrupted) _jobStopped.set(true);
+        if (interrupted) _jobSuspended.set(true);
         return interrupted;
     }
     
@@ -705,7 +707,7 @@ public abstract class AbstractPhaseWorker
         _job = null;
         
         // Reset the job stopped flag.
-        _jobStopped.set(false);
+        _jobSuspended.set(false);
         
         // Remove the action associated with a job.
         setWorkerAction(null);

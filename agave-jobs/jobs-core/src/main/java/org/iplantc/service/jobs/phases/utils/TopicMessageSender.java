@@ -108,13 +108,9 @@ public class TopicMessageSender
     /* ---------------------------------------------------------------------- */
     /* sendConfigMessage:                                                     */
     /* ---------------------------------------------------------------------- */
-    /** Put a job interrupt message on the job topic queue.  The caller is 
-     * responsible for already having updated the status of the job.  The topic
-     * thread will read the queued interrupt message and update the interrupts
-     * table with the job information.  Any worker thread subsequently servicing
-     * the job will note either the interrupt or the status change.  
+    /** Route a queue configuration message on the job topic queue.    
      * 
-     * @param message a concrete job message
+     * @param message a concrete queue configuration message
      * @throws JobException on error
      */
     public static void sendConfigMessage(AbstractQueueConfigMessage message) 
@@ -157,6 +153,9 @@ public class TopicMessageSender
                     break;
                 case SUBMITTING:
                     routingKey = QueueConstants.TOPIC_SUBMITTING_ROUTING_KEY;
+                    break;
+                case ROLLINGBACK:
+                    routingKey = QueueConstants.TOPIC_ROLLINGBACK_ROUTING_KEY;
                     break;
                 default:
                     String msg = "Unknown phase " + message.phase + 

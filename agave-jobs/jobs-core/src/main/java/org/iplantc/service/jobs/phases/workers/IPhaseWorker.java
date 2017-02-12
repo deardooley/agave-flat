@@ -58,7 +58,7 @@ public interface IPhaseWorker
      throws ClosedByInterruptException, JobFinishedException;
     
     /* ---------------------------------------------------------------------- */
-    /* isJobStopped:                                                          */
+    /* isJobExecutionSuspended:                                               */
     /* ---------------------------------------------------------------------- */
     /** Determine if the job was explicitly stopped using the topic interrupt
      * mechanism.  If so, we set a sticky flag so that subsequent checks can
@@ -66,5 +66,5 @@ public interface IPhaseWorker
      * 
      * @return true if the job is in a finished state; false otherwise.
      */
-    boolean isJobStopped();
+    boolean isJobExecutionSuspended();
 }

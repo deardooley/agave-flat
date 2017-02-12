@@ -250,6 +250,9 @@ public abstract class AbstractPhaseScheduler
     // making progress.  This thread is only created and started on the single
     // MONITORING scheduler that obtains a lease.
     private Thread _zombieCleanUpThread;
+    
+    // Initialize a reusable mapper for writing queue messages.
+    private ObjectMapper queueMessageMapper = new ObjectMapper();
         
     // This phase's queuing artifacts.
     private ConnectionFactory    _factory;
@@ -574,10 +577,7 @@ public abstract class AbstractPhaseScheduler
         qjob.uuid = job.getUuid();
         
         // Write the object as a JSON string.
-        ObjectMapper m = new ObjectMapper();
-        StringWriter writer = new StringWriter(150);
-        m.writeValue(writer, qjob);
-        return writer.toString();
+        return queueMessageMapper.writeValueAsString(qjob);
     }
     
     /* ---------------------------------------------------------------------- */
@@ -852,6 +852,39 @@ public abstract class AbstractPhaseScheduler
             }
         
         return new ReadyJobs(jobs, quotaChecker);
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getUnfilteredJobs:                                                     */
+    /* ---------------------------------------------------------------------- */
+    /** Get the list of jobs in one of this phase's trigger states that have not
+     * already been published by this phase.  This method is appropriate in 
+     * circumstances where all jobs returned will be processed.  In cases where
+     * additional filtering is best performed in memory, such as for the staging,
+     * submitting or monitoring phases, then taking the approach of initially 
+     * retrieving a small subset of fields from each job and then issuing another
+     * query for a smaller number of full job objects may be more efficient.  
+     * 
+     * @param statuses the trigger statuses for this phase
+     * @return the list of unpublished job in this phase that have a trigger status
+     * @throws JobSchedulerException on error
+     */
+    protected ReadyJobs getUnfilteredJobs(List<JobStatusType> statuses) 
+     throws JobSchedulerException
+    {
+        // Since we don't need to do any extra in-memory filtering of the
+        // results, make a call that returns all non-published jobs for the phase.
+        List<Job> jobs = null;
+        try {
+            jobs = JobDao.getSchedulerJobs(_phaseType, statuses);
+        } catch (Exception e) {
+            String msg = _phaseType.name() + 
+                         " scheduler unable to retrieve ready jobs.";
+            _log.error(msg, e);
+            throw new JobSchedulerException(msg, e);
+        }
+
+        return new ReadyJobs(jobs);
     }
     
     /* ********************************************************************** */
@@ -1218,7 +1251,6 @@ public abstract class AbstractPhaseScheduler
     /** Start the configured number of workers dedicated to each queue.  Each
      * worker thread services exactly one queue, though a queue can have multiple
      * workers.  
-     * 
      */
     private void startQueueWorkers()
     {
@@ -1412,8 +1444,8 @@ public abstract class AbstractPhaseScheduler
                     startInterruptCleanUpThread();
                 
                 // We assign zombie clean up to the monitoring scheduler.
-                if ((this instanceof StagingScheduler) && _interruptCleanUpThread == null)
-                    startInterruptCleanUpThread();
+                if ((this instanceof MonitoringScheduler) && _zombieCleanUpThread == null)
+                    startZombieCleanUpThread();
                 
                 // Query the database for all candidate jobs for this phase.  This
                 // method also maintains the published jobs set and filters the list

@@ -12,8 +12,10 @@ public final class PauseJobMessage
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
-    public PauseJobMessage(){super(JobCommand.TPC_PAUSE_JOB);}
+    // Constructor used for testing only.
+    PauseJobMessage(){super(JobCommand.TPC_PAUSE_JOB);}
     
+    // Real constructor.
     public PauseJobMessage(String     jobName,
                            String     jobUuid,
                            String     tenantId)

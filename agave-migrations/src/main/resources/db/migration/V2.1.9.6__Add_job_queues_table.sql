@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `job_queues` (
   `uuid` varchar(64) NOT NULL,
   `name` varchar(150) NOT NULL,
   `tenant_id` varchar(64) NOT NULL,
-  `phase` ENUM('ARCHIVING','MONITORING','STAGING','SUBMITTING') NOT NULL,
+  `phase` ENUM('ARCHIVING','MONITORING','ROLLINGBACK','STAGING','SUBMITTING') NOT NULL,
   `priority` int NOT NULL,
   `num_workers` int UNSIGNED NOT NULL,
   `max_messages` int UNSIGNED NOT NULL,
@@ -83,8 +83,10 @@ CREATE TABLE IF NOT EXISTS `job_interrupts` (
 
 # Create the published jobs table that tracks the jobs
 # already queue by a scheduler and should not be queued again.
+# Keep the enums in alphabetic order so that enum sorting
+# matches alphabetic sorting.
 CREATE TABLE `job_published` (
-  `phase` ENUM('ARCHIVING','MONITORING','STAGING','SUBMITTING') NOT NULL,
+  `phase` ENUM('ARCHIVING','MONITORING','ROLLINGBACK','STAGING','SUBMITTING') NOT NULL,
   `job_uuid` varchar(64) NOT NULL,
   `created` datetime NOT NULL,
   `creator` varchar(64) NOT NULL,
@@ -107,4 +109,6 @@ INSERT IGNORE INTO `job_leases` (lease, last_updated, expires_at, lessee) VALUES
 INSERT IGNORE INTO `job_leases` (lease, last_updated, expires_at, lessee) VALUES ('SUBMITTING', now(), NULL, NULL);
 INSERT IGNORE INTO `job_leases` (lease, last_updated, expires_at, lessee) VALUES ('MONITORING', now(), NULL, NULL);
 INSERT IGNORE INTO `job_leases` (lease, last_updated, expires_at, lessee) VALUES ('ARCHIVING', now(), NULL, NULL);
+INSERT IGNORE INTO `job_leases` (lease, last_updated, expires_at, lessee) VALUES ('ROLLINGBACK', now(), NULL, NULL);
+
 

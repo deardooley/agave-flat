@@ -95,7 +95,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 	 */
 	@Override
     public synchronized boolean isStopped() {
-        return worker.isJobStopped();
+        return worker.isJobExecutionSuspended();
     }
 
     /* (non-Javadoc)
