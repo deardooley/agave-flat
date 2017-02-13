@@ -63,6 +63,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /**
  * @author dooley
  * 
+ * TODO: Reuse ObjectMapper instances to improve performance.  
+ *       Implement using either one mapper per job instance or a static mapper used 
+ *       by all instances.  Later versions of Jackson recommend using ObjectReader 
+ *       and ObjectWriter, which may be worth looking into.  There are conflicting 
+ *       reports of locks slowing down multithreaded access to the same ObjectdMapper, 
+ *       so some research will be needed.
  */
 @Entity
 @Table(name = "jobs")
@@ -129,6 +135,7 @@ public class Job {
 	private boolean				visible;		// Can a user see the job?
 	private Integer				version = 0;	// Entity version used for optimistic locking
 	private String				tenantId;		// current api tenant
+	private int                 epoch = 0;      // this job's current rollback epoch
 	
 	public Job()
 	{
@@ -381,29 +388,6 @@ public class Job {
 	{
 		this.memoryPerNode = memoryPerNode;
 	}
-
-//	/**
-//	 * @return the callbackUrl
-//	 */
-//	@Column(name = "callback_url", nullable = true, length = 255)
-//	public String getCallbackUrl()
-//	{
-//		return callbackUrl;
-//	}
-//
-//	/**
-//	 * @param callbackUrl
-//	 *            the callbackUrl to set
-//	 * @throws JobException 
-//	 */
-//	public void setCallbackUrl(String callbackUrl) throws JobException
-//	{
-//		if (!StringUtils.isEmpty(callbackUrl) && callbackUrl.length() > 255) {
-//			throw new JobException("'job.callbackUrl' must be less than 255 characters");
-//		}
-//		
-//		this.callbackUrl = callbackUrl;
-//	}
 
 	/**
 	 * @param outputPath the outputPath to set
@@ -670,44 +654,6 @@ public class Job {
 		return inputs;
 	}
 
-//	public void setInputsAsMap(Map<String, String> map) throws JobException
-//	{
-//		try 
-//		{
-//			ObjectMapper mapper = new ObjectMapper();
-//			ObjectNode json = mapper.createObjectNode();
-//			for (String paramKey : map.keySet())
-//			{
-//				json.put(paramKey, StringUtils.trim(map.get(paramKey).toString()));
-//			}
-//			inputs = json.toString();
-//		}
-//		catch (Exception e) {
-//			throw new JobException("Failed to parse job parameters", e);
-//		}
-//	}
-
-//	@Transient
-//	public Map<String, String> getInputsAsMap() throws JobException
-//	{
-//		try {
-//			Map<String, String> map = new HashMap<String, String>();
-//			if (!ServiceUtils.isValid(inputs))
-//				return map;
-//			ObjectMapper mapper = new ObjectMapper();
-//			JsonNode json = mapper.readTree(inputs);
-//			for (Iterator<String> inputIterator = json.fieldNames(); inputIterator.hasNext();)
-//			{
-//				String inputKey = inputIterator.next();
-//				map.put(inputKey, StringUtils.trim(json.get(inputKey).textValue()));
-//			}
-//			return map;
-//		}
-//		catch (Exception e) {
-//			throw new JobException("Failed to parse job inputs", e);
-//		}
-//	}
-	
 	@Transient
 	public JsonNode getInputsAsJsonObject() throws JobException
 	{
@@ -790,57 +736,6 @@ public class Job {
 			setParameters(json.toString());
 		}
 	}
-
-//	@Transient
-//	@Deprecated
-//	public Map<String, Object> getParametersAsMap() throws JobException
-//	{
-//		try 
-//		{	
-//			Map<String, Object> map = new HashMap<String, Object>();
-//			JsonNode json = getParametersAsJsonObject();
-//			for (Iterator<String> parameterIterator = json.fieldNames(); parameterIterator.hasNext();)
-//			{
-//				String parameterKey = parameterIterator.next();
-//				map.put(parameterKey, json.get(parameterKey).textValue());
-//			}
-//			return map;
-//		}
-//		catch (Exception e) {
-//			throw new JobException("Failed to parse job parameters", e);
-//		}
-//	}
-//
-//	@Deprecated
-//	public void setParametersAsMap(Map<String, Object> map)
-//	throws JobException
-//	{
-//		try 
-//		{
-//			ObjectMapper mapper = new ObjectMapper();
-//			ObjectNode json = mapper.createObjectNode();
-//			for (String paramKey : map.keySet())
-//			{
-//				json.put(paramKey, map.get(paramKey).toString());
-//			}
-//			parameters = json.toString();
-//		}
-//		catch (Exception e) {
-//			throw new JobException("Failed to parse job parameters", e);
-//		}
-//	}
-	
-//	public void setParametersAsJsonNode(JsonNode json)
-//	throws JobException
-//	{
-//		try 
-//		{
-//			parameters = json.toString();
-//		}
-//		catch (Exception e) {
-//			throw new JobException("Failed to parse job parameters", e);
-//		}
-//	}
 
 	/**
 	 * @param parameters
@@ -1138,6 +1033,23 @@ public class Job {
 		this.tenantId = tenantId;
 	}
 
+    /**
+     * @return the retries
+     */
+    @Column(name = "epoch", nullable=false)
+    public int getEpoch()
+    {
+        return epoch;
+    }
+
+    /**
+     * @param retries the retries to set
+     */
+    public void setEpoch(int epoch)
+    {
+        this.epoch = epoch;
+    }
+    
 	@Transient
 	public String getArchiveUrl() 
 	{
@@ -1263,6 +1175,7 @@ public class Job {
 			.put("maxRunTime", maxRunTime)
 			.put("archive", archiveOutput)
 			.put("retries", retries)
+			.put("epoch", epoch)
 			.put("localId", localJobId)
 			.put("created", new DateTime(created).toString())
 			.put("lastUpdated", new DateTime(lastUpdated).toString());
@@ -1300,6 +1213,7 @@ public class Job {
 
 	public Job copy() throws JSONException, JobException
 	{
+	    // Not copying epoch so that copy starts fresh.
 		Job job = new Job();
 		job.setName(name);
 		job.setOwner(owner);
@@ -1373,6 +1287,8 @@ public class Job {
 			value = status;
 		} else if (attribute.equalsIgnoreCase("message")) {
 			value = status.equals(JobStatusType.FAILED) ? errorMessage == null ? "" : errorMessage : "";
+        } else if (attribute.equalsIgnoreCase("epoch")) {
+            value = epoch;
 		} else if (attribute.equalsIgnoreCase("submitTime")) {
 			value = submitTime == null ? null : submitTime.getTime();
 		} else if (attribute.equalsIgnoreCase("startTime")) {
@@ -1492,6 +1408,7 @@ public class Job {
 			.put("archive", archiveOutput)
 			.put("retries", retries)
 			.put("localId", localJobId)
+			.put("epoch", epoch)
 			.put("created", new DateTime(created).toString())
 			.put("lastModified", new DateTime(lastUpdated).toString());
 			

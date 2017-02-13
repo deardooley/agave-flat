@@ -135,6 +135,12 @@ public final class JobDaoUtils
             clause += "work_path = :workPath";
         }
         
+        // ----- epoch
+        if (parms.isEpochFlag()) {
+            if (!initialClause.equals(clause)) clause += ", ";
+            clause += "epoch = :epoch";
+        }
+        
         // See if we found any fields to update.
         if (initialClause.equals(clause)) return null;
         return clause;
@@ -206,6 +212,10 @@ public final class JobDaoUtils
         // ----- workPath
         if (parms.isWorkPathFlag()) 
             qry.setString("workPath", parms.getWorkPath());
+        
+        // ----- epoch
+        if (parms.isEpochFlag()) 
+            qry.setInteger("epoch", parms.getEpoch());
     }  
     
     /* ---------------------------------------------------------------------- */

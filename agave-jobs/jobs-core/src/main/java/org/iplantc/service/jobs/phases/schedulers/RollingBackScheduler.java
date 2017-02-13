@@ -21,14 +21,14 @@ import org.iplantc.service.jobs.phases.utils.ZombieJobUtils;
  * 
  * @author rcardone
  */
-public final class RollingbackScheduler 
+public final class RollingBackScheduler 
  extends AbstractPhaseScheduler
 {
     /* ********************************************************************** */
     /*                               Constants                                */
     /* ********************************************************************** */
     // Tracing.
-    private static final Logger _log = Logger.getLogger(RollingbackScheduler.class);
+    private static final Logger _log = Logger.getLogger(RollingBackScheduler.class);
 
     // A place to squirrel away our triggers.
     private List<JobStatusType> _phaseTriggerStatuses;
@@ -39,7 +39,7 @@ public final class RollingbackScheduler
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
-    public RollingbackScheduler() throws JobException
+    public RollingBackScheduler() throws JobException
     {
         super(JobPhaseType.ROLLINGBACK,
               new TenantRandom(),

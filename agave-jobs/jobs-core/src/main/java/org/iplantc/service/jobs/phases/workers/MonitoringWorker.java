@@ -59,6 +59,9 @@ public final class MonitoringWorker
         // to maintain compatibility with legacy code.
         _job = job;
 
+        // Capture the epoch before hibernate can change it.
+        setJobInitialEpoch(job.getEpoch());
+        
         // Exceptions thrown by any of the called methods abort processing.
         // This structure maintains compatibility with legacy code.
         try {

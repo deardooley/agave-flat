@@ -36,6 +36,7 @@ public class JobUpdateParameters
     private Date                submitTime;
     private boolean             visible;
     private String              workPath;
+    private Integer             epoch;
     
     // Flags that indicate whether the field was set.
     private boolean             archivePathFlag;
@@ -52,6 +53,7 @@ public class JobUpdateParameters
     private boolean             submitTimeFlag;
     private boolean             visibleFlag;
     private boolean             workPathFlag;
+    private boolean             epochFlag;
 
     /* ********************************************************************** */
     /*                               Accessors                                */
@@ -183,6 +185,16 @@ public class JobUpdateParameters
         workPathFlag = true;
         this.workPath = workPath;
     }
+    public Integer getEpoch()
+    {
+        return epoch;
+    }
+    public void setEpoch(Integer epoch)
+    {
+        epochFlag = true;
+        this.epoch = epoch;
+    }
+
 
     // Flag field getters.
     public boolean isArchivePathFlag()
@@ -253,6 +265,11 @@ public class JobUpdateParameters
     public boolean isWorkPathFlag()
     {
         return workPathFlag;
+    }
+    
+    public boolean isEpochFlag()
+    {
+        return epochFlag;
     }
     
     /* ********************************************************************** */
@@ -328,5 +345,10 @@ public class JobUpdateParameters
     {
         workPath = null;
         workPathFlag = false;
+    }
+    public void unsetEpoch()
+    {
+        epoch = null;
+        epochFlag = false;
     }
 }

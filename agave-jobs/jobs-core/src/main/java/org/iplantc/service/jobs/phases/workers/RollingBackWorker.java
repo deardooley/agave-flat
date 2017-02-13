@@ -12,7 +12,7 @@ import org.iplantc.service.jobs.model.enumerations.JobStatusType;
  * @author rcardone
  *
  */
-public final class RollingbackWorker 
+public final class RollingBackWorker 
  extends AbstractPhaseWorker
 {
     /* ********************************************************************** */
@@ -27,7 +27,7 @@ public final class RollingbackWorker
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
-    public RollingbackWorker(PhaseWorkerParms parms) 
+    public RollingBackWorker(PhaseWorkerParms parms) 
     {
         super(parms);
     }
@@ -44,6 +44,9 @@ public final class RollingbackWorker
         // Assign job field for the duration of this method
         // to maintain compatibility with legacy code.
         _job = job;
+        
+        // Capture the epoch before hibernate can change it.
+        setJobInitialEpoch(job.getEpoch());
         
         // Exceptions thrown by any of the called methods abort processing.
         // This structure maintains compatibility with legacy code.

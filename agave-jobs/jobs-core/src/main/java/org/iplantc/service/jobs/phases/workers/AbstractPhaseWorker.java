@@ -80,6 +80,15 @@ public abstract class AbstractPhaseWorker
     // The job currently being processed.  Updated by subclasses directly.
     protected Job                        _job;
     
+    // This field captures the job epoch when the worker starts processing
+    // the job.  We can't simply use the epoch field in _job because hibernate
+    // may change it underneath us during processing.  To defend ourselves 
+    // against hibernate, we initialize the field to an invalid value and
+    // set it to the job's epoch immediately in the worker subclass.
+    //
+    // See the class comment in JobInterruptDao for a discussion of job epochs.
+    private int                          _jobInitialEpoch = -1;
+    
     // Sticky state variable indicating whether the job status
     // has been assigned a finished state.
     private AtomicBoolean _jobSuspended = new AtomicBoolean(false);
@@ -536,6 +545,16 @@ public abstract class AbstractPhaseWorker
         return _job;
     }
     
+    public int getJobInitialEpoch()
+    {
+        return _jobInitialEpoch;
+    }
+
+    protected void setJobInitialEpoch(int _jobInitialEpoch)
+    {
+        this._jobInitialEpoch = _jobInitialEpoch;
+    }
+
     /* ---------------------------------------------------------------------- */
     /* checkStopped:                                                          */
     /* ---------------------------------------------------------------------- */
@@ -633,7 +652,9 @@ public abstract class AbstractPhaseWorker
      * discontinued by a signal received through the topic interrupt mechanism.
      * If so, we set a sticky flag so that subsequent checks can quickly discover 
      * that the job was moved into a suspended state and the worker should 
-     * immediately stop processing the job..
+     * immediately stop processing the job.
+     * 
+     * See the class comment in JobInterruptDao for a discussion of job epochs.
      * 
      * @return true if the job processing should be suspended; false otherwise.
      */
@@ -648,7 +669,7 @@ public abstract class AbstractPhaseWorker
         if (_job == null) return false;
         
         // Query the database for changes to a finished or suspended status.
-        boolean interrupted = JobInterruptUtils.isJobInterrupted(_job);
+        boolean interrupted = JobInterruptUtils.isJobInterrupted(_job, getJobInitialEpoch());
         if (interrupted) _jobSuspended.set(true);
         return interrupted;
     }
@@ -705,6 +726,9 @@ public abstract class AbstractPhaseWorker
     {
         // Reset the job state.
         _job = null;
+        
+        // Set the job epoch to an invalid value.
+        setJobInitialEpoch(-1);
         
         // Reset the job stopped flag.
         _jobSuspended.set(false);

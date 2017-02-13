@@ -31,6 +31,10 @@
 CREATE UNIQUE INDEX `tenants_tenant_id`
 ON `tenants` (`tenant_id`);
 
+# Add the epoch column to the jobs table and initialize to zero.
+# See rollback discussion in JobDao and JobManager for details.
+ALTER TABLE `agave-api`.jobs ADD COLUMN `epoch` int NOT NULL DEFAULT 0;
+
 # Create a non-unique index on the status field of a job
 # to avoid full table scans on scheduler queuries.  Include
 # the execution_system field to possibly speed up certain
@@ -70,6 +74,7 @@ CREATE TABLE IF NOT EXISTS `job_interrupts` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `job_uuid` varchar(64) NOT NULL,
   `tenant_id` varchar(64) NOT NULL,
+  `epoch` int NOT NULL,
   `interrupt_type` enum('DELETE','PAUSE','STOP') NOT NULL,
   `created` datetime NOT NULL,
   `expires_at` datetime NOT NULL,

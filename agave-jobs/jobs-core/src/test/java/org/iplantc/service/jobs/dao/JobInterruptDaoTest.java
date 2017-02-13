@@ -171,8 +171,9 @@ public class JobInterruptDaoTest
         // job.  The keys are from 0 to NUM_INTERRUPTS - 1.
         for (int i = 0; i < NUM_INTERRUPTS; i++)
         {
+            int epoch = 0; // All tests take place in the default epoch
             JobInterrupt interrupt = 
-               new JobInterrupt(getJobUuid(i), TENANT_ID, getInterruptType(i));
+               new JobInterrupt(getJobUuid(i), TENANT_ID, getInterruptType(i), epoch);
             map.put(i, interrupt);
         }
         

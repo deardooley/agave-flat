@@ -4,6 +4,8 @@ import java.io.IOException;
 
 /** This message cancels the job identified by uuid.
  * 
+ * See the class comment in JobInterruptDao for a discussion of job epochs.
+ * 
  * @author rcardone
  */
 public final class DeleteJobMessage 
@@ -18,9 +20,10 @@ public final class DeleteJobMessage
     // Real constructor.
     public DeleteJobMessage(String     jobName,
                             String     jobUuid,
-                            String     tenantId)
+                            String     tenantId,
+                            int        epoch)
     {
-        super(JobCommand.TPC_DELETE_JOB, jobName, jobUuid, tenantId);
+        super(JobCommand.TPC_DELETE_JOB, jobName, jobUuid, tenantId, epoch);
     }
     
     /* ********************************************************************** */

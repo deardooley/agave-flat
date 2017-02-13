@@ -844,10 +844,7 @@ public class JobDao
 	}
 	
 	/** Rollback the specified by atomically updating the job status and deleting all
-	 * publish records for the job.  We also delete all interrupts that exist for this
-	 * job so that they don't get applied after the rollback occurs.  The idea is that
-	 * interrupts intended for the job before the rollback will interfere with the job
-	 * as it begins executing after the rollback.
+	 * publish records for the job.
 	 * 
 	 * @param job the job to be rolled back
 	 * @param rollbackMessage a message stored in the job with it new status
@@ -886,10 +883,14 @@ public class JobDao
         }
         
         // ------------------- Assign Parms ------------------
-        // Populate a parameters object.
+        // Populate a parameters object.  Increment the epoch so
+        // that new interrupts don't get applied in old epochs.
+        // Setting the status to rollingback means that only the
+        // RollingBackScheduler will service this job.
         JobUpdateParameters parms = new JobUpdateParameters();
         parms.setStatus(JobStatusType.ROLLINGBACK);
         parms.setErrorMessage(rollbackMessage);
+        parms.setEpoch(job.getEpoch() + 1);
         parms.setLastUpdated(new Date());
         
         // Construct the set clause for the sql update statement.
@@ -972,19 +973,6 @@ public class JobDao
             // Delete all references to this job in the 
             // job_published table across all phases.
             sql = "delete from job_published where job_uuid = :job_uuid";
-            
-            // Fill in the placeholders.           
-            qry = session.createSQLQuery(sql);
-            qry.setString("job_uuid", job.getUuid());
-            qry.setCacheable(false);
-            qry.setCacheMode(CacheMode.IGNORE);
-            rows = qry.executeUpdate();
-            
-            // ---- Delete from interrupts table
-            // Delete all references to this job in the 
-            // job_interrupts table so that the job
-            // starts clean after the rollback.  
-            sql = "delete from job_interrupts where job_uuid = :job_uuid";
             
             // Fill in the placeholders.           
             qry = session.createSQLQuery(sql);

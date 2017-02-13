@@ -2,7 +2,9 @@ package org.iplantc.service.jobs.phases.queuemessages;
 
 import java.io.IOException;
 
-/** This message pauses the job identified by uuid..
+/** This message pauses the job identified by uuid.
+ * 
+ * See the class comment in JobInterruptDao for a discussion of job epochs.
  * 
  * @author rcardone
  */
@@ -18,9 +20,10 @@ public final class PauseJobMessage
     // Real constructor.
     public PauseJobMessage(String     jobName,
                            String     jobUuid,
-                           String     tenantId)
+                           String     tenantId,
+                           int        epoch)
     {
-        super(JobCommand.TPC_PAUSE_JOB, jobName, jobUuid, tenantId);
+        super(JobCommand.TPC_PAUSE_JOB, jobName, jobUuid, tenantId, epoch);
     }
     
     /* ********************************************************************** */

@@ -24,7 +24,106 @@ import org.joda.time.DateTime;
  * 
  * This class issues native SQL commands through Hibernate session objects.
  * See the JobQueue class for the rationale for not using Hibernate more
- * extensively. 
+ * extensively.
+ * 
+ * Concurrency 
+ * ===========
+ * 
+ * By definition interrupts occur asynchronous to job processing.  A job can
+ * be in any state when an interrupt occurs.  A job's state can be defined
+ * by these characteristics: 
+ *
+ *  1. In a finished, trigger or other status
+ *  2. Being or not being processed by a scheduler
+ *  3. In or not in a scheduler queue
+ *  4. Processing or not processing in a worker thread
+ *  5. Interrupted or not interrupted
+ * 
+ * Not all combinations of the above characteristics will occur.  By interrupted,
+ * we mean an interrupt record for the job is in the job_interrupts table.  Workers
+ * poll this table to check if the job they are processing has been interrupted.
+ * Currently, the only interrupt types are DELETE, PAUSE, and STOP, all of which
+ * simply cause the worker thread to discontinue processing its job.  
+ * 
+ * The originator of an interrupt is responsible for changing the job status
+ * before sending an interrupt message.  The sequence is (1) the interrupter updates
+ * the job status, (2) the interrupter sends an interrupt message to the topic queue, 
+ * (3) the topic queue thread reads the message, (4) the topic queue thread writes
+ * an interrupt record to the interrupt table, and (5) worker threads poll the
+ * interrupt table for interrupts for their current job. (See TopicMessageSender 
+ * and the topic queue support in AbstractPhaseScheduler for details on interrupt 
+ * message processing.)
+ * 
+ * When an interrupt is sent to a finished job that is not being processed by in
+ * a worker, the interrupt record is never read by a worker thead and it gets cleaned 
+ * up when it expires. 
+ * 
+ * When an interrupt is sent to a job that is in a trigger status, but the job has not
+ * yet been scheduled, the interrupt will be read by the worker that picks up the
+ * job after a scheduler schedules it (i.e., puts the job on the phase's scheduler queue).
+ * 
+ * When an interrupt is sent to a job currently being processed by a worker, the
+ * worker will periodically poll the interrupt table for its job and process
+ * interrupts (in chronological order) when they are found.
+ * 
+ * Rollback
+ * --------
+ * The above interrupt mechanism is relatively straightforward if jobs progress
+ * in a linear fashion from one phase to the next, or from one status to the 
+ * next.  Unfortunately, jobs can be rolled back to a prior status and even a 
+ * prior phase.  This cyclical behavior complicates interrupt processing.
+ * 
+ * Consider a job that proceeds from phase A to a later phase B, for example from 
+ * Staging to Monitoring.  The job itself may or may not be on phase B's queue
+ * and may or may not be processing in a B worker thread.  For this scenario, let's
+ * assume a B worker is processing the job.  
+ * 
+ * If a user or a zombie detector wants to rollback the job, it first updates the 
+ * job's status to Stopped and then sends a STOP message to the topic queue as 
+ * described above.  After the message is ASYNCHRONOUSLY read from the topic queue and
+ * written to the interrupt table, the goal is for worker B to eventually abandon the
+ * job.  In the meantime, the thread initiating the rollback updates the status of the 
+ * job from Stopped to RollingBack. 
+ * 
+ * Since schedulers, workers and interrupters run concurrently on different threads, 
+ * it is indeterminant when a worker thread actually sees an interrupt relative
+ * to the processing of other threads .  In particular, once a job is assigned 
+ * the RollingBack status, the RollingBackScheduler can schedule it and a worker 
+ * can actually perform the rollback to a prior status.  
+ * 
+ * Going back to our example, it's possible that the status update to a prior status,
+ * say to a phase A trigger status, takes place BEFORE the worker in phase B receives 
+ * the interrupt to stop processing.  As a matter of fact, its possible that a phase
+ * A worker begins processing the job while worker B is still processing it.
+ * 
+ * In this situation, we have two workers processing the same job, which breaks the 
+ * fundamental design requirement of our design.  There's a race condition on which worker 
+ * gets the interrupt, and bad things will happen if worker A is interrupted since worker B 
+ * will continue doing the wrong work under the wrong status.
+ * 
+ * Epochs
+ * ------
+ * The remedy for dealing with rollback complexities is to implement the concept of
+ * jobs running in an "epoch", starting with epoch 0.  Everytime a rollback is initiated
+ * the job's epoch is incremented.  Interrupts target jobs in specific epochs, which 
+ * avoids the race condition identified above.  Here's how epochs are used to implement
+ * safe rollbacks.
+ * 
+ * Consider again the above job that has progressed from phase A to phase B and a B  
+ * worker is processing the job.  Assume a rollback is initiated and the pathological case
+ * described above occurs such that the job is being processed concurrently by an A and
+ * a B worker.  Worker A, however, will be executing the job in epoch 1, while work B
+ * will be in epoch 0.  The interrupt to stop processing the job targeted the job in epoch 0, 
+ * so only worker B will get the interrupt.  When it does, it will stop processing the job, 
+ * leaving only worker A executing.  
+ * 
+ * The overlap period where there are two workers processing the same job can be 
+ * problematic if worker B changes the state.  Our last defense is the state machine 
+ * rejecting undefined status transitions.  Even with epochs and state machine validation, 
+ * however, it is possible that a roll back could put a job in an inconsistent state.  The 
+ * best guidance, therefore, is to avoid rolling back jobs that have active worker threads. 
+ * 
+ * See JobManager.rollback() and JobDao.rollback() for implementation details.
  * 
  * @author rcardone
  */
@@ -72,6 +171,11 @@ public final class JobInterruptDao {
             _log.error(msg);
             throw new JobException(msg);
         }
+        if (interrupt.getEpoch() < 0) {
+            String msg = "Negative epoch value specified in job interrtupt definition.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
                                     
         // ------------------------- Permission Checks -------------------
         // We only allow users to create interrupts under their own tenant. 
@@ -110,14 +214,15 @@ public final class JobInterruptDao {
 
             // Create the insert command.
             String sql = "insert into job_interrupts " +
-                         "(job_uuid, tenant_id, interrupt_type, created, expires_at) " +
+                         "(job_uuid, tenant_id, epoch, interrupt_type, created, expires_at) " +
                          "values " +
-                         "(:job_uuid, :tenant_id, :interrupt_type, :created, :expires_at) ";
+                         "(:job_uuid, :tenant_id, :epoch, :interrupt_type, :created, :expires_at) ";
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
             qry.setString("job_uuid", interrupt.getJobUuid().trim());
             qry.setString("tenant_id", interrupt.getTenantId());
+            qry.setInteger("epoch", interrupt.getEpoch());
             qry.setString("interrupt_type", interrupt.getInterruptType().name());
             qry.setTimestamp("created", interrupt.getCreated());
             qry.setTimestamp("expires_at", interrupt.getExpiresAt());
@@ -205,7 +310,7 @@ public final class JobInterruptDao {
             // Create the insert command using table definition field order.
             // NOTE: Any changes to the job_interrupts table requires maintenance
             //       here and in the populate routine below.
-            String sql = "select id, job_uuid, tenant_id, interrupt_type, created, expires_at " +
+            String sql = "select id, job_uuid, tenant_id, epoch, interrupt_type, created, expires_at " +
                          "from job_interrupts " +
                          "where job_uuid = :job_uuid " +
                          "and tenant_id = :tenant_id " +
@@ -362,7 +467,7 @@ public final class JobInterruptDao {
             // Create the insert command using table definition field order.
             // NOTE: Any changes to the job_interrupts table requires maintenance
             //       here and in the populate routine below.
-            String sql = "select id, job_uuid, tenant_id, interrupt_type, created, expires_at " +
+            String sql = "select id, job_uuid, tenant_id, epoch, interrupt_type, created, expires_at " +
                          "from job_interrupts " +
                          "order by expires_at";
             
@@ -429,7 +534,7 @@ public final class JobInterruptDao {
             // Issue the select for update query to lock the expired records.
             // NOTE: Any changes to the job_interrupts table requires maintenance
             //       here and in the populate routine below.
-            String sql = "select id, job_uuid, tenant_id, interrupt_type, created, expires_at " +
+            String sql = "select id, job_uuid, tenant_id, epoch, interrupt_type, created, expires_at " +
                          "from job_interrupts " +
                          "where expires_at < :curTS "  +
                          "FOR UPDATE";
@@ -657,12 +762,13 @@ public final class JobInterruptDao {
         jobInterrupt.setId(((BigInteger)array[0]).longValue());
         jobInterrupt.setJobUuid((String) array[1]);
         jobInterrupt.setTenantId((String) array[2]);
-        jobInterrupt.setInterruptType((JobInterruptType.valueOf((String)array[3])));
+        jobInterrupt.setEpoch((Integer) array[3]);
+        jobInterrupt.setInterruptType((JobInterruptType.valueOf((String)array[4])));
         
         // Waiting for Java 8 time functions...
-        Timestamp createdTS = (Timestamp)array[4];
+        Timestamp createdTS = (Timestamp)array[5];
         jobInterrupt.setCreated(new Date(createdTS.getTime()));
-        Timestamp expiresTS = (Timestamp)array[5];
+        Timestamp expiresTS = (Timestamp)array[6];
         jobInterrupt.setExpiresAt(new Date(expiresTS.getTime()));
         
         return jobInterrupt;

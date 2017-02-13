@@ -38,6 +38,7 @@ public class JobInterrupt {
     private long                id;             // Unique database sequence number
     private String              jobUuid;        // Unique job id not based on database id
     private String              tenantId;       // Tenant associated with job
+    private int                 epoch;          // The job's current epoch
     private JobInterruptType    interruptType;  // Interrupt type
     private Date                created;        // Time interrupt was defined
     private Date                expiresAt;      // Time interrupt will expire
@@ -63,11 +64,13 @@ public class JobInterrupt {
      * @param tenantId the tenant id of the job
      * @param interruptType the type of interrupt
      */
-    public JobInterrupt(String jobUuid, String tenantId, JobInterruptType interruptType)
+    public JobInterrupt(String jobUuid, String tenantId, JobInterruptType interruptType,
+                        int epoch)
     {
         this.jobUuid = jobUuid;
         this.tenantId = tenantId;
         this.interruptType = interruptType;
+        this.epoch = epoch;
     }
     
     /* ********************************************************************** */
@@ -90,6 +93,14 @@ public class JobInterrupt {
     }
     public void setTenantId(String tenantId) {
         this.tenantId = tenantId;
+    }
+    public int getEpoch()
+    {
+        return epoch;
+    }
+    public void setEpoch(int epoch)
+    {
+        this.epoch = epoch;
     }
     public JobInterruptType getInterruptType()
     {
@@ -133,6 +144,7 @@ public class JobInterrupt {
             .put("id", id)
             .put("jobUuid", jobUuid)
             .put("tenantId", tenantId)
+            .put("epoch", epoch)
             .put("interruptType", interruptType.name())
             .put("created", new DateTime(created).toString())
             .put("expiresAt", new DateTime(expiresAt).toString());
@@ -145,5 +157,4 @@ public class JobInterrupt {
     /* ----------------------------------------------------------- */
     @Override
     public String toString(){return AgaveStringUtils.toString(this);}
-    
 }

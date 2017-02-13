@@ -11,6 +11,8 @@ import org.iplantc.service.jobs.model.enumerations.JobInterruptType;
 /** Collection of utilities related to interrupt messages writing to 
  * the scheduler topic.
  * 
+ * See the class comment in JobInterruptDao for a discussion of job epochs.
+ * 
  * @author rcardone
  *
  */
@@ -34,10 +36,11 @@ public class JobInterruptUtils
      * discontinued.
      * 
      * @param job the target job
+     * @param initialEpoch the epoch of the job when worker processing began
      * @return true if interrupts were processed and normal job execution should
      *          be aborted; false if normal job processing should continue.
      */
-    public static boolean isJobInterrupted(Job job)
+    public static boolean isJobInterrupted(Job job, int initialEpoch)
     {
         // Check if this job has any outstanding interrupts.
         List<JobInterrupt> interrupts = null;
@@ -54,7 +57,7 @@ public class JobInterruptUtils
         if (interrupts.isEmpty()) return false;
         
         // Process all interrupts in creation order (i.e., list order).
-        return processInterrupts(job, interrupts);
+        return processInterrupts(job, initialEpoch, interrupts);
     }
     
     /* ********************************************************************** */
@@ -69,11 +72,13 @@ public class JobInterruptUtils
      * different status so that process can continue at a later time.
      * 
      * @param job the job that was interrupted
+     * @param initialEpoch the epoch of the job when worker processing began
      * @param interrupts the ordered list of interrupts
      * @return true if job processing should be discontinued by the worker thread;
      *         false if the worker can continue processing the job
      */
-    private static boolean processInterrupts(Job job, List<JobInterrupt> interrupts)
+    private static boolean processInterrupts(Job job, int initialEpoch,
+                                             List<JobInterrupt> interrupts)
     {
         // Assume we won't abort normal job processing.
         boolean abortProcessing = false;
@@ -91,6 +96,11 @@ public class JobInterruptUtils
                 _log.error("Invalid job interrupt type received: " + interruptType);
                 continue;
             }
+            
+            // We only care about interrupts that target the job's initial epoch.
+            // By skipping interrupts for another epoch, we allow a worker that 
+            // might still be executing the job in that epoch to be interrupted.
+            if (interrupt.getEpoch() != initialEpoch) continue;
             
             // We abort processing this job on any recognized interrupt type.
             abortProcessing |= true;

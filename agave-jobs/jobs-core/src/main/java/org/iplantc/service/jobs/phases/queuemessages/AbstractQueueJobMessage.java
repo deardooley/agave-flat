@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.jobs.exceptions.JobException;
 
 /** This abstract topic message contains the common fields needed in job-specific messages.
+ * See the class comment in JobInterruptDao for a discussion of job epochs.
  * 
  * @author rcardone
  */
@@ -20,6 +21,7 @@ public abstract class AbstractQueueJobMessage
     public String tenantId;  // Caller's tenant id
     public String jobName;   // Job name
     public String jobUuid;   // Job unique id
+    public int    epoch;     // Epoch in which this interrupt executes
     
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -29,12 +31,14 @@ public abstract class AbstractQueueJobMessage
     public AbstractQueueJobMessage(JobCommand jobCommand,
                                    String     jobName,
                                    String     jobUuid,
-                                   String     tenantId)
+                                   String     tenantId,
+                                   int        epoch)
     {
         this(jobCommand);
         this.jobName = jobName;
         this.jobUuid = jobUuid;
         this.tenantId = tenantId;
+        this.epoch = epoch;
     }
     
     /* ********************************************************************** */
@@ -62,6 +66,11 @@ public abstract class AbstractQueueJobMessage
         }
         if (StringUtils.isBlank(jobUuid)) {
             String msg = "Invalid job uuid assignment in " + 
+                         getClass().getSimpleName() + " object.";
+            throw new JobException(msg);
+        }
+        if (epoch < 0) {
+            String msg = "Invalid epoch value " + epoch + " in " + 
                          getClass().getSimpleName() + " object.";
             throw new JobException(msg);
         }

@@ -300,6 +300,17 @@ public class JobManager {
 	    if (stopMsg == null) stopMsg = JobStatusType.STOPPED.getDescription();
         job = JobManager.updateStatus(job, JobStatusType.STOPPED, stopMsg);
 
+        // ----- Interrupt the job's worker thread.
+        // Do this as soon as we can to give any currently executing worker the
+        // largest window in which to receive the interrupt.
+        StopJobMessage message = new StopJobMessage(job.getName(), job.getUuid(), 
+                                                    job.getTenantId(), job.getEpoch());
+        try {TopicMessageSender.sendJobMessage(message);}
+        catch (Exception e) {
+            String msg = "Unable to send job interrupt message: " + message.toString();
+            log.error(msg, e);
+        }
+
         // ----- Cancel transfers.
         for (JobEvent event: job.getEvents()) {
             if (event.getTransferTask() != null)
@@ -319,14 +330,6 @@ public class JobManager {
             }
         }
         
-        // ----- Interrupt the job's worker thread.
-        StopJobMessage message = new StopJobMessage(job.getName(), job.getUuid(), job.getTenantId());
-        try {TopicMessageSender.sendJobMessage(message);}
-        catch (Exception e) {
-            String msg = "Unable to send job interrupt message: " + message.toString();
-            log.error(msg, e);
-        }
-
         return job;
 	}
 	
@@ -518,7 +521,8 @@ public class JobManager {
                             invokingUsername));
                     
                     // Interrupt the worker thread that might be processing this job now.
-                    StopJobMessage message = new StopJobMessage(job.getName(), job.getUuid(), job.getTenantId());
+                    StopJobMessage message = new StopJobMessage(job.getName(), job.getUuid(), 
+                                                                job.getTenantId(), job.getEpoch());
                     try {TopicMessageSender.sendJobMessage(message);}
                     catch (Exception e) {
                         String msg = "Unable to send job interrupt message: " + message.toString();
@@ -530,7 +534,6 @@ public class JobManager {
         
         return job;
     }
-    
     
 	/**
 	 * Updates the status of a job, updates the timestamps as appropriate

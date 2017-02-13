@@ -1,7 +1,6 @@
 package org.iplantc.service.jobs.phases.schedulers;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -51,6 +50,7 @@ import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
 import org.iplantc.service.jobs.phases.workers.PhaseWorkerParms;
+import org.iplantc.service.jobs.phases.workers.RollingBackWorker;
 import org.iplantc.service.jobs.phases.workers.StagingWorker;
 import org.iplantc.service.jobs.phases.workers.SubmittingWorker;
 import org.iplantc.service.jobs.queue.SelectorFilter;
@@ -1317,6 +1317,7 @@ public abstract class AbstractPhaseScheduler
         else if (_phaseType == JobPhaseType.SUBMITTING) worker = new SubmittingWorker(parms);
         else if (_phaseType == JobPhaseType.MONITORING) worker = new MonitoringWorker(parms);
         else if (_phaseType == JobPhaseType.ARCHIVING) worker = new ArchivingWorker(parms);
+        else if (_phaseType == JobPhaseType.ROLLINGBACK) worker = new RollingBackWorker(parms);
         else throw new RuntimeException("Unknown JobPhaseType: " + _phaseType);
         
         // Set attributes.
@@ -2134,7 +2135,8 @@ public abstract class AbstractPhaseScheduler
         // either a worker thread assigned the job will process the interrupt or the
         // interrupt clean up thread will remove the interrupt after it expires.
         JobInterrupt jobInterrupt = 
-           new JobInterrupt(qjob.jobUuid, qjob.tenantId, qjob.command.toInterruptType());
+           new JobInterrupt(qjob.jobUuid, qjob.tenantId, qjob.command.toInterruptType(),
+                            qjob.epoch);
         try {
             // We expect to insert one row in the interrupts table.
             int rows = JobInterruptDao.createInterrupt(jobInterrupt);
