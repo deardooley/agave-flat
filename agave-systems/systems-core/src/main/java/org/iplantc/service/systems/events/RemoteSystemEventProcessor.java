@@ -166,7 +166,7 @@ public class RemoteSystemEventProcessor {
 			try {
 			    json = mapper.createObjectNode();
 		    	json.set("system", mapper.readTree(system.toJSON()));
-			    json.set("role", mapper.valueToTree(systemRole));
+			    json.set("role", systemRole.toJsonNode(system));
 			} catch (Throwable e) {
 			    log.error(String.format("Failed to serialize system "
 			            + "%s to json for %s event notification", 

@@ -4,11 +4,8 @@
 package org.iplantc.service.systems.resources;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
@@ -21,8 +18,10 @@ import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.common.resource.AgaveResource;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.dao.SystemDao;
+import org.iplantc.service.systems.dao.SystemRoleDao;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
 import org.iplantc.service.systems.exceptions.SystemException;
+import org.iplantc.service.systems.exceptions.SystemRoleException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.manager.SystemManager;
@@ -120,14 +119,10 @@ public class SystemRoleResource extends AgaveResource
 					// add the owner 
 					jsonPermissions = new SystemRole(system.getOwner(), RoleType.OWNER).toJSON(system);
 						
-					List<SystemRole> roles = new ArrayList<SystemRole>(system.getRoles());
+					List<SystemRole> roles = SystemRoleDao.getSystemRoles(system.getId(), limit, offset);
 					
-					Collections.sort(roles);
-					
-					for (int i=offset; i< Math.min((limit+offset), roles.size()); i++)
+					for (SystemRole role: roles)
 					{
-						SystemRole role = roles.get(i);
-						
 						jsonPermissions += "," + role.toJSON(system);
 					}
 					
@@ -135,18 +130,18 @@ public class SystemRoleResource extends AgaveResource
 				} 
 				else 
 				{
-					SystemRole role = system.getUserRole(sharedUsername);
+					SystemRoleManager systemRoleManager = new SystemRoleManager(system);
 					
 					try 
 					{
+						SystemRole role = systemRoleManager.getUserRole(sharedUsername);
+						
 						// check validate username
 						// we back off this for now to prevent people using this as a lookup service
 						AgaveProfileServiceClient authClient = new AgaveProfileServiceClient(Settings.IPLANT_PROFILE_SERVICE, Settings.IRODS_USERNAME, Settings.IRODS_PASSWORD);
 						if (authClient.getUser(sharedUsername) == null) 
 						{
-							throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-									"No roles found for user " + sharedUsername,
-									new FileNotFoundException());
+							throw new FileNotFoundException();
 						} 
 						else 
 						{
@@ -154,15 +149,24 @@ public class SystemRoleResource extends AgaveResource
 								if (ServiceUtils.isAdmin(sharedUsername)) {
 									role = new SystemRole(sharedUsername, RoleType.ADMIN);
 								} else {
-									throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-											"No roles found for user " + sharedUsername, 
-											new FileNotFoundException());
+									throw new FileNotFoundException();
 								}
 							}
 							
 							jsonPermissions = role.toJSON(system);
 						}
-					} catch (Exception e) {
+					} 
+					catch (ResourceException e) {
+						throw e;
+					}
+					catch (SystemRoleException e) {
+						throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
+								"Unable to fetch system roles for " + sharedUsername, e);
+					}
+					catch (FileNotFoundException e) {
+						throw e;
+					}
+					catch (Exception e) {
 						throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
 								"No roles found for user " + sharedUsername, e);
 					}
@@ -194,6 +198,10 @@ public class SystemRoleResource extends AgaveResource
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
 						"User does not have the necessary role to view this system.");
 			}
+		}
+		catch (FileNotFoundException e) {
+			throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
+					"No roles found for user " + sharedUsername, e);
 		}
 		catch (ResourceException e) 
 		{
@@ -237,7 +245,7 @@ public class SystemRoleResource extends AgaveResource
         
 		try
 		{
-			if (!ServiceUtils.isValid(systemId))
+			if (StringUtils.isBlank(systemId))
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
 						"Please specify an system using its system id. ");
@@ -339,9 +347,8 @@ public class SystemRoleResource extends AgaveResource
 						} else {
 							getResponse().setStatus(Status.SUCCESS_CREATED);
 						}
-						
 						SystemRole role = system.getUserRole(name);
-					
+						
 						getResponse().setEntity(new IplantSuccessRepresentation("[" + role.toJSON(system) + "]"));
 					} 
 					catch (IllegalArgumentException iae) {
