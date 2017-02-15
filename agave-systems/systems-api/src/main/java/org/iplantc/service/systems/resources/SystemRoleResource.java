@@ -21,6 +21,7 @@ import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.common.resource.AgaveResource;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.dao.SystemDao;
+import org.iplantc.service.systems.dao.SystemRoleDao;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
 import org.iplantc.service.systems.exceptions.SystemException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
@@ -120,14 +121,10 @@ public class SystemRoleResource extends AgaveResource
 					// add the owner 
 					jsonPermissions = new SystemRole(system.getOwner(), RoleType.OWNER).toJSON(system);
 						
-					List<SystemRole> roles = new ArrayList<SystemRole>(system.getRoles());
+					List<SystemRole> roles = SystemRoleDao.getSystemRoles(system.getId(), limit, offset);
 					
-					Collections.sort(roles);
-					
-					for (int i=offset; i< Math.min((limit+offset), roles.size()); i++)
+					for (SystemRole role: roles)
 					{
-						SystemRole role = roles.get(i);
-						
 						jsonPermissions += "," + role.toJSON(system);
 					}
 					
@@ -237,7 +234,7 @@ public class SystemRoleResource extends AgaveResource
         
 		try
 		{
-			if (!ServiceUtils.isValid(systemId))
+			if (StringUtils.isBlank(systemId))
 			{
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
 						"Please specify an system using its system id. ");

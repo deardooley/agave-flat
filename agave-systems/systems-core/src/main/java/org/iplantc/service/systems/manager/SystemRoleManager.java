@@ -15,8 +15,11 @@ import org.iplantc.service.notification.managers.NotificationManager;
 import org.iplantc.service.notification.util.EmailMessage;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.dao.SystemDao;
+import org.iplantc.service.systems.dao.SystemRoleDao;
 import org.iplantc.service.systems.events.RemoteSystemEventProcessor;
+import org.iplantc.service.systems.exceptions.RolePersistenceException;
 import org.iplantc.service.systems.exceptions.SystemException;
+import org.iplantc.service.systems.exceptions.SystemRoleException;
 import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.SystemRole;
 import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
@@ -48,8 +51,8 @@ public class SystemRoleManager {
 		if (system == null) { 
 			throw new SystemException("RemoteSystem cannot be null"); 
 		}
-		this.system = system;
-		this.eventProcessor = new RemoteSystemEventProcessor();
+		this.setSystem(system);
+		this.setEventProcessor(new RemoteSystemEventProcessor());
 	}
 
 	/**
@@ -58,72 +61,104 @@ public class SystemRoleManager {
 	 * @param username
 	 * @param type
 	 * @param createdBy the user granting the role the recipient
+	 * @return the effective {@link SystemRole} after update
 	 * @throws SystemException
+	 * @throws RolePersistenceException 
+	 * @throws SystemRoleException 
 	 */
-	public void setRole(String username, RoleType type, String createdBy)
-	throws SystemException
+	public SystemRole setRole(String username, RoleType type, String createdBy)
+	throws SystemRoleException
 	{
-		if (StringUtils.isEmpty(username) || StringUtils.equals(username, "null")) { 
-			throw new SystemException("Invalid username"); 
-		}
-
-		if (system.getOwner().equals(username))
-			return;
+		try {
+			SystemRole updatedRole = null;
 		
-		if (type == RoleType.PUBLISHER && system.getType() == RemoteSystemType.STORAGE) {
-			throw new SystemException("Cannot set PUBLISHER role on storage systems."); 
-		}
-		
-		SystemRole currentRole = system.getUserRole(username);
-		SystemDao dao = new SystemDao();
-		
-		if (currentRole == null)
-		{ 
-			if (type.equals(RoleType.NONE)) {
-				return;
-			} else {
-			    SystemRole newRole = new SystemRole(username, type);
-				system.addRole(newRole);
-				
-				this.eventProcessor.processPermissionEvent(system, newRole, createdBy);
+			if (StringUtils.isEmpty(username) || StringUtils.equals(username, "null")) { 
+				throw new SystemException("Invalid username"); 
+			}
+	
+			if (getSystem().getOwner().equals(username))
+				return new SystemRole(username, RoleType.OWNER, getSystem());
+			
+			if (type == RoleType.PUBLISHER && getSystem().getType() == RemoteSystemType.STORAGE) {
+				throw new SystemException("Cannot set PUBLISHER role on storage systems."); 
+			}
+			
+			SystemRole currentRole = getUserRole(username);
+	//		SystemDao dao = new SystemDao();
+			
+			// are we granting a role to a new user? 
+			if (currentRole == null)
+			{ 
+				// if we're ignoring them, just return null;
+				if (type.equals(RoleType.NONE)) {
+					return new SystemRole(username, RoleType.NONE, getSystem());
+				} else {
+					updatedRole = new SystemRole(username, type, system);
+				    SystemRoleDao.persist(updatedRole);
+				    
+					this.getEventProcessor().processPermissionEvent(getSystem(), updatedRole, createdBy);
+					
+					return updatedRole;
+				}
+			} 
+			else 
+			{
+				if (type.equals(RoleType.NONE)) {
+	//				getSystem().removeRole(currentRole);
+					SystemRoleDao.delete(currentRole);
+					updatedRole = new SystemRole(username, RoleType.NONE, getSystem());
+					
+					this.getEventProcessor().processPermissionEvent(getSystem(), updatedRole, createdBy);
+					
+					return updatedRole;
+					
+	//				// now disable all apps for this system that were registered by 
+	//				// the user who just had access revoked
+	//				for (String appId: new SystemDao().getUserOwnedAppsForSystemId(currentRole.getUsername(), system.getId())) {
+	////					if (app.getOwner().equals(currentRole.getUsername())) {
+	////						app.setAvailable(false);
+	////						app.setLastUpdated(new Date());
+	////						SoftwareDao.persist(app);
+	////						appIds.add(app.getUniqueName());
+	//						try {
+	//							json = "{\"system\":" + system.toJSON() + ",\"app\":{\"uuid\":\"" + appId + "\"}";
+	//							NotificationManager.process(appId, "SYSTEM_DISABLE", currentRole.getUsername(), json);
+	//						} catch (JSONException e) {
+	//							log.error("Failed to send system_disable event to app " + appId, e);
+	//						}	
+	////					}
+	//				}
+					
+				} 
+				else if (!ServiceUtils.isAdmin(username)) 
+				{
+	//				getSystem().removeRole(currentRole);
+					SystemRoleDao.delete(currentRole);
+					updatedRole = new SystemRole(username, type, getSystem());
+	//				getSystem().addRole(newRole);
+					SystemRoleDao.persist(updatedRole);
+					
+					this.getEventProcessor().processPermissionEvent(getSystem(), updatedRole, createdBy);
+					
+					return updatedRole;
+				}
+				else {
+					return new SystemRole(username, RoleType.ADMIN, getSystem());
+				}
 			}
 		} 
-		else 
-		{
-			if (type.equals(RoleType.NONE)) {
-				system.removeRole(currentRole);
-				
-				this.eventProcessor.processPermissionEvent(system, new SystemRole(username, RoleType.NONE), createdBy);
-				
-//				// now disable all apps for this system that were registered by 
-//				// the user who just had access revoked
-//				for (String appId: new SystemDao().getUserOwnedAppsForSystemId(currentRole.getUsername(), system.getId())) {
-////					if (app.getOwner().equals(currentRole.getUsername())) {
-////						app.setAvailable(false);
-////						app.setLastUpdated(new Date());
-////						SoftwareDao.persist(app);
-////						appIds.add(app.getUniqueName());
-//						try {
-//							json = "{\"system\":" + system.toJSON() + ",\"app\":{\"uuid\":\"" + appId + "\"}";
-//							NotificationManager.process(appId, "SYSTEM_DISABLE", currentRole.getUsername(), json);
-//						} catch (JSONException e) {
-//							log.error("Failed to send system_disable event to app " + appId, e);
-//						}	
-////					}
-//				}
-				
-			} 
-			else if (!ServiceUtils.isAdmin(username)) 
-			{
-				system.removeRole(currentRole);
-				SystemRole newRole = new SystemRole(username, type);
-				system.addRole(newRole);
-				
-				this.eventProcessor.processPermissionEvent(system, newRole, createdBy);
-			}
+		catch (SystemRoleException e) {
+			throw e;
+		}
+		catch (RolePersistenceException | SystemException e) {
+			throw new SystemRoleException("Unable to save role for " + 
+					username + " on " + getSystem().getSystemId(), e);
+		}
+		finally {
+			
 		}
 		
-		dao.merge(system);
+//		dao.merge(getSystem());
 	}
 
 	/**
@@ -131,25 +166,27 @@ public class SystemRoleManager {
 	 * 
 	 * @param createdBy the username of the user clearing the roles
 	 * @throws SystemException
+	 * @throws RolePersistenceException 
 	 */
-	public void clearRoles(String createdBy) throws SystemException
+	public void clearRoles(String createdBy) throws SystemException, RolePersistenceException
 	{   
-	    Set<SystemRole> currentRoles = system.getRoles();
-		SystemRole[] deletedRoles = currentRoles.toArray(new SystemRole[] {});
+		List<SystemRole> rolesToDelete = SystemRoleDao.getSystemRoles(getSystem().getSystemId());
 		
-		for (SystemRole role: system.getRoles()) {
-			role.setRemoteSystem(null);
-		}
 		
-		system.getRoles().clear();
 		
-		new SystemDao().persist(system);
+//		getSystem().getRoles().clear();
 		
-		if (!system.isPubliclyAvailable()) 
+//		new SystemDao().persist(getSystem());
+		
+		if (!getSystem().isPubliclyAvailable()) 
 		{
-			for (SystemRole deletedRole: deletedRoles) {
-				this.eventProcessor.processPermissionEvent(system, new SystemRole(deletedRole.getUsername(), RoleType.NONE), createdBy);
+			for (SystemRole roleToDelete: rolesToDelete) {
+				this.getEventProcessor().processPermissionEvent(getSystem(), new SystemRole(roleToDelete.getUsername(), RoleType.NONE, getSystem()), createdBy);
 			}
+			
+			SystemRoleDao.clearSystemRoles(getSystem().getId());
+			
+//			new SystemDao().merge(system);
 			
 //			// now disable all apps for this system that were registered by users
 //			// who were granted permissions, but are now revoked.
@@ -244,7 +281,7 @@ public class SystemRoleManager {
 			String subject = "Your access to \"" + system.getName() + "\" has been revoked.";
 			
 			String body = fullname + ",\n\n" +
-					"This email is being sent to you as a courtesy by the iPlant Foundation API. " + 
+					"This email is being sent to you as a courtesy by the Agave Platform. " + 
 					"Your access to " + system.getName() + " (" + system.getSystemId() + ") " +
 					"has been revoked by the owner. As a result, the applications you " +
 					"registered on this system have been disabled. The affected applications " +
@@ -270,5 +307,106 @@ public class SystemRoleManager {
 		{
 			log.error("Error notifying " + appOwner + " of application deactivation.", e);
 		}
+	}
+
+	/**
+	 * Returns effective {@link SystemRole} of user after adjusting for 
+	 * resource scope, public, and world user roles.
+	 * 
+	 * @param username
+	 * @return
+	 * @throws SystemRoleException 
+	 */
+	public SystemRole getUserRole(String username) throws SystemRoleException {
+		try {
+			if (StringUtils.isEmpty(username)) {
+				return new SystemRole(username, RoleType.NONE, getSystem());
+			}
+			else if (username.equals(getSystem().getOwner()))
+			{
+				return new SystemRole(username, RoleType.OWNER, getSystem());
+			}
+			else if (ServiceUtils.isAdmin(username))
+			{
+				return new SystemRole(username, RoleType.ADMIN, getSystem());
+			}
+			else
+			{
+				SystemRole worldRole = new SystemRole(Settings.WORLD_USER_USERNAME, RoleType.NONE, getSystem());
+	//			SystemRole publicRole = new SystemRole(Settings.PUBLIC_USER_USERNAME, RoleType.NONE);
+				for(SystemRole role: SystemRoleDao.getSystemRoles(getSystem().getSystemId())) {
+					if(role.getUsername().equals(username)) {
+						if (role.getRole() == RoleType.PUBLISHER && getSystem().getType() == RemoteSystemType.STORAGE) {
+							return new SystemRole(username, RoleType.USER, getSystem());
+						} else {
+							return role;
+						}
+					} else if (role.getUsername().equals(Settings.WORLD_USER_USERNAME)) {
+						worldRole = role;
+	//				} else if (role.getUsername().equals(Settings.PUBLIC_USER_USERNAME)) {
+	//					publicRole = role;
+					}
+				}
+	
+				if ( getSystem().isPubliclyAvailable())
+				{
+					if (getSystem().getType() != RemoteSystemType.EXECUTION && worldRole.canRead())
+					{
+						return new SystemRole(username, RoleType.GUEST, getSystem());
+					}
+	//				else if (worldRole.canRead() || publicRole.canRead())
+	//				{
+	//					if (worldRole.getRole().intVal() >= publicRole.getRole().intVal()) {
+	//						return worldRole;
+	//					} else {
+	//						return publicRole;
+	//					}
+	//				}
+	//				else if (worldRole.canRead())
+	//				{
+	//					return worldRole;
+	//				}
+					else
+					{
+						return new SystemRole(username, RoleType.USER, getSystem());
+					}
+				}
+				else
+				{
+					return new SystemRole(username, RoleType.NONE, getSystem());
+				}
+			}
+		}
+		catch (RolePersistenceException e) {
+			throw new SystemRoleException("Unable to fetch role for system " + getSystem().getSystemId(), e);
+		}
+	}
+
+	/**
+	 * @return the system
+	 */
+	public RemoteSystem getSystem() {
+		return system;
+	}
+
+	/**
+	 * @param system the system to set
+	 */
+	public void setSystem(RemoteSystem system) {
+		this.system = system;
+	}
+
+	/**
+	 * @return the eventProcessor
+	 */
+	public RemoteSystemEventProcessor getEventProcessor() {
+		return eventProcessor;
+	}
+
+	/**
+	 * @param eventProcessor the eventProcessor to set
+	 */
+	public void setEventProcessor(RemoteSystemEventProcessor eventProcessor) {
+		this.eventProcessor = eventProcessor;
 	}
 }

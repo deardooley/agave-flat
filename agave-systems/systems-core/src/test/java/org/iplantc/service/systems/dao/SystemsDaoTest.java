@@ -364,7 +364,7 @@ public class SystemsDaoTest extends SystemsModelTestCommon {
 		
 		try 
 		{
-			SystemRole userRole = new SystemRole("bob", role);
+			SystemRole userRole = new SystemRole("bob", role, system);
 			system.addRole(userRole);
 			dao.persist(system);
 			
@@ -406,7 +406,7 @@ public class SystemsDaoTest extends SystemsModelTestCommon {
 		
 		try 
 		{
-			SystemRole role = new SystemRole("bob", originalType);
+			SystemRole role = new SystemRole("bob", originalType, system);
 			system.addRole(role);
 			dao.persist(system);
 			
@@ -419,7 +419,7 @@ public class SystemsDaoTest extends SystemsModelTestCommon {
 			
 			system.getRoles().remove(role);
 //			dao.persist(system);
-			system.addRole(new SystemRole("bob", updateType));
+			system.addRole(new SystemRole("bob", updateType, system));
 			dao.persist(system);
 			
 			system = dao.findById(system.getId());
@@ -450,7 +450,7 @@ public class SystemsDaoTest extends SystemsModelTestCommon {
 		
 		try 
 		{
-			SystemRole pem = new SystemRole("bob", originalType);
+			SystemRole pem = new SystemRole("bob", originalType, system);
 			system.addRole(pem);
 			dao.persist(system);
 			
@@ -655,8 +655,8 @@ public class SystemsDaoTest extends SystemsModelTestCommon {
 			
 			privateExecutionSystem = ExecutionSystem.fromJSON(jtd.getTestDataObject(JSONTestDataUtil.TEST_EXECUTION_SYSTEM_FILE));
 			privateExecutionSystem.setOwner(SYSTEM_USER);
-			privateExecutionSystem.addRole(new SystemRole(SYSTEM_SHARE_USER, RoleType.USER));
 			dao.persist(privateExecutionSystem);
+			privateExecutionSystem.addRole(new SystemRole(SYSTEM_SHARE_USER, RoleType.USER, privateExecutionSystem));
 			Assert.assertNotNull(privateExecutionSystem.getId(), "Private execution system was not saved.");
 			
 			List<RemoteSystem> sharedSystems = dao.getUserSystems(SYSTEM_SHARE_USER, true);
@@ -674,8 +674,9 @@ public class SystemsDaoTest extends SystemsModelTestCommon {
 			
 			privateStorageSystem = StorageSystem.fromJSON(jtd.getTestDataObject(JSONTestDataUtil.TEST_STORAGE_SYSTEM_FILE));
 			privateStorageSystem.setOwner(SYSTEM_USER);
-			privateStorageSystem.addRole(new SystemRole(SYSTEM_SHARE_USER, RoleType.USER));
 			dao.persist(privateStorageSystem);
+			privateStorageSystem.addRole(new SystemRole(SYSTEM_SHARE_USER, RoleType.USER, privateStorageSystem));
+			
 			Assert.assertNotNull(privateStorageSystem.getId(), "Private storage system was not saved.");
 			
 			List<RemoteSystem> sharedSystems2 = dao.getUserSystems(SYSTEM_SHARE_USER, true);

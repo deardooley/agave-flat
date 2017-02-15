@@ -9,6 +9,7 @@ import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.uuid.UniqueId;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
+import org.iplantc.service.systems.exceptions.SystemRoleException;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.JSONTestDataUtil;
 import org.iplantc.service.systems.model.RemoteSystem;
@@ -44,13 +45,13 @@ public class SystemRoleManagerTest extends SystemsModelTestCommon {
     }
     
     private StorageSystem getStorageSystem(boolean publik)
-    throws SystemArgumentException, JSONException, IOException 
+    throws SystemArgumentException, JSONException, IOException, SystemRoleException
     {
         return getStorageSystem(publik, null);
     }
     
     private StorageSystem getStorageSystem(boolean publik, SystemRole[] initialRoles)
-    throws SystemArgumentException, JSONException, IOException 
+    throws SystemArgumentException, JSONException, IOException, SystemRoleException 
     {
         StorageSystem system = StorageSystem.fromJSON( jtd.getTestDataObject(
                 JSONTestDataUtil.TEST_STORAGE_SYSTEM_FILE));
@@ -69,13 +70,13 @@ public class SystemRoleManagerTest extends SystemsModelTestCommon {
     }
     
     private ExecutionSystem getExecutionSystem(boolean publik)
-    throws SystemArgumentException, JSONException, IOException 
+    throws SystemArgumentException, JSONException, IOException, SystemRoleException 
     {
         return getExecutionSystem(publik, null);
     }
     
     private ExecutionSystem getExecutionSystem(boolean publik, SystemRole[] initialRoles) 
-    throws SystemArgumentException, JSONException, IOException 
+    throws SystemArgumentException, JSONException, IOException, SystemRoleException 
     {
         ExecutionSystem system = ExecutionSystem.fromJSON( jtd.getTestDataObject(
             JSONTestDataUtil.TEST_EXECUTION_SYSTEM_FILE));

@@ -6,6 +6,7 @@ package org.iplantc.service.systems.model;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -41,15 +42,20 @@ import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.ParamDef;
 import org.iplantc.service.common.auth.TrustedCALocation;
+import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.util.Slug;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.notification.managers.NotificationManager;
 import org.iplantc.service.systems.Settings;
+import org.iplantc.service.systems.dao.SystemRoleDao;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
+import org.iplantc.service.systems.exceptions.RolePersistenceException;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
 import org.iplantc.service.systems.exceptions.SystemException;
+import org.iplantc.service.systems.exceptions.SystemRoleException;
+import org.iplantc.service.systems.manager.SystemRoleManager;
 import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
 import org.iplantc.service.systems.model.enumerations.RoleType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
@@ -88,8 +94,7 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 	protected boolean 				available = true;
 	protected String				uuid;
 	protected String				tenantId;
-	private Set<SystemRole> 	    roles = new HashSet<SystemRole>();
-//	private List<SystemRole> 		roles = new ArrayList<SystemRole>();
+//	private Set<SystemRole> 	    roles = new HashSet<SystemRole>();
 	private Set<String>				usersUsingAsDefault = new HashSet<String>();
 
 	public RemoteSystem() {
@@ -374,109 +379,163 @@ public abstract class RemoteSystem implements LastUpdatable, Comparable<RemoteSy
 //		joinColumns={ @JoinColumn(name="systems", referencedColumnName="id") },
 //		inverseJoinColumns={ @JoinColumn(name="roles", referencedColumnName="id", unique=true) }
 //	)
-	@OneToMany(cascade = CascadeType.ALL, mappedBy = "remoteSystem", fetch=FetchType.EAGER, orphanRemoval=true)
-	@org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
-	public Set<SystemRole> getRoles()
+//	@OneToMany(cascade = CascadeType.ALL, mappedBy = "remoteSystem", fetch=FetchType.EAGER, orphanRemoval=true)
+//	@org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
+	public List<SystemRole> getRoles()
 	{
-		return roles;
+		try {
+			return SystemRoleDao.getSystemRoles(getId());
+		}
+		catch (Exception e) {
+			return new ArrayList<SystemRole>();
+		}
+//		return roles;
 	}
 	
 	@Transient
 	public boolean removeRole(SystemRole role)
 	{
-		if (getRoles().remove(role)) {
-			role.setRemoteSystem(null);
+		try {
+			SystemRoleDao.delete(role);
 			return true;
-		}
-		else {
+		} catch (RolePersistenceException e) {
 			return false;
-		}	
+		}
+//		if (getRoles().remove(role)) {
+//			role.setRemoteSystem(null);
+//			return true;
+//		}
+//		else {
+//			return false;
+//		}	
 	}
 
+	/**
+	 * Returns effective {@link SystemRole} of user after adjusting for 
+	 * resource scope, public, and world user roles.
+	 * 
+	 * @param username
+	 * @return a {@link SystemRole} will be returned in all situations. 
+	 * Users without a role on the system will get a {@link SystemRole} 
+	 * back with {@link RoleType#NONE}.
+	 * @deprecated 
+	 * @see {@link SystemRoleManager#getUserRole(String)}
+	 */
 	@Transient
 	public SystemRole getUserRole(String username)
 	{
-		if (StringUtils.isEmpty(username)) {
+		try {
+			return new SystemRoleManager(this).getUserRole(username);
+		}
+		catch (Throwable e) {
 			return new SystemRole(username, RoleType.NONE, this);
 		}
-		else if (username.equals(owner))
-		{
-			return new SystemRole(username, RoleType.OWNER, this);
-		}
-		else if (ServiceUtils.isAdmin(username))
-		{
-			return new SystemRole(username, RoleType.ADMIN, this);
-		}
-		else
-		{
-			SystemRole worldRole = new SystemRole(Settings.WORLD_USER_USERNAME, RoleType.NONE);
-//			SystemRole publicRole = new SystemRole(Settings.PUBLIC_USER_USERNAME, RoleType.NONE);
-			for(SystemRole role: getRoles()) {
-				if(role.getUsername().equals(username)) {
-					if (role.getRole() == RoleType.PUBLISHER && getType() == RemoteSystemType.STORAGE) {
-						return new SystemRole(username, RoleType.USER, this);
-					} else {
-						return role;
-					}
-				} else if (role.getUsername().equals(Settings.WORLD_USER_USERNAME)) {
-					worldRole = role;
-//				} else if (role.getUsername().equals(Settings.PUBLIC_USER_USERNAME)) {
-//					publicRole = role;
-				}
-			}
-
-			if ( isPubliclyAvailable())
-			{
-				if (!getType().equals(RemoteSystemType.EXECUTION) && worldRole.canRead())
-				{
-					return new SystemRole(username, RoleType.GUEST, this);
-				}
-//				else if (worldRole.canRead() || publicRole.canRead())
-//				{
-//					if (worldRole.getRole().intVal() >= publicRole.getRole().intVal()) {
-//						return worldRole;
+//		
+//		if (StringUtils.isEmpty(username)) {
+//			return new SystemRole(username, RoleType.NONE, this);
+//		}
+//		else if (username.equals(owner))
+//		{
+//			return new SystemRole(username, RoleType.OWNER, this);
+//		}
+//		else if (ServiceUtils.isAdmin(username))
+//		{
+//			return new SystemRole(username, RoleType.ADMIN, this);
+//		}
+//		else
+//		{
+//			SystemRole worldRole = new SystemRole(Settings.WORLD_USER_USERNAME, RoleType.NONE);
+////			SystemRole publicRole = new SystemRole(Settings.PUBLIC_USER_USERNAME, RoleType.NONE);
+//			for(SystemRole role: getRoles()) {
+//				if(role.getUsername().equals(username)) {
+//					if (role.getRole() == RoleType.PUBLISHER && getType() == RemoteSystemType.STORAGE) {
+//						return new SystemRole(username, RoleType.USER, this);
 //					} else {
-//						return publicRole;
+//						return role;
 //					}
+//				} else if (role.getUsername().equals(Settings.WORLD_USER_USERNAME)) {
+//					worldRole = role;
+////				} else if (role.getUsername().equals(Settings.PUBLIC_USER_USERNAME)) {
+////					publicRole = role;
 //				}
-//				else if (worldRole.canRead())
+//			}
+//
+//			if ( isPubliclyAvailable())
+//			{
+//				if (!getType().equals(RemoteSystemType.EXECUTION) && worldRole.canRead())
 //				{
-//					return worldRole;
+//					return new SystemRole(username, RoleType.GUEST, this);
 //				}
-				else
-				{
-					return new SystemRole(username, RoleType.USER, this);
-				}
-			}
-			else
-			{
-				return new SystemRole(username, RoleType.NONE, this);
-			}
-		}
+////				else if (worldRole.canRead() || publicRole.canRead())
+////				{
+////					if (worldRole.getRole().intVal() >= publicRole.getRole().intVal()) {
+////						return worldRole;
+////					} else {
+////						return publicRole;
+////					}
+////				}
+////				else if (worldRole.canRead())
+////				{
+////					return worldRole;
+////				}
+//				else
+//				{
+//					return new SystemRole(username, RoleType.USER, this);
+//				}
+//			}
+//			else
+//			{
+//				return new SystemRole(username, RoleType.NONE, this);
+//			}
+//		}
 	}
 
 	/**
 	 * @param role the roles to add
 	 * @return true if the role was uniquely added to the set
+	 * @throws SystemRoleException 
+	 * @deprecated
+	 * @see {@link SystemRoleManager#setRole(String, RoleType, String)}
 	 */
-	public boolean addRole(SystemRole role)
+	public boolean addRole(SystemRole role) throws SystemRoleException
 	{
 		if (role == null) return false;
 		
-		role.setRemoteSystem(this);
+//		role.setRemoteSystem(this);
+//		
+//		// set will catch duplicates, return whether a 
+//		// change was made.
+//		return this.roles.add(role);
 		
-		// set will catch duplicates, return the whether a 
-		// change was made.
-		return this.roles.add(role);
+		new SystemRoleManager(this).setRole(role.getUsername(), role.getRole(), TenancyHelper.getCurrentEndUser());
+		
+		return true;
+		
 		
 	}
 
 	/**
+	 * Replaces all existing roles with the given ones. 
+	 * Providing a null or empty set will clear all roles
+	 * on this {@link RemoteSystem}.
+	 * 
 	 * @param roles the roles to set
+	 * @throws RolePersistenceException 
 	 */
-	public void setRoles(Set<SystemRole> roles)
+	public void setRoles(Set<SystemRole> roles) 
+	throws RolePersistenceException
 	{
-		this.roles = roles;
+		// remove all existing roles
+		SystemRoleDao.clearSystemRoles(getId());
+		
+		if (roles != null) {
+			for (SystemRole role: roles) {
+				role.setRemoteSystem(this);
+				SystemRoleDao.persist(role);
+			}
+		}
+		
+//		this.roles = roles;
 	}
 
 	/**

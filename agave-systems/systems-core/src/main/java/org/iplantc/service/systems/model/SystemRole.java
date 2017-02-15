@@ -7,6 +7,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 
 import java.util.Date;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -16,19 +17,19 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
 import org.apache.commons.lang.StringUtils;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.exceptions.SystemException;
 import org.iplantc.service.systems.model.enumerations.RoleType;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -44,11 +45,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @Table(name = "systemroles")
 public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 
+	@JsonIgnore
 	private Long				id;
 	private String				username;
 	private RoleType			role;
-	private RemoteSystem		remoteSystem;
+	
+	@JsonIgnore
+	private RemoteSystem		remoteSystem = null;
+	@JsonIgnore
 	private Date				lastUpdated = new Date();
+	@JsonIgnore
 	private Date				created = new Date();
 	
 	public SystemRole() {}
@@ -200,10 +206,14 @@ public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 	}
 	
 	public SystemRole clone() {
-	    return new SystemRole(getUsername(), getRole());
+	    return new SystemRole(getUsername(), getRole(), null);
 	}
 	
-	public String toJSON(RemoteSystem system)  
+	public String toJSON(RemoteSystem system) {
+		return toJsonNode(system).toString();
+	}
+	
+	public ObjectNode toJsonNode(RemoteSystem system)  
 	{
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode json = mapper.createObjectNode()
@@ -217,7 +227,7 @@ public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 	    hypermedia.putObject("profile")
 	        	  .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_PROFILE_SERVICE) + username);
 	        	
-		return json.toString();
+		return json;
 	}
 	
 	public String toString()
@@ -306,7 +316,9 @@ public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 	/**
 	 * @return the remoteSystem
 	 */
-	@ManyToOne(fetch = FetchType.LAZY)
+//	@ManyToOne(fetch = FetchType.LAZY)
+//	@JoinColumn(name = "remote_system_id")
+	@OneToOne(fetch = FetchType.EAGER, cascade={CascadeType.ALL,CascadeType.REMOVE})
 	@JoinColumn(name = "remote_system_id")
 	public RemoteSystem getRemoteSystem() {
 		return remoteSystem;

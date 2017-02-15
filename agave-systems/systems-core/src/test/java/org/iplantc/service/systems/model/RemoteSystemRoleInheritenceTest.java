@@ -1,7 +1,9 @@
 package org.iplantc.service.systems.model;
 
+import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
+import org.iplantc.service.systems.exceptions.SystemRoleException;
 import org.iplantc.service.systems.model.enumerations.RoleType;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
 import org.testng.Assert;
@@ -68,6 +70,7 @@ public class RemoteSystemRoleInheritenceTest
 	
 	@Test(dataProvider="privateSystemUserRoleTestProvider")
     public void privateSystemUserRoleTest(RemoteSystem system, String username, RoleType expectedRole, String message) 
+    throws PermissionException
 	{	
 		Assert.assertEquals(system.getUserRole(username).getRole(), expectedRole, message);
     }
@@ -107,12 +110,13 @@ public class RemoteSystemRoleInheritenceTest
 	
 	@Test(dataProvider="publicSystemUserRoleTestProvider")
     public void publicSystemUserRoleTest(RemoteSystem system, String username, RoleType expectedRole, String message) 
+    throws PermissionException 
 	{	
 		Assert.assertEquals(system.getUserRole(username).getRole(), expectedRole, message);
     }
 	
 	@DataProvider
-	public Object[][] publicSharedSystemUserRoleTestProvider() throws SystemArgumentException
+	public Object[][] publicSharedSystemUserRoleTestProvider() throws SystemArgumentException, SystemRoleException
 	{
 		StorageSystem publicSharedStorageSystem = getStorageSystem();
 		publicSharedStorageSystem.setSystemId("publicSharedStorageSystem");
@@ -153,13 +157,14 @@ public class RemoteSystemRoleInheritenceTest
 	
 	@Test(dataProvider="publicSharedSystemUserRoleTestProvider")
     public void publicSharedSystemUserRoleTest(RemoteSystem system, String username, RoleType expectedRole, String message) 
+    throws PermissionException 
 	{
     	Assert.assertEquals(system.getUserRole(username).getRole(), expectedRole, message);
     	
     }
 	
 	@DataProvider
-	public Object[][] publicGuestSystemUserRoleTestProvider() throws SystemArgumentException
+	public Object[][] publicGuestSystemUserRoleTestProvider() throws SystemArgumentException, SystemRoleException
 	{
 		StorageSystem publicGuestStorageSystem = getStorageSystem();
 		publicGuestStorageSystem.setSystemId("publicGuestStorageSystem");
@@ -194,12 +199,13 @@ public class RemoteSystemRoleInheritenceTest
 	
 	@Test(dataProvider="publicGuestSystemUserRoleTestProvider")
     public void publicGuestSystemUserRoleTest(RemoteSystem system, String username, RoleType expectedRole, String message) 
+    throws PermissionException 
 	{
     	Assert.assertEquals(system.getUserRole(username).getRole(), expectedRole, message);
     }
 	
 	@DataProvider
-	public Object[][] publicSharedGuestSystemUserRoleTestProvider() throws SystemArgumentException
+	public Object[][] publicSharedGuestSystemUserRoleTestProvider() throws SystemArgumentException, SystemRoleException
 	{
 		StorageSystem publicSharedGuestStorageSystem = getStorageSystem();
 		publicSharedGuestStorageSystem.setSystemId("publicSharedGuestStorageSystem");
@@ -242,12 +248,13 @@ public class RemoteSystemRoleInheritenceTest
 	
 	@Test(dataProvider="publicSharedGuestSystemUserRoleTestProvider")
     public void publicSharedGuestSystemUserRoleTest(RemoteSystem system, String username, RoleType expectedRole, String message) 
+    throws PermissionException 
 	{
     	Assert.assertEquals(system.getUserRole(username).getRole(), expectedRole, message);
     }
 	
 	@DataProvider
-	public Object[][] publicPublicGuestSystemUserRoleTestProvider() throws SystemArgumentException
+	public Object[][] publicPublicGuestSystemUserRoleTestProvider() throws SystemArgumentException, SystemRoleException
 	{
 		StorageSystem publicGuestStorageSystem = getStorageSystem();
 		publicGuestStorageSystem.setSystemId("publicGuestStorageSystem");
@@ -281,13 +288,14 @@ public class RemoteSystemRoleInheritenceTest
 	}
 	
 	@Test(dataProvider="publicPublicGuestSystemUserRoleTestProvider")
-    public void publicPublicGuestSystemUserRoleTest(RemoteSystem system, String username, RoleType expectedRole, String message) 
+    public void publicPublicGuestSystemUserRoleTest(RemoteSystem system, String username, RoleType expectedRole, String message)  
+    throws PermissionException
 	{
     	Assert.assertEquals(system.getUserRole(username).getRole(), expectedRole, message);
     }
 	
 	@DataProvider
-	public Object[][] publicPublicSharedGuestSystemUserRoleTestProvider() throws SystemArgumentException
+	public Object[][] publicPublicSharedGuestSystemUserRoleTestProvider() throws SystemArgumentException, SystemRoleException
 	{
 		StorageSystem publicSharedGuestStorageSystem = getStorageSystem();
 		publicSharedGuestStorageSystem.setSystemId("publicSharedGuestStorageSystem");
@@ -330,12 +338,13 @@ public class RemoteSystemRoleInheritenceTest
 	
 	@Test(dataProvider="publicPublicSharedGuestSystemUserRoleTestProvider")
     public void publicPublicSharedGuestSystemUserRoleTest(RemoteSystem system, String username, RoleType expectedRole, String message) 
+    throws PermissionException 
 	{
     	Assert.assertEquals(system.getUserRole(username).getRole(), expectedRole, message);
     }
 	
 	@DataProvider
-	public Object[][] privateSharedGuestSystemUserRoleTestProvider() throws SystemArgumentException
+	public Object[][] privateSharedGuestSystemUserRoleTestProvider() throws SystemArgumentException, SystemRoleException
 	{
 		StorageSystem privatePublicUserStorageSystem = getStorageSystem();
 		privatePublicUserStorageSystem.setSystemId("privatePublicUserStorageSystem");
@@ -405,7 +414,8 @@ public class RemoteSystemRoleInheritenceTest
 	}
 	
 	@Test(dataProvider="privateSharedGuestSystemUserRoleTestProvider")
-    public void privateSharedGuestSystemUserRoleTest(RemoteSystem system, String username, RoleType expectedRole, String message) 
+    public void privateSharedGuestSystemUserRoleTest(RemoteSystem system, String username, RoleType expectedRole, String message)  
+    throws PermissionException
 	{
     	Assert.assertEquals(system.getUserRole(username).getRole(), expectedRole, message);
     }

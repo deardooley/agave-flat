@@ -88,10 +88,10 @@ public class SystemManagerDisableSystemTest extends SystemsModelTestCommon
 		try 
 		{
 			sharedSystem = getPrivateExecutionSystem();
-			sharedSystem.getRoles().add(new SystemRole(callingUser, callingUserRole));
 			sharedSystem.setAvailable(true);
 			
 			dao.persist(sharedSystem);
+			sharedSystem.addRole(new SystemRole(callingUser, callingUserRole, sharedSystem));
 			
 			manager.disableSystem(sharedSystem, callingUser);
 			
@@ -150,11 +150,11 @@ public class SystemManagerDisableSystemTest extends SystemsModelTestCommon
 		try 
 		{
 			sharedSystem = getPrivateStorageSystem();
-			sharedSystem.getRoles().add(new SystemRole(callingUser, callingUserRole));
 			sharedSystem.setPubliclyAvailable(true);
 			sharedSystem.setAvailable(true);
 			
 			dao.persist(sharedSystem);
+			sharedSystem.addRole(new SystemRole(callingUser, callingUserRole, sharedSystem));
 			
 			manager.disableSystem(sharedSystem, callingUser);
 			
@@ -181,11 +181,11 @@ public class SystemManagerDisableSystemTest extends SystemsModelTestCommon
 		try 
 		{
 			sharedSystem = getPrivateExecutionSystem();
-			sharedSystem.getRoles().add(new SystemRole(callingUser, callingUserRole));
 			sharedSystem.setPubliclyAvailable(true);
 			sharedSystem.setAvailable(true);
 			
 			dao.persist(sharedSystem);
+			sharedSystem.addRole(new SystemRole(callingUser, callingUserRole, sharedSystem));
 			
 			manager.disableSystem(sharedSystem, callingUser);
 			
@@ -238,10 +238,10 @@ public class SystemManagerDisableSystemTest extends SystemsModelTestCommon
 		try 
 		{
 			sharedSystem = getPrivateStorageSystem();
-			sharedSystem.getRoles().add(new SystemRole(callingUser, callingUserRole));
 			sharedSystem.setAvailable(true);
 			
 			dao.persist(sharedSystem);
+			sharedSystem.addRole(new SystemRole(callingUser, callingUserRole, sharedSystem));
 			
 			manager.disableSystem(sharedSystem, callingUser);
 			
@@ -265,10 +265,10 @@ public class SystemManagerDisableSystemTest extends SystemsModelTestCommon
 		try 
 		{
 			sharedSystem = getPrivateExecutionSystem();
-			sharedSystem.getRoles().add(new SystemRole(callingUser, callingUserRole));
 			sharedSystem.setAvailable(true);
 			
 			dao.persist(sharedSystem);
+			sharedSystem.addRole(new SystemRole(callingUser, callingUserRole, sharedSystem));
 			
 			manager.disableSystem(sharedSystem, callingUser);
 			
