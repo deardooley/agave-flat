@@ -6,10 +6,12 @@ import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.metadata.Settings;
 import org.iplantc.service.metadata.dao.MetadataPermissionDao;
+import org.iplantc.service.metadata.events.MetadataEventProcessor;
 import org.iplantc.service.metadata.exceptions.MetadataException;
+import org.iplantc.service.metadata.model.MetadataItem;
 import org.iplantc.service.metadata.model.MetadataPermission;
+import org.iplantc.service.metadata.model.enumerations.MetadataEventType;
 import org.iplantc.service.metadata.model.enumerations.PermissionType;
-import org.iplantc.service.metadata.util.ServiceUtils;
 import org.iplantc.service.notification.managers.NotificationManager;
 
 /**
@@ -24,21 +26,22 @@ import org.iplantc.service.notification.managers.NotificationManager;
 public class MetadataPermissionManager {
 
 	private String uuid;
-    private String owner;
-
+    private String authenticatedUsername;
+    private MetadataEventProcessor eventProcessor = new MetadataEventProcessor();
+    
 	/**
 	 * Base constructor binding a {@link MetadataItem} by {@code uuid} to a new
 	 * instance of this {@link MetadataPermissionManager}. 
 	 * @param uuid the uuid of the {@link MetadataItem} to which permission checks apply
-	 * @param owner the username of the user responsible for invoking methods on the {@code uuid}
+	 * @param authenticatedUsername the username of the user responsible for invoking methods on the {@code uuid}
 	 * @throws MetadataException
 	 */
-	public MetadataPermissionManager(String uuid, String owner) throws MetadataException
+	public MetadataPermissionManager(String uuid, String authenticatedUsername) throws MetadataException
 	{
 		if (uuid == null) { throw new MetadataException("UUID cannot be null"); }
 		this.setUuid(uuid);
-        if (owner == null) { throw new MetadataException("UUID owner cannot be null"); }
-        this.setOwner(owner);
+        if (authenticatedUsername == null) { throw new MetadataException("UUID owner cannot be null"); }
+        this.setAuthenticatedUsername(authenticatedUsername);
 	}
 
 	/**
@@ -56,7 +59,7 @@ public class MetadataPermissionManager {
 
 		if (StringUtils.isBlank(username)) { return false; }
 
-		if (getOwner().equals(username) || AuthorizationHelper.isTenantAdmin(username))
+		if (getAuthenticatedUsername().equals(username) || AuthorizationHelper.isTenantAdmin(username))
 			return true;
 
 		for (MetadataPermission pem : MetadataPermissionDao.getByUuid(getUuid()))
@@ -84,7 +87,7 @@ public class MetadataPermissionManager {
 
 		if (StringUtils.isBlank(username)) { return false; }
 
-		if (StringUtils.equals(getOwner(), username) || AuthorizationHelper.isTenantAdmin(username))
+		if (StringUtils.equals(getAuthenticatedUsername(), username) || AuthorizationHelper.isTenantAdmin(username))
 			return true;
 
 		for (MetadataPermission pem : MetadataPermissionDao.getByUuid(getUuid()))
@@ -112,7 +115,7 @@ public class MetadataPermissionManager {
 
 		if (StringUtils.isBlank(username)) { return false; }
 
-		if (getOwner().equals(username) || AuthorizationHelper.isTenantAdmin(username))
+		if (getAuthenticatedUsername().equals(username) || AuthorizationHelper.isTenantAdmin(username))
 			return true;
 
 		for (MetadataPermission pem : MetadataPermissionDao.getByUuid(getUuid()))
@@ -144,7 +147,7 @@ public class MetadataPermissionManager {
 			throw new MetadataException("Invalid username"); 
 		}
 
-		if (getOwner().equals(username))
+		if (getAuthenticatedUsername().equals(username))
 			return;
 		
 		if (StringUtils.equals(Settings.PUBLIC_USER_USERNAME, username) || 
@@ -154,43 +157,42 @@ public class MetadataPermissionManager {
 			}
 		}
 		
+		MetadataPermission userPermission = MetadataPermissionDao.getByUsernameAndUuid(username, getUuid());
+		
 		// if the permission is empty or null, delete it
 		if (StringUtils.isEmpty(sPermission) || sPermission.equalsIgnoreCase("none"))
 		{
-			for (MetadataPermission pem : MetadataPermissionDao.getByUuid(getUuid(), 0, -1))
-			{
-				if (pem.getUsername().equals(username))
-				{
-					MetadataPermissionDao.delete(pem);
-					
-					NotificationManager.process(getUuid(), "PERMISSION_REVOKE", username );
-					
-					return;
-				}
+			// delete the permission if it exists
+			if (userPermission != null) {
+				MetadataPermissionDao.delete(userPermission);
+				// getEventProcessor().processPermissionEvent(getUuid(), pem, MetadataEventType.PERMISSION_REVOKE, getAuthenticatedUsername(), new MetadataDao().getByUuid(getUuid()).toJSON());
+				NotificationManager.process(getUuid(), MetadataEventType.PERMISSION_REVOKE.name(), username );
 			}
-			return;
-		}
-
-		PermissionType permissionType = PermissionType
-				.valueOf(sPermission.toUpperCase());
-
-		for (MetadataPermission pem : MetadataPermissionDao.getByUuid(getUuid(), 0, -1))
-		{
-			if (pem.getUsername().equals(username))
-			{
-				pem.setPermission(permissionType);
-				MetadataPermissionDao.persist(pem);
-				
-				NotificationManager.process(getUuid(), "PERMISSION_GRANT", username);
-				
-				return;
+			else {
+				// otherwise do nothing, no permission existed before or after
 			}
 		}
-		MetadataPermission pem = new MetadataPermission(getUuid(), username, permissionType);
-		MetadataPermissionDao.persist(pem);
-		
-		NotificationManager.process(getUuid(), "PERMISSION_GRANT", username);
-
+		// they're updating/adding a permission, so resolve the permission and  
+		// and alert the appropriate subscriptions
+		else {
+			PermissionType permissionType = PermissionType
+					.valueOf(sPermission.toUpperCase());
+	
+			// if not present, add it
+			if (userPermission == null) {
+				userPermission = new MetadataPermission(getUuid(), username, permissionType);
+				MetadataPermissionDao.persist(userPermission);
+				// getEventProcessor().processPermissionEvent(getUuid(), pem, MetadataEventType.PERMISSION_GRANT, getAuthenticatedUsername(), new MetadataDao().getByUuid(getUuid()).toJSON());
+				NotificationManager.process(getUuid(), MetadataEventType.PERMISSION_GRANT.name(), username);
+			}
+			// otherwise, update the existing permission
+			else {
+				userPermission.setPermission(permissionType);
+				MetadataPermissionDao.persist(userPermission);
+				// getEventProcessor().processPermissionEvent(getUuid(), pem, MetadataEventType.PERMISSION_UPDATE, getAuthenticatedUsername(), new MetadataDao().getByUuid(getUuid()).toJSON());
+				NotificationManager.process(getUuid(), MetadataEventType.PERMISSION_UPDATE.name(), username);
+			}
+		}
 	}
 	
 	/**
@@ -203,9 +205,20 @@ public class MetadataPermissionManager {
 			throw new MetadataException("No object ID specified");
 		}
 		
+//		List<MetadataPermission> currentPems = MetadataPermissionDao.getByUuid(uuid);
+			
 		MetadataPermissionDao.deleteByUuid(getUuid());
 		
-		NotificationManager.process(getUuid(), "PERMISSION_REVOKE", getOwner());
+//		for (MetadataPermission currentPem: currentPems) {
+//			getEventProcessor().processPermissionEvent(getUuid(), 
+//													   currentPem, 
+//													   MetadataEventType.PERMISSION_REVOKE, 
+//													   getAuthenticatedUsername(), 
+//													   new MetadataDao().getByUuid(getUuid()).toJSON());
+//		}
+		
+		NotificationManager.process(getUuid(), "PERMISSION_REVOKE", getAuthenticatedUsername());
+		
 	}
 
 	/**
@@ -221,7 +234,7 @@ public class MetadataPermissionManager {
 		if (StringUtils.isBlank(username)) { 
 			return pem; 
 		}
-		else if (getOwner().equals(username) || AuthorizationHelper.isTenantAdmin(username)) {
+		else if (getAuthenticatedUsername().equals(username) || AuthorizationHelper.isTenantAdmin(username)) {
 			pem.setPermission(PermissionType.ALL);
 			return pem; 
 		}
@@ -241,17 +254,18 @@ public class MetadataPermissionManager {
 	}
 
 	/**
-	 * @return the owner
+	 * The user responsible for making the permission manager requests
+	 * @return the authenticatedUsername
 	 */
-	public String getOwner() {
-		return owner;
+	public String getAuthenticatedUsername() {
+		return authenticatedUsername;
 	}
 
 	/**
-	 * @param owner the owner to set
+	 * @param authenticatedUsername the authenticatedUsername to set
 	 */
-	public void setOwner(String owner) {
-		this.owner = owner;
+	public void setAuthenticatedUsername(String authenticatedUsername) {
+		this.authenticatedUsername = authenticatedUsername;
 	}
 
 	/**
@@ -266,5 +280,19 @@ public class MetadataPermissionManager {
 	 */
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
+	}
+
+	/**
+	 * @return the eventProcessor
+	 */
+	public MetadataEventProcessor getEventProcessor() {
+		return eventProcessor;
+	}
+
+	/**
+	 * @param eventProcessor the eventProcessor to set
+	 */
+	public void setEventProcessor(MetadataEventProcessor eventProcessor) {
+		this.eventProcessor = eventProcessor;
 	}
 }
