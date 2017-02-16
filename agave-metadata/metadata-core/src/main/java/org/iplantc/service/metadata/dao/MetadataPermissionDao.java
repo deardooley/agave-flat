@@ -72,6 +72,8 @@ public class MetadataPermissionDao {
 		{
 			Session session = getSession();
 			
+			session.clear();
+			
 			String hql = "FROM MetadataPermission "
 					+ "WHERE uuid = :uuid "
 					+ "ORDER BY username ASC";
@@ -89,7 +91,8 @@ public class MetadataPermissionDao {
             }
             
             List<MetadataPermission> pems = query.list();
-			session.flush();
+			
+            session.flush();
 			
 			return pems;
 		}

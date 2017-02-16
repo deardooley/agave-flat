@@ -15,8 +15,11 @@ import org.iplantc.service.notification.managers.NotificationManager;
 import org.iplantc.service.notification.util.EmailMessage;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.dao.SystemDao;
+import org.iplantc.service.systems.dao.SystemRoleDao;
 import org.iplantc.service.systems.events.RemoteSystemEventProcessor;
+import org.iplantc.service.systems.exceptions.RolePersistenceException;
 import org.iplantc.service.systems.exceptions.SystemException;
+import org.iplantc.service.systems.exceptions.SystemRoleException;
 import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.SystemRole;
 import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
@@ -271,4 +274,106 @@ public class SystemRoleManager {
 			log.error("Error notifying " + appOwner + " of application deactivation.", e);
 		}
 	}
+
+	/**
+	 * Returns effective {@link SystemRole} of user after adjusting for 
+	 * resource scope, public, and world user roles.
+	 * 
+	 * @param username
+	 * @return
+	 * @throws SystemRoleException 
+	 */
+	public SystemRole getUserRole(String username) throws SystemRoleException {
+		try {
+			if (StringUtils.isEmpty(username)) {
+				return new SystemRole(username, RoleType.NONE, getSystem());
+			}
+			else if (username.equals(getSystem().getOwner()))
+			{
+				return new SystemRole(username, RoleType.OWNER, getSystem());
+			}
+			else if (ServiceUtils.isAdmin(username))
+			{
+				return new SystemRole(username, RoleType.ADMIN, getSystem());
+			}
+			else
+			{
+				SystemRole worldRole = new SystemRole(Settings.WORLD_USER_USERNAME, RoleType.NONE, getSystem());
+	//			SystemRole publicRole = new SystemRole(Settings.PUBLIC_USER_USERNAME, RoleType.NONE);
+				for(SystemRole role: SystemRoleDao.getSystemRoles(getSystem().getSystemId())) {
+					if(role.getUsername().equals(username)) {
+						if (role.getRole() == RoleType.PUBLISHER && getSystem().getType() == RemoteSystemType.STORAGE) {
+							return new SystemRole(username, RoleType.USER, getSystem());
+						} else {
+							return role;
+						}
+					} else if (role.getUsername().equals(Settings.WORLD_USER_USERNAME)) {
+						worldRole = role;
+	//				} else if (role.getUsername().equals(Settings.PUBLIC_USER_USERNAME)) {
+	//					publicRole = role;
+					}
+				}
+	
+				if ( getSystem().isPubliclyAvailable())
+				{
+					if (getSystem().getType() != RemoteSystemType.EXECUTION && worldRole.canRead())
+					{
+						return new SystemRole(username, RoleType.GUEST, getSystem());
+					}
+	//				else if (worldRole.canRead() || publicRole.canRead())
+	//				{
+	//					if (worldRole.getRole().intVal() >= publicRole.getRole().intVal()) {
+	//						return worldRole;
+	//					} else {
+	//						return publicRole;
+	//					}
+	//				}
+	//				else if (worldRole.canRead())
+	//				{
+	//					return worldRole;
+	//				}
+					else
+					{
+						return new SystemRole(username, RoleType.USER, getSystem());
+					}
+				}
+				else
+				{
+					return new SystemRole(username, RoleType.NONE, getSystem());
+				}
+			}
+		}
+		catch (RolePersistenceException e) {
+			throw new SystemRoleException("Unable to fetch role for system " + getSystem().getSystemId(), e);
+		}
+	}
+
+	/**
+	 * @return the system
+	 */
+	public RemoteSystem getSystem() {
+		return system;
+	}
+
+	/**
+	 * @param system the system to set
+	 */
+	public void setSystem(RemoteSystem system) {
+		this.system = system;
+	}
+
+	/**
+	 * @return the eventProcessor
+	 */
+	public RemoteSystemEventProcessor getEventProcessor() {
+		return eventProcessor;
+	}
+
+	/**
+	 * @param eventProcessor the eventProcessor to set
+	 */
+	public void setEventProcessor(RemoteSystemEventProcessor eventProcessor) {
+		this.eventProcessor = eventProcessor;
+	}
+
 }

@@ -286,7 +286,7 @@ public class MetadataShareResource extends AgaveResource {
 				// will be removed
 				try 
 				{
-					pm.setPermission(name, sPermission);
+					pm.setPermission(name, sPermission );
 					if (StringUtils.isEmpty(sPermission)) {
 						getResponse().setStatus(Status.SUCCESS_OK);
 					} else {

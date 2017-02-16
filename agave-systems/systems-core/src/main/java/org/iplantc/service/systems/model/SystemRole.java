@@ -29,6 +29,8 @@ import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.exceptions.SystemException;
 import org.iplantc.service.systems.model.enumerations.RoleType;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -203,8 +205,14 @@ public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 	    return new SystemRole(getUsername(), getRole());
 	}
 	
-	public String toJSON(RemoteSystem system)  
-	{
+	/**
+	 * Serializes this object to a {@link JsonNode} for
+	 * manipulation and serialization.
+	 * @param system
+	 * @return
+	 */
+	@JsonValue
+	public ObjectNode toJsonNode(RemoteSystem system) {
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode json = mapper.createObjectNode()
 			.put("username", username)
@@ -217,7 +225,12 @@ public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 	    hypermedia.putObject("profile")
 	        	  .put("href", TenancyHelper.resolveURLToCurrentTenant(Settings.IPLANT_PROFILE_SERVICE) + username);
 	        	
-		return json.toString();
+		return json;
+	}
+	
+	public String toJSON(RemoteSystem system)  
+	{
+		return toJsonNode(system).toString();
 	}
 	
 	public String toString()
@@ -319,4 +332,7 @@ public class SystemRole implements LastUpdatable, Comparable<SystemRole> {
 	public void setRemoteSystem(RemoteSystem remoteSystem) {
 		this.remoteSystem = remoteSystem;
 	}
+
+
+	
 }
