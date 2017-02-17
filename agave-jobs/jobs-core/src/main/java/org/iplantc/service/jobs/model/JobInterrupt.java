@@ -20,8 +20,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  *  
  * @author rcardone
  */
-public class JobInterrupt {
-
+public final class JobInterrupt 
+{
     /* ********************************************************************** */
     /*                               Constants                                */
     /* ********************************************************************** */

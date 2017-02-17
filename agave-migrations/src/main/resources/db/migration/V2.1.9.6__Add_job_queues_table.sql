@@ -98,6 +98,17 @@ CREATE TABLE `job_published` (
   PRIMARY KEY (`phase`, `job_uuid`)
 ) ENGINE=InnoDB;
 
+# Create the workers table so that worker threads can 
+# register what job they are processing and their location.
+CREATE TABLE IF NOT EXISTS `job_workers` (
+  `job_uuid` varchar(64) NOT NULL,
+  `worker_uuid` varchar(64) NOT NULL,
+  `host` varchar(255) NOT NULL,
+  `container_id` varchar(128) NOT NULL,
+  PRIMARY KEY (`job_uuid`),
+  UNIQUE KEY `worker_uuid` (`worker_uuid`)
+) ENGINE=InnoDB;
+
 # Create the scheduler lease table that is used to limit
 # the number of active schedulers for each phase to 1.
 CREATE TABLE `job_leases` (

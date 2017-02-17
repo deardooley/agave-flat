@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  *  
  * @author rcardone
  */
-public class JobQueue {
+public final class JobQueue {
 
     /* ********************************************************************** */
     /*                               Constants                                */

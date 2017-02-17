@@ -445,8 +445,10 @@ public final class JobPublishedDao {
      * table.
      * 
      * @return number of rows affected.
+     * @throws JobException 
      */
-    public static int clearPublishedJobs()
+    public static int clearPublishedJobs() 
+     throws JobException
     {
         // Return value.
         int rows = 0;
@@ -476,6 +478,7 @@ public final class JobPublishedDao {
             
             String msg = "Unable to clear all published jobs.";
             _log.error(msg, e);
+            throw new JobException(msg, e);
         }
         
         return rows;

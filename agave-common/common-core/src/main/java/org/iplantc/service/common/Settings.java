@@ -12,12 +12,10 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.TimeZone;
 
 import javax.net.ssl.HostnameVerifier;
@@ -33,15 +31,6 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.common.util.IPAddressValidator;
 import org.iplantc.service.common.util.OSValidator;
 import org.joda.time.DateTimeZone;
-
-import com.google.common.escape.Escaper;
-import com.google.common.net.UrlEscapers;
-import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
-import com.jayway.jsonpath.spi.json.JsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
-import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
 
 public class Settings 

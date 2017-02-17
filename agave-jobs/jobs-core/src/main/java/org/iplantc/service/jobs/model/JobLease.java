@@ -8,7 +8,7 @@ import java.util.Date;
  *  
  * @author rcardone
  */
-public class JobLease 
+public final class JobLease 
 {
     /* ********************************************************************** */
     /*                                Fields                                  */

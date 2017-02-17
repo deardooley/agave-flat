@@ -10,7 +10,7 @@ import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
  *  
  * @author rcardone
  */
-public class JobPublished 
+public final class JobPublished 
 {
     /* ********************************************************************** */
     /*                                Fields                                  */

@@ -285,11 +285,14 @@ public final class JobLeaseDao
      * that is useful in testing but will probably never be used in production.
      *  
      * @return the list of all leases in ascending lease order.
+     * @throws JobException 
      */
-    public static List<JobLease> getLeases()
+    public static List<JobLease> getLeases() 
+     throws JobException
     {
-        // Initialize result list.
-        List<JobLease> list = new ArrayList<>(4);
+        // Initialize result list to fixed number of schedulers.
+        final int numSchedulers = 5;
+        List<JobLease> list = new ArrayList<>(numSchedulers);
         
         // Dump the complete table..
         try {
@@ -323,6 +326,7 @@ public final class JobLeaseDao
             
             String msg = "Unable to retrieve leases.";
             _log.error(msg, e);
+            throw new JobException(msg, e);
         }
         
         return list;

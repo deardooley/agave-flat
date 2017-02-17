@@ -35,7 +35,7 @@ public class JobPublishedDaoTest
     /* setup:                                                                 */
     /* ---------------------------------------------------------------------- */
     @BeforeSuite
-    private void setup()
+    private void setup() throws JobException
     {
         // Clear the interrupts table for testing.
         JobPublishedDao.clearPublishedJobs();
@@ -45,7 +45,7 @@ public class JobPublishedDaoTest
     /* teardown:                                                              */
     /* ---------------------------------------------------------------------- */
     @AfterSuite
-    private void teardown()
+    private void teardown() throws JobException
     {
         // Clear the interrupts table for testing.
         JobPublishedDao.clearPublishedJobs();

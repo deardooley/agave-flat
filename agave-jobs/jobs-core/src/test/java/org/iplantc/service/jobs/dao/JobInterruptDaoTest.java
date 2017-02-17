@@ -44,7 +44,7 @@ public class JobInterruptDaoTest
     /* setup:                                                                 */
     /* ---------------------------------------------------------------------- */
     @BeforeSuite
-    private void setup()
+    private void setup() throws JobException
     {
         // Set up thread-local context.
         TenancyHelper.setCurrentTenantId(TENANT_ID);
@@ -57,7 +57,7 @@ public class JobInterruptDaoTest
     /* teardown:                                                              */
     /* ---------------------------------------------------------------------- */
     @AfterSuite
-    private void teardown()
+    private void teardown() throws JobException
     {
         // Clear the interrupts table for testing.
         JobInterruptDao.clearInterrupts();

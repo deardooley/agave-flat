@@ -23,6 +23,7 @@ import org.iplantc.service.jobs.dao.JobInterruptDao;
 import org.iplantc.service.jobs.dao.JobLeaseDao;
 import org.iplantc.service.jobs.dao.JobPublishedDao;
 import org.iplantc.service.jobs.dao.JobQueueDao;
+import org.iplantc.service.jobs.dao.JobWorkerDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobQueueFilterException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
@@ -435,22 +436,27 @@ public abstract class AbstractPhaseScheduler
         // Restart worker threads only.
         if (!(t instanceof AbstractPhaseWorker)) return;
         
-        // Get the next available recovery thread number.
+        // Get the dead worker.
         AbstractPhaseWorker oldWorker = (AbstractPhaseWorker) t;
         
         // Do our best to release any jobs listed in the published table.
         releasePublishedJob(oldWorker);
         
+        // Do our best to release any job claim.
+        releaseJobClaim(oldWorker);
+        
         // Create the new thread object.
         int newThreadNum = _threadSeqno.incrementAndGet();
         AbstractPhaseWorker newWorker = createWorkerThread(oldWorker.getThreadGroup(), 
-                                                   oldWorker.getTenantId(), 
-                                                   oldWorker.getQueueName(), 
-                                                   newThreadNum);
+                                                           oldWorker.getTenantId(), 
+                                                           oldWorker.getQueueName(), 
+                                                           newThreadNum);
           
         // Log more information.
-        String msg = "Phase worker thread " + t.getName() + " died unexpectedly. " +
-                     "Starting new worker " + newWorker.getName();
+        String msg = "Phase worker thread " + oldWorker.getName() + 
+                     " (" + oldWorker.getThreadUuid() + ") died unexpectedly. " +
+                     "Starting new worker " + newWorker.getName() + 
+                     " (" + newWorker.getThreadUuid() + ").";
         _log.error(msg);
         
         // Let it rip.
@@ -573,8 +579,9 @@ public abstract class AbstractPhaseScheduler
     {
         // Initialize the queueable object.
         ProcessJobMessage qjob = new ProcessJobMessage();
-        qjob.name = job.getName();
-        qjob.uuid = job.getUuid();
+        qjob.name  = job.getName();
+        qjob.uuid  = job.getUuid();
+        qjob.epoch = job.getEpoch();
         
         // Write the object as a JSON string.
         return queueMessageMapper.writeValueAsString(qjob);
@@ -2025,7 +2032,40 @@ public abstract class AbstractPhaseScheduler
         // published table so that the job may be rescheduled if necessary.
         try {JobPublishedDao.deletePublishedJob(deadWorker.getPhaseType(), 
                                                 deadWorker.getJob().getUuid());}
-            catch (Exception e) {/* do nothing */}
+            catch (Exception e) {
+                String msg = "Worker thread uncaughtException handler unable to " +
+                             "delete job publish record for phase " + 
+                             deadWorker.getPhaseType().name() + " and job " +
+                             deadWorker.getJob().getUuid() + ".";
+                _log.error(msg, e);
+            }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* releasePublishedJob:                                                   */
+    /* ---------------------------------------------------------------------- */
+    /** Make a best effort attempt to remove a job that was being serviced by 
+     * a thread that died unexpectedly.  The thread may not have working on 
+     * a job, in which case we don't do anything.  Otherwise, we fire and
+     * forget a database delete command.
+     * 
+     * @param deadWorker a worker thread that died unexpectedly.
+     */
+    private void releaseJobClaim(AbstractPhaseWorker deadWorker)
+    {
+        // Should we even try?
+        if (deadWorker == null || 
+            deadWorker.getThreadUuid() == null) 
+           return;
+        
+        // Try to remove the job the dead worker was processing from the
+        // published table so that the job may be rescheduled if necessary.
+        try {JobWorkerDao.unclaimJobByWorkerUuid(deadWorker.getThreadUuid());}
+            catch (Exception e) {
+                String msg = "Worker thread uncaughtException handler unable to " +
+                            "unclaim job for worker " + deadWorker.getThreadUuid() + ".";
+               _log.error(msg, e);
+            }
     }
     
     /* ---------------------------------------------------------------------- */

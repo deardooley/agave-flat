@@ -17,6 +17,7 @@ public final class ProcessJobMessage
     // Job name and unique id.
     public String name;
     public String uuid;
+    public int    epoch;
     
     /* ********************************************************************** */
     /*                              Constructors                              */

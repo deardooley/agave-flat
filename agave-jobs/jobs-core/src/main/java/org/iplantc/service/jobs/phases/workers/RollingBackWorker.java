@@ -41,13 +41,6 @@ public final class RollingBackWorker
     @Override
     protected void processJob(Job job) throws JobWorkerException
     {
-        // Assign job field for the duration of this method
-        // to maintain compatibility with legacy code.
-        _job = job;
-        
-        // Capture the epoch before hibernate can change it.
-        setJobInitialEpoch(job.getEpoch());
-        
         // Exceptions thrown by any of the called methods abort processing.
         // This structure maintains compatibility with legacy code.
         try {
@@ -66,9 +59,6 @@ public final class RollingBackWorker
             try { HibernateUtil.flush(); } catch (Exception e) {}
             try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
             try { HibernateUtil.disconnectSession(); } catch (Exception e) {} 
-            
-            // Remove dangling references to job-specific data.
-            reset();
         }
     }
     

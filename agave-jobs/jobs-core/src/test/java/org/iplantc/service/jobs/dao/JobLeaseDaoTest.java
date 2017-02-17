@@ -3,6 +3,7 @@ package org.iplantc.service.jobs.dao;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.JobLease;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.testng.Assert;
@@ -146,9 +147,10 @@ public class JobLeaseDaoTest {
     /* ---------------------------------------------------------------------- */
     /** Test the mass retrieve and clear methods.  We first acquire every type
      * of lease and then clear all leases.
+     * @throws JobException 
      */
     @Test(enabled=true)
-    public void getAndClearLeasesTest()
+    public void getAndClearLeasesTest() throws JobException
     {   
         // Initialize the dao object.
         JobLeaseDao dao1 = new JobLeaseDao(JobPhaseType.STAGING, LESSEE_1);

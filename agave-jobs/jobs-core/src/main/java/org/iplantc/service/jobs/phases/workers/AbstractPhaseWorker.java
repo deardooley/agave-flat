@@ -9,9 +9,12 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.common.uuid.AgaveUUID;
+import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobPublishedDao;
+import org.iplantc.service.jobs.dao.JobWorkerDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
@@ -71,6 +74,7 @@ public abstract class AbstractPhaseWorker
     private final String                 _tenantId;
     private final String                 _queueName;
     private final int                    _threadNum;
+    private final String                 _threadUuid;
     
     // Calculated fields.
     private Channel                      _jobChannel;
@@ -99,7 +103,7 @@ public abstract class AbstractPhaseWorker
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
-    public AbstractPhaseWorker(PhaseWorkerParms parms) 
+    protected AbstractPhaseWorker(PhaseWorkerParms parms) 
     {
         // Unpack the parameters.
         super(parms.threadGroup, parms.threadName);
@@ -108,6 +112,12 @@ public abstract class AbstractPhaseWorker
         _tenantId   = parms.tenantId;
         _queueName  = parms.queueName;
         _threadNum  = parms.threadNum;
+        _threadUuid = new AgaveUUID(UUIDType.JOB_WORKER_THREAD).toString();
+        
+        if (_log.isDebugEnabled()) {
+            String msg = "Worker thread " + getName() + " has been assigned UUID " +
+            _threadUuid + ".";
+        }
     }
     
     /* ********************************************************************** */
@@ -430,6 +440,18 @@ public abstract class AbstractPhaseWorker
             return false;
         }
         
+        // We only process jobs if they are in the epoch defined in the message.
+        if (qjob.epoch != job.getEpoch()) {
+            if (_log.isDebugEnabled()) {
+                String msg = "Worker " + getName() + 
+                             " received a WKR_PROCESS_JOB message for epoch " +
+                             qjob.epoch + ", but the job is currently in epoch " +
+                             job.getEpoch() + ".";
+                _log.debug(msg);
+            }
+            return false;
+        }
+        
         /* --- From this point on we have to manage job status on all paths --- */ 
         /* -------------------------------------------------------------------- */
         
@@ -469,6 +491,15 @@ public abstract class AbstractPhaseWorker
             return false;
         }
         
+        // Pre-process the job the same way for all subtypes.
+        try {preprocessJob(job);}
+        catch (Exception e) {
+            String msg = "Worker preprocessing failed for job " + job.getUuid() + 
+                         ".  Skippig job.";
+            _log.error(msg, e);
+            return false;
+        }
+        
         // Invoke the phase processor.
         boolean jobProcessed = true;
         try {processJob(job);}
@@ -479,6 +510,10 @@ public abstract class AbstractPhaseWorker
                          " (" + qjob.name + ").";
             _log.error(msg, e);
             jobProcessed = false;
+        }
+        finally {
+            // Reset the worker thread for the next job.
+            postprocessJob();
         }
         
         // Successful processing.
@@ -527,6 +562,10 @@ public abstract class AbstractPhaseWorker
 
     public int getThreadNum() {
         return _threadNum;
+    }
+
+    public String getThreadUuid() {
+        return _threadUuid;
     }
 
     public JobPhaseType getPhaseType() {
@@ -716,28 +755,6 @@ public abstract class AbstractPhaseWorker
     }
     
     /* ---------------------------------------------------------------------- */
-    /* reset:                                                                 */
-    /* ---------------------------------------------------------------------- */
-    /** Reset all fields that are specific to a particular job.  This method
-     * resets the state of this class instance back to it initial state just
-     * after queue communication has been initialized. 
-     */
-    protected void reset()
-    {
-        // Reset the job state.
-        _job = null;
-        
-        // Set the job epoch to an invalid value.
-        setJobInitialEpoch(-1);
-        
-        // Reset the job stopped flag.
-        _jobSuspended.set(false);
-        
-        // Remove the action associated with a job.
-        setWorkerAction(null);
-    }
-
-    /* ---------------------------------------------------------------------- */
     /* checkSystemAvailability:                                               */
     /* ---------------------------------------------------------------------- */
     protected void checkSystemAvailability(int days) throws JobWorkerException
@@ -830,6 +847,74 @@ public abstract class AbstractPhaseWorker
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* preprocessJob:                                                         */
+    /* ---------------------------------------------------------------------- */
+    private void preprocessJob(Job job)
+     throws JobException
+    {
+        // Assign job field for the duration of the job's processing.
+        // This maintains compatibility with legacy code.
+        _job = job;
+
+        // Capture the epoch before hibernate can change it.
+        setJobInitialEpoch(job.getEpoch());
+        
+        // Claim this job for this worker thread.
+        // TODO: assign host and containerid
+        try {JobWorkerDao.claimJob(job.getUuid(), getThreadUuid(), "unknown", "unknown");}
+        catch (JobWorkerException e) {
+            // This job is already claimed!
+            String msg = "Worker " + getThreadUuid() + " (" + getName() +
+                         ") is unable to claim job " +
+                         job.getUuid() + " due to a worker or job constraint violation.";
+            _log.error(msg, e);
+            throw e;
+        }
+        catch (JobException e) {
+            // We have the option of failing the job here.  If the problem was
+            // transient, the user is inconvenienced.  If the problem persists,
+            // we may end up writing the same log message too many times.  For 
+            // now, we leave the job in its current state.
+            String msg = "Worker " + getThreadUuid() + " (" + getName() +
+                         ") is unable to claim job " +
+                         job.getUuid() + " due to non-constraint violation.";
+            _log.error(msg, e);
+            throw e;
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* postprocessJob:                                                        */
+    /* ---------------------------------------------------------------------- */
+    /** Reset all fields that are specific to a particular job.  This method
+     * resets the state of this class instance back to it initial state just
+     * after queue communication has been initialized. 
+     */
+    private void postprocessJob()
+    {
+        // Reset the job state.
+        _job = null;
+        
+        // Set the job epoch to an invalid value.
+        setJobInitialEpoch(-1);
+        
+        // Reset the job stopped flag.
+        _jobSuspended.set(false);
+        
+        // Remove the action associated with a job.
+        setWorkerAction(null);
+        
+        // Remove this worker's claim to the job.
+        try {JobWorkerDao.unclaimJobByWorkerUuid(getThreadUuid());}
+        catch (JobException e) {
+            String msg = "Worker " + getThreadUuid() + " (" + getName() + 
+                         ") is unable to release it claimon on job " +
+                         _job.getUuid() + ".";
+            _log.error(msg, e);
+        }
+    }
+
     /* ---------------------------------------------------------------------- */
     /* detectDuplicateJob:                                                    */
     /* ---------------------------------------------------------------------- */

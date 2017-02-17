@@ -44,12 +44,13 @@ public class QueueMessagesTest {
         {
             // Generate the json.
             ProcessJobMessage m = new ProcessJobMessage();
-            m.name = "processJob";
-            m.uuid = "73";
+            m.name  = "processJob";
+            m.uuid  = "73";
+            m.epoch = 22;
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"WKR_PROCESS_JOB\",\"name\":\"processJob\",\"uuid\":\"73\"}", 
+                    json, "{\"command\":\"WKR_PROCESS_JOB\",\"name\":\"processJob\",\"uuid\":\"73\",\"epoch\":22}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
@@ -69,7 +70,7 @@ public class QueueMessagesTest {
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TPC_DELETE_JOB\",\"tenantId\":\"squatter\",\"jobName\":\"deleteJob\",\"jobUuid\":\"999\"}", 
+                    json, "{\"command\":\"TPC_DELETE_JOB\",\"tenantId\":\"squatter\",\"jobName\":\"deleteJob\",\"jobUuid\":\"999\",\"epoch\":0}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
@@ -89,7 +90,7 @@ public class QueueMessagesTest {
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TPC_STOP_JOB\",\"tenantId\":\"squatter\",\"jobName\":\"stopJob\",\"jobUuid\":\"1001\"}", 
+                    json, "{\"command\":\"TPC_STOP_JOB\",\"tenantId\":\"squatter\",\"jobName\":\"stopJob\",\"jobUuid\":\"1001\",\"epoch\":0}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
@@ -106,10 +107,11 @@ public class QueueMessagesTest {
             m.jobName = "pauseJob";
             m.jobUuid = "34";
             m.tenantId = "squatter";
+            m.epoch    = 66;
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TPC_PAUSE_JOB\",\"tenantId\":\"squatter\",\"jobName\":\"pauseJob\",\"jobUuid\":\"34\"}", 
+                    json, "{\"command\":\"TPC_PAUSE_JOB\",\"tenantId\":\"squatter\",\"jobName\":\"pauseJob\",\"jobUuid\":\"34\",\"epoch\":66}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.

@@ -14,7 +14,7 @@ import org.iplantc.service.jobs.model.enumerations.JobStatusType;
  * 
  * @author rcardone
  */
-public class JobUpdateParameters
+public final class JobUpdateParameters
 {
     /* ********************************************************************** */
     /*                                 Fields                                 */

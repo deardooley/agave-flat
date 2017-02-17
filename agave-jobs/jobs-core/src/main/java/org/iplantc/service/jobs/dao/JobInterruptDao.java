@@ -14,7 +14,6 @@ import org.hibernate.Session;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.exceptions.JobException;
-import org.iplantc.service.jobs.exceptions.JobQueueException;
 import org.iplantc.service.jobs.model.JobInterrupt;
 import org.iplantc.service.jobs.model.enumerations.JobInterruptType;
 import org.joda.time.DateTime;
@@ -337,7 +336,7 @@ public final class JobInterruptDao {
             
             String msg = "Unable to query job interrupts for tenant " + tenantId + ".";
             _log.error(msg);
-            throw new JobQueueException(msg, e);
+            throw new JobException(msg, e);
         }
         finally {
             try {HibernateUtil.commitTransaction();} 
@@ -346,7 +345,7 @@ public final class JobInterruptDao {
                 String msg = "Unable to commit query transaction " +
                              "for job interrupts for tenant " + tenantId + ".";
                 _log.error(msg);
-                throw new JobQueueException(msg, e);
+                throw new JobException(msg, e);
             }
         }
         
@@ -423,7 +422,7 @@ public final class JobInterruptDao {
             String msg = "Unable to delete job interrupt id = " + id +
                          " for tenant " + tenantId + ".";
             _log.error(msg);
-            throw new JobQueueException(msg, e);
+            throw new JobException(msg, e);
         }
         finally {
             try {HibernateUtil.commitTransaction();} 
@@ -433,7 +432,7 @@ public final class JobInterruptDao {
                              "for job interrupt with id = " + id + 
                              " for tenant " + tenantId + ".";
                 _log.error(msg);
-                throw new JobQueueException(msg, e);
+                throw new JobException(msg, e);
             }
         }
         
@@ -490,7 +489,7 @@ public final class JobInterruptDao {
             
             String msg = "Unable to query job interrupts.";
             _log.error(msg);
-            throw new JobQueueException(msg, e);
+            throw new JobException(msg, e);
         }
         finally {
             try {HibernateUtil.commitTransaction();} 
@@ -498,7 +497,7 @@ public final class JobInterruptDao {
             {
                 String msg = "Unable to commit query transaction for job interrupts.";
                 _log.error(msg);
-                throw new JobQueueException(msg, e);
+                throw new JobException(msg, e);
             }
         }
         
@@ -675,7 +674,7 @@ public final class JobInterruptDao {
             String msg = "Unable to update expiration date for interrupt " +
                          id + " and tenant " + tenantId + ".";
             _log.error(msg);
-            throw new JobQueueException(msg, e);
+            throw new JobException(msg, e);
         }
         finally {
             try {HibernateUtil.commitTransaction();} 
@@ -684,7 +683,7 @@ public final class JobInterruptDao {
                 String msg = "Unable to commit update expiration data transaction " +
                              "for interrupt " + id + ", tenant " + tenantId + ".";
                 _log.error(msg);
-                throw new JobQueueException(msg, e);
+                throw new JobException(msg, e);
             }
         }
         
@@ -701,6 +700,7 @@ public final class JobInterruptDao {
      * @return number of rows affected.
      */
     public static int clearInterrupts()
+     throws JobException
     {
         // Return value.
         int rows = 0;
@@ -730,6 +730,7 @@ public final class JobInterruptDao {
             
             String msg = "Unable to clear all interrupts.";
             _log.error(msg, e);
+            throw new JobException(msg, e);
         }
         
         return rows;

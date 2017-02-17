@@ -69,7 +69,8 @@ public enum UUIDType {
 	ABACO_AGENT_EVENT("061"),
 	SCHEDULED_TRANSFER("062"),
 	SCHEDULED_TRANSFER_EVENT("063"),
-	JOB_QUEUE("064"),;
+	JOB_QUEUE("064"),
+	JOB_WORKER_THREAD("065");
 	
 	private String code;
 
