@@ -1,4 +1,4 @@
-package org.iplantc.service.jobs.queue;
+package org.iplantc.service.jobs.queue.factory;
 
 
 import static org.quartz.TriggerBuilder.newTrigger;
@@ -9,12 +9,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.jobs.Settings;
+import org.iplantc.service.jobs.queue.WorkerWatch;
 import org.quartz.Job;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
-import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 
@@ -23,65 +23,39 @@ import org.quartz.spi.TriggerFiredBundle;
  * to maintain a priority queue of jobs across the jvm.
  * 
  * @author dooley
- * @deprecated
- * @see org.iplantc.service.jobs.queue.factory.AbstractJobProducerFactory
+ *
  * @param <T>
  */
-public class JobProducerFactory implements JobFactory {
+public abstract class AbstractJobProducerFactory implements JobFactory {
     
     private final Logger log = Logger.getLogger(getClass());
     
-    private static final ConcurrentLinkedDeque<String> stagingJobTaskQueue = new ConcurrentLinkedDeque<String>();
-    private static final ConcurrentLinkedDeque<String> monitoringJobTaskQueue = new ConcurrentLinkedDeque<String>();
-    private static final ConcurrentLinkedDeque<String> submissionJobTaskQueue = new ConcurrentLinkedDeque<String>();
-    private static final ConcurrentLinkedDeque<String> archivingJobTaskQueue = new ConcurrentLinkedDeque<String>();
+    protected static final ConcurrentLinkedDeque<String> stagingJobTaskQueue = new ConcurrentLinkedDeque<String>();
+    protected static final ConcurrentLinkedDeque<String> monitoringJobTaskQueue = new ConcurrentLinkedDeque<String>();
+    protected static final ConcurrentLinkedDeque<String> submissionJobTaskQueue = new ConcurrentLinkedDeque<String>();
+    protected static final ConcurrentLinkedDeque<String> archivingJobTaskQueue = new ConcurrentLinkedDeque<String>();
     
-    public JobProducerFactory() {}
+    public AbstractJobProducerFactory() {}
 
     public synchronized Job newJob(TriggerFiredBundle bundle, Scheduler scheduler) throws SchedulerException {
 
         JobDetail jobDetail = bundle.getJobDetail();
-        Class<? extends WorkerWatch> jobClass = (Class<? extends WorkerWatch>) jobDetail.getJobClass();
-      
+        
         WorkerWatch worker = null;
         
         try 
         {
-            worker = jobClass.newInstance();
+            worker = getJobInstance();
             
             String jobUuid = worker.selectNextAvailableJob();
 
             if (StringUtils.isNotEmpty(jobUuid))
             {
-                if (worker instanceof ArchiveWatch) {
-                    if (!archivingJobTaskQueue.contains(jobUuid) && 
-                            archivingJobTaskQueue.size() < Settings.MAX_ARCHIVE_TASKS) 
-                    {
-                        archivingJobTaskQueue.add(jobUuid);
-                        produceWorker(jobClass, jobDetail.getKey().getGroup(), jobUuid);
-                    }
-                }
-                else if (worker instanceof SubmissionWatch) {
-                    if (!submissionJobTaskQueue.contains(jobUuid) && 
-                            submissionJobTaskQueue.size() < Settings.MAX_SUBMISSION_TASKS) 
-                    {
-                        submissionJobTaskQueue.add(jobUuid);
-                        produceWorker(jobClass, jobDetail.getKey().getGroup(), jobUuid);
-                    }
-                } else if (worker instanceof MonitoringWatch) {
-                    if (!monitoringJobTaskQueue.contains(jobUuid) && 
-                            monitoringJobTaskQueue.size() < Settings.MAX_MONITORING_TASKS) 
-                    {
-                        monitoringJobTaskQueue.add(jobUuid);
-                        produceWorker(jobClass, jobDetail.getKey().getGroup(), jobUuid);
-                    }
-                } else if (worker instanceof StagingWatch) {
-                    if (!stagingJobTaskQueue.contains(jobUuid) && 
-                            stagingJobTaskQueue.size() < Settings.MAX_STAGING_TASKS) 
-                    {
-                        stagingJobTaskQueue.add(jobUuid);
-                        produceWorker(jobClass, jobDetail.getKey().getGroup(), jobUuid);
-                    }
+                if (!getTaskQueue().contains(jobUuid) && 
+                		getTaskQueue().size() < getMaxTasks()) 
+                {
+                	getTaskQueue().add(jobUuid);
+                    produceWorker(worker.getClass(), jobDetail.getKey().getGroup(), jobUuid, scheduler);
                 }
             }
 
@@ -99,18 +73,19 @@ public class JobProducerFactory implements JobFactory {
         	catch (Throwable e) {}
         }
     }
-
+    
     /**
      * Creates a new job on the consumer queue with a unique name based on the job uuid,
      * thus guaranteeing single execution within a JVM. If clustered, this should ensure 
      * single execution across the cluster.
      * 
-     * @param jobClass
-     * @param groupName
-     * @param jobUuid
+     * @param jobClass the class of the {@link Job} to run
+     * @param groupName phase name
+     * @param jobUuid the Agave job UUID to be run by the Quartz {@link Job}
+     * @param sched the current scheduler
      * @throws SchedulerException
      */
-    private void produceWorker(Class<? extends WorkerWatch> jobClass, String groupName, String jobUuid) 
+    protected void produceWorker(Class<? extends WorkerWatch> jobClass, String groupName, String jobUuid, Scheduler sched) 
     throws SchedulerException 
     {
         JobDetail jobDetail = org.quartz.JobBuilder.newJob(jobClass)
@@ -124,17 +99,10 @@ public class JobProducerFactory implements JobFactory {
                             .startNow()
                             .build();
          
-         Scheduler sched = new StdSchedulerFactory().getScheduler("AgaveConsumerJobScheduler");
-         
-         if (!sched.isStarted()) {
-             sched.start();
-         }
-//         log.debug("Assigning new job " + jobUuid + " to " + archiveJobDetail);
          sched.scheduleJob(jobDetail, trigger);
     }
     
-
-    /**
+   /**
      * Releases the job from the relevant {@link ConcurrentLinkedDeque} so it can be
      * consumed by another thread.
      * 
@@ -157,4 +125,14 @@ public class JobProducerFactory implements JobFactory {
             submissionJobTaskQueue.remove(uuid);
         }
     }
+    
+    /**
+     * Returns the task queue for the given scheduler.
+     * @return
+     */
+    protected abstract ConcurrentLinkedDeque<String> getTaskQueue();
+    
+    protected abstract WorkerWatch getJobInstance();
+    
+    protected abstract int getMaxTasks();
 }

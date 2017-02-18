@@ -162,6 +162,9 @@ public class EncodingJob extends AbstractJobWatch<EncodingTask>
 			}
 			
 			log.error(message, e);
+			
+			Thread.currentThread().interrupt();
+			
 			throw new JobExecutionException(message, e);
         }
 		catch (StaleObjectStateException e) {
@@ -265,6 +268,8 @@ public class EncodingJob extends AbstractJobWatch<EncodingTask>
 		}
 		
 		releaseJob();
+		
+		Thread.currentThread().interrupt();
 		
 	}
 	

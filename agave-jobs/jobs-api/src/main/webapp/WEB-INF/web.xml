@@ -24,11 +24,34 @@ id="WebApp_ID" version="2.5" metadata-complete="true">
 
   <!--  Quartz initialization servlet -->
   <servlet>
-    <servlet-name>JobsProducerInitializer</servlet-name>
+    <servlet-name>StagingInitializer</servlet-name>
     <servlet-class>org.quartz.ee.servlet.QuartzInitializerServlet</servlet-class>
     <init-param>
       <param-name>config-file</param-name>
-      <param-value>quartz-producer.properties</param-value>
+      <param-value>quartz/staging.properties</param-value>
+    </init-param>
+    <init-param>
+      <param-name>shutdown-on-unload</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>wait-on-shutdown</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>start-scheduler-on-load</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  
+  <!--  Quartz initialization servlet -->
+  <servlet>
+    <servlet-name>SubmissionInitializer</servlet-name>
+    <servlet-class>org.quartz.ee.servlet.QuartzInitializerServlet</servlet-class>
+    <init-param>
+      <param-name>config-file</param-name>
+      <param-value>quartz/submission.properties</param-value>
     </init-param>
     <init-param>
       <param-name>shutdown-on-unload</param-name>
@@ -45,12 +68,35 @@ id="WebApp_ID" version="2.5" metadata-complete="true">
     <load-on-startup>1</load-on-startup>
   </servlet>
 
+	<!--  Quartz initialization servlet -->
   <servlet>
-    <servlet-name>JobsConsumerInitializer</servlet-name>
+    <servlet-name>MonitoringInitializer</servlet-name>
     <servlet-class>org.quartz.ee.servlet.QuartzInitializerServlet</servlet-class>
     <init-param>
       <param-name>config-file</param-name>
-      <param-value>quartz-consumer.properties</param-value>
+      <param-value>quartz/monitoring.properties</param-value>
+    </init-param>
+    <init-param>
+      <param-name>shutdown-on-unload</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>wait-on-shutdown</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>start-scheduler-on-load</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  
+  <servlet>
+    <servlet-name>ArchivingInitializer</servlet-name>
+    <servlet-class>org.quartz.ee.servlet.QuartzInitializerServlet</servlet-class>
+    <init-param>
+      <param-name>config-file</param-name>
+      <param-value>quartz/archiving.properties</param-value>
     </init-param>
     <init-param>
       <param-name>shutdown-on-unload</param-name>

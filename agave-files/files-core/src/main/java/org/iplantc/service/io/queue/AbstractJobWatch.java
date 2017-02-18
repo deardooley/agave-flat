@@ -109,10 +109,16 @@ public abstract class AbstractJobWatch<T extends QueueTask> implements WorkerWat
     public void setStopped(boolean killed) throws UnableToInterruptJobException {
         this.stopped.set(killed);
         int timeout = 0;
+
         while(!isTaskComplete()) {
-            try { Thread.sleep(1000); } catch (InterruptedException e) {}
+            try { 
+            	Thread.sleep(1000); 
+            } catch (InterruptedException e) {
+            	Thread.currentThread().interrupt();
+            	break;
+            }
             timeout++;
-            if (timeout >= 60) {
+            if (timeout >= 30) {
                 throw new UnableToInterruptJobException("Unable to interrupt " + getClass().getName() + " task " 
                         + getQueueTask().getId() + " after 30 seconds.");
             }

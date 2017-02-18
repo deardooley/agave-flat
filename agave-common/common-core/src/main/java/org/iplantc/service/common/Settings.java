@@ -300,7 +300,8 @@ public class Settings
         
         IPLANT_APP_SERVICE          = Settings.getSantizedServiceUrl(props, "iplant.app.service", "https://public.agaveapi.co/apps/v2");        
         IPLANT_AUTH_SERVICE         = Settings.getSantizedServiceUrl(props, "iplant.auth.service", "https://public.agaveapi.co/auth/v2");
-        IPLANT_CLIENTS_SERVICE      = Settings.getSantizedServiceUrl(props, "iplant.clients.service", "http://public.agaveapi.co/clients/v2");IPLANT_SYSTEM_SERVICE       = Settings.getSantizedServiceUrl(props, "iplant.system.service", "https://public.agaveapi.co/systems/v2");
+        IPLANT_CLIENTS_SERVICE      = Settings.getSantizedServiceUrl(props, "iplant.clients.service", "http://public.agaveapi.co/clients/v2");
+        IPLANT_SYSTEM_SERVICE       = Settings.getSantizedServiceUrl(props, "iplant.system.service", "https://public.agaveapi.co/systems/v2");
         IPLANT_DOCS                 = Settings.getSantizedServiceUrl(props, "iplant.service.documentation", "https://public.agaveapi.co/docs/v2");
         IPLANT_FILE_SERVICE         = Settings.getSantizedServiceUrl(props, "iplant.io.service", "https://public.agaveapi.co/files/v2");
         IPLANT_GROUPS_SERVICE       = Settings.getSantizedServiceUrl(props, "iplant.groups.service", "https://public.agaveapi.co/groups/v2");

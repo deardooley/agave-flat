@@ -16,14 +16,14 @@ import org.iplantc.service.jobs.Settings;
  * @author dooley
  *
  */
-public class JobArchiveSchedulingPlugin extends GenericSchedulingPlugin 
+public class JobArchivingSchedulingPlugin extends GenericSchedulingPlugin 
 {
-    final Logger log = Logger.getLogger(JobArchiveSchedulingPlugin.class);
+    final Logger log = Logger.getLogger(JobArchivingSchedulingPlugin.class);
     
 	/**
 	 * 
 	 */
-	public JobArchiveSchedulingPlugin() {
+	public JobArchivingSchedulingPlugin() {
 		super();
 	}
 

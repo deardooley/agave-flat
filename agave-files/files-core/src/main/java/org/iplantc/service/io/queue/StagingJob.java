@@ -359,6 +359,8 @@ public class StagingJob extends AbstractJobWatch<StagingTask>
             catch (LogicalFileException | FileEventProcessingException e1) {
                 log.error("Failed to send notification of failed staging task " + this.queueTask.getId(), e1);
             }
+            
+			Thread.currentThread().interrupt();
         }
 		catch (SystemUnknownException e) {
 			String message = "Unsupported protocol for queued file " + this.queueTask.getLogicalFile().getPath();

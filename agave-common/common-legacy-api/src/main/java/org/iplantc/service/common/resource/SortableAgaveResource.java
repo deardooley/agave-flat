@@ -54,7 +54,7 @@ public abstract class SortableAgaveResource<T extends AgaveResourceSearchFilter>
     		sortOrder = defaultOrder;
     	}
     	
-    	Form form = getRequest().getOriginalRef().getQueryAsForm();
+    	Form form = Request.getCurrent().getOriginalRef().getQueryAsForm();
         if (form != null) {
         	String sorder = form.getFirstValue("order");
 	        if (!StringUtils.isBlank(sorder)) {
@@ -81,7 +81,7 @@ public abstract class SortableAgaveResource<T extends AgaveResourceSearchFilter>
     	AgaveResourceSearchFilter searchFilter = getAgaveResourceSearchFilter();
 		SearchTerm searchTerm = null;
 		
-    	Form form = getRequest().getOriginalRef().getQueryAsForm();
+    	Form form = Request.getCurrent().getOriginalRef().getQueryAsForm();
         if (form != null) {
         	String orderByQueryTerm = form.getFirstValue("orderBy");
 	        if (!StringUtils.isBlank(orderByQueryTerm)) {

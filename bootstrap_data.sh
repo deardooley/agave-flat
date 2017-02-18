@@ -8,8 +8,8 @@
 #echo "Starting third-party containers"
 #cd config/testbed
 #docker-compose -p thirdparty -f compose/third-party.yml up -d pushpin beanstalkd redis mongodb mysql sftp
-#docker-compose -p testbed -f config/testbed/data.yml up -d --force-recreate sftp irods4
-#docker-compose -p testbed -f config/testbed/compute.yml up -d --force-recreate ssh slurm htcondor  
+docker-compose -p testbed -f config/testbed/data.yml up -d --force-recreate sftp irods4
+docker-compose -p testbed -f config/testbed/compute.yml up -d --force-recreate ssh slurm htcondor  
 
 printf "Waiting for irods4 container to come online..."
 
@@ -40,6 +40,13 @@ systems-addupdate -d -F $SYSTEMS_FOLDER/storage/storage.example.com.json
 
 # set as the default storage system
 systems-setdefault -d storage.example.com
+
+# set as the default storage system
+if [[ "$(systems-list -D -S --filter=id -v -l 1)" == "storage.example.com" ]]; then
+	echo "Verified storage.example.com as the default storage system"
+else
+	echo "Failed to set storage.example.com as the default storage system"
+fi
 
 ############### STORAGE - IRODS ######################
 systems-addupdate -d -F $SYSTEMS_FOLDER/storage/irods4.example.com.json
@@ -163,7 +170,7 @@ auth-switch -u dooley -S
 ################# publishing systems #################
 
 # create the public app folder
-files-mkdir -d -N public
+files-mkdir -d -N public -S storage.example.com
 systems-publish -d storage.example.com
 systems-setdefault -G -d storage.example.com
 

@@ -16,6 +16,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.StatusType;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -246,8 +247,7 @@ public class SoftwareResourceImpl extends AbstractSoftwareResource implements So
                                                                 publicExecutionSystemId);
                                                                 
                 publishAction.run();
-                
-                return Response.accepted(new AgaveSuccessRepresentation(publishAction.getPublishedSoftware().toJSON())).build();
+                return Response.status(202).entity(new AgaveSuccessRepresentation(publishAction.getPublishedSoftware().toJSON())).build();
             } 
             else if (action == CLONE) 
             {
@@ -268,7 +268,7 @@ public class SoftwareResourceImpl extends AbstractSoftwareResource implements So
                                                           clonedDeploymentPath);
                 cloneAction.run();
                 
-                return Response.accepted(new AgaveSuccessRepresentation(cloneAction.getClonedSoftware().toJSON())).build();
+                return Response.status(202).entity(new AgaveSuccessRepresentation(cloneAction.getClonedSoftware().toJSON())).build();
             } 
             else if (action == ERASE) 
             {

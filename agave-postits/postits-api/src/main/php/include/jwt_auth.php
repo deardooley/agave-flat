@@ -29,7 +29,7 @@ foreach ($headers as $header => $value)
 
 if (empty($jwt_claims) || empty($tenant_id))
 {
-	format_error_response("Permission denied. No authentication credentials found.");
+	format_error_response("Permission denied. No authentication credentials found.", ERROR_401);
 	exit;
 }
 

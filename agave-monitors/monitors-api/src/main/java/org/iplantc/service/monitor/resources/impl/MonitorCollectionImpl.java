@@ -89,25 +89,6 @@ public class MonitorCollectionImpl extends AbstractAgaveResource implements Moni
 				includeActive = Boolean.parseBoolean(active);
 				includeInactive = !Boolean.parseBoolean(active);
 			}
-			if (!StringUtils.isEmpty(systemId)) 
-			{
-				SystemDao systemDao = new SystemDao();
-				RemoteSystem system = systemDao.findBySystemId(systemId);
-				
-				if (system == null) 
-				{
-					throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-							"No system found matching " + systemId);
-				}
-				else
-				{
-					if (!system.getUserRole(getAuthenticatedUsername()).canUse())
-					{
-						throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-								"Permission denied. You do not have permission to view this system");
-					}
-				}
-			}
 			
 			monitors = dao.getUserMonitors(getAuthenticatedUsername(), includeActive, includeInactive, systemId);
 			
@@ -180,7 +161,7 @@ public class MonitorCollectionImpl extends AbstractAgaveResource implements Moni
 		
 		if (StringUtils.isEmpty(systemId)) {
 			throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-					"No system found matching " + systemId);
+					"No monitor found matching " + systemId);
 		} else {
 			RemoteSystem system = new SystemDao().findBySystemId(systemId);
 			if (!system.getUserRole(getAuthenticatedUsername()).canUse()) {

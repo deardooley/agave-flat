@@ -370,9 +370,11 @@ public class URLCopy
 							try {
 								TransferTaskDao.cancelAllRelatedTransfers(transferTask.getId());
 							} catch (TransferException e1) {
+								Thread.currentThread().interrupt();
 								throw new RemoteDataException("Failed to cancel related transfer tasks.", e1);
 							}
 						}
+						Thread.currentThread().interrupt();
 						throw e;
 					}
 					catch (TransferException e)
@@ -584,7 +586,7 @@ public class URLCopy
                     aggregateTransferTask.getDest(),
                     getProtocolForClass(sourceClient.getClass()),
                     getProtocolForClass(destClient.getClass())));
-            
+		    Thread.currentThread().interrupt();
             throw e;
 		}
 		catch (RemoteDataException e)
@@ -771,6 +773,8 @@ public class URLCopy
 			listener.progressed(bytesSoFar);
 			listener.cancel();
 			
+			Thread.currentThread().interrupt();
+			
 			throw e;
 		}
 		catch (RemoteDataException | IOException e)
@@ -890,9 +894,11 @@ public class URLCopy
                             try {
                                 TransferTaskDao.cancelAllRelatedTransfers(transferTask.getId());
                             } catch (TransferException e1) {
+                            	Thread.currentThread().interrupt();
                                 throw new RemoteDataException("Failed to cancel related transfer tasks.", e1);
                             }
                         }
+                        Thread.currentThread().interrupt();
                         throw e;
                     }
                     catch (RangeValidationException e) {
@@ -1142,7 +1148,7 @@ public class URLCopy
             
             listener.progressed(bytesSoFar);
             listener.cancel();
-            
+            Thread.currentThread().interrupt();
             throw e;
         }
         catch (RemoteDataException | IOException e)
@@ -1341,7 +1347,7 @@ public class URLCopy
 			
 			try { ((GridFTP)sourceClient).abort(); } catch (Exception e1) {}
 			try { ((GridFTP)destClient).abort(); } catch (Exception e1) {}
-			
+			Thread.currentThread().interrupt();
 			throw e;
 		}
 		catch (IOException e)

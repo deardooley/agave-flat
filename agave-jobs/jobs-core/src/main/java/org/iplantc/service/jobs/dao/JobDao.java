@@ -1796,7 +1796,7 @@ public class JobDao
 			    
 			}
 			
-			log.debug(q);
+//			log.debug(q);
 			
 			List<JobDTO> jobs = query
 					.setFirstResult(offset)

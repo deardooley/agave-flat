@@ -27,7 +27,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: jobs-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/jobs-api:$AGAVE_VERSION
     mem_limit: 2048m
     environment:
       - 'LOG_TARGET_STDOUT=1'
@@ -50,7 +50,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: files-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/files-api:$AGAVE_VERSION
     mem_limit: 2048m
     environment:
       - 'IPLANT_MAX_STAGING_TASKS=5'
@@ -70,7 +70,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: apps-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/apps-api:$AGAVE_VERSION
     environment:
       - 'GLOBUS_TCP_PORT_RANGE=50901,50910'
       - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms256m -Xmx1000m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
@@ -88,7 +88,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: systems-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/systems-api:$AGAVE_VERSION
     mem_limit: 512m
     environment:
       - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms256m -Xmx512m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
@@ -105,7 +105,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: monitors-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/monitors-api:$AGAVE_VERSION
     mem_limit: 1024m
     restart: "always"
     volumes:
@@ -121,7 +121,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: profiles-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/profiles-api:$AGAVE_VERSION
     mem_limit: 512m
     environment:
       - 'CATALINA_OPTS="-Duser.timezone=America/Chicago -Djsse.enableCBCProtection=false -Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms256m -Xmx512m -XX:+DisableExplicitGC -Djava.security.egd=file:/dev/urandom"'
@@ -138,7 +138,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: metadata-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/metadata-api:$AGAVE_VERSION
     volumes:
       - './logs/metadata:/opt/tomcat/logs'
     labels:
@@ -152,7 +152,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: notifications-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/notifications-api:$AGAVE_VERSION
     environment:
       - 'IPLANT_MAX_NOTIFICATION_TASKS=2'
     volumes:
@@ -168,7 +168,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: transforms-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/transforms-api:$AGAVE_VERSION
     environment:
       - 'IPLANT_MAX_STAGING_TASKS=2'
       - 'IPLANT_MAX_ARCHIVE_TASKS=2'
@@ -188,7 +188,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: realtime-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/realtime-api:$AGAVE_VERSION
     volumes:
       - './logs/realtime:/opt/tomcat/logs'
     labels:
@@ -203,7 +203,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: tags-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/tags-api:$AGAVE_VERSION
     volumes:
       - './logs/tags:/opt/tomcat/logs'
     labels:
@@ -217,7 +217,7 @@ services:
     extends:
       file: common.yml
       service: java_api
-    image: uuid-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/uuid-api:$AGAVE_VERSION
     volumes:
       - './logs/uuid:/opt/tomcat/logs'
     labels:
@@ -231,16 +231,16 @@ services:
     extends:
       file: common.yml
       service: php_api
-    image: postits-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/postits-api:$AGAVE_VERSION
     hostname: postits.api.example.com
     environment:
       - 'LOG_LEVEL_DEBUG=1'
-      - 'IPLANT_PROXY_SERVICE=http://api.prod.agaveapi.co'
-      - 'IPLANT_POSTIT_SERVICE=https://api.prod.agaveapi.co/postits/v2/'
+      - 'IPLANT_PROXY_SERVICE=http://api.example.com'
+      - 'IPLANT_POSTIT_SERVICE=http://api.example.com/postits/v2/'
       - 'IPLANT_DB_POSTITS_TABLE=postits'
     volumes:
       - './logs/postits:/var/log/apache2'
-      - '../agave-postits/postits-api/src/main/php:/var/www/html' 
+      #- '../agave-postits/postits-api/src/main/php:/var/www/html' 
     labels:
       - traefik.frontend.rule=Host:api.example.com;PathPrefixStrip:/postits
       - traefik.backend=postits
@@ -252,7 +252,7 @@ services:
     extends:
       file: common.yml
       service: php_api
-    image: usage-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/usage-api:$AGAVE_VERSION
     volumes:
       - './logs/usage:/var/log/apache2'
     labels:
@@ -266,7 +266,7 @@ services:
     extends:
       file: common.yml
       service: php_api
-    image: logging-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/logging-api:$AGAVE_VERSION
     volumes:
       - './logs/logging:/var/log/apache2'
     labels:
@@ -280,7 +280,7 @@ services:
     extends:
       file: common.yml
       service: php_api
-    image: tenants-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/tenants-api:$AGAVE_VERSION
     volumes:
       - './logs/tenants:/var/log/apache2'
       - './ssl:/ssl:ro'
@@ -295,7 +295,7 @@ services:
     extends:
       file: common.yml
       service: php_api
-    image: apidocs-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/apidocs-api:$AGAVE_VERSION
     volumes:
       - './logs/docs:/var/log/apache2'
     labels:
@@ -309,7 +309,7 @@ services:
     extends:
       file: common.yml
       service: php_api
-    image: stats-api:$AGAVE_VERSION
+    image: ${AGAVE_DOCKER_REGISTRY}${AGAVE_DOCKER_REGISTRY_USERNAME}/stats-api:$AGAVE_VERSION
     environment:
       - 'PINGDOM_USERNAME=USERNAME'
       - 'PINGDOM_PASSWORD=PASSWORD'

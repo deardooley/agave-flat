@@ -62,3 +62,4 @@ agave-systems/systems-core/src/test/resources/systems/storage/sftp-sshkeys-kbi.e
 compose/proxy/logs
 science-api-samples
 appendonly.aof
+compose/scratch

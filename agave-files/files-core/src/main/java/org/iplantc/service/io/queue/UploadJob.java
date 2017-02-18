@@ -286,6 +286,9 @@ public class UploadJob implements InterruptableJob
 				log.error("Failed to transfer uploaded file " 
 	                    + dataMap.getString("cachedFile") + " to remote destination for "
 	            		+ " when the worker was interrupted.");
+				
+				Thread.currentThread().interrupt();
+				
 	        }
 			catch (SchedulerException e) {
 				if (logicalFile != null) {
@@ -351,5 +354,9 @@ public class UploadJob implements InterruptableJob
     		log.error("Failed to updated logical file status to STAGING_FAILED due to "
     				+ "worker interrupt during upload file staging.", e);
     	}
+    	finally {
+    		Thread.currentThread().interrupt();
+    	}
+		
     }
 }

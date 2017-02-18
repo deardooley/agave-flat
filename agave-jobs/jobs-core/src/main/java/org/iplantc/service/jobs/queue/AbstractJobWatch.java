@@ -11,6 +11,7 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.queue.actions.WorkerAction;
+import org.iplantc.service.jobs.queue.factory.AbstractJobProducerFactory;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -81,11 +82,10 @@ public abstract class AbstractJobWatch implements WorkerWatch {
     	}
     	finally {
     	    if (getJob() != null) {
-//    	        log.debug("Releasing job " + getJob().getUuid() + " after task completion");
-    	        JobProducerFactory.releaseJob(getJob().getUuid());
+    	        log.debug("Releasing job " + getJob().getUuid() + " after task completion");
+    	        AbstractJobProducerFactory.releaseJob(getJob().getUuid());
     	    }
     	}
-    	
     }
 
     @Override
