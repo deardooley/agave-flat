@@ -2,6 +2,7 @@ package org.iplantc.service.jobs.queue;
 
 import java.nio.channels.ClosedByInterruptException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
@@ -18,8 +19,14 @@ import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.JobQuotaCheck;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.queue.actions.SubmissionAction;
+import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
+import org.iplantc.service.systems.exceptions.SystemUnknownException;
+import org.iplantc.service.systems.model.ExecutionSystem;
+import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.enumerations.LoginProtocolType;
+import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
+import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.joda.time.DateTime;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionException;
@@ -119,16 +126,57 @@ public class SubmissionWatch extends AbstractJobWatch
 				return;
 			} 
 			
-			// if it's a condor job, then it has to be submitted from a condor node.
-			// we check to see if this is a submit node. if not, we pass.
-			Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
+			ExecutionSystem executionSystem = null;
+			try {
+				
+				executionSystem = (ExecutionSystem)new SystemDao().findUserSystemBySystemId(job.getOwner(), job.getSystem(), RemoteSystemType.EXECUTION);
+				
+				if (executionSystem == null) {
+					throw new SystemUnknownException("Submission failed due to the job "
+							+ "execution system, " + job.getSystem() + ", having been deleted. No further "
+							+ "action can be taken for this job. The job will be terminated immediately. ");
+				}
+				else if (!executionSystem.isAvailable()) {
+					throw new SystemUnavailableException();
+				}
+				else if (executionSystem.getStatus() != SystemStatusType.UP) {
+					throw new SystemUnavailableException("Job execution system " + job.getSystem() + 
+							" is not currently available. " + executionSystem.getStatus().getExpression());
+				}
+			}	
+			catch (SystemUnknownException e) {
+				try
+				{
+					log.error("Failed to submit job job " + this.job.getUuid(), e);
+					this.job = JobManager.updateStatus(this.job, JobStatusType.ARCHIVING_FAILED, e.getMessage());
+					this.job = JobManager.updateStatus(this.job, JobStatusType.FAILED, 
+							"Job failed during submission due to missing execution system.");
+				}
+				catch (Exception e1) {
+					log.error("Failed to update job " + this.job.getUuid() + " status to FAILED");
+				}
+				throw new JobExecutionException(e);
+			}
+			catch (SystemUnavailableException e) {
+				try
+				{
+					this.job = JobManager.updateStatus(job, JobStatusType.STAGED,
+						"Submission is current paused waiting for the execution system " + executionSystem.getSystemId() +
+						" to become available. If the system becomes available again within 7 days, this job " +
+						"will resume archiving. After 7 days it will be killed.");
+				}
+				catch (Throwable e1) {
+					log.error("Failed to update job " + this.job.getUuid() + " status to PENDING");
+				}	
+				throw new JobExecutionException(e);
+			}
 			
 			// if the execution system login config is local, then we cannot submit
 			// jobs to this system remotely. In this case, a worker will be running
 			// dedicated to that system and will submitting jobs locally. All workers
 			// other that this will should pass on accepting this job.
-			if (software.getExecutionSystem().getLoginConfig().getProtocol().equals(LoginProtocolType.LOCAL) && 
-					!Settings.LOCAL_SYSTEM_ID.equals(job.getSystem()))
+			if (executionSystem.getLoginConfig().getProtocol() == LoginProtocolType.LOCAL && 
+					StringUtils.equals(Settings.LOCAL_SYSTEM_ID, job.getSystem()))
 			{
 				return;
 			}

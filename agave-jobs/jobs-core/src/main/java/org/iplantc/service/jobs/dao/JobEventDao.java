@@ -3,6 +3,9 @@
  */
 package org.iplantc.service.jobs.dao;
 
+import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +17,8 @@ import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
+import org.hibernate.type.DateType;
+import org.hibernate.type.Type;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
@@ -379,7 +384,7 @@ public class JobEventDao {
 			    
 			}
 			
-			log.debug(q);
+//			log.debug(q);
 			
 			List<JobEvent> events = query
 					.addEntity(JobEvent.class)
@@ -393,6 +398,85 @@ public class JobEventDao {
 			
 			return events;
 
+		}
+		catch (Throwable ex)
+		{
+			throw new JobException(ex);
+		}
+		finally {
+			try { HibernateUtil.commitTransaction();} catch (Exception e) {}
+		}
+	}
+
+	/**
+	 * Finds the most recent time that any {@link TransferTask} associated 
+	 * with the given {@code jobId} was updated. For {@link Job}s that have 
+	 * not been updated recently, this effectively indicates whether the 
+	 * {@link Job} is in a zombie state and requires rolling back to a previous 
+	 * known safe state.
+	 *  
+	 * @param jobId
+	 * @return
+	 * @throws JobException
+	 */
+	@SuppressWarnings("unchecked")
+	public static Date getMostRecentTransferUpdateForJob(Long jobId) 
+	throws JobException
+	{
+		try
+		{
+			Session session = getSession();
+			session.clear();
+			
+			// find all root transfer tasks for the job id
+			String sql = "SELECT je.transfertask "
+					   + "FROM jobevents je "
+					   + "WHERE je.job_id = :jobid "
+					   + "		AND je.transfertask <> '' "
+					   + "		AND je.transfertask IS NOT null";
+			List<BigInteger> bigTransferTaskIds = session.createSQLQuery(sql)
+				.setLong("jobid", jobId)
+				.setCacheable(false)
+				.setCacheMode(CacheMode.IGNORE)
+				.list();
+			
+			// if there are none, then the job is a zombie for sure.
+			// return null to indicate as much
+			if (bigTransferTaskIds.isEmpty()) {
+				return null;
+			}
+			// otherwise the job may just have a lot of data movement 
+			// and need more time to complete. check the most recent 
+			// update to any transfer task. this will tell us whether 
+			// the job is alive or dead.
+			else {
+				
+				// just grab the most recent timestamp from the transfer 
+				// tasks in the first query
+				List<Long> transferTaskIds = new ArrayList<Long>();
+				for(BigInteger transferTaskId: bigTransferTaskIds) {
+					transferTaskIds.add(transferTaskId.longValue());
+				}
+				String ttids = StringUtils.join(transferTaskIds, ",");
+				
+				sql = "SELECT max(t.last_updated) as lastTransferUpdate "
+					+ "FROM transfertasks t "
+					+ "WHERE t.id IN (" + ttids + ") "
+					+ "		OR t.root_task in (" + ttids + ") ";
+				
+				Timestamp lastUpdatedTransferTaskTimestamp = (Timestamp) session.createSQLQuery(sql)
+						.setCacheable(false)
+						.setCacheMode(CacheMode.IGNORE)
+						.uniqueResult();
+				
+				// the result will be null or a Date we can pass back.
+				if (lastUpdatedTransferTaskTimestamp == null) {
+					return null;
+				}
+				else {
+					return new DateTime(lastUpdatedTransferTaskTimestamp).toDate();
+				}
+			}
 		}
 		catch (Throwable ex)
 		{

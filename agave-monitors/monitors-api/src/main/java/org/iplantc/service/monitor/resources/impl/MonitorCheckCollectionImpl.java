@@ -173,7 +173,7 @@ public class MonitorCheckCollectionImpl extends AbstractAgaveResource implements
 					StringToTime stt = new StringToTime();
 					Date start = null;
 					if (!StringUtils.isEmpty(startDate)) {
-						stt = new StringToTime(endDate);
+						stt = new StringToTime(startDate);
 						
 						start = new Date(stt.getTime());
 					}

@@ -24,6 +24,7 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.exceptions.SoftwareException;
+import org.iplantc.service.apps.exceptions.UnknownSoftwareException;
 import org.iplantc.service.apps.managers.ApplicationManager;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwareInput;
@@ -2203,44 +2204,46 @@ public class JobManager {
 
 			JsonNode jobInputJson = job.getInputsAsJsonObject();
 			Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
-
-			for (SoftwareInput input: software.getInputs())
-			{
-				if (jobInputJson.has(input.getKey()))
+			if (software != null) {
+				for (SoftwareInput input: software.getInputs())
 				{
-					JsonNode inputJson = jobInputJson.get(input.getKey());
-					String[] inputValues = null;
-					if (inputJson == null || inputJson.isNull() || (inputJson.isArray() && inputJson.size() == 0))
+					if (jobInputJson.has(input.getKey()))
 					{
-						// no inputs, don't even include it in the map
-						continue;
+						JsonNode inputJson = jobInputJson.get(input.getKey());
+						String[] inputValues = null;
+						if (inputJson == null || inputJson.isNull() || (inputJson.isArray() && inputJson.size() == 0))
+						{
+							// no inputs, don't even include it in the map
+							continue;
+						}
+						else if (inputJson.isArray())
+						{
+							// should be an array of
+							inputValues = ServiceUtils.getStringValuesFromJsonArray((ArrayNode)inputJson, false);
+						}
+						else
+						{
+							inputValues = new String[]{ inputJson.textValue() };
+						}
+	
+						map.put(input.getKey(), inputValues);
 					}
-					else if (inputJson.isArray())
-					{
-						// should be an array of
-						inputValues = ServiceUtils.getStringValuesFromJsonArray((ArrayNode)inputJson, false);
-					}
-					else
-					{
-						inputValues = new String[]{ inputJson.textValue() };
-					}
-
-					map.put(input.getKey(), inputValues);
+					else if (!input.isVisible())
+	 				{
+						String[] inputValues = ServiceUtils.getStringValuesFromJsonArray(input.getDefaultValueAsJsonArray(), false);
+						map.put(input.getKey(), inputValues);
+	 				}
 				}
-				else if (!input.isVisible())
- 				{
-					String[] inputValues = ServiceUtils.getStringValuesFromJsonArray(input.getDefaultValueAsJsonArray(), false);
-					map.put(input.getKey(), inputValues);
- 				}
+	
+				return map;
 			}
-
-			return map;
+			else {
+				throw new UnknownSoftwareException("No app found for job " + job.getUuid() + " with id " + job.getSoftwareName());
+			}
 		}
-		catch (Throwable e)
-		{
+		catch (Throwable e) {
 			throw new JobException("Unable to parse job and app inputs", e);
 		}
-
 	}
 
     /**

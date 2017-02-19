@@ -2123,35 +2123,24 @@ public class JobDao
 		Session session = null;
 		try
 		{
+			HibernateUtil.beginTransaction();
 			session = getSession();
 			session.clear();
 			session.disableFilter("jobTenantFilter");
 			
-			String sql ="select j.id " + 
-						"from  " + 
-						"	( " + 
-						"		select jj.id, jj.status, jj.last_updated, jj.uuid, jj.tenant_id, jj.owner, e.transfertask as task_id " + 
-						"		from jobs jj left join jobevents e on jj.id = e.job_id " + 
-						"		where ( " + 
-						"				jj.status in ('PROCESSING_INPUTS', 'STAGING_INPUTS', 'STAGING_JOB', 'SUBMITTING_JOB', 'SUBMITTING', 'ARCHIVING')  " + 
-						"				and NOW() > DATE_ADD(jj.last_updated, INTERVAL 15 minute) " + 
-						"				and e.transfertask is not null " + 
-						"			  ) or  " + 
-						"			  ( " + 
-						"			  	jj.status in ('PROCESSING_INPUTS', 'STAGING_JOB', 'SUBMITTING_JOB', 'SUBMITTING')  " + 
-						"				and NOW() > DATE_ADD(jj.last_updated, INTERVAL 1 hour) " + 
-						"			  ) " + 
-						"	) as j " + 
-						"	left join transfertasks t on j.task_id = t.id " + 
-						"where (t.status = 'TRANSFERRING' or t.status = 'QUEUED') " + 
-						"	and NOW() > DATE_ADD(t.last_updated, INTERVAL 15 minute) " + 
-						"	and t.tenant_id :excludetenant like :tenantId " + 
-						"group by j.id " + 
-						"order by t.last_updated ASC ";
+			String sql ="SELECT j.id " + 
+						"FROM jobs j " +
+						"WHERE j.status in ('PROCESSING_INPUTS', 'STAGING_INPUTS', 'STAGING_JOB', 'SUBMITTING_JOB', 'SUBMITTING', 'ARCHIVING')  " + 
+						"	   AND NOW() > DATE_ADD(j.last_updated, INTERVAL 15 minute) " +  
+						"	   AND j.visible = 1 " + 
+						"	   AND j.tenant_id :excludetenant like :tenantId " + 
+						"ORDER BY j.last_updated ASC ";
 			
 			sql = StringUtils.replace(sql, ":excludetenant", excludeTenant ? "not" : "");
 			
 			List<BigInteger> jobIds = session.createSQLQuery(sql)
+					.setCacheable(false)
+					.setCacheMode(CacheMode.IGNORE)
 					.setString("tenantId", tenantId)
 					.list();
 			
@@ -2163,6 +2152,9 @@ public class JobDao
 		catch (Throwable e)
 		{
 			throw new JobException("Failed to retrieve zombie archiving jobs", e);
+		}
+		finally {
+			try { HibernateUtil.commitTransaction();} catch (Exception e) {}
 		}
 	}
 

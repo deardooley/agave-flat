@@ -5,6 +5,7 @@ package org.iplantc.service.jobs.managers;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.iplantc.service.apps.exceptions.UnknownSoftwareException;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.jobs.exceptions.JobEventProcessingException;
 import org.iplantc.service.jobs.model.JobEvent;
@@ -197,27 +198,35 @@ public class JobEventProcessor {
     	{
         	software = JobManager.getJobSoftwarem(getEvent().getJob());
             jsonContent.set("job", jsonJob);
-            jsonContent.set("software", mapper.readTree(software.toJSON()));
-        
-    		NotificationManager.process(software.getUuid(), eventName, getEvent().getCreatedBy(), jsonContent.toString());
-    		
-    		return true;
+            if (software == null) {
+            	throw new UnknownSoftwareException("No software found for id " + getEvent().getJob().getSoftwareName());
+            }
+            else {
+            	jsonContent.set("software", mapper.readTree(software.toJSON()));
+            	NotificationManager.process(software.getUuid(), eventName, getEvent().getCreatedBy(), jsonContent.toString());
+            	return true;
+            }
         } 
         catch (JsonProcessingException e) {
         	log.error("Unable to serialize software " + getEvent().getJob().getSoftwareName() 
     				+ " while processing a " + eventName + " event for job " + getEvent().getJob().getUuid(), e);
         	
-        	if (jsonContent.has("software")) {
-        		jsonContent.remove("software");
-        	}
+        	jsonContent.set("job", jsonJob);
+        	jsonContent.set("software", mapper.createObjectNode().put("id", getEvent().getJob().getSoftwareName()));
         	
         	NotificationManager.process(software.getUuid(), eventName, getEvent().getCreatedBy(), jsonContent.toString());
     		
         }
+        // software has been deleted
+        catch (UnknownSoftwareException e) {
+        	log.error("Unable to process " + eventName + " event for software " + getEvent().getJob().getSoftwareName()
+    				+ " by job " + getEvent().getJob().getUuid() + ". Software has been deleted.");
+        }
+        // something is just wonky here
         catch (Exception e) {
-    		log.error("Unable to process " + eventName + " event for software " + getEvent().getJob().getSoftwareName()
-    				+ " by job " + getEvent().getJob().getUuid(), e);
-    	}
+        	log.error("Unable to process " + eventName + " event for software " + getEvent().getJob().getSoftwareName()
+        				+ " by job " + getEvent().getJob().getUuid(), e);
+        }
         
         return false;
     }

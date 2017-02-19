@@ -23,6 +23,8 @@ import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.exceptions.SystemUnknownException;
 import org.iplantc.service.systems.model.ExecutionSystem;
+import org.iplantc.service.systems.model.RemoteSystem;
+import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.joda.time.DateTime;
@@ -64,109 +66,6 @@ public class ArchiveWatch extends AbstractJobWatch
                 org.iplantc.service.common.Settings.getDedicatedSystemIdsFromServiceProperties());
     }
 
-//    /* (non-Javadoc)
-//     * @see org.quartz.Job#execute(org.quartz.JobExecutionContext)
-//     */
-//    public void execute(JobExecutionContext context)
-//    throws JobExecutionException
-//    {
-//        Message message = null;
-//        try
-//        {
-//            if (org.iplantc.service.common.Settings.isDrainingQueuesEnabled()) {
-//                log.debug("Queue draining has been enabled. Skipping archive task." );
-//                return;
-//            }
-//
-//            messageClient = MessageClientFactory.getMessageClient();
-//
-//            message = messageClient.pop(org.iplantc.service.common.Settings.JOBS_ARCHIVING_TOPIC,
-//                                        org.iplantc.service.common.Settings.JOBS_ARCHIVING_QUEUE);
-//
-//            if (message != null)
-//            {
-//                messageClient.delete(org.iplantc.service.common.Settings.JOBS_ARCHIVING_TOPIC,
-//                                    org.iplantc.service.common.Settings.JOBS_ARCHIVING_QUEUE,
-//                                    message.getId());
-//
-//
-//                setJob(processMessage(message.getMessage()));
-//
-//                doExecute();
-//            }
-//            else {
-//                log.debug(getClass().getSimpleName() + " worker was given null job uuid. Going for coffee...");
-//            }
-//        }
-//        catch (MessageProcessingException e) {
-//            log.error(e);
-//        }
-//        catch(JobExecutionException e) {
-//            if (allowFailure) throw e;
-//        }
-//        catch (Throwable e) {
-//            log.error("Unexpected error during job archive worker processing. " + (message == null ? "" : message.getMessage()));
-//            try {
-//                Tenant tenant = new TenantDao().findByTenantId(TenancyHelper.getCurrentTenantId());
-//                EmailMessage.send(tenant.getContactName(),
-//                    tenant.getContactEmail(),
-//                    "Job archive worker died unexpectedly",
-//                    "A job archive worker on " + org.iplantc.service.common.Settings.getIpLocalAddress() + " died unexpectedly." +
-//                            ExceptionUtils.getStackTrace(e),
-//                    "<p>A notification worker on " + org.iplantc.service.common.Settings.getIpLocalAddress() + " died unexpectedly.</p><br><p><pre>" +
-//                            ExceptionUtils.getStackTrace(e) + "</pre></p>");
-//                
-//            } catch (Throwable e1) {
-//                log.error("Failed to send job archive worker failure message to admin.",e1);
-//            }
-//        }
-//        finally {
-//            if (getJob() != null) {
-//                log.debug("Releasing job " + getJob().getUuid() + " after task completion");
-//            }
-//        }
-//
-//    }
-
-//    /**
-//     * Parses the message and resolves it into a Job object to process.
-//     *
-//     * @param body
-//     * @return
-//     * @throws MessageProcessingException
-//     */
-//    public Job processMessage(String body) throws MessageProcessingException
-//    {
-//        try
-//        {
-//            JobMessageBody messageBody =
-//                    new ObjectMapper().readValue(body, JobMessageBody.class );
-//
-//            Job job = JobDao.getByUuid(messageBody.getUuid());
-//
-//            if (job == null) {
-//                throw new MessageProcessingException("No job with uuid " + messageBody.getUuid() + " found.");
-//            }
-//            else if (job.getStatus() != JobStatusType.CLEANING_UP) {
-//                throw new MessageProcessingException( "Job " + messageBody.getUuid() +
-//                       " is already archiving through another worker. Ignoring.");
-//            }
-//            else
-//            {
-//                return job;
-//            }
-//        }
-//        catch (MessageProcessingException e) {
-//            throw e;
-//        }
-//        catch (JobException e) {
-//            throw new MessageProcessingException(true, e);
-//        }
-//        catch (Throwable e) {
-//            throw new MessageProcessingException("Job archive message processing failed.", e);
-//        }
-//    }
-
 	/* (non-Javadoc)
      * @see org.iplantc.service.jobs.queue.WorkerWatch#doExecute()
      */
@@ -197,23 +96,41 @@ public class ArchiveWatch extends AbstractJobWatch
 					return;
 				}
 
-            	Software software = SoftwareDao.getSoftwareByUniqueName(getJob().getSoftwareName());
-
-            	// if the execution system for this job has a local storage config,
-            	// all other transfer workers will pass on it.
-                if (!StringUtils.equals(Settings.LOCAL_SYSTEM_ID, getJob().getSystem()) &&
-                		software.getExecutionSystem().getStorageConfig().getProtocol().equals(StorageProtocolType.LOCAL))
-                {
-                    return;
-                }
-                else
-                {
-					// check for resource availability before updating status
-                	ExecutionSystem executionSystem = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
-
-            		if (executionSystem != null && (!executionSystem.isAvailable() || !executionSystem.getStatus().equals(SystemStatusType.UP)))
-            		{
-            			if (!StringUtils.contains(job.getErrorMessage(), "paused waiting")) {
+				ExecutionSystem executionSystem = null;
+				try {
+					
+					executionSystem = (ExecutionSystem)new SystemDao().findUserSystemBySystemId(job.getOwner(), job.getSystem(), RemoteSystemType.EXECUTION);
+					
+					if (executionSystem == null) {
+						throw new SystemUnknownException("Archiving failed due to the job "
+								+ "execution system, " + job.getSystem() + ", having been deleted. No further "
+								+ "action can be taken for this job. The job will be terminated immediately. ");
+					}
+					else if (!executionSystem.isAvailable()) {
+						throw new SystemUnavailableException();
+					}
+					else if (executionSystem.getStatus() != SystemStatusType.UP) {
+						throw new SystemUnavailableException("Job execution system " + job.getSystem() + 
+								" is not currently available. " + executionSystem.getStatus().getExpression());
+					}
+				}	
+				catch (SystemUnknownException e) {
+					try
+					{
+						log.error("Failed to archive outputs for job " + this.job.getUuid(), e);
+						this.job = JobManager.updateStatus(this.job, JobStatusType.ARCHIVING_FAILED, e.getMessage());
+						this.job = JobManager.updateStatus(this.job, JobStatusType.FAILED, 
+								"Job failed while archiving outputs due to missing execution system.");
+					}
+					catch (Exception e1) {
+						log.error("Failed to update job " + this.job.getUuid() + " status to FAILED");
+					}
+					throw new JobExecutionException(e);
+				}
+				catch (SystemUnavailableException e) {
+					try
+					{
+						if (!StringUtils.contains(job.getErrorMessage(), "paused waiting")) {
             				log.debug("Archiving skipped for job " + getJob().getUuid() + ". Execution system " +
             						executionSystem.getSystemId() + " is currently unavailable.");
             			}
@@ -221,9 +138,23 @@ public class ArchiveWatch extends AbstractJobWatch
 							"Archiving is current paused waiting for the execution system " + executionSystem.getSystemId() +
 							" to become available. If the system becomes available again within 7 days, this job " +
 							"will resume archiving. After 7 days it will be killed.");
-						return;
-            		}
-            		else if (job.getArchiveSystem() != null && (!job.getArchiveSystem().isAvailable() || !job.getArchiveSystem().getStatus().equals(SystemStatusType.UP)))
+					}
+					catch (Throwable e1) {
+						log.error("Failed to update job " + this.job.getUuid() + " status to PENDING");
+					}	
+					throw new JobExecutionException(e);
+				}
+
+            	// if the execution system for this job has a local storage config,
+            	// all other transfer workers will pass on it.
+                if (!StringUtils.equals(Settings.LOCAL_SYSTEM_ID, getJob().getSystem()) &&
+                		executionSystem.getStorageConfig().getProtocol().equals(StorageProtocolType.LOCAL))
+                {
+                    return;
+                }
+                else
+                {
+					if (job.getArchiveSystem() != null && (!job.getArchiveSystem().isAvailable() || !job.getArchiveSystem().getStatus().equals(SystemStatusType.UP)))
             		{
             			if (!StringUtils.contains(getJob().getErrorMessage(), "paused waiting")) {
             				log.debug("Archiving skipped for job " + getJob().getUuid() + ". Archive system " +

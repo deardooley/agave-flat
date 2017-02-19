@@ -112,6 +112,28 @@ id="WebApp_ID" version="2.5" metadata-complete="true">
     </init-param>
     <load-on-startup>1</load-on-startup>
   </servlet>
+  
+  <servlet>
+    <servlet-name>ZombieInitializer</servlet-name>
+    <servlet-class>org.quartz.ee.servlet.QuartzInitializerServlet</servlet-class>
+    <init-param>
+      <param-name>config-file</param-name>
+      <param-value>quartz/zombie.properties</param-value>
+    </init-param>
+    <init-param>
+      <param-name>shutdown-on-unload</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>wait-on-shutdown</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>start-scheduler-on-load</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
 
   <!-- Restlet adapter -->
   <servlet>

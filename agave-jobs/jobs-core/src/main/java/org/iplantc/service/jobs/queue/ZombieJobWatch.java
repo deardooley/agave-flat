@@ -1,12 +1,10 @@
 package org.iplantc.service.jobs.queue;
 
-import static org.iplantc.service.jobs.model.enumerations.JobStatusType.ARCHIVING;
-import static org.iplantc.service.jobs.model.enumerations.JobStatusType.CLEANING_UP;
-import static org.iplantc.service.jobs.model.enumerations.JobStatusType.PENDING;
-import static org.iplantc.service.jobs.model.enumerations.JobStatusType.STAGED;
-import static org.iplantc.service.jobs.model.enumerations.JobStatusType.isFinished;
+import static org.iplantc.service.jobs.model.enumerations.JobStatusType.*;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -16,6 +14,7 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.dao.JobDao;
+import org.iplantc.service.jobs.dao.JobEventDao;
 import org.iplantc.service.jobs.exceptions.JobDependencyException;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.managers.JobManager;
@@ -27,6 +26,7 @@ import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.model.enumerations.TransferTaskEventType;
+import org.joda.time.DateTime;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -45,12 +45,17 @@ public class ZombieJobWatch implements org.quartz.Job
 	
 	public ZombieJobWatch() {}
 	
+	private JobExecutionContext context = null;
+	
 	public void execute(JobExecutionContext context)
 			throws JobExecutionException
 	{
+		setContext(context);
+		
 		try 
 		{
 			doExecute();
+			
 		}
 		catch(JobExecutionException e) {
 			throw e;
@@ -71,7 +76,7 @@ public class ZombieJobWatch implements org.quartz.Job
 			}
 			
 			List<BigInteger> zombieJobIds = JobDao.findZombieJobs(TenancyHelper.getDedicatedTenantIdForThisService());
-			
+			List<String> resultUuids = new ArrayList<String>();
 			for (BigInteger jobId: zombieJobIds) 
             {
 				Job job = JobDao.getById(jobId.longValue());
@@ -82,8 +87,58 @@ public class ZombieJobWatch implements org.quartz.Job
 				TenancyHelper.setCurrentTenantId(job.getTenantId());
 				TenancyHelper.setCurrentEndUser(job.getOwner());
 				
-				rollbackJob(job, job.getOwner()); 
+				switch(job.getStatus()) {
+					case STAGING_INPUTS: 
+					case ARCHIVING: 
+					case STAGING_JOB:
+					case SUBMITTING:
+						Date lastUpdatedTransferTime = JobEventDao.getMostRecentTransferUpdateForJob(job.getId());
+						if (lastUpdatedTransferTime == null || 
+								new DateTime(lastUpdatedTransferTime).plusMinutes(15).isBeforeNow()) {
+							
+							log.info("Job " + job.getUuid() + " in the " + job.getTenantId() + 
+								" tenant has not been updated recently, and the last "
+									+ "known transfer associated with the job was last updated at " 
+									+ new DateTime(lastUpdatedTransferTime).toString() + ". This indicates an abandonded job. "
+									+ "Rolling back now." );
+							
+							// clean things up and roll th job back. quota will be checked as part
+							// of the cleanup.
+							rollbackJob(job, job.getOwner());
+							
+							// add to the list of jobs touched by this execution of the zombie cleanup worker
+							resultUuids.add(job.getUuid());
+						}
+						else {
+							log.debug("Job " + job.getUuid() + " in the " + job.getTenantId() + 
+								" tenant has not been updated recently, but has a transfer task " + 
+									"that was last updated at " + lastUpdatedTransferTime + ". This job will not be touched " + 
+									"as long as the transfer continues.");
+						}
+						break;
+					case PROCESSING_INPUTS:
+						log.info("Job " + job.getUuid() + " in the " + job.getTenantId() + 
+								" tenant has not been updated since " + 
+								new DateTime(job.getLastUpdated()).toString() + " and appears to be trapped in an " 
+								+ "unrecoverable state. Rolling back now." );
+						
+						// clean things up and roll th job back. quota will be checked as part
+						// of the cleanup.
+						rollbackJob(job, job.getOwner());
+						
+						// add to the list of jobs touched by this execution of the zombie cleanup worker
+						resultUuids.add(job.getUuid());
+						
+						break;
+					default:
+						log.info("Zombie job " + job.getUuid() + " in the " + job.getTenantId() + 
+								" tenant was last updated at " + new DateTime(job.getLastUpdated()).toString() + 
+								" and needs rolled back.");
+						break;
+				}
             }
+			
+			setJobResult(StringUtils.join(resultUuids, ","));
 		}
 		catch (JobException | JobDependencyException e) {
 			log.error(e);
@@ -300,5 +355,28 @@ public class ZombieJobWatch implements org.quartz.Job
 				}
 			}
 		}
-	}		
+	}
+
+	/**
+	 * @return the context
+	 */
+	public JobExecutionContext getContext() {
+		return context;
+	}
+
+	/**
+	 * @param context the context to set
+	 */
+	public void setContext(JobExecutionContext context) {
+		this.context = context;
+	}	
+	
+	/**
+	 * Set the result object for this job which will be passed to the job listener
+	 * for logging, etc.
+	 * @param result
+	 */
+	protected void setJobResult(Object result) {
+		getContext().setResult(result);
+	}
 }

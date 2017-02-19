@@ -64,29 +64,29 @@ public class AgaveJobCleanupTriggerListener implements TriggerListener {
 		
 		try {
 			if (context.getMergedJobDataMap().containsKey("uuid") ) {
-				log.debug("Quartz job " + trigger.getJobKey() + " completed running. " + context.getScheduler().getMetaData().getSummary());
+				log.debug("Quartz job " + trigger.getJobKey() + " completed running after " + context.getJobRunTime() + " milliseconds.");//.getScheduler().getMetaData().getSummary());
 				
-				log.debug("Attempting to delete quartz job " + trigger.getJobKey() + " for agave uuid: " + context.getMergedJobDataMap().getString("uuid"));
+//				log.debug("Attempting to delete quartz job " + trigger.getJobKey() + " for agave uuid: " + context.getMergedJobDataMap().getString("uuid"));
 				
 				if (context.getScheduler().checkExists(trigger.getJobKey())) {
-					log.debug("Deleting quartz job " + trigger.getJobKey() + " for agave uuid: " + context.getMergedJobDataMap().getString("uuid"));
+//					log.debug("Deleting quartz job " + trigger.getJobKey() + " for agave uuid: " + context.getMergedJobDataMap().getString("uuid"));
 					context.getScheduler().deleteJob(trigger.getJobKey());
-					log.debug("Successfully deleted quartz job " + trigger.getJobKey() + " for agave uuid: " + context.getMergedJobDataMap().getString("uuid"));
+//					log.debug("Successfully deleted quartz job " + trigger.getJobKey() + " for agave uuid: " + context.getMergedJobDataMap().getString("uuid"));
 					
 					if (context.getScheduler().getTrigger(trigger.getKey()) == null) { 
-						log.debug("Quartz trigger " + trigger.getKey() + " was removed");
+//						log.debug("Quartz trigger " + trigger.getKey() + " was removed");
 					}
 					else {
-						log.debug("Quartz trigger " + trigger.getKey() + " was not removed. State is " + context.getScheduler().getTriggerState(trigger.getKey()).name());
+//						log.debug("Quartz trigger " + trigger.getKey() + " was not removed. State is " + context.getScheduler().getTriggerState(trigger.getKey()).name());
 					}
 					
-					log.debug("Successfully deleted quartz job " + trigger.getJobKey() + " for agave uuid: " + context.getMergedJobDataMap().getString("uuid"));
+//					log.debug("Successfully deleted quartz job " + trigger.getJobKey() + " for agave uuid: " + context.getMergedJobDataMap().getString("uuid"));
 					
 				} else {
-					log.debug("No quartz job " + trigger.getKey() + " found for agave uuid: " + context.getMergedJobDataMap().getString("uuid"));
+//					log.debug("No quartz job " + trigger.getKey() + " found for agave uuid: " + context.getMergedJobDataMap().getString("uuid"));
 				}
 				
-				log.debug("Completed cleaning up quartz job " + trigger.getJobKey() + " for agave job " + context.getMergedJobDataMap().getString("uuid"));
+//				log.debug("Completed cleaning up quartz job " + trigger.getJobKey() + " for agave job " + context.getMergedJobDataMap().getString("uuid"));
 			}
 			else {
 //				log.debug("Completed quartz job " + trigger.getJobKey() + " for job " + context.getMergedJobDataMap().getString("uuid"));

@@ -16,6 +16,7 @@
         <property name="hibernate.query.factory_class">org.hibernate.hql.ast.ASTQueryTranslatorFactory</property>
         <property name="hibernate.connection.autocommit">false</property>
         <property name="hibernate.cache.use_second_level_cache">false</property>
+         <property name="hibernate.cache.use_query_cache">false</property>
         <!--<property name="hbm2ddl.auto">update</property>-->
         <property name="hibernate.show_sql">false</property>
         <property name="hibernate.query.substitutions">true 1, false 0</property>

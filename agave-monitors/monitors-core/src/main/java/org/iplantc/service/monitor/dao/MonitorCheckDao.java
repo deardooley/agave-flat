@@ -204,7 +204,7 @@ public class MonitorCheckDao extends AbstractDao
 		}
 		
 		if (startDate == null) {
-			startDate = new DateTime().minusSeconds(1).toDate();
+			startDate = new Date(0);
 		}
 		
 		if (endDate == null) {

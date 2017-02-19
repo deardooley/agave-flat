@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.apps.dao.SoftwareDao;
+import org.iplantc.service.apps.exceptions.UnknownSoftwareException;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
@@ -20,8 +21,14 @@ import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.managers.JobQuotaCheck;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.queue.actions.StagingAction;
+import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
+import org.iplantc.service.systems.exceptions.SystemUnknownException;
+import org.iplantc.service.systems.model.ExecutionSystem;
+import org.iplantc.service.systems.model.RemoteSystem;
+import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
+import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.joda.time.DateTime;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionException;
@@ -114,12 +121,56 @@ public class StagingWatch extends AbstractJobWatch
 				throw new JobExecutionException(e);
 			}
 			
-			Software software = SoftwareDao.getSoftwareByUniqueName(this.job.getSoftwareName());
-            
+			ExecutionSystem executionSystem = null;
+			try {
+				
+				executionSystem = (ExecutionSystem)new SystemDao().findUserSystemBySystemId(job.getOwner(), job.getSystem(), RemoteSystemType.EXECUTION);
+				
+				if (executionSystem == null) {
+					throw new SystemUnknownException("Input staging failed due to the job "
+							+ "execution system, " + job.getSystem() + ", having been deleted. No further "
+							+ "action can be taken for this job. The job will be terminated immediately. ");
+				}
+				else if (!executionSystem.isAvailable()) {
+					throw new SystemUnavailableException();
+				}
+				else if (executionSystem.getStatus() != SystemStatusType.UP) {
+					throw new SystemUnavailableException("Job execution system " + job.getSystem() + 
+							" is not currently available. " + executionSystem.getStatus().getExpression());
+				}
+			}	
+			catch (SystemUnknownException e) {
+				try
+				{
+					log.error("Failed to stage inputs for job " + this.job.getUuid(), e);
+					this.job = JobManager.updateStatus(this.job, JobStatusType.FAILED, 
+							"Job failed while staging inputs due to missing execution system.");
+				}
+				catch (Exception e1) {
+					log.error("Failed to update job " + this.job.getUuid() + " status to FAILED");
+				}
+				throw new JobExecutionException(e);
+			}
+			catch (SystemUnavailableException e) {
+				try
+				{
+					log.debug("System for job " + this.job.getUuid() + " is currently unavailable. " + e.getMessage());
+					this.job = JobManager.updateStatus(this.job, JobStatusType.PENDING, 
+						"Input staging is current paused waiting for a system containing " + 
+						"input data to become available. If the system becomes available " +
+						"again within 7 days, this job " + 
+						"will resume staging. After 7 days it will be killed.");
+				}
+				catch (Throwable e1) {
+					log.error("Failed to update job " + this.job.getUuid() + " status to PENDING");
+				}	
+				throw new JobExecutionException(e);
+			}
+			
         	// if the execution system for this job has a local storage config,
         	// all other transfer workers will pass on it.
             if (!StringUtils.equals(Settings.LOCAL_SYSTEM_ID, this.job.getSystem()) &&
-            		software.getExecutionSystem().getStorageConfig().getProtocol().equals(StorageProtocolType.LOCAL)) 
+            		executionSystem.getStorageConfig().getProtocol() == StorageProtocolType.LOCAL) 
             {
                 return;
             }
@@ -295,7 +346,7 @@ public class StagingWatch extends AbstractJobWatch
                     "Job staging reset due to worker shutdown. Staging will resume in another worker automatically.");
                 JobDao.persist(job);
             } catch (UnresolvableObjectException | JobException e1) {
-                log.error("Failed to roll back job status when archive task was interrupted.", e);
+                log.error("Failed to roll back job " + job.getUuid() + " status when staging task was interrupted.", e);
             }
             throw new JobExecutionException("Staging task for job " + job.getUuid() + " aborted due to interrupt by worker process.");
         }
@@ -303,6 +354,31 @@ public class StagingWatch extends AbstractJobWatch
             log.debug("Job " + job.getUuid() + " already being processed by another staging thread. Ignoring.");
             throw new JobExecutionException("Job " + job.getUuid() + " already being processed by another staging thread. Ignoring.", e);
         }
+		catch (JobException e) {
+			
+			if (e.getCause() instanceof UnknownSoftwareException) {
+				log.debug("Staging task for job " + job.getUuid() + " aborted due to unknown software id " + job.getSoftwareName());
+				
+				try {
+					this.job = JobManager.updateStatus(this.job, JobStatusType.FAILED, 
+							"Input staging failed due to the app associated with this job, "
+							+ ", " + job.getSoftwareName() + ", having been deleted. No further "
+							+ "action can be taken for this job. The job will be terminated immediately.");
+				} catch (Exception e1) {
+	                log.error("Failed to roll back job " + job.getUuid() + " status when staging task was aborted due to missing app.", e);
+	            }
+	            throw new JobExecutionException("Staging task for job " + job.getUuid() + " aborted due to missing app.");
+			}
+			else {
+				String message = "Failed to stage input data for job " + getJob().getUuid() + ". " + e.getMessage();
+				log.error(message, e);
+	            
+	            try {
+	                this.job = JobManager.updateStatus(job, JobStatusType.FAILED, message);
+	            } catch (Exception e1) {}
+	            throw new JobExecutionException(e);
+			}
+		}
 		catch (Throwable e)
         {
             if (e.getCause() instanceof StaleObjectStateException) {
