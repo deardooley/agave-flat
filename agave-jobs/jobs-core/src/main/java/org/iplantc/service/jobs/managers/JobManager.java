@@ -333,16 +333,9 @@ public class JobManager {
         return job;
 	}
 	
-    /** Rollback a job to a prior status by performing the following: 
+    /** Rollback a job to a prior status.
      * 
-     *     1. Atomically 
-     *          a. change the job status 
-     *          b. remove existing publish records
-     *          c. remove existing interrupt records
-     *     2. Cancel job transfers
-     *     3. Interrupt the job's worker thread
-     * 
-     * @param job to the job to be rolled back
+     * @param job the job to be rolled back
      * @param rollbackMessage a custom message saved with the status change or 
      *                        null to save the standard message
      * @return the refreshed job object
@@ -350,50 +343,7 @@ public class JobManager {
      */
     public static Job rollbackJob(Job job, String rollbackMessage) throws JobException
     {
-        // Make sure we have a job.
-        if (job == null) {
-            String msg = "Cannot rollback null job.";
-            log.error(msg);
-            throw new JobException(msg);
-        }
-        
-        // ----- Stop the job.
-        // Stop the job if it's not in a finished or an archiving finished state.
-        // After the statement below executes, the job will not be picked up 
-        // by any scheduler because it will be in a non-trigger status.  If 
-        // stopRunningJob() is called, it will issue an interrupt.  In the 
-        // interim between this finished state and the upcoming call DAO call
-        // to rollback the job, a worker processing the job may or may not 
-        // process an interrupt that causes it to abandon processing the job. 
-        // that causes it to stop processing.  
-        //
-        // Not that it is not safe to assume no worker is processing a job during 
-        // rollback processing.  More precisely, a job can be in one of the 
-        // following states AFTER the statement below executes:
-        //
-        //   The job is:
-        //      - in a phase scheduler queue, or
-        //      - about to be put into a phase scheduler queue, or
-        //      - processing in a worker, or
-        //      - being ignored by all schedulers and not in any queue.
-        //
-        // The last case requires no extra work.  The first three cases require
-        // a current or future worker to ignore or stop processing the job being 
-        // rolled back.
-        if (!JobStatusType.isFinished(job.getStatus()) && 
-            !JobStatusType.isArchived(job.getStatus()))
-           job = stopRunningJob(job, "Preparing for rollback by stopping job");
-
-        // ----- Update the job status and remove publish records.
-        // Rollback routine will provide the default rollback message if necessary.  
-        // Once the dao rolls back the job, it can be rescheduled by the rollback
-        // scheduler.  There is no need for a rollback interrupt message since either
-        // (1) the previous stopRunningJob() call issued one or (2) the job was 
-        // already in a finished state and, therefore, any necessary interrupt has
-        // already been sent.
-        job = JobDao.rollback(job, rollbackMessage);
-
-        return job;
+        return JobDao.rollback(job, rollbackMessage);
     }
     
 	/**

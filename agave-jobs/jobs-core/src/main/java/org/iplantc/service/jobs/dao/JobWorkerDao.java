@@ -308,6 +308,72 @@ public final class JobWorkerDao
         return rows;
     }
     
+    /* ---------------------------------------------------------------------- */
+    /* lockJobClaim:                                                          */
+    /* ---------------------------------------------------------------------- */
+    /** This method should only be called during rollback processing where locks
+     * have already been acquire on a job record in the jobs table and we need
+     * to lock the job's record in the job_workers table.  
+     * 
+     * The caller is expected to have already begun a transaction on the session
+     * assigned in thread local storage.  This method uses that session without
+     * committing or rolling back its transaction--it just issues a SELECT FOR 
+     * UPDATE call to retrieve information and lock the record.
+     * 
+     * Retrieve the claim for the specified job if one exists.   
+     * 
+     * @param jobUuid the UUID of the job being queried
+     * @return the job claim or null if it doesn't exist
+     * @throws JobException on error
+     */
+    public static JobClaim lockJobClaim(String jobUuid)
+     throws JobException
+    {
+        // ------------------------- Check Input -------------------------
+        // Null or empty check.
+        if (StringUtils.isBlank(jobUuid)) {
+            String msg = "Null or empty job UUID received.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // ------------------------- Call SQL ----------------------------
+        JobClaim jobClaim = null;
+        try
+        {
+            // Continue using existing transaction in thread local session.
+            Session session = HibernateUtil.getSession();
+
+            // Issue the SELECT FOR UPDATE call.
+            // NOTE: Any changes to the job_workers table requires maintenance
+            //       here and in the populate routine below.
+            String sql = "select job_uuid, worker_uuid, host, container_id " +
+                         "from job_workers " +
+                         "where job_uuid = :jobUuid FOR UPDATE";
+            
+            // Fill in the placeholders.           
+            Query qry = session.createSQLQuery(sql);
+            qry.setString("jobUuid", jobUuid);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            
+            // Issue the call to get the claim.
+            Object obj = qry.uniqueResult();
+            
+            // Populate the output object.
+            jobClaim = populateJobClaim(obj);
+        }
+        catch (Exception e)
+        {
+            // Log error, throw exception, but let caller clean up transaction.
+            String msg = "Unable to query job claim for job " + jobUuid + "."; 
+            _log.error(msg);
+            throw new JobException(msg, e);
+        }
+        
+        return jobClaim;
+    }
+    
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
@@ -375,7 +441,8 @@ public final class JobWorkerDao
     /* ---------------------------------------------------------------------- */
     /* getJobClaim:                                                           */
     /* ---------------------------------------------------------------------- */
-    /** Retrieve the claim for the specified job if one exists.  
+    /** Retrieve the claim for the specified job or worker if one exists.  The
+     * selector allows us to use the same code to search by job or worker UUID.  
      * 
      * @param selector the search criterion
      * @param selectorValue the value of the search criterion
@@ -402,7 +469,7 @@ public final class JobWorkerDao
             session.clear();
             HibernateUtil.beginTransaction();
 
-            // Create the insert command using table definition field order.
+            // Retrieve the claim record using the selector information.
             // NOTE: Any changes to the job_queues table requires maintenance
             //       here and in the populate routine below.
             String sql = "select job_uuid, worker_uuid, host, container_id " +
@@ -430,7 +497,7 @@ public final class JobWorkerDao
             try {HibernateUtil.rollbackTransaction();}
              catch (Exception e1){_log.error("Rollback failed.", e1);}
             
-            String msg = "Unable to query job claime using " + 
+            String msg = "Unable to query job claim using " + 
                     ((selector == Selector.JOB_UUID) ? "job " : " worker ") + 
                     "uuid " + selectorValue + ".";
             _log.error(msg);

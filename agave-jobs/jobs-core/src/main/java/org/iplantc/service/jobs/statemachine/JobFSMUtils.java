@@ -114,7 +114,6 @@ public final class JobFSMUtils
             case KILLED:                return JobFSMStates.Killed;
             case STOPPED:               return JobFSMStates.Stopped;
             case FAILED:                return JobFSMStates.Failed;
-            case ROLLINGBACK:           return JobFSMStates.RollingBack;
             default:                    break;
         }
         
@@ -154,7 +153,6 @@ public final class JobFSMUtils
             case KILLED:                return JobFSMEvents.TO_KILLED;
             case STOPPED:               return JobFSMEvents.TO_STOPPED;
             case FAILED:                return JobFSMEvents.TO_FAILED;
-            case ROLLINGBACK:           return JobFSMEvents.TO_ROLLINGBACK;
             default:                    break;
         }
     

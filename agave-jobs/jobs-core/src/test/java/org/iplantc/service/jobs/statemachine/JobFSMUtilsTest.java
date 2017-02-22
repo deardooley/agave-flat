@@ -35,13 +35,13 @@ public class JobFSMUtilsTest
         result = JobFSMUtils.hasTransition(JobStatusType.RUNNING, JobStatusType.CLEANING_UP);
         Assert.assertTrue(result, "Failed on a legal transaction!");
 
-        result = JobFSMUtils.hasTransition(JobStatusType.ROLLINGBACK, JobStatusType.CLEANING_UP);
+        result = JobFSMUtils.hasTransition(JobStatusType.ARCHIVING, JobStatusType.CLEANING_UP);
         Assert.assertTrue(result, "Failed on a legal transaction!");
 
-        result = JobFSMUtils.hasTransition(JobStatusType.ROLLINGBACK, JobStatusType.PENDING);
+        result = JobFSMUtils.hasTransition(JobStatusType.STAGED, JobStatusType.PENDING);
         Assert.assertTrue(result, "Failed on a legal transaction!");
 
-        result = JobFSMUtils.hasTransition(JobStatusType.ROLLINGBACK, JobStatusType.STAGED);
+        result = JobFSMUtils.hasTransition(JobStatusType.STAGING_JOB, JobStatusType.STAGED);
         Assert.assertTrue(result, "Failed on a legal transaction!");
 
         // ----- Illegal transitions.
@@ -57,13 +57,13 @@ public class JobFSMUtilsTest
         result = JobFSMUtils.hasTransition(JobStatusType.PAUSED, null);
         Assert.assertFalse(result, "Failed to identify an illegal transaction!");
         
-        result = JobFSMUtils.hasTransition(null, JobStatusType.ROLLINGBACK);
+        result = JobFSMUtils.hasTransition(null, JobStatusType.PENDING);
         Assert.assertFalse(result, "Failed to identify an illegal transaction!");
         
-        result = JobFSMUtils.hasTransition(JobStatusType.ROLLINGBACK, JobStatusType.STAGING_INPUTS);
+        result = JobFSMUtils.hasTransition(JobStatusType.FINISHED, JobStatusType.STAGING_INPUTS);
         Assert.assertFalse(result, "Failed to identify an illegal transaction!");
         
-        result = JobFSMUtils.hasTransition(JobStatusType.ROLLINGBACK, JobStatusType.ROLLINGBACK);
+        result = JobFSMUtils.hasTransition(JobStatusType.FAILED, JobStatusType.FINISHED);
         Assert.assertFalse(result, "Failed to identify an illegal transaction!");
         
         // ----- Junk.

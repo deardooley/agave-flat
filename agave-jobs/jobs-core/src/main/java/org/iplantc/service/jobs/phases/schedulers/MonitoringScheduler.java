@@ -211,9 +211,10 @@ public final class MonitoringScheduler
                 // the second is the time period that has to elapse 
                 // for the job to be monitored again.
                 if ((statusChecks < intervalCheck[0]) && 
-                    now.isAfter(lastUpdated.plusSeconds(intervalCheck[1])))
+                    now.isAfter(lastUpdated.plusSeconds(intervalCheck[1]))) {
                    keep = true; // do not remove this job from the list
                    break; 
+                }
             }
             if (keep) continue;
             

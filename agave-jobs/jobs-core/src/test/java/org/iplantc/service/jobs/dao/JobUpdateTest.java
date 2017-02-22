@@ -111,9 +111,12 @@ public class JobUpdateTest
         parms.setVisible(true);
         parms.setWorkPath(workPath);
         parms.setStatusChecks(statusChecks);
+        
+        // Set the current epoch to the default value.
+        int currentEpoch = 0;
        
         // Update the job.
-        try {JobDao.update(JOB_UUID, TENANT_ID, parms);}
+        try {JobDao.update(JOB_UUID, TENANT_ID, currentEpoch, parms);}
         catch (JobException e) {
             e.printStackTrace();
             Assert.fail("update call failed: " + e.getMessage());
@@ -188,8 +191,11 @@ public class JobUpdateTest
         parms.setStatus(JobStatusType.PROCESSING_INPUTS);
         parms.setStatusChecks(statusChecks);
        
+        // Set the current epoch to the default value.
+        int currentEpoch = 0;
+       
         // Update the job.
-        try {JobDao.update(JOB_UUID, TENANT_ID, parms);}
+        try {JobDao.update(JOB_UUID, TENANT_ID, currentEpoch, parms);}
         catch (JobException e) {
             e.printStackTrace();
             Assert.fail("update call failed: " + e.getMessage());
@@ -238,9 +244,12 @@ public class JobUpdateTest
         JobUpdateParameters parms = new JobUpdateParameters();
         parms.setStatus(JobStatusType.ARCHIVING);
        
+        // Set the current epoch to the default value.
+        int currentEpoch = 0;
+       
         // Update the job.
         boolean exceptionCaught = false;
-        try {JobDao.update(JOB_UUID, TENANT_ID, parms);}
+        try {JobDao.update(JOB_UUID, TENANT_ID, currentEpoch, parms);}
         catch (JobException e) {exceptionCaught = true;}
         Assert.assertTrue(exceptionCaught, "The expected exception was not thrown.");
         

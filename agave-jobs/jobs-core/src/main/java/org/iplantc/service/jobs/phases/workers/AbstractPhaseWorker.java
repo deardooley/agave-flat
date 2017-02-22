@@ -112,11 +112,13 @@ public abstract class AbstractPhaseWorker
         _tenantId   = parms.tenantId;
         _queueName  = parms.queueName;
         _threadNum  = parms.threadNum;
+//        _threadUuid = new AgaveUUID(UUIDType.USER_ROLE).toString();
         _threadUuid = new AgaveUUID(UUIDType.JOB_WORKER_THREAD).toString();
         
         if (_log.isDebugEnabled()) {
             String msg = "Worker thread " + getName() + " has been assigned UUID " +
-            _threadUuid + ".";
+                         _threadUuid + ".";
+            _log.debug(msg);
         }
     }
     
@@ -858,6 +860,8 @@ public abstract class AbstractPhaseWorker
         _job = job;
 
         // Capture the epoch before hibernate can change it.
+        // The caller has already checked that the request
+        // epoch matches the job's epoch when retrieved.
         setJobInitialEpoch(job.getEpoch());
         
         // Claim this job for this worker thread.

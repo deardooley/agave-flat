@@ -30,17 +30,22 @@ import org.iplantc.service.common.search.AgaveResourceResultOrdering;
 import org.iplantc.service.common.search.SearchTerm;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.utils.JobDaoUtils;
+import org.iplantc.service.jobs.dao.utils.JobLockResult;
+import org.iplantc.service.jobs.exceptions.JobEpochException;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobClaim;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
 import org.iplantc.service.jobs.model.dto.JobDTO;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.model.enumerations.PermissionType;
+import org.iplantc.service.jobs.phases.queuemessages.StopJobMessage;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobActiveCount;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobMonitorInfo;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
+import org.iplantc.service.jobs.phases.utils.TopicMessageSender;
 import org.iplantc.service.jobs.search.JobSearchFilter;
 import org.iplantc.service.jobs.statemachine.JobFSMUtils;
 import org.joda.time.DateTime;
@@ -424,145 +429,6 @@ public class JobDao
 	}
 	
 	
-	/** Get the current status value of a job record and maintain an exclusive 
-	 * lock on that record.  We begin a transaction, query a job by its primary
-	 * key, and keep that transaction open when the method completes.  
-	 * 
-	 * The caller is responsible for committing or rolling back the transaction
-	 * and if this requirement is not observed, bad things will happen.  To
-	 * emphasize:
-	 * 
-	 *     THE CALLER MUST COMPLETE THE TRANSACTION BEGUN HERE
-	 *     
-	 * The session on which the transaction can be rolled back or committed is
-	 * the threadlocal session managed by HibernateUtil.  Therefore, the 
-	 * transaction can be completed by calling rollbackTransaction() or
-	 * commitTransaction() on HibernateUtil on the SAME THREAD.  The usual case,
-	 * however, is to call persistLockedJob(job) to update the job record to
-	 * complete the transaction. 
-	 * 
-	 * NOTE: If the query fails, the transaction is rolled back and a null
-	 *       status is returned.  The caller does not need to complete the 
-	 *       transaction in this case.
-	 * 
-	 * @param job the job to lock
-	 * @return the current version of a job (open transaction) or 
-	 *         null (rolled back transaction) 
-	 */
-    public static JobStatusType lockJobForStatus(Job job)
-    {
-        // Get the current version of a job record 
-        // and obtain an exclusive lock on that record.
-        JobStatusType status = null;
-        try {
-            // Get a hibernate session.
-            Session session = HibernateUtil.getSession();
-            session.clear();
-            HibernateUtil.beginTransaction();
-            
-            // Retrieve the current version of the job.
-            String sql = "select status from jobs " +
-                         "where id = :id FOR UPDATE";
-       
-            // Make the query and leave transaction open.          
-            String result = (String) session.createSQLQuery(sql)
-                            .setLong("id", job.getId())
-                            .uniqueResult();
-            
-            // Convert the result string.
-            if (result != null) {
-                try {status = JobStatusType.valueOf(result);}
-                catch (Exception e) {
-                    String msg = "Unable to convert " + result + " into a JobStatusType";
-                    log.error(msg, e);
-                    throw e;
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            // Rollback transaction.
-            try {HibernateUtil.rollbackTransaction();}
-             catch (Exception e1){log.error("Rollback failed.", e1);}
-            
-            String msg = "Unable to lock running job " + job.getUuid() + 
-                         " (" + job.getName() + ").";
-            log.error(msg, e);
-        }
-        
-        // Return session with uncommitted transaction.
-        return status;
-    }
-	
-    /** Get the current status value of a job record and maintain an exclusive 
-     * lock on that record.  We begin a transaction, query a job by its primary
-     * key, and keep that transaction open when the method completes.  
-     * 
-     * The caller is responsible for committing or rolling back the transaction
-     * and if this requirement is not observed, bad things will happen.  To
-     * emphasize:
-     * 
-     *     THE CALLER MUST COMPLETE THE TRANSACTION BEGUN HERE
-     *     
-     * The session on which the transaction can be rolled back or committed is
-     * the threadlocal session managed by HibernateUtil.  Therefore, the 
-     * transaction can be completed by calling rollbackTransaction() or
-     * commitTransaction() on HibernateUtil on the SAME THREAD.  The usual case,
-     * however, is to call persistLockedJob(job) to update the job record to
-     * complete the transaction. 
-     * 
-     * NOTE: If the query fails, the transaction is rolled back and a null
-     *       status is returned.  The caller does not need to complete the 
-     *       transaction in this case.
-     * 
-     * @param jobUuid the unique identifier of the job to lock
-     * @return the current version of a job (open transaction) or 
-     *         null (rolled back transaction) 
-     */
-    public static JobStatusType lockJobForStatus(String jobUuid)
-    {
-        // Get the current version of a job record 
-        // and obtain an exclusive lock on that record.
-        JobStatusType status = null;
-        try {
-            // Get a hibernate session.
-            Session session = HibernateUtil.getSession();
-            session.clear();
-            HibernateUtil.beginTransaction();
-            
-            // Retrieve the current version of the job.
-            String sql = "select status from jobs " +
-                         "where uuid = :uuid FOR UPDATE";
-       
-            // Make the query and leave transaction open.          
-            String result = (String) session.createSQLQuery(sql)
-                            .setString("uuid", jobUuid)
-                            .uniqueResult();
-            
-            // Convert the result string.
-            if (result != null) {
-                try {status = JobStatusType.valueOf(result);}
-                catch (Exception e) {
-                    String msg = "Unable to convert " + result + " into a JobStatusType";
-                    log.error(msg, e);
-                    throw e;
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            // Rollback transaction.
-            try {HibernateUtil.rollbackTransaction();}
-             catch (Exception e1){log.error("Rollback failed.", e1);}
-            
-            String msg = "Unable to lock running job with UUID " + jobUuid + ").";
-            log.error(msg, e);
-        }
-        
-        // Return session with uncommitted transaction.
-        return status;
-    }
-    
     /** Use this method insert new job records into the database.
      * 
      * @param job the new job
@@ -649,7 +515,7 @@ public class JobDao
         }
         
         // Call the real update method and then refresh the job object.
-        int rows = update(job.getUuid(), job.getTenantId(), parms);
+        int rows = update(job.getUuid(), job.getTenantId(), job.getEpoch(), parms);
         refresh(job);
         return rows;
     }
@@ -690,8 +556,8 @@ public class JobDao
 	 * @return the number of rows in the database affected (0 or 1)
 	 */
 	public static int update(String jobUuid, String jobTenantId, 
-	                         JobUpdateParameters parms)
-	 throws JobException, JobFinishedException
+	                         int jobEpoch, JobUpdateParameters parms)
+	 throws JobException, JobFinishedException, JobEpochException
 	{
 	    // ------------------- Check Input -------------------
 	    // Make sure we have a job uuid.
@@ -741,22 +607,52 @@ public class JobDao
             throw new JobException(msg);
 	    }
 
-	    // ------------------- Get Session -------------------
-	    // Status changes require validation using the current status in the database
-	    // and require us to lock the job record until this transaction completes.
-	    // The lock method acquires the session for us and starts a transaction.
-	    Session session = null;
+	    // ------------------- Lock Job --------------------
+        // No update can take place unless we can read certain values from the job
+        // record and maintain a lock on that job record.  The lock method acquires 
+        // a session for us and starts a transaction.  If this call returns a 
+        // value, then we must either commit or rollback the transaction before
+        // before returning from this method.  If the call throws an exception,
+        // no further session or transaction clean up is necessary.
+	    JobLockResult jobLockResult = lockJob(jobUuid);
 	    
-	    // Both branches of this conditional statement set the session variable.
+        // ***********************************************************************
+        // **** Open Transaction From This Point On -- Close Before Returning ****
+        // ***********************************************************************
+	    
+	    // ------------------- Check Epoch -------------------
+        // Updates can only occur when the local job epoch matches the job's epoch in the
+        // database.  This check fails when a rollback action has occurred after our 
+        // in-memory job information was retrieved.  In this case, the local job's epoch 
+        // will be less than its epoch in the database (the ultimate source of truth).
+        if (jobLockResult.epoch != jobEpoch) {
+            
+            // Abort the update since the attempted status 
+            // change is illegal, but first log the problem.
+            String msg = "Stale job epoch value detected. Job " + jobUuid + 
+                         " for tenant " + jobTenantId + " is now in epoch " + 
+                         jobLockResult.epoch + " as defined in the database. " +
+                         "This does not match the local epoch value of " + jobEpoch + ".";
+            log.error(msg);
+            
+            // Release the lock on the job record.
+            try {HibernateUtil.rollbackTransaction();}
+            catch (Exception e) {
+                String msg2 = "Failure rolling back transaction on locked job record.";
+                log.error(msg2, e);
+            }
+            
+            // Throw our exception.
+            throw new JobEpochException(msg);
+        }
+	    
+	    // ------------------- Check Status ------------------
+        // Status changes require validation using the current status in the database.
+        // We check if there's a legal transition from the current status to the new one.
 	    if (parms.isStatusFlag()) {
 	        
 	        // A transaction is begun only if the lock method returns a non-null status.
-	        JobStatusType curStatus = lockJobForStatus(jobUuid);
-	        if (curStatus == null) {
-	            String msg = "Unable to query job record for current status.";
-	            log.error(msg);
-	            throw new JobException(msg);
-	        }
+	        JobStatusType curStatus = jobLockResult.status;
 	        
 	        // Check if the status change is legal.
 	        if (!JobFSMUtils.hasTransition(curStatus, parms.getStatus())) {
@@ -779,33 +675,23 @@ public class JobDao
 	            if (JobStatusType.isFinished(curStatus)) throw new JobFinishedException(msg);
 	              else throw new JobException(msg);
 	        }
-	        
-	        // Get the thread-local session in which the lock routine began our transaction.
-	        try {session = HibernateUtil.getSession();}
-	            catch (Exception e) {
-	                String msg = "Unable to retrieve thread-local session.";
-	                log.error(msg, e);
-	                throw new JobException(msg);
-	            }
 	    }
-	    else {
-	        try {
-	            // Get a hibernate session.
-	            session = HibernateUtil.getSession();
-	            session.clear();
-	            HibernateUtil.beginTransaction();
-	        }
+	    
+        // ------------------- Get Session -------------------
+        // Get the thread-local session in which the lock routine began our transaction.
+        Session session = null;
+        try {session = HibernateUtil.getSession();}
             catch (Exception e) {
-                String msg = "Unable to start transaction on thread-local session.";
+                String msg = "Unable to retrieve thread-local session.";
                 log.error(msg, e);
                 throw new JobException(msg);
             }
-	    }
-	    
+        
 	    // ------------------- Issue Update ------------------
 	    // Note from this point on we must close the transaction before returning.
 	    int rows = 0;
 	    try {
+	        // ---- Update all fields.
             // Construct the update statement.
             String sql = "Update jobs " + setClause +
                          " where uuid = :uuid and tenant_id = :tenantId";
@@ -825,6 +711,27 @@ public class JobDao
                 log.warn(msg);
             }
 	        
+            // ---- Double check epoch
+            // Check that we are updating the job in the correct epoch.  This call
+            // can be issue before or after the update call since we've already 
+            // locked the job record.
+            sql = "select epoch from jobs " +
+                  " where uuid = :uuid and tenant_id = :tenantId";
+            qry = session.createSQLQuery(sql);
+            qry.setString("uuid", jobUuid);
+            qry.setString("tenantId", jobTenantId);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            Integer currentEpoch = (Integer) qry.uniqueResult();
+            if (jobEpoch != currentEpoch) {
+                String msg = "Unable to update job " + jobUuid + 
+                             " for tenant " + jobTenantId + 
+                             " with stale epoch. Local epoch " + jobEpoch +
+                             ", does not match epoch " + currentEpoch + " in the database.";
+                log.warn(msg);
+                throw new JobException(msg);
+            }
+            
             // End the transaction.
             HibernateUtil.commitTransaction();
 	    }
@@ -833,7 +740,8 @@ public class JobDao
             try {HibernateUtil.rollbackTransaction();}
              catch (Exception e1){log.error("Rollback failed.", e1);}
             
-            // Log original problem.
+            // Log original problem if it's not our own exception.
+            if (e instanceof JobException) throw e;
 	        String msg = "Error updating job " + jobUuid + " for tenant " + jobTenantId + ".";
 	        log.error(msg, e);
 	        throw new JobException(msg, e);
@@ -843,13 +751,26 @@ public class JobDao
 	    return rows;
 	}
 	
-	/** Rollback the specified by atomically updating the job status and deleting all
-	 * publish records for the job.
+	/** Rollback the specified job by atomically updating the job status, epoch and deleting all
+	 * publish records for the job.  Depending on whether or not the job is currently processing 
+	 * in a worker thread, an interrupt message will be sent to request a halt to processing.  If
+	 * the worker does not stop processing the thread within a short time, the container in which
+	 * the thread runs will be shutdown and then restarted after the rollback occurs.
+	 * 
+	 * If this method fails or is shutdown while waiting on a worker thread to stop processing, 
+	 * the job will be in the failsafe status of STOPPED.  This is a terminal status from which
+	 * the job cannot be restarted.
+	 * 
+	 * The epoch of a job is changed only during rollback operations and all rollbacks start with
+	 * this method.  Workers only honor requests to process jobs that are in the same epoch as the
+	 * request specifies.  The database records of jobs are only updated if the in-memory job
+	 * is in the same epoch as in the record.
 	 * 
 	 * @param job the job to be rolled back
-	 * @param rollbackMessage a message stored in the job with it new status
-	 * @return the 
-	 * @throws JobException
+	 * @param rollbackMessage a message stored in the job with it new status, specify null to 
+	 *                        store a standard message
+	 * @return the job with its fields refreshed
+	 * @throws JobException on error
 	 */
 	public static Job rollback(Job job, String rollbackMessage)
 	 throws JobException
@@ -862,12 +783,8 @@ public class JobDao
             throw new JobException(msg);
         }
         
-        // Use default message if necessary.
-        if (StringUtils.isBlank(rollbackMessage)) 
-           rollbackMessage = JobStatusType.ROLLINGBACK.getDescription();
-        
         // -------------------- Permission Checks ------------
-        // We only allow users to create queues under their own tenant. 
+        // We only allow users to process jobs under their own tenant. 
         String currentTenantId = TenancyHelper.getCurrentTenantId();
         if (StringUtils.isBlank(currentTenantId)) {
             String msg = "Unable to retrieve current tenant id.";
@@ -882,48 +799,72 @@ public class JobDao
             throw new JobException(msg);
         }
         
-        // ------------------- Assign Parms ------------------
-        // Populate a parameters object.  Increment the epoch so
-        // that new interrupts don't get applied in old epochs.
-        // Setting the status to rollingback means that only the
-        // RollingBackScheduler will service this job.
-        JobUpdateParameters parms = new JobUpdateParameters();
-        parms.setStatus(JobStatusType.ROLLINGBACK);
-        parms.setErrorMessage(rollbackMessage);
-        parms.setEpoch(job.getEpoch() + 1);
-        parms.setLastUpdated(new Date());
-        
-        // Construct the set clause for the sql update statement.
-        String setClause = JobDaoUtils.createSetClause(parms);
-        if (setClause == null) {
-            String msg = "No field values to update.";
+        // ------------------- Check Status ------------------
+        // We cannot rollback jobs in finished or paused state.
+        if (JobStatusType.isFinished(job.getStatus()) || 
+            job.getStatus() == JobStatusType.PAUSED) 
+        {
+            String msg = "Cannot rollback a job with status " + job.getStatus().name() + ".";
             log.error(msg);
             throw new JobException(msg);
         }
         
-        // ------------------- Get Session -------------------
-        // Status changes require validation using the current status in the database
-        // and require us to lock the job record until this transaction completes.
-        // The lock method acquires the session for us and starts a transaction.
-        //
-        // A transaction is begun only if the lock method returns a non-null status.
-        JobStatusType curStatus = lockJobForStatus(job.getUuid());
-        if (curStatus == null) {
-            String msg = "Unable to query job record for current status.";
+        // Get the status that the rollback will target.
+        JobStatusType rollbackStatus = job.getStatus().rollbackState();
+        if (rollbackStatus == null) {
+            String msg = "Unable to determine rollback target status when job " + 
+                         job.getUuid() + " is in status " + job.getStatus().name() + ".";
             log.error(msg);
             throw new JobException(msg);
         }
+        
+        // Make sure the rollback transition is valid.  This should never fail
+        // since we know in advance what the rollback target status is for every
+        // status that can be rolled back.  This double checks that our state
+        // machine is properly configured.
+        if (!JobFSMUtils.hasTransition(job.getStatus(), rollbackStatus)) {
             
-        // Check if the status change is legal.
-        if (!JobFSMUtils.hasTransition(curStatus, parms.getStatus())) {
-                
             // Abort the update since the attempted status 
             // change is illegal, but first log the problem.
-            String msg = "Invalid transition from " + curStatus.name() +
-                         " to " + parms.getStatus().name() + " attempted for job " +
+            String msg = "Invalid transition from " + job.getStatus().name() +
+                         " to " + rollbackStatus.name() + " attempted for job " +
                          job.getUuid() + ".";
             log.error(msg);
-                
+            throw new JobException(msg);
+        }
+        
+        // Use default message if necessary.
+        if (StringUtils.isBlank(rollbackMessage)) 
+           rollbackMessage = "Rolling job back to " + rollbackStatus.name();
+        
+        // ------------------- Lock Job --------------------
+        // No update can take place unless we can read certain values from the job
+        // record and maintain a lock on that job record.  The lock method acquires 
+        // a session for us and starts a transaction.  If this call returns a 
+        // value, then we must either commit or rollback the transaction before
+        // before returning from this method.  If the call throws an exception,
+        // no further session or transaction clean up is necessary.
+        JobLockResult jobLockResult = lockJob(job.getUuid());
+        
+        // ***********************************************************************
+        // **** Open Transaction From This Point On -- Close Before Returning ****
+        // ***********************************************************************
+        
+        // ------------------- Check Epoch -------------------
+        // Updates can only occur when the local job epoch matches the job's epoch in the
+        // database.  This check fails when a rollback action has occurred after our 
+        // in-memory job information was retrieved.  In this case, the local job's epoch 
+        // will be less than its epoch in the database (the ultimate source of truth).
+        if (jobLockResult.epoch != job.getEpoch()) {
+            
+            // Abort the update since the attempted status 
+            // change is illegal, but first log the problem.
+            String msg = "Stale job epoch value detected. Job " + job.getUuid() + 
+                         " for tenant " + job.getTenantId() + " is now in epoch " + 
+                         jobLockResult.epoch + " as defined in the database. " +
+                         "This does not match the local epoch value of " + job.getEpoch() + ".";
+            log.error(msg);
+            
             // Release the lock on the job record.
             try {HibernateUtil.rollbackTransaction();}
             catch (Exception e) {
@@ -932,69 +873,161 @@ public class JobDao
             }
             
             // Throw our exception.
-            if (JobStatusType.isFinished(curStatus)) throw new JobFinishedException(msg);
-              else throw new JobException(msg);
+            throw new JobEpochException(msg);
         }
-            
-        // Get the thread-local session in which the lock routine began our transaction.
-        Session session = null;
-        try {session = HibernateUtil.getSession();}
-            catch (Exception e) {
-                String msg = "Unable to retrieve thread-local session.";
-                log.error(msg, e);
-                throw new JobException(msg);
-            }
         
-        // ------------------- Issue Update ------------------
-        // Note from this point on we must close the transaction before returning.
-        int rows = 0;
-        try {
-            // ---- Update jobs table
-            // Construct the update statement.
-            String sql = "Update jobs " + setClause +
-                         " where uuid = :uuid and tenant_id = :tenantId";
-            Query qry = session.createSQLQuery(sql);
-            qry.setString("uuid", job.getUuid());
-            qry.setString("tenantId", job.getTenantId());
-            JobDaoUtils.setUpdatePlaceholders(qry, parms);
-            qry.setCacheable(false);
-            qry.setCacheMode(CacheMode.IGNORE);
-            rows = qry.executeUpdate();
+        // ------------------- Lock Job Claim ----------------
+        // Lock the job claim record if one exists.
+        JobClaim jobClaim = null;
+        try {jobClaim = JobWorkerDao.lockJobClaim(job.getUuid());}
+        catch (Exception e) {
+            // If we are unable to query the job_workers table,
+            // we cannot determine if a worker is currently claiming
+            // this job or not.
+            String msg = "Unable to lock worker claim record for job " +
+                         job.getUuid() + ".";
+            log.error(msg, e);
             
-            // Sanity check.
-            if (rows == 0)
-            {
-                // We expected something to happen...
-                String msg = "Nothing updated for job " + job.getUuid() + " under tenant " + job.getTenantId() + ".";
-                log.warn(msg);
+            // Release the lock on the job record.
+            try {HibernateUtil.rollbackTransaction();}
+            catch (Exception e2) {
+                String msg2 = "Failure rolling back transaction on locked job record.";
+                log.error(msg2, e2);
             }
             
-            // ---- Delete from published table
-            // Delete all references to this job in the 
-            // job_published table across all phases.
-            sql = "delete from job_published where job_uuid = :job_uuid";
-            
-            // Fill in the placeholders.           
-            qry = session.createSQLQuery(sql);
-            qry.setString("job_uuid", job.getUuid());
-            qry.setCacheable(false);
-            qry.setCacheMode(CacheMode.IGNORE);
-            rows = qry.executeUpdate();
-            
-            // End the transaction.
-            HibernateUtil.commitTransaction();
-        }
-        catch (Exception e) {
-            // Rollback transaction.
-            try {HibernateUtil.rollbackTransaction();}
-             catch (Exception e1){log.error("Rollback failed.", e1);}
-            
-            // Log original problem.
-            String msg = "Error rolling back job " + job.getUuid() + " for tenant " + job.getTenantId() + ".";
-            log.error(msg, e);
+            // Throw our exception.
             throw new JobException(msg, e);
         }
         
+        // ------------------- Rollback ----------------------
+        // How we rollback depends on whether a worker is currently claiming the
+        // job or not.  If the job is not claimed, we can rollback to the target
+        // status immediately.  Otherwise, we need to interrupt the worker that's 
+        // processing the job before we can rollback.
+        Session session = HibernateUtil.getSession();
+        if (jobClaim == null) {
+            // --------------- Immediate Rollback Case ---------------
+            try {
+                // Construct the update statement.
+                String sql = "Update jobs set status = :status, epoch = :epoch, " +
+                             "error_message = :errorMessage " + 
+                             "where uuid = :uuid and tenant_id = :tenantId";
+                Query qry = session.createSQLQuery(sql);
+                qry.setString("status", rollbackStatus.name());
+                qry.setInteger("epoch", job.getEpoch() + 1);
+                qry.setString("errorMessage", rollbackMessage);
+                qry.setString("uuid", job.getUuid());
+                qry.setString("tenantId", job.getTenantId());
+                qry.setCacheable(false);
+                qry.setCacheMode(CacheMode.IGNORE);
+                int rows = qry.executeUpdate();
+                
+                // Sanity check.
+                if (rows == 0)
+                {
+                    // We expected something to happen...
+                    String msg = "Nothing updated for job " + job.getUuid() + 
+                                 " under tenant " + job.getTenantId() + ".";
+                    log.warn(msg);
+                }
+
+                // ---- Delete from published table
+                // Delete all references to this job in the job_published table 
+                // across all phases.  This guarantees that the job will be 
+                // available for scheduling.
+                sql = "delete from job_published where job_uuid = :job_uuid";
+                
+                // Fill in the placeholders.           
+                qry = session.createSQLQuery(sql);
+                qry.setString("job_uuid", job.getUuid());
+                qry.setCacheable(false);
+                qry.setCacheMode(CacheMode.IGNORE);
+                rows = qry.executeUpdate();
+                
+                // End the transaction.  Committing here releases locks on the jobs,
+                // job_workers, and job_published published tables.
+                HibernateUtil.commitTransaction();
+            }
+            catch (Exception e) {
+                // Rollback transaction.
+                try {HibernateUtil.rollbackTransaction();}
+                 catch (Exception e1){log.error("Rollback failed.", e1);}
+                
+                // Log original problem if it's not our own exception.
+                if (e instanceof JobException) throw e;
+                String msg = "Error rolling back job " + job.getUuid() + 
+                             " for tenant " + job.getTenantId() + ".";
+                log.error(msg, e);
+                throw new JobException(msg, e);
+            }
+        }
+        else {
+            // --------------- Interrupt Worker Case ---------------
+            // Put the job into a terminal STOPPED status temporarily to prevent 
+            // it from being rescheduled while we try to stop the worker that is
+            // currently processing the job.
+            try {
+                // Construct the update statement.
+                String sql = "Update jobs set status = :status, error_message = :errorMessage " + 
+                             "where uuid = :uuid and tenant_id = :tenantId";
+                Query qry = session.createSQLQuery(sql);
+                qry.setString("status", JobStatusType.STOPPED.name());
+                qry.setString("uuid", job.getUuid());
+                qry.setString("errorMessage", "Preparing for rollback by stopping job");
+                qry.setString("tenantId", job.getTenantId());
+                qry.setCacheable(false);
+                qry.setCacheMode(CacheMode.IGNORE);
+                int rows = qry.executeUpdate();
+                
+                // Sanity check.
+                if (rows == 0)
+                {
+                    // We expected something to happen...
+                    String msg = "Nothing updated for job " + job.getUuid() + 
+                                 " under tenant " + job.getTenantId() + ".";
+                    log.warn(msg);
+                }
+                
+                // End the transaction and release locks on the jobs and job_workers
+                // tables.  Note that the since the job is STOPPED when we release
+                // the lock on the job_workers table, no new worker will have a chance
+                // to pick up the job:  The worker currently processing the job can
+                // only unclaim it after this transaction completes.  Similarly, no
+                // scheduler can read the job before the transaction completes, after
+                // which it will not be in a schedulable status.
+                HibernateUtil.commitTransaction();
+            }
+            catch (Exception e) {
+                // Rollback transaction.
+                try {HibernateUtil.rollbackTransaction();}
+                 catch (Exception e1){log.error("Rollback failed.", e1);}
+                
+                // Log original problem if it's not our own exception.
+                if (e instanceof JobException) throw e;
+                String msg = "Error rolling back job " + job.getUuid() + 
+                             " for tenant " + job.getTenantId() + ".";
+                log.error(msg, e);
+                throw new JobException(msg, e);
+            }
+            
+            // Send an interrupt message to the worker.  We do this as soon as we can to 
+            // give the currently executing worker the largest window in which to receive 
+            // the interrupt.
+            StopJobMessage message = new StopJobMessage(job.getName(), job.getUuid(), 
+                                                        job.getTenantId(), job.getEpoch());
+            try {TopicMessageSender.sendJobMessage(message);}
+            catch (Exception e) {
+                String msg = "Unable to send job interrupt message: " + message.toString();
+                log.error(msg, e);
+            }
+            
+            // Cancel outstanding transfers associated with the job.
+            JobDaoUtils.cancelTransfers(job);
+            
+            // Complete the rollback in a bounded amount of time.
+            completeRollback(job, jobClaim, rollbackStatus, rollbackMessage);
+        }
+                
         // Perform another database round trip
         // just to keep hibernate up to date.
         refresh(job);
@@ -1318,7 +1351,7 @@ public class JobDao
      * 
      * The job monitor records returned identify jobs via their UUIDs. These jobs are in one of the 
      * trigger statuses and do not have a publish record for the specified phase.  The quota records 
-     * contain all the information needed to determine if a job is ready to be monitored.
+     * that are returned contain all the information needed to determine if a job is ready to be monitored.
      * 
      * @param phase the phase of the calling scheduler
      * @param statuses the trigger statuses for the phase scheduler
@@ -1921,4 +1954,206 @@ public class JobDao
 		}
 	}
 
+    /* ********************************************************************** */
+    /*                            Private Methods                             */
+    /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* JobLockResult:                                                         */
+    /* ---------------------------------------------------------------------- */
+    /** Get the current status and epoch values of a job record and maintain an  
+     * exclusive lock on that record.  We begin a transaction, query a job by its 
+     * unique uuid key, and keep that transaction open when the method completes.
+     * The use of SELECT FOR UPDATE requires that an index be used in the search.   
+     * 
+     * The caller is responsible for committing or rolling back the transaction
+     * unless an exception is thrown, in which case the transaction is rolled
+     * back before this method returns.  If the caller does not close the 
+     * transaction when this method returns a result, bad things will happen.  
+     * To emphasize:
+     * 
+     *     THE CALLER MUST COMPLETE THE TRANSACTION BEGUN HERE
+     *     
+     * The session on which the transaction can be rolled back or committed is
+     * the threadlocal session managed by HibernateUtil.  Therefore, the 
+     * transaction can be completed by calling rollbackTransaction() or
+     * commitTransaction() on HibernateUtil on the SAME THREAD.  
+     * 
+     * NOTE: If the query fails, the transaction is rolled back and a null
+     *       status is returned.  The caller does not need to complete the 
+     *       transaction in this case.
+     * 
+     * @param jobUuid the unique identifier of the job to lock
+     * @return the job's lock results with the transaction left open 
+     * @throws JobException on error (transaction closed, job not locked)
+     */
+    private static JobLockResult lockJob(String jobUuid) 
+     throws JobException
+    {
+        // Get the current version of a job record 
+        // and obtain an exclusive lock on that record.
+        JobLockResult result = null;
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+            
+            // Retrieve the current version of the job.
+            String sql = "select status, epoch from jobs " +
+                         "where uuid = :uuid FOR UPDATE";
+       
+            // Issue the query and leave transaction open.          
+            Object obj = session.createSQLQuery(sql)
+                         .setString("uuid", jobUuid)
+                         .uniqueResult();
+            if (obj == null) {
+                String msg = "Job " + jobUuid + " not found.";
+                log.error(msg);
+                throw new JobException(msg);
+            }
+            
+            // Populate a new lock result object or throw an 
+            // exception if it cannot be locked for any reason.
+            result = new JobLockResult((Object[]) obj);
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to lock job record with UUID " + jobUuid + ").";
+            log.error(msg, e);
+            throw new JobException(msg, e);
+        }
+        
+        // Return session with uncommitted transaction.
+        return result;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* completeRollback:                                                      */
+    /* ---------------------------------------------------------------------- */
+    /** This method completes rolling back a job that was being processed by
+     * a worker thread when it was placed in the STOPPED status.  An interrupt
+     * message has already been sent to signal the worker to abandon its job
+     * processing.
+     * 
+     * This method completes the rollback processing in a bounded time period
+     * by polling the job_workers table and detecting when the worker thread
+     * previously processing the job relinquishes its claim on the job.  The
+     * polling period is of limited duration.  If the period expires and the 
+     * worker has not discontinued job processing, the container running the worker 
+     * thread is abruptly stopped and the job_workers table is cleaned up. The 
+     * container is then restarted
+     * 
+     * Once the worker is known to not be processing the job anymore, the
+     * job's status and epoch are updated and the job_published table is 
+     * cleaned up.
+     * 
+     * @param job the job who needs to be rolled back
+     * @param jobClaim information on the worker claiming the job
+     * @param rollbackStatus the target status of the rollback
+     * @param rollbackMessage the message to save with the target status
+     * @throws JobException on error
+     */
+    private static void completeRollback(Job job, JobClaim jobClaim,
+                                         JobStatusType rollbackStatus,
+                                         String rollbackMessage) 
+     throws JobException
+    {
+        // See if no worker is claiming the job.
+        boolean jobStillClaimed = true;
+        try {jobStillClaimed = JobDaoUtils.isJobClaimed(job.getUuid());}
+        catch (InterruptedException e) {
+            String msg = "Interrupted while check claim for job " + job.getUuid() +
+                         ".  Aborting job rollback, job will be left in " +
+                         job.getStatus().name() + " status."; 
+            log.warn(msg, e);
+            return;
+        }
+        
+        // Force the job to be free if it wasn't voluntarily abandoned. 
+        if (jobStillClaimed) {
+            // TODO:  container kill
+            
+            // TODO:  remove all host/container entries from job_workers
+        }
+        
+        // Perform the actual rollback.  Note that we are transitioning from
+        // a STOPPED state to a rollback target state.  This is not normally
+        // allowed since STOPPED is a terminal state.  We allow it here because
+        // we are in a controlled rollback situation.  We purposely don't define
+        // any transition from STOPPED in the state machine because we don't 
+        // want to allow transitions from STOPPED outside of this method.
+        JobException delayedException = null;
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Construct the update statement.
+            String sql = "Update jobs set status = :status, epoch = :epoch, " +
+                         "error_message = :errorMessage " + 
+                         "where uuid = :uuid and tenant_id = :tenantId";
+            Query qry = session.createSQLQuery(sql);
+            qry.setString("status", rollbackStatus.name());
+            qry.setInteger("epoch", job.getEpoch() + 1);
+            qry.setString("errorMessage", rollbackMessage);
+            qry.setString("uuid", job.getUuid());
+            qry.setString("tenantId", job.getTenantId());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            int rows = qry.executeUpdate();
+            
+            // Sanity check.
+            if (rows == 0)
+            {
+                // We expected something to happen...
+                String msg = "Nothing updated for job " + job.getUuid() + 
+                             " under tenant " + job.getTenantId() + ".";
+                log.warn(msg);
+            }
+
+            // ---- Delete from published table
+            // Delete all references to this job in the job_published table 
+            // across all phases.  This makes the job available for scheduling.
+            sql = "delete from job_published where job_uuid = :job_uuid";
+            
+            // Fill in the placeholders.           
+            qry = session.createSQLQuery(sql);
+            qry.setString("job_uuid", job.getUuid());
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            rows = qry.executeUpdate();
+            
+            // End the transaction.  Committing here releases locks on the jobs,
+            // job_workers, and job_published published tables.
+            HibernateUtil.commitTransaction();
+        }
+        catch (Exception e) {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){log.error("Rollback failed.", e1);}
+            
+            // Log original problem if it's not our own exception.
+            if (e instanceof JobException) throw e;
+            String msg = "Error rolling back job " + job.getUuid() + 
+                         " for tenant " + job.getTenantId() + ".";
+            log.error(msg, e);
+            
+            // Delay throwing the exception until we restart 
+            // the container if it was shutdown.
+            delayedException =  new JobException(msg, e);
+        }
+        
+        // Restart the container.
+        if (jobStillClaimed) {
+         // TODO:  container restart
+        }
+        
+        // Throw any held exception.
+        if (delayedException != null) throw delayedException;
+    }
 }

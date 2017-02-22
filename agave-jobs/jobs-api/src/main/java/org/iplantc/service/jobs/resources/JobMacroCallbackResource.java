@@ -119,7 +119,7 @@ public class JobMacroCallbackResource extends AbstractJobResource
 				}
 
                 // Update the lastUpdated timestamp on the job record.
-                JobDao.update(job.getUuid(), job.getTenantId(), new JobUpdateParameters());
+                JobDao.update(job.getUuid(), job.getTenantId(), job.getEpoch(), new JobUpdateParameters());
                 JobDao.refresh(job);
                 
 				// Send an event.

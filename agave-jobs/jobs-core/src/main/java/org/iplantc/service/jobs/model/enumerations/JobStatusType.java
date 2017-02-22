@@ -24,8 +24,7 @@ public enum JobStatusType
 	STOPPED("Job execution intentionally stopped"), 
 	FAILED("Job failed"), 
 	
-	HEARTBEAT("Job heartbeat received"),
-    ROLLINGBACK("Rolling job back to a prior state");
+	HEARTBEAT("Job heartbeat received");
 	
 	private final String description;
 	
@@ -131,10 +130,10 @@ public enum JobStatusType
 		{
 			return CLEANING_UP;
 		} 
-		// Just rerun from the beginning
-		// PAUSED, KILLED, STOPPED, FINISHED, FAILED
+		// States from which we cannot rollback.
+		// PAUSED, KILLED, STOPPED, FINISHED, FAILED 
 		else { 
-			return PENDING;
+			return null;
 		}
 	}
 	

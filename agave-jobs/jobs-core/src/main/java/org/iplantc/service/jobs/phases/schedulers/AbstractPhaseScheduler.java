@@ -12,6 +12,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -51,7 +52,6 @@ import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
 import org.iplantc.service.jobs.phases.workers.PhaseWorkerParms;
-import org.iplantc.service.jobs.phases.workers.RollingBackWorker;
 import org.iplantc.service.jobs.phases.workers.StagingWorker;
 import org.iplantc.service.jobs.phases.workers.SubmittingWorker;
 import org.iplantc.service.jobs.queue.SelectorFilter;
@@ -1324,7 +1324,6 @@ public abstract class AbstractPhaseScheduler
         else if (_phaseType == JobPhaseType.SUBMITTING) worker = new SubmittingWorker(parms);
         else if (_phaseType == JobPhaseType.MONITORING) worker = new MonitoringWorker(parms);
         else if (_phaseType == JobPhaseType.ARCHIVING) worker = new ArchivingWorker(parms);
-        else if (_phaseType == JobPhaseType.ROLLINGBACK) worker = new RollingBackWorker(parms);
         else throw new RuntimeException("Unknown JobPhaseType: " + _phaseType);
         
         // Set attributes.
@@ -1504,9 +1503,11 @@ public abstract class AbstractPhaseScheduler
                     }
                 }
                 
-                // Wait for more jobs to accumulate
-                // while maintaining our job lease.
-                waitForWork(jobLeaseDao, POLLING_NORMAL_DELAY);
+                // Wait for more jobs to accumulate while maintaining our job lease.
+                // We add up to 999 milliseconds of random skew to avoid scheduler
+                // contention at the database.
+                int skew = (int) ThreadLocalRandom.current().nextDouble(0, 1000);
+                waitForWork(jobLeaseDao, POLLING_NORMAL_DELAY + skew);
                 
             } // End polling loop.
         } catch (InterruptedException e) {

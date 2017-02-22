@@ -1,6 +1,7 @@
 package org.iplantc.service.jobs.dao.utils;
 
 import java.math.BigInteger;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,11 +9,19 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.hibernate.Query;
+import org.iplantc.service.jobs.dao.JobWorkerDao;
+import org.iplantc.service.jobs.model.Job;
+import org.iplantc.service.jobs.model.JobClaim;
+import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.JobUpdateParameters;
+import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobActiveCount;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobMonitorInfo;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
+import org.iplantc.service.transfer.dao.TransferTaskDao;
+import org.iplantc.service.transfer.model.enumerations.TransferStatusType;
 
 /** This file contains auxiliary methods used by JobDao.  The methods here
  * manipulate data structures and perform other tasks in support of SQL calls
@@ -22,6 +31,16 @@ import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
  */
 public final class JobDaoUtils
 {
+    /* ********************************************************************** */
+    /*                               Constants                                */
+    /* ********************************************************************** */
+    // Tracing.
+    private static final Logger _log = Logger.getLogger(JobDaoUtils.class);
+    
+    // Worker claim polling constants.
+    private static final int CLAIM_POLL_ITERATIONS = 15;
+    private static final int CLAIM_POLL_SLEEP_MILLIS = 1000;
+
     /* ********************************************************************** */
     /*                                 Fields                                 */
     /* ********************************************************************** */
@@ -514,5 +533,98 @@ public final class JobDaoUtils
         }
         
         return outList;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* cancelTransfers:                                                       */
+    /* ---------------------------------------------------------------------- */
+    /** Make a best effort attempt to cancel all transfers for the specified job.
+     * This method does not throw exceptions.
+     * 
+     * @param job the job whose transfer will be canceled
+     */
+    public static void cancelTransfers(Job job)
+    {
+        // Try to get the job's events
+        List<JobEvent> events = null;
+        try {events = job.getEvents();}
+        catch (Exception e) {
+            String msg = "Unable to retrieve events for job " + job.getUuid() + ".";
+            _log.error(msg, e);
+            return;
+        }
+        
+        // Try to cancel the transfers associated with each event.
+        for (JobEvent event: events) {
+            
+            // Maybe there's nothing to do.
+            if (event.getTransferTask() == null) continue;
+            
+            if (event.getTransferTask().getStatus() == TransferStatusType.PAUSED ||
+                event.getTransferTask().getStatus() == TransferStatusType.QUEUED ||
+                event.getTransferTask().getStatus() == TransferStatusType.RETRYING ||
+                event.getTransferTask().getStatus() == TransferStatusType.TRANSFERRING) 
+            {
+               try {
+                   TransferTaskDao.cancelAllRelatedTransfers(event.getTransferTask().getId());
+               } catch (Exception e ) {
+                   _log.error("Failed to cancel transfer task " +
+                              event.getTransferTask().getUuid() + " while stopping job " +
+                              job.getUuid(), e);
+               }
+            }
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* isJobClaimed:                                                          */
+    /* ---------------------------------------------------------------------- */
+    /** Poll the job_workers table for a configured period of time to determine
+     * if any worker thread is claiming the job.  Return true if after polling
+     * completes some worker thread still claims the job; return false if no
+     * worker claims the thread.  It is assumed that the caller has configured
+     * the job such that a new worker will not claim the job once it is unclaimed.  
+     * 
+     * Since this can be a long running method, we throw an exception if the 
+     * thread is interrupted.
+     * 
+     * @param jobUuid the job uuid whose claim we are checking
+     * @throws InterruptedException if the we receive an interrupt
+     */
+    public static boolean isJobClaimed(String jobUuid) 
+     throws InterruptedException
+    {
+        // Assume some worker claims the job until proven otherwise.
+        boolean jobStillClaimed = true;
+        
+        // See if no worker is claiming the job.
+        boolean errorLogged = false; // Limit the amount of noise we log.
+        for (int i = 0; i < CLAIM_POLL_ITERATIONS; i++)
+        {
+            // Poll the job_workers table for any worker claiming our job.
+            try {
+                // If we don't get back a claim, no worker has claimed it.
+                JobClaim curClaim = JobWorkerDao.getJobClaimByJobUuid(jobUuid);
+                if (curClaim == null) {
+                    jobStillClaimed = false;
+                    break;
+                }
+            }
+            catch (Exception e) {
+                if (!errorLogged) {
+                    String msg = "Unable to query worker claims for job " + jobUuid + ".";
+                    _log.error(msg, e);
+                    errorLogged = true;
+                }
+            }
+            
+            // Sleep before trying again.  Stop everything on interrupt.
+            if (Thread.interrupted()) 
+                throw new InterruptedException("Interrupted while polling claim for job " + jobUuid + ".");
+            Thread.sleep(CLAIM_POLL_SLEEP_MILLIS);
+        }
+        
+        // If we broke out of the loop, the job is not claimed.
+        return jobStillClaimed;
     }
 }

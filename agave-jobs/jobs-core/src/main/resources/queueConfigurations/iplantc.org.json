@@ -35,15 +35,6 @@
             "numWorkers" : 3,
             "maxMessages" : 2,
             "filter" : "phase = 'SUBMITTING' AND tenant_id = 'iplantc.org'"
-        },
-        {
-            "name" : "ROLLINGBACK.iplantc.org",
-            "tenantId" :"iplantc.org",
-            "phase" : "ROLLINGBACK",
-            "priority" : 1,
-            "numWorkers" : 1,
-            "maxMessages" : 2,
-            "filter" : "phase = 'ROLLINGBACK' AND tenant_id = 'iplantc.org'"
         }
     ]
 

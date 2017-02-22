@@ -162,11 +162,6 @@ public class JobFSMTest
         state = _jsm.onEvent(_entity, JobFSMEvents.TO_SUBMITTING.name());
         Assert.assertEquals(state.getName(), JobFSMStates.Submitting.getName(), 
                             "Transitioned to the wrong state!");
-        
-        _persister.setCurrent(_entity, JobFSMStates.Paused);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
-                            "Transitioned to the wrong state!");
     }
    
     /* ---------------------------------------------------------------------- */
@@ -204,11 +199,6 @@ public class JobFSMTest
         _persister.setCurrent(_entity, JobFSMStates.Pending);
         state = _jsm.onEvent(_entity, JobFSMEvents.TO_STOPPED.name());
         Assert.assertEquals(state.getName(), JobFSMStates.Stopped.getName(), 
-                            "Transitioned to the wrong state!");
-        
-        _persister.setCurrent(_entity, JobFSMStates.Pending);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -304,8 +294,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.ProcessingInputs);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_PENDING.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.Pending.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -366,11 +356,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_SUBMITTING.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_SUBMITTING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_PENDING.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_PENDING.name()); 
     }
 
     /* ---------------------------------------------------------------------- */
@@ -406,8 +391,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.StagingInputs);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_PENDING.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.Pending.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -468,11 +453,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_SUBMITTING.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_SUBMITTING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_PENDING.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_PENDING.name()); 
     }
 
     /* ---------------------------------------------------------------------- */
@@ -508,8 +488,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.Staged);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_PENDING.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.Pending.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -570,11 +550,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_RUNNING.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_RUNNING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_PENDING.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_PENDING.name()); 
     }
 
     /* ---------------------------------------------------------------------- */
@@ -610,8 +585,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.StagingJob);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.Staged.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -672,11 +647,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_RUNNING.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_RUNNING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STAGED.name()); 
     }
 
     /* ---------------------------------------------------------------------- */
@@ -722,8 +692,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.Submitting);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.Staged.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -774,11 +744,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGING_JOB.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STAGING_JOB.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STAGED.name()); 
     }
 
     /* ---------------------------------------------------------------------- */
@@ -824,8 +789,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.Queued);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.Staged.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -876,11 +841,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGING_JOB.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STAGING_JOB.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STAGED.name()); 
    }
 
     /* ---------------------------------------------------------------------- */
@@ -921,8 +881,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.Running);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.Staged.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -978,11 +938,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_QUEUED.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_QUEUED.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STAGED.name()); 
     }
 
     /* ---------------------------------------------------------------------- */
@@ -1028,8 +983,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.CleaningUp);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.Staged.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -1080,11 +1035,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_RUNNING.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_RUNNING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STAGED.name()); 
     }
 
     /* ---------------------------------------------------------------------- */
@@ -1130,8 +1080,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.Archiving);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_CLEANING_UP.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.CleaningUp.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -1182,12 +1132,7 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_RUNNING.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_RUNNING.name()); 
-
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_CLEANING_UP.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_RUNNING.name()); 
-}
+    }
 
     /* ---------------------------------------------------------------------- */
     /* fromArchivingFailed:                                                   */
@@ -1207,8 +1152,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.ArchivingFailed);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_CLEANING_UP.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.CleaningUp.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -1284,11 +1229,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_SUBMITTING.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_SUBMITTING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_CLEANING_UP.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_CLEANING_UP.name()); 
     }
     
     /* ---------------------------------------------------------------------- */
@@ -1314,8 +1254,8 @@ public class JobFSMTest
                             "Transitioned to the wrong state!");
         
         _persister.setCurrent(_entity, JobFSMStates.ArchivingFinished);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
+        state = _jsm.onEvent(_entity, JobFSMEvents.TO_CLEANING_UP.name());
+        Assert.assertEquals(state.getName(), JobFSMStates.CleaningUp.getName(), 
                             "Transitioned to the wrong state!");
         
         // ----- Illegal transitions.
@@ -1386,11 +1326,6 @@ public class JobFSMTest
         try {_jsm.onEvent(_entity, JobFSMEvents.TO_SUBMITTING.name());}
         catch (IllegalStateException e){_exceptionThrown = true;}
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_SUBMITTING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_CLEANING_UP.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_CLEANING_UP.name()); 
     }
     
     /* ---------------------------------------------------------------------- */
@@ -1399,12 +1334,6 @@ public class JobFSMTest
     @Test(enabled=true)
     public void fromFailed()
     {   
-        // ----- Legal transitions.
-        _persister.setCurrent(_entity, JobFSMStates.Failed);
-        State<JobFSMStatefulEntity> state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
-                            "Transitioned to the wrong state!");
-        
         // ----- Illegal transitions.
         // Should be the last time we reset this.
         _persister.setCurrent(_entity, JobFSMStates.Failed);
@@ -1501,12 +1430,6 @@ public class JobFSMTest
     @Test(enabled=true)
     public void fromFinished()
     {   
-        // ----- Legal transitions.
-        _persister.setCurrent(_entity, JobFSMStates.Finished);
-        State<JobFSMStatefulEntity> state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
-                            "Transitioned to the wrong state!");
-        
         // ----- Illegal transitions.
         // Should be the last time we reset this.
         _persister.setCurrent(_entity, JobFSMStates.Finished);
@@ -1603,12 +1526,6 @@ public class JobFSMTest
     @Test(enabled=true)
     public void fromKilled()
     {   
-        // ----- Legal transitions.
-        _persister.setCurrent(_entity, JobFSMStates.Killed);
-        State<JobFSMStatefulEntity> state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
-                            "Transitioned to the wrong state!");
-        
         // ----- Illegal transitions.
         // Should be the last time we reset this.
         _persister.setCurrent(_entity, JobFSMStates.Killed);
@@ -1705,12 +1622,6 @@ public class JobFSMTest
     @Test(enabled=true)
     public void fromStopped()
     {   
-        // ----- Legal transitions.
-        _persister.setCurrent(_entity, JobFSMStates.Stopped);
-        State<JobFSMStatefulEntity> state = _jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.RollingBack.getName(), 
-                            "Transitioned to the wrong state!");
-        
         // ----- Illegal transitions.
         // Should be the last time we reset this.
         _persister.setCurrent(_entity, JobFSMStates.Stopped);
@@ -1801,106 +1712,4 @@ public class JobFSMTest
         Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_PENDING.name()); 
     }
 
-    /* ---------------------------------------------------------------------- */
-    /* fromRollingBack:                                                       */
-    /* ---------------------------------------------------------------------- */
-    @Test(enabled=true)
-    public void fromRollingBack()
-    {   
-        // ----- Legal transitions.
-        _persister.setCurrent(_entity, JobFSMStates.RollingBack);
-        State<JobFSMStatefulEntity> state = _jsm.onEvent(_entity, JobFSMEvents.TO_PENDING.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.Pending.getName(), 
-                            "Transitioned to the wrong state!");
-        
-        _persister.setCurrent(_entity, JobFSMStates.RollingBack);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_STAGED.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.Staged.getName(), 
-                            "Transitioned to the wrong state!");
-        
-        _persister.setCurrent(_entity, JobFSMStates.RollingBack);
-        state = _jsm.onEvent(_entity, JobFSMEvents.TO_CLEANING_UP.name());
-        Assert.assertEquals(state.getName(), JobFSMStates.CleaningUp.getName(), 
-                            "Transitioned to the wrong state!");
-        
-        // ----- Illegal transitions.
-        // Should be the last time we reset this.
-        _persister.setCurrent(_entity, JobFSMStates.RollingBack);
-
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_ARCHIVING.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_ARCHIVING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_ARCHIVING_FAILED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_ARCHIVING_FAILED.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_ARCHIVING_FINISHED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_ARCHIVING_FINISHED.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_FAILED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_FAILED.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_FINISHED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_FINISHED.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_KILLED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_KILLED.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_PAUSED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_PAUSED.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_PROCESSING_INPUTS.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_PROCESSING_INPUTS.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_QUEUED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_QUEUED.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_RUNNING.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_RUNNING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGING_INPUTS.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STAGING_INPUTS.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_STAGING_JOB.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STAGING_JOB.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_STOPPED.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_STOPPED.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_SUBMITTING.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_SUBMITTING.name()); 
-        
-        _exceptionThrown = false;
-        try {_jsm.onEvent(_entity, JobFSMEvents.TO_ROLLINGBACK.name());}
-        catch (IllegalStateException e){_exceptionThrown = true;}
-        Assert.assertTrue(_exceptionThrown, "Illegal transition " + JobFSMEvents.TO_ROLLINGBACK.name()); 
-    }
-    
 }

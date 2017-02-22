@@ -15,7 +15,6 @@ public class FileException extends Exception {
 	 */
 	public FileException()
 	{
-	// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -24,7 +23,6 @@ public class FileException extends Exception {
 	public FileException(String message)
 	{
 		super(message);
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -33,7 +31,6 @@ public class FileException extends Exception {
 	public FileException(Throwable cause)
 	{
 		super(cause);
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -43,7 +40,6 @@ public class FileException extends Exception {
 	public FileException(String message, Throwable cause)
 	{
 		super(message, cause);
-		// TODO Auto-generated constructor stub
 	}
 
 }

@@ -15,7 +15,6 @@ public class SchedulerException extends Exception {
 	 */
 	public SchedulerException()
 	{
-	// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -24,7 +23,6 @@ public class SchedulerException extends Exception {
 	public SchedulerException(String message)
 	{
 		super(message);
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -33,7 +31,6 @@ public class SchedulerException extends Exception {
 	public SchedulerException(Throwable cause)
 	{
 		super(cause);
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -43,7 +40,6 @@ public class SchedulerException extends Exception {
 	public SchedulerException(String message, Throwable cause)
 	{
 		super(message, cause);
-		// TODO Auto-generated constructor stub
 	}
 
 }

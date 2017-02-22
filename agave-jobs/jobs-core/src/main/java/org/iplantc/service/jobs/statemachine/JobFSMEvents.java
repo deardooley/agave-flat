@@ -28,7 +28,5 @@ public enum JobFSMEvents
     TO_FINISHED,
     TO_KILLED,
     TO_STOPPED,
-    TO_FAILED,
-    
-    TO_ROLLINGBACK
+    TO_FAILED
 }

@@ -8,7 +8,6 @@ import org.iplantc.service.common.persistence.JndiSetup;
 import org.iplantc.service.common.restlet.AgaveApplication;
 import org.iplantc.service.jobs.phases.schedulers.ArchivingScheduler;
 import org.iplantc.service.jobs.phases.schedulers.MonitoringScheduler;
-import org.iplantc.service.jobs.phases.schedulers.RollingBackScheduler;
 import org.iplantc.service.jobs.phases.schedulers.StagingScheduler;
 import org.iplantc.service.jobs.phases.schedulers.SubmittingScheduler;
 import org.iplantc.service.jobs.resources.JobDocumentationResource;
@@ -155,13 +154,6 @@ public class JobsApplication extends AgaveApplication
                     _log.error(msg, e);
                     throw e;
                 }
-            try {taskService.execute(new RollingBackScheduler());}
-            catch (Exception e)
-            {
-                String msg = "Unable to start RollingbackScheduler.";
-                _log.error(msg, e);
-                throw e;
-            }
         }
     }
 
