@@ -38,19 +38,9 @@
 			</testResource>
 		</testResources>
 		<plugins>
-			<!-- <plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>install</id>
-						<phase>install</phase>
-						<goals>
-							<goal>sources</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin> -->
+			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-dependency-plugin</artifactId> 
+				<executions> <execution> <id>install</id> <phase>install</phase> <goals> 
+				<goal>sources</goal> </goals> </execution> </executions> </plugin> -->
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<executions>
@@ -84,7 +74,7 @@
 		</plugins>
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
@@ -179,27 +169,21 @@
 			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
-		<!-- <dependency>
-			<groupId>org.mongojack</groupId>
-			<artifactId>mongojack</artifactId>
-			<version>${mongojack.version}</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>persistence-api</artifactId>
-					<groupId>javax.persistence</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency> -->
-		<!-- <dependency>
-			<groupId>com.google.inject</groupId>
-			<artifactId>guice</artifactId>
-			<version>${guice.version}</version>
-			<scope>test</scope>
-		</dependency> -->
+		<!-- <dependency> <groupId>org.mongojack</groupId> <artifactId>mongojack</artifactId> 
+			<version>${mongojack.version}</version> <exclusions> <exclusion> <artifactId>persistence-api</artifactId> 
+			<groupId>javax.persistence</groupId> </exclusion> </exclusions> </dependency> -->
+		<!-- <dependency> <groupId>com.google.inject</groupId> <artifactId>guice</artifactId> 
+			<version>${guice.version}</version> <scope>test</scope> </dependency> -->
 		<dependency>
 			<groupId>cz.jirutka.validator</groupId>
 			<artifactId>validator-collection</artifactId>
 			<version>${validator-collection.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.hibernate</groupId>
+					<artifactId>hibernate-validator</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 </project>

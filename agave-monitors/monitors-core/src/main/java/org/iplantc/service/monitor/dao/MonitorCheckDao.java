@@ -3,9 +3,11 @@
  */
 package org.iplantc.service.monitor.dao;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import org.hibernate.CacheMode;
 import org.hibernate.HibernateException;
 import org.hibernate.ObjectNotFoundException;
 import org.hibernate.Query;
@@ -17,6 +19,7 @@ import org.iplantc.service.monitor.exceptions.MonitorException;
 import org.iplantc.service.monitor.model.MonitorCheck;
 import org.iplantc.service.monitor.model.enumeration.MonitorCheckType;
 import org.iplantc.service.monitor.model.enumeration.MonitorStatusType;
+import org.joda.time.DateTime;
 
 /**
  * Data access class for internal users.
@@ -205,7 +208,7 @@ public class MonitorCheckDao extends AbstractDao
 		}
 		
 		if (endDate == null) {
-			endDate = new Date();
+			endDate = new DateTime().plusSeconds(1).toDate();
 		}
 		
 		if (endDate.before(startDate))
@@ -249,6 +252,8 @@ public class MonitorCheckDao extends AbstractDao
 			
 			List<MonitorCheck> checks = (List<MonitorCheck>)query
 //					.setResultTransformer(Transformers.aliasToBean(MonitorCheck.class))
+					.setCacheable(false)
+					.setCacheMode(CacheMode.IGNORE)
 					.setFirstResult(offset)
 					.setMaxResults(limit)
 					.list();

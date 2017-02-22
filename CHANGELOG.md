@@ -1,14 +1,22 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## 2.1.10 - 2017-02-15
+## 2.1.10 - 2017-02-18
 
 ### Added
-- nothing
+- JOBS: Added basic zombie cleanup quartz job with its own dedicated scheduler to roll back jobs that get stuck or abandoned. The reaper runs every 5 mintutes looking for jobs that have been in active states for more than 15 minutes `’PROCESSING_INPUTS', 'STAGING_INPUTS', 'STAGING_JOB', 'SUBMITTING_JOB', 'SUBMITTING', 'ARCHIVING'` without any data transfer task being updated in that timeframe. Since there is a `TransferTask` tied to every phase of job management, this is sufficient to recover most tasks within 15 minutes at worst. The reaper must be enabled by setting `IPLANT_ENABLE_ZOMBIE_CLEANUP` to true. `IPLANT_DEDICATED_TENANT_ID` will be honored in the reaping queries.
+- METADATA: Added support for sorting through the same syntax as the jobs api: `order` and `orderBy` url query parameters. Nested objects are supported in the `orderBy` field.
 
 ### Changed
+- APPS: Fixed dependency conflict between the Restlet JAX-RS extension lib and the jCloud jsr133 jar. 
+- JOBS: Swapped out consumer-producer quartz schedulers used by the jobs API with distinct schedulers per phase. This frees up possible deadlocks due to thread scarcity in prod and allows each threadpool to work without contention.
+- JOBS: Fixed bug causing workers to crash when apps and systems were erased from the system. This was enough to stall containers with unexpected runtime errors that failed silently. System and app retirement are now logged and written to the user’s event history for transparency.  
+- JOBS: Added worker autopsy reports after completion to log any unhandled exceptions and provide stat data on the execution.
+- FILES: Adding explicit call to `Thread.currentThread().interrupt()` as part of the Quartz job interrupt to shut down the current thread and properly roll back transfer tasks.  
 - SYSTEMS: AH-176 Speeding up system role operations through the use of direct sql call. Bumps capacity of the service before failure by about 10x.
+- METADATA: Fixed dependency conflict between versions of hibernate validator used in metadata and commons. 
 - METADATA: AH-174 Speeding up metadata permission operations through the use of direct sql calls. Bumps capacity of the service marginally, but ensures accuracy on every call.
+- MONITORS: Fixed a bug in the monitor check query that prevented checks in the last 2 seconds from being returned.  
 - TAGS: Fixed serialization and validation of association ids on Monitors, Files, and Monitor Checks.  
 - UUIDS: Fixed resolution of association ids on Monitors, Files, and Monitor Checks.
 

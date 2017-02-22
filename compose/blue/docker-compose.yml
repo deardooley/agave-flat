@@ -272,7 +272,7 @@ services:
     environment:
       - 'CONTAINER_STACK=blue'
     labels:
-      - 'traefik.frontend.rule=Host:api.example.com;PathStrip:/tenants,/tenants/{id}'
+      - 'traefik.frontend.rule=Host:api.example.com;PathStrip:/tenants'
       - 'traefik.backend=tenants'
       - "traefik.port=80"
       - "traefik.protocol=http"
