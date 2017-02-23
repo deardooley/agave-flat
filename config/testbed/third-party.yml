@@ -30,6 +30,8 @@ mysql:
     agaveapi.test: "utest"
   volumes_from:
     - 'mysqlvol'
+  volumes:
+    - './mysql/my.cnf:/etc/mysql/my.cnf'
   environment:
     MYSQL_ROOT_PASSWORD: changeit
     MYSQL_DATABASE: agavecore

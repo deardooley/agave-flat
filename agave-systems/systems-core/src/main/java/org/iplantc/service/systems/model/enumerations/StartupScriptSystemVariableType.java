@@ -22,7 +22,8 @@ public enum StartupScriptSystemVariableType
 	SYSTEM_LOGIN_PROTOCOL,
 	SYSTEM_LOGIN_HOST,
 	SYSTEM_LOGIN_PORT,
-	SYSTEM_LOGIN_AUTH_TYPE;
+	SYSTEM_LOGIN_AUTH_TYPE,
+	SYSTEM_OWNER;
 	
 	private static final Logger log = Logger.getLogger(StartupScriptSystemVariableType.class);
 
@@ -39,6 +40,10 @@ public enum StartupScriptSystemVariableType
 		if (this == SYSTEM_ID)
 		{
 			return system.getSystemId();
+		}
+		else if (this == SYSTEM_OWNER)
+		{
+			return system.getOwner();
 		}
 		else if (this == SYSTEM_UUID)
 		{

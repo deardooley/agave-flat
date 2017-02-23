@@ -22,6 +22,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.globus.ftp.GridFTPSession;
+import org.hibernate.HibernateException;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.RangeValidationException;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
@@ -246,7 +247,17 @@ public class URLCopy
     					childTransferTask = TransferTaskDao.getById(childTransferTask.getId());
     					
     					transferTask.updateSummaryStats(childTransferTask);
-    					TransferTaskDao.persist(childTransferTask);
+    					try {
+    						// this should always succeed.
+    						TransferTaskDao.updateProgress(transferTask);
+    					}
+    					catch (HibernateException | TransferException e) {
+    						// on error, the parent task is likely stale. 
+    						// update the transferTask by merging with the official
+    						// record and persist again.
+    						transferTask = TransferTaskDao.merge(transferTask);
+    						TransferTaskDao.persist(transferTask);
+    					}
     					
     					if (childTransferTask.getStatus().equals(TransferStatusType.CANCELLED)) {
     						transferTask.setStatus(TransferStatusType.CANCELLED);
@@ -331,7 +342,7 @@ public class URLCopy
 						 } 
 				        else {
 						 	proxyTransfer(srcPath, destPath, listener);
-						 }
+						}
 					}
 					catch (ClosedByInterruptException e) 
 					{
@@ -453,7 +464,7 @@ public class URLCopy
     				
     				aggregateTransferTask.updateSummaryStats(srcChildRemoteTransferListener.getTransferTask());
     				
-    				TransferTaskDao.persist(aggregateTransferTask);
+    				TransferTaskDao.updateProgress(aggregateTransferTask);
     				
     				// must be in here as the LOCAL files will not have a src transfer listener associated with them.
     				checkCancelled(srcChildRemoteTransferListener); 
@@ -511,7 +522,7 @@ public class URLCopy
     				
     				aggregateTransferTask.updateSummaryStats(destChildRemoteTransferListener.getTransferTask());
     				
-    				TransferTaskDao.persist(aggregateTransferTask);
+    				TransferTaskDao.updateProgress(aggregateTransferTask);
     			}
     			catch (RemoteDataException e) {
     			    log.debug(String.format(
@@ -701,12 +712,10 @@ public class URLCopy
                     // field to true
                     checkCancelled(listener);
                     
-                    
 				    callbackTime = System.currentTimeMillis();
 					
 				    listener.progressed(bytesSoFar);
 				}
-				
 			}
 			
 			// update with the final transferred blocks and wrap the transfer.
@@ -945,7 +954,6 @@ public class URLCopy
             if (totalSize == Range.SIZE_MAX) {
                 totalSize = sourceClient.length(srcPath) - srcRangeOffset;
             }
-            
             
             in = getInputStream(sourceClient, srcPath);
             in.skip(srcRangeOffset);

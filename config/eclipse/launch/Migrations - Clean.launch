@@ -14,7 +14,6 @@
 <booleanAttribute key="M2_UPDATE_SNAPSHOTS" value="false"/>
 <stringAttribute key="M2_USER_SETTINGS" value="../config/maven/settings-SAMPLE.xml"/>
 <booleanAttribute key="M2_WORKSPACE_RESOLUTION" value="false"/>
-<stringAttribute key="org.eclipse.debug.core.ATTR_REFRESH_SCOPE" value="${project}"/>
 <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:/agave-migrations}"/>
 </launchConfiguration>

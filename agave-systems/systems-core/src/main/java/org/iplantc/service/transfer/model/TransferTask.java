@@ -705,11 +705,13 @@ public class TransferTask {
 	@Transient
 	public void updateSummaryStats(TransferTask transferTask)
 	{
-		this.bytesTransferred += transferTask.getBytesTransferred();
-		this.totalFiles += transferTask.getTotalFiles();
-		this.totalSize += transferTask.totalSize;
-		this.totalSkippedFiles += transferTask.totalSkippedFiles;
-		this.lastUpdated = new Date();
-		this.updateTransferRate();
+		if (transferTask != null) {
+			this.bytesTransferred += transferTask.getBytesTransferred();
+			this.totalFiles += transferTask.getTotalFiles();
+			this.totalSize += transferTask.getTotalSize();
+			this.totalSkippedFiles += transferTask.getTotalSkippedFiles();
+			this.lastUpdated = new Date();
+			this.updateTransferRate();
+		}
 	}
 }

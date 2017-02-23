@@ -915,4 +915,60 @@ public class TransferTaskDao
             try { HibernateUtil.commitTransaction();} catch (Exception e) {}
         }
     }
+
+	/**
+	 * Updates a transfer task with a raw sql update wrapped in a transaction.
+	 * @param transferTask
+	 * @throws TransferException
+	 */
+	public static void updateProgress(TransferTask transferTask) 
+	throws TransferException
+	{
+		try
+		{	
+			Session session = getSession();
+			session.beginTransaction();
+			String sql = "UPDATE transfertasks t " + 
+						 "SET `attempts` = :attempts, " +
+						 "	  `bytes_transferred` = :bytestransferred, " +
+						 "	  `end_time` = :end, " +
+						 "	  `last_updated` = :lastupdated, " +
+						 "	  `start_time` = :start, " +
+						 "	  `status` = :status, " +
+						 "	  `total_size` = :total, " +
+						 "	  `transfer_rate` = :rate, " +
+						 "	  `total_files` = :totalfiles, " +
+						 "	  `total_skipped` = :totalskipped " +
+						 "WHERE `id` = :id";
+
+			session.createSQLQuery(sql)
+					.setInteger("attempts", transferTask.getAttempts())
+					.setLong("bytestransferred", transferTask.getBytesTransferred())
+					.setDate("end", transferTask.getEndTime())
+					.setDate("lastupdated", transferTask.getLastUpdated())
+					.setDate("start", transferTask.getStartTime())
+					.setString("status", TransferStatusType.TRANSFERRING.name())
+					.setLong("total", transferTask.getTotalSize())
+					.setDouble("rate", transferTask.getTransferRate())
+					.setLong("totalfiles", transferTask.getTotalFiles())
+					.setLong("totalskipped", transferTask.getTotalSkippedFiles())
+					.setLong("id", transferTask.getId())
+					.executeUpdate();
+		}
+		catch (HibernateException ex)
+		{
+			try
+			{
+				if (HibernateUtil.getSession().isOpen()) {
+					HibernateUtil.rollbackTransaction();
+				}
+			}
+			catch (Exception e) {}
+			
+			throw new TransferException(ex);
+		}
+		finally {
+			try { HibernateUtil.commitTransaction(); } catch (Exception e) {}
+		}
+	}	
 }

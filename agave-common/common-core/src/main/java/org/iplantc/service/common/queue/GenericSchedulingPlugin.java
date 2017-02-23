@@ -12,6 +12,7 @@ import org.iplantc.service.common.discovery.ServiceCapability;
 import org.iplantc.service.common.discovery.ServiceCapabilityConfiguration;
 import org.iplantc.service.common.messaging.MessageQueueListener;
 import org.joda.time.DateTime;
+import org.quartz.InterruptableJob;
 import org.quartz.Job;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
@@ -127,6 +128,9 @@ public abstract class GenericSchedulingPlugin implements SchedulerPlugin
 				Job job = jobContext.getJobInstance();
 				if (job instanceof MessageQueueListener) {
 					((MessageQueueListener)job).stop();
+				}
+				else if (job instanceof InterruptableJob) {
+					((InterruptableJob)job).interrupt();
 				}
 			}
 		}
