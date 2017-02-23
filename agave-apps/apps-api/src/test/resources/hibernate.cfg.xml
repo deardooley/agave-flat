@@ -21,6 +21,7 @@
         <!-- <property name="hibernate.connection.autocommit">false</property> --> 
         <property name="hibernate.show_sql">false</property>
         <property name="hibernate.query.substitutions">true 1, false 0</property>
+        <property name="hbm2ddl.auto">create</property>
     </session-factory>
 
 </hibernate-configuration>
