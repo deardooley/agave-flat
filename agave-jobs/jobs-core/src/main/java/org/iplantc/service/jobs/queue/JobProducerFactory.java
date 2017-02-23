@@ -3,6 +3,11 @@ package org.iplantc.service.jobs.queue;
 
 import static org.quartz.TriggerBuilder.newTrigger;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.apache.commons.lang3.StringUtils;

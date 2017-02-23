@@ -58,9 +58,12 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 	{
 		try {
 //		    log.debug("Saving transfer task");
-			this.transferTask = transferTask == null ? 
-					null : TransferTaskDao.merge(transferTask);
+			if (transferTask != null) {
+				TransferTaskDao.updateProgress(transferTask);
+			}
 			
+			this.transferTask = transferTask;
+				
 		} catch (StaleObjectStateException ex) {
 //		    notify();
 			// just ignore these. 

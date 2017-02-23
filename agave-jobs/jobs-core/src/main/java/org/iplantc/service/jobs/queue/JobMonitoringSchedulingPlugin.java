@@ -48,6 +48,4 @@ public class JobMonitoringSchedulingPlugin extends GenericSchedulingPlugin
         }
 	}
 
-	
-
 }

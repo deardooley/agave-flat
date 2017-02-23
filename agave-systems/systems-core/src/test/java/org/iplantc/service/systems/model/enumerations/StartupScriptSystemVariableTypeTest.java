@@ -46,6 +46,7 @@ public class StartupScriptSystemVariableTypeTest extends SystemsModelTestCommon 
 				{ SYSTEM_LOGIN_PORT, String.format("${%s}", SYSTEM_LOGIN_PORT), String.valueOf(executionSystem.getLoginConfig().getPort())},
 				{ SYSTEM_LOGIN_AUTH_TYPE, String.format("${%s}", SYSTEM_LOGIN_AUTH_TYPE), executionSystem.getLoginConfig().getDefaultAuthConfig().getType().name()},
 				{ SYSTEM_UUID, String.format("${%s}", SYSTEM_UUID), executionSystem.getUuid()},
+				{ SYSTEM_OWNER, String.format("${%s}", SYSTEM_OWNER), executionSystem.getUuid()},
 				{ SYSTEM_ID, String.format("${%s}", SYSTEM_ID), executionSystem.getSystemId()},
 		};
 	}

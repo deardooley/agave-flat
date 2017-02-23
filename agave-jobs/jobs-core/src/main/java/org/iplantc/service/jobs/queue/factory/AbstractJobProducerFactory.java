@@ -3,6 +3,9 @@ package org.iplantc.service.jobs.queue.factory;
 
 import static org.quartz.TriggerBuilder.newTrigger;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.apache.commons.lang3.StringUtils;
@@ -135,4 +138,73 @@ public abstract class AbstractJobProducerFactory implements JobFactory {
     protected abstract WorkerWatch getJobInstance();
     
     protected abstract int getMaxTasks();
+    
+
+    
+    /**
+	 * @return the stagingjobtaskqueue
+	 */
+	public static synchronized ConcurrentLinkedDeque<String> getStagingjobtaskqueue() {
+		return stagingJobTaskQueue;
+	}
+
+	/**
+	 * @return the monitoringjobtaskqueue
+	 */
+	public static synchronized ConcurrentLinkedDeque<String> getMonitoringjobtaskqueue() {
+		return monitoringJobTaskQueue;
+	}
+
+	/**
+	 * @return the submissionjobtaskqueue
+	 */
+	public static synchronized ConcurrentLinkedDeque<String> getSubmissionjobtaskqueue() {
+		return submissionJobTaskQueue;
+	}
+
+	/**
+	 * @return the archivingjobtaskqueue
+	 */
+	public static synchronized ConcurrentLinkedDeque<String> getArchivingjobtaskqueue() {
+		return archivingJobTaskQueue;
+	}
+
+	/**
+     * Returns the contents of all the concurrent task queues
+     * at the moment.
+     * 
+     * @return
+     */
+    public static synchronized Set<String> getAllActiveJobsUuids() {
+    	Set<String> jobUuids = new HashSet<String>();
+    	if (archivingJobTaskQueue.size() > 0) {
+    		Iterator<String> iter = archivingJobTaskQueue.iterator();
+    		while (iter.hasNext()) {
+    			jobUuids.add(iter.next());
+    		}
+    	}
+    	
+    	if (monitoringJobTaskQueue.size() > 0) {
+    		Iterator<String> iter = monitoringJobTaskQueue.iterator();
+    		while (iter.hasNext()) {
+    			jobUuids.add(iter.next());
+    		}
+    	}
+    	
+    	if (stagingJobTaskQueue.size() > 0) {
+    		Iterator<String> iter = stagingJobTaskQueue.iterator();
+    		while (iter.hasNext()) {
+    			jobUuids.add(iter.next());
+    		}
+    	}
+    	
+    	if (submissionJobTaskQueue.size() > 0) {
+    		Iterator<String> iter = submissionJobTaskQueue.iterator();
+    		while (iter.hasNext()) {
+    			jobUuids.add(iter.next());
+    		}
+    	}
+    	
+    	return jobUuids;
+    }
 }
