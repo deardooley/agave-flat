@@ -323,7 +323,7 @@ public class URLCopy
 				        long availableBytes = new File("/").getUsableSpace();
                         
 				        if (Settings.ALLOW_RELAY_TRANSFERS 
-				                && sourceClient.length(srcPath) < (Settings.MAX_RELAY_TRANSFER_SIZE * Math.pow(2, 30))) 
+				                && srcFileLength < (Settings.MAX_RELAY_TRANSFER_SIZE * Math.pow(2, 30))) 
 						{
 				            if (availableBytes > (srcFileLength + (5*Math.pow(2, 30)))) 
 				            {

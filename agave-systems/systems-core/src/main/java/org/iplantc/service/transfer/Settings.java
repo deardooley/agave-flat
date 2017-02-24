@@ -89,18 +89,9 @@ public class Settings {
 	
 	static
 	{
-		try
-		{
-			props.load(Settings.class.getClassLoader().getResourceAsStream(
-					"service.properties"));
-
-			InetAddress addr = InetAddress.getLocalHost();
-			HOSTNAME = addr.getHostName();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
+		props = org.iplantc.service.common.Settings.loadRuntimeProperties();
+		
+		HOSTNAME = org.iplantc.service.common.Settings.getLocalHostname();
 
 		AUTH_SOURCE = (String) props.get("iplant.auth.source");
 

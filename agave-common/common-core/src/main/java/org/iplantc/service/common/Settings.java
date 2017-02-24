@@ -588,13 +588,9 @@ public class Settings
      */
     public static String getLocalHostname()
     {
-        String hostname = System.getenv("TUTUM_CONTAINER_FQDN");
+        String hostname = System.getenv("HOSTNAME");
         
-        if (StringUtils.isEmpty(hostname)) 
-        {
-            hostname = System.getenv("HOSTNAME");
-        } 
-        else if (StringUtils.isBlank(hostname)) 
+        if (StringUtils.isBlank(hostname)) 
         {
             try {
                 hostname = InetAddress.getLocalHost().getHostName();

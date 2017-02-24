@@ -111,7 +111,7 @@ public class Settings
 	    }
 		
 		props = org.iplantc.service.common.Settings.loadRuntimeProperties();
-				
+		
 		DEBUG = Boolean.valueOf((String)props.get("iplant.debug.mode"));
 		
 		DEBUG_USERNAME = (String)props.get("iplant.debug.username");
