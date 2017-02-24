@@ -63,3 +63,4 @@ compose/proxy/logs
 science-api-samples
 appendonly.aof
 compose/scratch
+config/testbed/mongodb
