@@ -62,7 +62,8 @@ services:
       - backend
 
   devproxy:
-    image: agaveapi/apache-api-proxy:alpine
+    #image: agaveapi/apache-api-proxy:alpine
+    build: apache
     hostname: api.example.com
     mem_limit: 512m
     restart: on-failure
@@ -82,8 +83,8 @@ services:
     volumes:
       - './logs/proxy:/var/log/apache2'
       - '../ssl:/ssl:ro'
-      - './apache:/apache'
-      - './apache/environment.sh:/app/config/environment.sh'
+      #- './apache:/apache'
+      #- './apache/environment.sh:/app/config/environment.sh'
     networks:
       - frontend
       - backend

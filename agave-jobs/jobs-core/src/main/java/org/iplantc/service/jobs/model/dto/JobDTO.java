@@ -497,6 +497,7 @@ public class JobDTO {
 		json.put("submitTime", submit_time == null ? null : new DateTime(submit_time).toString());
 		json.put("startTime", start_time == null ? null : new DateTime(start_time).toString());
 		json.put("endTime", end_time == null ? null : new DateTime(end_time).toString());
+		json.put("lastUpdated", new DateTime(last_updated).toString());
 
 		try {
 			json.set("inputs", getInputsAsJsonObject());
