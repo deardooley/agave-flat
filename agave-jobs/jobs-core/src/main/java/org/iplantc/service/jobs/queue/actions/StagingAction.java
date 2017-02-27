@@ -49,7 +49,6 @@ import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.AuthenticationException;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.iplantc.service.transfer.model.TransferTask;
-import org.joda.time.DateTime;
 
 /**
  * @author dooley
@@ -366,6 +365,7 @@ public class StagingAction extends AbstractWorkerAction {
                                 try { remoteStorageDataClient.disconnect(); } catch(Exception e) {};
                                 
                                 JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+                                jobUpdateParameters.setWorkPath(job.getWorkPath());
                                 job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, message, jobUpdateParameters);
                                 
                                 continue;
