@@ -364,6 +364,8 @@ public class StagingAction extends AbstractWorkerAction {
                                 try { remoteExecutionDataClient.disconnect(); } catch (Exception e) {}
                                 try { remoteStorageDataClient.disconnect(); } catch(Exception e) {};
                                 
+                                // Bundle any previously changed job values into this update so that
+                                // hibernate doesn't loose them.
                                 JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
                                 jobUpdateParameters.setWorkPath(job.getWorkPath());
                                 job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, message, jobUpdateParameters);
