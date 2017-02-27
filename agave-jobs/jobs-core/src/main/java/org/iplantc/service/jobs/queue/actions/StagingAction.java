@@ -365,7 +365,8 @@ public class StagingAction extends AbstractWorkerAction {
                                 try { remoteExecutionDataClient.disconnect(); } catch (Exception e) {}
                                 try { remoteStorageDataClient.disconnect(); } catch(Exception e) {};
                                 
-                                this.job.setStatus(JobStatusType.STAGING_INPUTS, message);
+                                JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+                                job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, message, jobUpdateParameters);
                                 
                                 continue;
                 			}
