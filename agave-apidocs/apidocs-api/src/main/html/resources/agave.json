@@ -15,8 +15,8 @@
     "auth": {
       "type": "oauth2",
       "flow": "implicit",
-      "authorizationUrl": "https://agave.iplantc.org/authorize",
-      "tokenUrl": "https://agave.iplantc.org/token",
+      "authorizationUrl": "https://public.agaveapi.co/authorize",
+      "tokenUrl": "https://public.agaveapi.co/token",
       "scopes": {
       	"PRODUCTION": "Catchall scope for all core services"
       }
@@ -4862,7 +4862,7 @@
         "tags": [
           "postits"
         ],
-        "operationId": "add Postit",
+        "operationId": "addPostit",
         "produces": [
           "application/json"
         ],
@@ -7423,6 +7423,52 @@
             "auth": ["PRODUCTION"]
           }
         ]
+      },
+      "post": {
+        "description": "Generate a new UUID for a given resource type",
+        "tags": [
+          "uuids"
+        ],
+        "operationId": "createUuid",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "x-is-map": false,
+            "description": "The type of resource for which the UUID should be generated.",
+            "schema": {
+              "$ref": "#/definitions/UUIDRequest"
+            }
+          },
+          {
+            "name": "naked",
+            "in": "query",
+            "required": true,
+            "x-is-map": false,
+            "default": true,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/UUIDResolution"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "auth": ["PRODUCTION"]
+          }
+        ]
       }
     },
     "/uuids/v2/{uuid}": {
@@ -7468,7 +7514,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/UUIDSummary"
+                "$ref": "#/definitions/UUIDResolution"
               }
             }
           }
@@ -9477,7 +9523,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "lastUpdated ": {
+        "lastUpdated": {
           "description": "The date the internal user was last updated",
           "type": "string",
           "format": "date-time"
@@ -9486,7 +9532,7 @@
       "required": [
         "parent",
         "created",
-        "lastUpdated "
+        "lastUpdated"
       ],
       "allOf": [
         {
@@ -11340,7 +11386,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "lastUpdated ": {
+        "lastUpdated": {
           "description": "The date the permission was last updated",
           "type": "string",
           "format": "date-time"
@@ -11354,7 +11400,7 @@
         "username",
         "permission",
         "created",
-        "lastUpdated ",
+        "lastUpdated",
         "id"
       ]
     },
@@ -11506,6 +11552,58 @@
         "urlToImport": {
           "description": "The URL to import the file from. This parameter is used if not file is uploaded with this post.",
           "type": "string"
+        }
+      }
+    },
+    "UUIDRequest": {
+      "description": "Request object to create a new UUID",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The resource type for which the UUID should be created.",
+          "type": "string"
+        }
+      }
+    },
+    "UUIDSummary": {
+      "description": "Resource to which a tag has been associated",
+      "type": "object",
+      "properties": {
+        "message": {
+          "description": "success or failure",
+          "type": "string"
+        },
+        "result": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UUIDResolution"
+          }
+        },
+        "status": {
+          "description": "success or failure",
+          "type": "string"
+        },
+        "version": {
+          "description": "API version number",
+          "type": "string"
+        }
+      }
+    },
+    "UUIDResolution": {
+      "description": "Resource to which a tag has been associated",
+      "type": "object",
+      "properties": {
+        "uuid": {
+          "description": "uuid created/requested",
+          "type": "string"
+        },
+        "type": {
+          "description": "the resource type represented by this uuid",
+          "type": "string"
+        },
+        "representation": {
+          "description": "the full object representation for this uuid",
+          "type": "object"
         }
       }
     }

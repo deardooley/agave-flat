@@ -326,47 +326,51 @@ public class StagingAction extends AbstractWorkerAction {
                     		remoteExecutionDataClient.length(destPath) == remoteStorageDataClient.length(remotePath)) {
                     	
                 		// verify the checksums are the same before skipping?
+                    	String message = "";
                 		try {
                 			String sourceChecksum = remoteStorageDataClient.checksum(remotePath);
                 			String destChecksum = remoteExecutionDataClient.checksum(destPath);
                 			
                 			if (StringUtils.equals(sourceChecksum, destChecksum)) {
                 				// they're the same! skip this transfer
-                				log.debug("Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
-        						+ job.getUuid() + ". The checksums were identical. This input will not be recopied.");
+                				message = "Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
+                						+ job.getUuid() + ". The checksums were identical. This input will not be recopied.";
                 				
                 				skipTransfer = true;
                 			}
                 			else {
-                				log.debug("Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
+                				message = "Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
                 						+ job.getUuid() + ". The checksums did not match, so the input file will be transfered to the "
-                						+ "target system and overwrite the existing file.");
+                						+ "target system and overwrite the existing file.";
                 			}
                 		} 
                 		catch (NotImplementedException  e) {
                 			// should we find another way, or just copy the files?
                 			// we'll err on the side of caution and recopy
-                			log.debug("Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
-            						+ job.getUuid() + ". Unable to calculate checksums. This input will not be recopied.");
+                			message = "Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
+            						+ job.getUuid() + ". Unable to calculate checksums. This input will not be recopied.";
                 			
                 			skipTransfer = true;
                 		}
                 		catch (Throwable e) {
                 			// couldn't calculate the checksum due to server side error
                 			// we'll err on the side of caution and recopy
-                			log.debug("Input file " + singleRawInputValue + " of idential size was found in the work folder of job "
-            						+ job.getUuid() + ". Unable to calculate checksums. This input will not be recopied.");
+                			message = "Unable to locate file " + singleRawInputValue + " in the work folder of job "
+            						+ job.getUuid() + ". This input will not be recopied.";
                 		}
                 		finally {
+                			log.debug(message);
+                			
                 			if (skipTransfer) {
                                 try { remoteExecutionDataClient.disconnect(); } catch (Exception e) {}
                                 try { remoteStorageDataClient.disconnect(); } catch(Exception e) {};
+                                
+                                this.job.setStatus(JobStatusType.STAGING_INPUTS, message);
                                 
                                 continue;
                 			}
                 		}
                     }
-                    
                     
                     // nope. still have to copy them. proceed
                     TransferTask rootTask = new TransferTask(
