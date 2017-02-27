@@ -29,7 +29,6 @@ public class QueueConstants
     public static final String TOPIC_SUBMITTING_ROUTING_KEY = TOPIC_QUEUE_NAME + "." + JobPhaseType.SUBMITTING.name();
     public static final String TOPIC_MONITORING_ROUTING_KEY = TOPIC_QUEUE_NAME + "." + JobPhaseType.MONITORING.name();
     public static final String TOPIC_ARCHIVING_ROUTING_KEY = TOPIC_QUEUE_NAME + "." + JobPhaseType.ARCHIVING.name();
-    public static final String TOPIC_ROLLINGBACK_ROUTING_KEY = TOPIC_QUEUE_NAME + "." + JobPhaseType.ROLLINGBACK.name();
     
     // ----- RabbitMQ pre-configured properties objects.
     public static final BasicProperties PERSISTENT_JSON =

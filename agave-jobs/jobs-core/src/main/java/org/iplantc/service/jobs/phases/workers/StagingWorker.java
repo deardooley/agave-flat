@@ -140,7 +140,7 @@ public final class StagingWorker
         boolean staged = false;
         
         // Main staging loop.
-        while (!staged && !isJobExecutionSuspended() && attempts <= Settings.MAX_SUBMISSION_RETRIES)
+        while (!staged && !isJobExecutionSuspended() && attempts <= Settings.JOB_MAX_SUBMISSION_RETRIES)
         {
             // Set the number of retries and attempts.
             _job.setRetries(attempts++);
@@ -255,7 +255,7 @@ public final class StagingWorker
             }
             catch (JobException e) 
             {
-                if (attempts >= Settings.MAX_SUBMISSION_RETRIES ) 
+                if (attempts >= Settings.JOB_MAX_SUBMISSION_RETRIES ) 
                 {
                     _log.error("Failed to stage job " + _job.getUuid() + 
                             " inputs after " + attempts + " attempts.", e);

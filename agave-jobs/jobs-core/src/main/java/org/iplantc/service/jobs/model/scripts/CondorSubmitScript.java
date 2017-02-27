@@ -81,7 +81,7 @@ public class CondorSubmitScript extends AbstractSubmitScript {
 	        sb.append("\n\n");
 	        
 	        sb.append("# retry job 3 times, pause 5 min between retries\n");
-	        sb.append("periodic_release =  (NumJobStarts < " + Settings.MAX_SUBMISSION_RETRIES + ") && ((CurrentTime - EnteredCurrentStatus) > (15*60))\n\n");
+	        sb.append("periodic_release =  (NumJobStarts < " + Settings.JOB_MAX_SUBMISSION_RETRIES + ") && ((CurrentTime - EnteredCurrentStatus) > (15*60))\n\n");
 	        
 	        sb.append("# stay in queue on failures");
 	        sb.append("on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n\n");

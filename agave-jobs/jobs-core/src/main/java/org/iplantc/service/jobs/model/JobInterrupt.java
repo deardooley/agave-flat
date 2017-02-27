@@ -15,6 +15,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /** This class is the in-memory model object for a record from job_interrupts table.
  * 
+ * See Settings.JOB_INTERRUPT_TTL_SECONDS for the interrupt's time-to-live (default 
+ * is 3600 seconds--1 hour).
+ * 
  * The choice to not define this class as a Hibernate entity is intentional.
  * See the class comment in JobQueue for a discussion.  
  *  
@@ -27,9 +30,6 @@ public final class JobInterrupt
     /* ********************************************************************** */
     // Tracing.
     private static final Logger _log = Logger.getLogger(JobInterrupt.class);
-    
-    // Expiration period.  This duration is the interrupt's time-to-live.
-    public static final int JOB_INTERRUPT_TTL_SECONDS = 3600; // 1 hour
     
     /* ********************************************************************** */
     /*                                Fields                                  */

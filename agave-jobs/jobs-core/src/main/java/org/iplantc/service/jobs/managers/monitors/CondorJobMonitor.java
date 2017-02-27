@@ -206,7 +206,7 @@ public class CondorJobMonitor extends AbstractJobMonitor
             
             JobKiller killer = JobKillerFactory.getInstance(job);
             int retries = 0;
-            while (retries < Settings.MAX_SUBMISSION_RETRIES) 
+            while (retries < Settings.JOB_MAX_SUBMISSION_RETRIES) 
             { 
                 checkStopped();
                 
@@ -269,7 +269,7 @@ public class CondorJobMonitor extends AbstractJobMonitor
                     
                     this.job = JobManager.updateStatus(job, job.getStatus(), message);
                     
-                    if (retries == Settings.MAX_SUBMISSION_RETRIES) {
+                    if (retries == Settings.JOB_MAX_SUBMISSION_RETRIES) {
                         
                         message = "Failed to kill job " + job.getUuid() + 
                                 " after " + retries + "  attempts. Terminating job.";

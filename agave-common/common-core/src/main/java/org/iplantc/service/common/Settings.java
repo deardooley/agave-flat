@@ -146,15 +146,6 @@ public class Settings
     public static String                        TRANSFORMS_STAGING_TOPIC;
     public static String                        TRANSFORMS_STAGING_QUEUE;
     
-    public static String                        JOBS_STAGING_QUEUE;
-    public static String                        JOBS_STAGING_TOPIC;
-    public static String                        JOBS_SUBMISSION_QUEUE;
-    public static String                        JOBS_SUBMISSION_TOPIC;
-    public static String                        JOBS_MONITORING_QUEUE;
-    public static String                        JOBS_MONITORING_TOPIC;
-    public static String                        JOBS_ARCHIVING_QUEUE;
-    public static String                        JOBS_ARCHIVING_TOPIC;
-
     public static String                        MONITORS_CHECK_QUEUE;
     public static String                        MONITORS_CHECK_TOPIC;
     
@@ -180,27 +171,6 @@ public class Settings
     
     static
     {
-//    	Configuration.setDefaults(new Configuration.Defaults() {
-//
-//    	    private final JsonProvider jsonProvider = new JacksonJsonProvider();
-//    	    private final MappingProvider mappingProvider = new JacksonMappingProvider();
-//
-//    	    @Override
-//    	    public JsonProvider jsonProvider() {
-//    	        return jsonProvider;
-//    	    }
-//
-//    	    @Override
-//    	    public MappingProvider mappingProvider() {
-//    	        return mappingProvider;
-//    	    }
-//
-//    	    @Override
-//    	    public Set<Option> options() {
-//    	    	return EnumSet.of(Option.ALWAYS_RETURN_LIST, Option.SUPPRESS_EXCEPTIONS);
-//    	    }
-//    	});
-    	
         // trust everyone. we need this due to the unknown nature of the callback urls
         try { 
             HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier(){ 
@@ -341,15 +311,6 @@ public class Settings
         TRANSFORMS_DECODING_TOPIC = (String) props.getProperty("iplant.transforms.service.decoding.topic", "decoding.prod.transforms.topic");
         TRANSFORMS_STAGING_QUEUE = (String) props.getProperty("iplant.transforms.service.staging.queue", "staging.prod.transforms.queue");
         TRANSFORMS_STAGING_TOPIC = (String) props.getProperty("iplant.transforms.service.staging.topic", "staging.prod.transforms.topic");
-        
-        JOBS_STAGING_QUEUE = (String) props.getProperty("iplant.jobs.service.staging.queue", "staging.prod.jobs.queue");
-        JOBS_STAGING_TOPIC = (String) props.getProperty("iplant.jobs.service.staging.topic", "staging.prod.jobs.topic");
-        JOBS_SUBMISSION_QUEUE = (String) props.getProperty("iplant.jobs.service.submission.queue", "submission.prod.jobs.queue");
-        JOBS_SUBMISSION_TOPIC = (String) props.getProperty("iplant.jobs.service.submission.topic", "submission.prod.jobs.topic");
-        JOBS_MONITORING_QUEUE = (String) props.getProperty("iplant.jobs.service.monitoring.queue", "monitoring.prod.jobs.queue");
-        JOBS_MONITORING_TOPIC = (String) props.getProperty("iplant.jobs.service.monitoring.topic", "monitoring.prod.jobs.topic");
-        JOBS_ARCHIVING_QUEUE = (String) props.getProperty("iplant.jobs.service.archiving.queue", "archiving.prod.jobs.queue");
-        JOBS_ARCHIVING_TOPIC = (String) props.getProperty("iplant.jobs.service.archiving.topic", "archiving.prod.jobs.topic");
         
         MONITORS_CHECK_QUEUE = (String) props.getProperty("iplant.monitors.service.checks.queue", "checks.prod.monitors.queue");
         MONITORS_CHECK_TOPIC = (String) props.getProperty("iplant.monitors.service.checks.topic", "checks.prod.monitors.topic");

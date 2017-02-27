@@ -13,6 +13,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.JobInterrupt;
 import org.iplantc.service.jobs.model.enumerations.JobInterruptType;
@@ -200,7 +201,7 @@ public final class JobInterruptDao {
         // Add the interrupt time-to-live duration to the 
         // current time and use it as the expiration date.
         DateTime dt = new DateTime(curDate.getTime());
-        dt = dt.plusSeconds(JobInterrupt.JOB_INTERRUPT_TTL_SECONDS);
+        dt = dt.plusSeconds(Settings.JOB_INTERRUPT_TTL_SECONDS);
         interrupt.setExpiresAt(dt.toDate());
         
         // ------------------------- Call SQL ----------------------------

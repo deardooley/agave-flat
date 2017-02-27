@@ -63,7 +63,6 @@ public abstract class AbstractPhaseWorker
     
     // Communication constants.
     private static final String WORKER_EXCHANGE_NAME = QueueConstants.WORKER_EXCHANGE_NAME;
-    private static final int WORKER_INIT_RETRY_DELAY = 10000; // milliseconds
 
     /* ********************************************************************** */
     /*                                Fields                                  */
@@ -112,7 +111,6 @@ public abstract class AbstractPhaseWorker
         _tenantId   = parms.tenantId;
         _queueName  = parms.queueName;
         _threadNum  = parms.threadNum;
-//        _threadUuid = new AgaveUUID(UUIDType.USER_ROLE).toString();
         _threadUuid = new AgaveUUID(UUIDType.JOB_WORKER_THREAD).toString();
         
         if (_log.isDebugEnabled()) {
@@ -186,7 +184,7 @@ public abstract class AbstractPhaseWorker
                 
                 // Calculate a bounded and somewhat random wait time.
                 int rand = (int) Math.round(Math.random() * 10000); // between 0 and 10 seconds
-                rand += WORKER_INIT_RETRY_DELAY;
+                rand += Settings.JOB_WORKER_INIT_RETRY_MS;
                 msg += " Waiting " + rand + " milliseconds before retrying.";
                 _log.warn(msg);
                

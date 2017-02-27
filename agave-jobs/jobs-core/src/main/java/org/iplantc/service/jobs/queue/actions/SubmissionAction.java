@@ -62,7 +62,7 @@ public class SubmissionAction extends AbstractWorkerAction {
         
         try 
         {
-            while (!submitted && attempts <= Settings.MAX_SUBMISSION_RETRIES)
+            while (!submitted && attempts <= Settings.JOB_MAX_SUBMISSION_RETRIES)
             {
                 // Exceptions thrown from here propagate out (no retries). 
                 checkStopped(false, JobStatusType.STAGED);
@@ -159,7 +159,7 @@ public class SubmissionAction extends AbstractWorkerAction {
                         setJobLauncher(null);
                         attempts++;
                     }
-                    else if (attempts >= Settings.MAX_SUBMISSION_RETRIES ) 
+                    else if (attempts >= Settings.JOB_MAX_SUBMISSION_RETRIES ) 
                     {
                         try
                         {

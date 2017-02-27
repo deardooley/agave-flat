@@ -11,6 +11,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.dao.TenantDao;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobQueueDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.JobQueue;
@@ -144,7 +145,8 @@ public final class TenantQueues
             else result = new UpdateResult();
         
         // Construct resource file name.
-        String fileName = DEFAULT_CONFIG_DIR + tenantId + CONFIG_FILE_SUFFIX;
+        String configSubDir = Settings.JOB_QUEUE_CONFIG_FOLDER + "/";
+        String fileName = DEFAULT_CONFIG_DIR + configSubDir + tenantId + CONFIG_FILE_SUFFIX;
         
         // -------------------- Read Configuration File ---------------------
         // Get the class loader.

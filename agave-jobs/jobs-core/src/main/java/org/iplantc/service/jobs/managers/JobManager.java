@@ -199,7 +199,7 @@ public class JobManager {
 		    JobKiller killer = null;
 
 			int retries = 0;
-			while (retries < Settings.MAX_SUBMISSION_RETRIES)
+			while (retries < Settings.JOB_MAX_SUBMISSION_RETRIES)
 			{
 			    try
                 {
@@ -259,7 +259,7 @@ public class JobManager {
 
                     job = JobManager.updateStatus(job, job.getStatus(), message);
 
-                    if (retries == Settings.MAX_SUBMISSION_RETRIES) {
+                    if (retries == Settings.JOB_MAX_SUBMISSION_RETRIES) {
 
                         message = "Failed to kill job " + job.getUuid() +
                                 " after " + retries + "  attempts. Terminating job.";

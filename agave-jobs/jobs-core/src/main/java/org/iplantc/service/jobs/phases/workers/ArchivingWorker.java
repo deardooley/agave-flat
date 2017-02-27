@@ -235,7 +235,7 @@ public final class ArchivingWorker
         boolean archived = false;
 
         // Attempt to stage the job several times
-        while (!archived && !isJobExecutionSuspended() && attempts <= Settings.MAX_SUBMISSION_RETRIES)
+        while (!archived && !isJobExecutionSuspended() && attempts <= Settings.JOB_MAX_SUBMISSION_RETRIES)
         {
             _job.setRetries(attempts++);
             _log.debug("Attempt " + attempts + " to archive job " + _job.getUuid() + " output");
@@ -354,7 +354,7 @@ public final class ArchivingWorker
             }
             catch (JobException e)
             {
-                if (attempts >= Settings.MAX_SUBMISSION_RETRIES )
+                if (attempts >= Settings.JOB_MAX_SUBMISSION_RETRIES )
                 {
                     try {
                         _log.error("Failed to archive job " + _job.getName() + " (" + _job.getUuid() + 

@@ -154,9 +154,6 @@ public class TopicMessageSender
                 case SUBMITTING:
                     routingKey = QueueConstants.TOPIC_SUBMITTING_ROUTING_KEY;
                     break;
-                case ROLLINGBACK:
-                    routingKey = QueueConstants.TOPIC_ROLLINGBACK_ROUTING_KEY;
-                    break;
                 default:
                     String msg = "Unknown phase " + message.phase + 
                                  " encountered during topic message processing.";

@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobInterruptDao;
 import org.iplantc.service.jobs.dao.JobLeaseDao;
@@ -189,23 +190,11 @@ public abstract class AbstractPhaseScheduler
     private static final String THREAD_SUFFIX = "-Thread";
     
     // Number of milliseconds to wait in various polling situations.
-    private static final int POLLING_NORMAL_DELAY  = 10000;
-    private static final int POLLING_FAILURE_DELAY = 15000;
     private static final int LEASE_RENEWAL_DELAY = (JobLeaseDao.LEASE_SECONDS / 4) * 1000;
     
-    // Milliseconds between attempts to delete expired interrupts.
-    private static final int INTERRUPT_DELETE_DELAY = 240000; // 4 minutes
-    
-    // Milliseconds between attempts to roll back zombie jobs.
-    protected static final int ZOMBIE_MONITOR_DELAY = 600000; // 10 minutes
-    
-    // Milliseconds to wait (or poll) for threads to terminate 
-    // after being interrupted.
-    private static final int THREAD_DEATH_DELAY = 10000;
-    private static final int THREAD_DEATH_POLL_DELAY  = 100;
-    
-    // RabbitMQ connection close delay in milliseconds.
-    private static final int CONNECTION_CLOSE_DELAY = 5000;
+    // Milliseconds to wait (or poll) for threads to terminate after being interrupted.
+    private static final int THREAD_DEATH_DELAY = (int) Settings.JOB_THREAD_DEATH_MS;
+    private static final int THREAD_DEATH_POLL_DELAY  = (int) Settings.JOB_THREAD_DEATH_POLL_MS;
     
     /* ********************************************************************** */
     /*                                Fields                                  */
@@ -315,6 +304,9 @@ public abstract class AbstractPhaseScheduler
         
         // Create parent thread group.
         _phaseThreadGroup = new ThreadGroup(phaseType.name() + THREADGROUP_SUFFIX);
+        
+        // Log our configuration.
+        if (_log.isInfoEnabled()) _log.info(getConfigInfo());
     }
     
     /* ********************************************************************** */
@@ -379,13 +371,32 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* run:                                                                   */
     /* ---------------------------------------------------------------------- */
-    /** Initialize all thread groups, threads, channels, queues and exchanges
-     * used by this scheduler on start up.  When initialization completes, the 
-     * executing thread will begin an infinite read loop on the scheduler topic.
+    /** Initialize all appropriate thread groups, threads, channels, queues and 
+     * exchanges used by this scheduler on start up depending on its execution
+     * mode.  
+     * 
+     * When running in scheduler mode, this thread will begin polling the database
+     * for new work for this scheduler's assigned phase.  When running in worker
+     * mode, the worker threads are spawned and wait for input on their assigned
+     * queues.  A scheduler instance can be configured to run in both scheduler
+     * and worker modes simultaneously.
      */
     @Override
     public void run() 
     {
+        // Make sure that we are configured to do something.
+        if (!Settings.JOB_SCHEDULER_MODE && !Settings.JOB_WORKER_MODE) {
+            
+            // Let's exit the JVM.
+            String msg = _phaseType.name() + 
+                         " phase scheduler must be configured to run in " +
+                         "scheduler mode, worker mode or both.  Aborting " +
+                         getSchedulerName() + ".";
+            _log.error(msg); 
+            throw new RuntimeException(msg);
+        }
+        
+        // Initialize this phase scheduler and start working.
         try {
             // Update tenant queues.
             updateTenantQueues();
@@ -411,7 +422,7 @@ public abstract class AbstractPhaseScheduler
         catch (Exception e)
         {
             // Let's try to shutdown the JVM.
-            String msg = _phaseType.name() + 
+            String msg = getSchedulerName() + 
                          " phase scheduler initialization failure.  Aborting.";
             _log.error(msg); // Already logged initial exception message.
             throw new RuntimeException(msg, e);
@@ -1255,12 +1266,15 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* startQueueWorkers:                                                     */
     /* ---------------------------------------------------------------------- */
-    /** Start the configured number of workers dedicated to each queue.  Each
-     * worker thread services exactly one queue, though a queue can have multiple
-     * workers.  
+    /** If we are in worker mode, start the configured number of workers dedicated 
+     * to each queue.  Each worker thread services exactly one queue, though a 
+     * queue can have multiple workers.  
      */
     private void startQueueWorkers()
     {
+        // Is this instance configured to run workers?
+        if (!Settings.JOB_WORKER_MODE) return;
+        
         // Iterator through each tenant's queue list.
         for (Entry<String, List<JobQueue>> tenant : _tenantQueues.entrySet())
         {
@@ -1306,7 +1320,7 @@ public abstract class AbstractPhaseScheduler
      * @return
      */
     private AbstractPhaseWorker createWorkerThread(ThreadGroup threadGroup, String tenantId,
-                                           String queueName, int threadNum)
+                                                   String queueName, int threadNum)
     {
         // Initialize parameter passing object.
         PhaseWorkerParms parms = new PhaseWorkerParms();
@@ -1335,8 +1349,21 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* initScheduler:                                                         */
     /* ---------------------------------------------------------------------- */
+    /** Conditionally create the outbound channel to the queue broker.  Since 
+     * this channel is currently only used in scheduler mode to push jobs onto 
+     * worker queues, there's no need to create it unless we are in that mode.
+     *   
+     * In the future, if the topic, interrupt, zombie or any other thread needs 
+     * an outbound connection to be managed by this class, then we will have to 
+     * revisit the decision to conditionally initialize communication here.   
+     * 
+     * @throws JobSchedulerException
+     */
     private void initScheduler() throws JobSchedulerException
     {
+        // Only initialize outbound queue communication when in scheduler mode.
+        if (!Settings.JOB_SCHEDULER_MODE) return;
+        
         // Get the channel the schedule thread uses to write to queues.
         _schedulerChannel = getNewOutChannel();
         
@@ -1424,6 +1451,12 @@ public abstract class AbstractPhaseScheduler
      */
     private void schedule()
     {
+        // Go to our lonely corner if we are not running in scheduler mode.
+        if (!Settings.JOB_SCHEDULER_MODE) {
+            waitForever();
+            return;
+        }
+        
         // Tracing.
         if (_log.isDebugEnabled())
             _log.debug(_phaseType.name() + " scheduler entering polling loop on thread " + 
@@ -1450,8 +1483,10 @@ public abstract class AbstractPhaseScheduler
                 if ((this instanceof StagingScheduler) && _interruptCleanUpThread == null)
                     startInterruptCleanUpThread();
                 
-                // We assign zombie clean up to the monitoring scheduler.
-                if ((this instanceof MonitoringScheduler) && _zombieCleanUpThread == null)
+                // We arbitrarily assign zombie clean up to the monitoring scheduler only.
+                if (Settings.JOB_ENABLE_ZOMBIE_CLEANUP    && 
+                    _zombieCleanUpThread == null          &&
+                    (this instanceof MonitoringScheduler))
                     startZombieCleanUpThread();
                 
                 // Query the database for all candidate jobs for this phase.  This
@@ -1467,7 +1502,7 @@ public abstract class AbstractPhaseScheduler
                         
                         // Wait for some period of time before trying again.
                         // Interrupt exceptions can be thrown from here.
-                        waitForWork(jobLeaseDao, POLLING_FAILURE_DELAY);
+                        waitForWork(jobLeaseDao, getSkewedPollTime());
                         continue;
                     }
             
@@ -1506,8 +1541,7 @@ public abstract class AbstractPhaseScheduler
                 // Wait for more jobs to accumulate while maintaining our job lease.
                 // We add up to 999 milliseconds of random skew to avoid scheduler
                 // contention at the database.
-                int skew = (int) ThreadLocalRandom.current().nextDouble(0, 1000);
-                waitForWork(jobLeaseDao, POLLING_NORMAL_DELAY + skew);
+                waitForWork(jobLeaseDao, getSkewedPollTime());
                 
             } // End polling loop.
         } catch (InterruptedException e) {
@@ -1647,7 +1681,7 @@ public abstract class AbstractPhaseScheduler
         // results if the system implicitly adds threads to the group.
         for (int i = THREAD_DEATH_DELAY; i > 0; i -= THREAD_DEATH_POLL_DELAY)
         {
-            // We can immediately return when no descendent thread are still active.
+            // We can immediately return when no descendant threads are still active.
             int activeThreads = _phaseThreadGroup.activeCount();
             if (activeThreads == 0) break;
             try {Thread.sleep(THREAD_DEATH_POLL_DELAY);} catch (Exception e){return;}
@@ -1661,14 +1695,14 @@ public abstract class AbstractPhaseScheduler
     {
         // Close all rabbitmq connections.
         if (_inConnection != null)
-            try {_inConnection.close(CONNECTION_CLOSE_DELAY);}
+            try {_inConnection.close((int) Settings.JOB_CONNECTION_CLOSE_MS);}
             catch (Exception e) {
                 String msg = "Error closing inbound connection " + 
                              _inConnection.getClientProvidedName() + ".";
                 _log.error(msg, e);
             }
         if (_outConnection != null)
-            try {_outConnection.close(CONNECTION_CLOSE_DELAY);}
+            try {_outConnection.close((int) Settings.JOB_CONNECTION_CLOSE_MS);}
             catch (Exception e) {
                 String msg = "Error closing outbound connection " + 
                              _outConnection.getClientProvidedName() + ".";
@@ -1773,6 +1807,41 @@ public abstract class AbstractPhaseScheduler
     }
     
     /* ---------------------------------------------------------------------- */
+    /* waitForever:                                                           */
+    /* ---------------------------------------------------------------------- */
+    /** This method keeps the main thread of the core processor alive but 
+     * sleeping until interupted.  This method is only called when the instance
+     * is not running in schedule mode.
+     */
+    private void waitForever()
+    {
+        // Put the current thread into a deep sleep.
+        try {
+            // Wait until interrupted.  If we start executing for any reason
+            // other than an interrupt, we just go back to sleep.
+            while (!Thread.currentThread().isInterrupted()) 
+                Thread.sleep(Integer.MAX_VALUE);
+        }
+        catch (InterruptedException e) {
+            if (_log.isDebugEnabled()) 
+                _log.debug(getSchedulerName() + " interrupted in waitForever.");
+        }
+
+        // Interrupt all threads in the phase's threadgroup.
+        interruptThreads();
+        
+        // Close all dedicated connections.
+        closeConnections();
+        
+        // Announce our termination.
+        if (_log.isInfoEnabled()) {
+            String msg = "Terminating thread " + Thread.currentThread().getName() +
+                         " with scheduler name " + _name + ".";
+            _log.info(msg);
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* deleteExpiredInterrupts:                                               */
     /* ---------------------------------------------------------------------- */
     /** Delete expired interrupts periodically. */
@@ -1807,7 +1876,7 @@ public abstract class AbstractPhaseScheduler
             }
             
             // Sleep for the prescribed amount of time before trying again.
-            try {Thread.sleep(INTERRUPT_DELETE_DELAY);}
+            try {Thread.sleep(Settings.JOB_INTERRUPT_DELETE_MS);}
             catch (InterruptedException e) {
                 // Terminate this thread.
                 if (_log.isInfoEnabled()) {
@@ -2298,4 +2367,71 @@ public abstract class AbstractPhaseScheduler
         return job;
     }
     
+    /* ---------------------------------------------------------------------- */
+    /* getSkewedPollTime:                                                     */
+    /* ---------------------------------------------------------------------- */
+    /** Get the number of milliseconds the scheduler should wait before poll 
+     * the database again.  The value is skewed with a random number of 
+     * milliseconds between 0 to 999 to avoid having all scheduler polling at 
+     * the exact same time.
+     * 
+     * @return the number of millisecond to wait before polling again.
+     */
+    private int getSkewedPollTime()
+    {
+        int skew = (int) ThreadLocalRandom.current().nextDouble(0, 1000);
+        return ((int)Settings.JOB_SCHEDULER_NORMAL_POLL_MS) + skew;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getConfigInfo:                                                         */
+    /* ---------------------------------------------------------------------- */
+    /** Print our configuration parameters to the log. */
+    private String getConfigInfo()
+    {
+        StringBuilder buf = new StringBuilder(512);
+        buf.append("\n");
+        buf.append(getSchedulerName());
+        buf.append(" starting with these configuration parameters:\n");
+        buf.append("\n  JOB_SCHEDULER_MODE = ");
+        buf.append(Settings.JOB_SCHEDULER_MODE);
+        buf.append("\n  JOB_WORKER_MODE = ");
+        buf.append(Settings.JOB_WORKER_MODE);
+        buf.append("\n  JOB_ENABLE_ZOMBIE_CLEANUP = ");
+        buf.append(Settings.JOB_ENABLE_ZOMBIE_CLEANUP);
+        buf.append("\n  JOB_CLAIM_POLL_ITERATIONS = ");
+        buf.append(Settings.JOB_CLAIM_POLL_ITERATIONS);
+        buf.append("\n  JOB_CLAIM_POLL_SLEEP_MS = ");
+        buf.append(Settings.JOB_CLAIM_POLL_SLEEP_MS);
+        buf.append("\n  JOB_UUID_QUERY_LIMIT = ");
+        buf.append(Settings.JOB_UUID_QUERY_LIMIT);
+        buf.append("\n  JOB_SCHEDULER_LEASE_SECONDS = ");
+        buf.append(Settings.JOB_SCHEDULER_LEASE_SECONDS);
+        buf.append("\n  JOB_SCHEDULER_NORMAL_POLL_MS = ");
+        buf.append(Settings.JOB_SCHEDULER_NORMAL_POLL_MS);
+        buf.append("\n  JOB_INTERRUPT_TTL_SECONDS = ");
+        buf.append(Settings.JOB_INTERRUPT_TTL_SECONDS);
+        buf.append("\n  JOB_INTERRUPT_DELETE_MS = ");
+        buf.append(Settings.JOB_INTERRUPT_DELETE_MS);
+        buf.append("\n  JOB_ZOMBIE_MONITOR_MS = ");
+        buf.append(Settings.JOB_ZOMBIE_MONITOR_MS);
+        buf.append("\n  JOB_THREAD_DEATH_MS = ");
+        buf.append(Settings.JOB_THREAD_DEATH_MS);
+        buf.append("\n  JOB_THREAD_DEATH_POLL_MS = ");
+        buf.append(Settings.JOB_THREAD_DEATH_POLL_MS);
+        buf.append("\n  JOB_CONNECTION_CLOSE_MS = ");
+        buf.append(Settings.JOB_CONNECTION_CLOSE_MS);
+        buf.append("\n  JOB_WORKER_INIT_RETRY_MS = ");
+        buf.append(Settings.JOB_WORKER_INIT_RETRY_MS);
+        buf.append("\n  JOB_MAX_SUBMISSION_RETRIES = ");
+        buf.append(Settings.JOB_MAX_SUBMISSION_RETRIES);
+        buf.append("\n  JOB_QUEUE_CONFIG_FOLDER = ");
+        buf.append(Settings.JOB_QUEUE_CONFIG_FOLDER);
+        buf.append("\n  DEDICATED_TENANT_ID = ");
+        buf.append(Settings.getDedicatedTenantIdFromServiceProperties());
+        buf.append("\n  DRAIN_ALL_QUEUES_ENABLED = ");
+        buf.append(Settings.isDrainingQueuesEnabled());
+        buf.append("\n");
+        return buf.toString();
+    }
 }

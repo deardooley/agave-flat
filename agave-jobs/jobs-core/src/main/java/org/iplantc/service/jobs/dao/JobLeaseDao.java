@@ -10,6 +10,7 @@ import org.hibernate.CacheMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.iplantc.service.common.persistence.HibernateUtil;
+import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.JobLease;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
@@ -54,7 +55,7 @@ public final class JobLeaseDao
     private static final Logger _log = Logger.getLogger(JobLeaseDao.class);
     
     // The number of seconds before a lease expires.
-    public static final int LEASE_SECONDS = 240;
+    public static final int LEASE_SECONDS = Settings.JOB_SCHEDULER_LEASE_SECONDS;
 
     /* ********************************************************************** */
     /*                                Fields                                  */

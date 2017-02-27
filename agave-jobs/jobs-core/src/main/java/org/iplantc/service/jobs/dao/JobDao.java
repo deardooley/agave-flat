@@ -64,7 +64,7 @@ public class JobDao
     //
     //     SHOW VARIABLES LIKE 'max_allowed_packet';
     // 
-    private static final int UUID_QUERY_LIMIT = 1000;
+    private static final int UUID_QUERY_LIMIT = Settings.JOB_UUID_QUERY_LIMIT;
 	
 	protected static Session getSession() {
 		Session session = HibernateUtil.getSession();

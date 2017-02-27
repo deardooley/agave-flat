@@ -11,6 +11,7 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.Query;
+import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobWorkerDao;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobClaim;
@@ -37,10 +38,6 @@ public final class JobDaoUtils
     // Tracing.
     private static final Logger _log = Logger.getLogger(JobDaoUtils.class);
     
-    // Worker claim polling constants.
-    private static final int CLAIM_POLL_ITERATIONS = 15;
-    private static final int CLAIM_POLL_SLEEP_MILLIS = 1000;
-
     /* ********************************************************************** */
     /*                                 Fields                                 */
     /* ********************************************************************** */
@@ -599,7 +596,7 @@ public final class JobDaoUtils
         
         // See if no worker is claiming the job.
         boolean errorLogged = false; // Limit the amount of noise we log.
-        for (int i = 0; i < CLAIM_POLL_ITERATIONS; i++)
+        for (int i = 0; i < Settings.JOB_CLAIM_POLL_ITERATIONS; i++)
         {
             // Poll the job_workers table for any worker claiming our job.
             try {
@@ -621,7 +618,7 @@ public final class JobDaoUtils
             // Sleep before trying again.  Stop everything on interrupt.
             if (Thread.interrupted()) 
                 throw new InterruptedException("Interrupted while polling claim for job " + jobUuid + ".");
-            Thread.sleep(CLAIM_POLL_SLEEP_MILLIS);
+            Thread.sleep(Settings.JOB_CLAIM_POLL_SLEEP_MS);
         }
         
         // If we broke out of the loop, the job is not claimed.

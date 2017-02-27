@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.ietf.jgss.GSSCredential;
 
 /**
@@ -18,6 +19,9 @@ import org.ietf.jgss.GSSCredential;
  * 
  */
 public class Settings {
+    // Tracing.
+    private static final Logger _log = Logger.getLogger(Settings.class);
+
 	private static final String PROPERTY_FILE = "service.properties";
 	
 	private static Properties					props			= new Properties();
@@ -50,10 +54,6 @@ public class Settings {
 	public static String 						MAILLOGIN;    
     public static String 						MAILPASSWORD;
     
-	/* Data service settings */
-//	public static String						ARCHIVE_DIRECTORY;
-//	public static String						WORK_DIRECTORY;
-
 	/* Iplant API service endpoints */
 	public static String						IPLANT_APPS_SERVICE;
 	public static String						IPLANT_IO_SERVICE;
@@ -68,50 +68,40 @@ public class Settings {
 	/* Job service settings */
 	public static boolean						DEBUG;
 	public static String						DEBUG_USERNAME;
-//	public static String						DEFAULT_SERIAL_SYSTEM;
-//	public static String						DEFAULT_PARALLEL_SYSTEM;
 	public static String[]						BLACKLIST_COMMANDS;
 	public static String[]						BLACKLIST_FILES;
-	//public static String						BLACKLIST_REPLACEMENT_TEXT;
 
-//	public static int							REFRESH_RATE	= 0;
-	public static int							MAX_SUBMISSION_TASKS;
-	public static int							MAX_STAGING_TASKS;
-	public static int							MAX_ARCHIVE_TASKS;
-	public static int							MAX_MONITORING_TASKS;
-	
 	public static boolean						SLAVE_MODE;
 	public static boolean 						CONDOR_GATEWAY;
 
 	public static String						IRODS_USERNAME;
 	public static String						IRODS_PASSWORD;
-//	public static String						IRODS_HOST;
-//	public static int							IRODS_PORT;
-//	public static String						IRODS_ZONE;
-//	public static String						IRODS_STAGING_DIRECTORY;
-//	public static String						IRODS_DEFAULT_RESOURCE;
-//	public static int							IRODS_REFRESH_RATE;	// how often to check the irods connection info
 	public static String						PUBLIC_USER_USERNAME;
 	public static String						WORLD_USER_USERNAME;
-//	public static String						IRODS_HEARTBEAT;
 
-//	public static String						XSEDE_IIS_PROFILE_SERVICE_URL;
-//	public static String						TERAGRID_IIS_CTSS_SERVICE_URL;
-//	public static String						TERAGRID_IIS_RDR_SERVICE_URL;
-//	public static String						TERAGRID_IIS_OUTAGE_SERVICE_URL;
-//	public static String						TERAGRID_OUTAGE_SERVICE_URL;
-//	public static String						TERAGRID_IIS_KIT_SERVICE_URL;
-//	public static int							TERAGRID_REFRESH_RATE;
-
-	public static int 							MAX_SUBMISSION_RETRIES;
-
-//	public static String 						IPLANT_CHARGE_NUMBER;
     public static Integer 						DEFAULT_PAGE_SIZE;
     public static String 						IPLANT_DOCS;
 
 	public static String 						LOCAL_SYSTEM_ID;
 
-	public static boolean 						ENABLE_ZOMBIE_CLEANUP;
+	// Configuration value used in queue-based implementation (RabbitMQ). 
+	public static boolean                       JOB_SCHEDULER_MODE;
+	public static boolean                       JOB_WORKER_MODE;
+	public static boolean                       JOB_ENABLE_ZOMBIE_CLEANUP;
+	public static int                           JOB_CLAIM_POLL_ITERATIONS;
+	public static long                          JOB_CLAIM_POLL_SLEEP_MS;
+	public static int                           JOB_UUID_QUERY_LIMIT;
+	public static int                           JOB_SCHEDULER_LEASE_SECONDS;
+	public static long                          JOB_SCHEDULER_NORMAL_POLL_MS;
+	public static int                           JOB_INTERRUPT_TTL_SECONDS;
+	public static long                          JOB_INTERRUPT_DELETE_MS;
+	public static long                          JOB_ZOMBIE_MONITOR_MS;
+	public static long                          JOB_THREAD_DEATH_MS;
+	public static long                          JOB_THREAD_DEATH_POLL_MS;
+	public static long                          JOB_CONNECTION_CLOSE_MS;
+	public static long                          JOB_WORKER_INIT_RETRY_MS;
+	public static int                           JOB_MAX_SUBMISSION_RETRIES;
+	public static String                        JOB_QUEUE_CONFIG_FOLDER;
 	
 	static
 	{
@@ -144,13 +134,7 @@ public class Settings {
 		IPLANT_LDAP_URL = (String) props.get("iplant.ldap.url");
 
 		IPLANT_LDAP_BASE_DN = (String) props.get("iplant.ldap.base.dn");
-//
-//		ARCHIVE_DIRECTORY = (String) props.get("iplant.archive.path");
-//
-//		WORK_DIRECTORY = (String) props.get("iplant.work.path");
-		
-//		IPLANT_CHARGE_NUMBER = (String) props.get("iplant.charge.number");
-//		
+
 		IPLANT_APPS_SERVICE = (String) props.get("iplant.app.service");
 		if (!IPLANT_APPS_SERVICE.endsWith("/")) IPLANT_APPS_SERVICE += "/";
 		
@@ -187,7 +171,6 @@ public class Settings {
 
 		String blacklistCommands = (String) props.get("iplant.blacklist.commands");
 		if (blacklistCommands != null && blacklistCommands.contains(",")) {
-//		if (StringUtils.contains(blacklistCommands, ",")) {
 			BLACKLIST_COMMANDS = StringUtils.split(blacklistCommands, ',');
 		} else {
 			BLACKLIST_COMMANDS = new String[1];
@@ -222,37 +205,131 @@ public class Settings {
 		
 		LOCAL_SYSTEM_ID = (String) props.getProperty("iplant.local.system.id");
 		
-		MAX_SUBMISSION_TASKS = Integer.valueOf((String) props
-				.getProperty("iplant.max.submission.tasks", "0"));
-
-		MAX_STAGING_TASKS = Integer.valueOf((String) props
-				.getProperty("iplant.max.staging.tasks", "0"));
-
-		MAX_ARCHIVE_TASKS = Integer.valueOf((String) props
-				.getProperty("iplant.max.archive.tasks", "0"));
+		// ----------------- Queue-Based Implementation -----------------
+		// See the agave-api's service.properties file for parameter descriptions.
+		// Note that the following parameters are set to their default values if
+		// any runtime error is encountered during value assignment.
 		
-		MAX_SUBMISSION_RETRIES = Integer.valueOf((String) props
-				.getProperty("iplant.max.submission.retries", "0"));
+		try {JOB_SCHEDULER_MODE = Boolean.valueOf(props
+		        .getProperty("iplant.service.jobs.scheduler.mode", "true"));}
+		    catch (Exception e) {
+		        _log.error("Error initializing setting JOB_SCHEDULER_MODE, using default.", e);
+		        JOB_SCHEDULER_MODE = true;
+		    }
 		
-		MAX_MONITORING_TASKS = Integer.valueOf((String) props
-				.getProperty("iplant.max.monitoring.tasks", "0"));
+		try {JOB_WORKER_MODE = Boolean.valueOf(props
+		        .getProperty("iplant.service.jobs.worker.mode", "true"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_WORKER_MODE, using default.", e);
+                JOB_WORKER_MODE = true;
+            }
 		
-		ENABLE_ZOMBIE_CLEANUP = Boolean.valueOf((String) props
-				.getProperty("iplant.enable.zombie.cleanup", "false"));
+        try {JOB_ENABLE_ZOMBIE_CLEANUP = Boolean.valueOf((String) props
+                .getProperty("iplant.service.jobs.enable.zombie.cleanup", "false"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting ENABLE_ZOMBIE_CLEANUP, using default.", e);
+                JOB_ENABLE_ZOMBIE_CLEANUP = false;
+            }
+        
+		try {JOB_CLAIM_POLL_ITERATIONS = Integer.valueOf(props
+		        .getProperty("iplant.service.jobs.claim.poll.iterations", "15"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_CLAIM_POLL_ITERATIONS, using default.", e);
+                JOB_CLAIM_POLL_ITERATIONS = 15;
+            }
 		
-//		String maxUserJobs = (String) props.get("iplant.max.user.jobs.per.system");
-//		try {
-//			MAX_USER_JOBS_PER_SYSTEM = Integer.parseInt(maxUserJobs);
-//		} catch (Exception e) {
-//			MAX_USER_JOBS_PER_SYSTEM = Integer.MAX_VALUE;
-//		}
+		try {JOB_CLAIM_POLL_SLEEP_MS = Long.valueOf(props
+		        .getProperty("iplant.service.jobs.claim.poll.sleep.ms", "1000"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_CLAIM_POLL_SLEEP_MS, using default.", e);
+                JOB_CLAIM_POLL_SLEEP_MS = 1000;
+            }
 		
-//		String maxUserTransfers = (String) props.get("iplant.max.user.concurrent.transfers");
-//		try {
-//			MAX_USER_CONCURRENT_TRANSFERS = Integer.parseInt(maxUserTransfers);
-//		} catch (Exception e) {
-//			MAX_USER_CONCURRENT_TRANSFERS = Integer.MAX_VALUE;
-//		}
+		try {JOB_UUID_QUERY_LIMIT = Integer.valueOf(props
+		        .getProperty("iplant.service.jobs.uuid.query.limit", "1000"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_UUID_QUERY_LIMIT, using default.", e);
+                JOB_UUID_QUERY_LIMIT = 1000;
+            }
+		
+		try {JOB_SCHEDULER_LEASE_SECONDS = Integer.valueOf(props
+		        .getProperty("iplant.service.jobs.scheduler.lease.seconds", "250"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_SCHEDULER_LEASE_SECONDS, using default.", e);
+                JOB_SCHEDULER_LEASE_SECONDS = 250;
+            }
+		
+		try {JOB_SCHEDULER_NORMAL_POLL_MS = Long.valueOf(props
+		        .getProperty("iplant.service.jobs.scheduler.normal.poll.ms", "10000"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_SCHEDULER_NORMAL_POLL_MS, using default.", e);
+                JOB_SCHEDULER_NORMAL_POLL_MS = 10000;
+            }
+		
+		try {JOB_INTERRUPT_TTL_SECONDS = Integer.valueOf(props
+		        .getProperty("iplant.service.jobs.interrupt.ttl.seconds", "3600"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_INTERRUPT_TTL_SECONDS, using default.", e);
+                JOB_INTERRUPT_TTL_SECONDS = 3600;
+            }
+		
+		try {JOB_INTERRUPT_DELETE_MS = Long.valueOf(props
+		        .getProperty("iplant.service.jobs.interrupt.delete.ms", "240000"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_INTERRUPT_DELETE_MS", e);
+                JOB_INTERRUPT_DELETE_MS = 240000;
+            }
+		
+		try {JOB_ZOMBIE_MONITOR_MS = Long.valueOf(props
+		        .getProperty("iplant.service.jobs.zombie.monitor.ms", "600000"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_ZOMBIE_MONITOR_MS, using default.", e);
+                JOB_ZOMBIE_MONITOR_MS = 600000;
+            }
+		
+		try {JOB_THREAD_DEATH_MS = Long.valueOf(props
+		        .getProperty("iplant.service.jobs.thread.death.ms", "10000"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_THREAD_DEATH_MS, using default.", e);
+                JOB_THREAD_DEATH_MS = 10000;
+            }
+		
+		try {JOB_THREAD_DEATH_POLL_MS = Long.valueOf(props
+		        .getProperty("iplant.service.jobs.thread.death.poll.ms", "100"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_THREAD_DEATH_POLL_MS, using default.", e);
+                JOB_THREAD_DEATH_POLL_MS = 100;
+            }
+		
+		try {JOB_CONNECTION_CLOSE_MS = Long.valueOf(props
+		        .getProperty("iplant.service.jobs.connection.close.ms", "5000"));}
+		    catch (Exception e) {
+		        _log.error("Error initializing setting JOB_CONNECTION_CLOSE_MS, using default.", e);
+		        JOB_CONNECTION_CLOSE_MS = 5000;
+		    }
+		
+		try {JOB_WORKER_INIT_RETRY_MS = Long.valueOf(props
+		        .getProperty("iplant.service.jobs.worker.init.retry.ms", "10000"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_WORKER_INIT_RETRY_MS, using default.", e);
+                JOB_WORKER_INIT_RETRY_MS = 10000;
+            }
+		
+		try {JOB_MAX_SUBMISSION_RETRIES = Integer.valueOf((String) props
+                .getProperty("iplant.service.jobs.max.submission.retries", "0"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting MAX_SUBMISSION_RETRIES, using default.", e);
+                JOB_MAX_SUBMISSION_RETRIES = 0;
+            }
+        
+        try {JOB_QUEUE_CONFIG_FOLDER = props
+                .getProperty("iplant.service.jobs.queue.config.folder", "basic");}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_QUEUE_CONFIG_FOLDER, using default.", e);
+                JOB_QUEUE_CONFIG_FOLDER = "basic";
+            }
+        
+		// --------------- End Queue-Based Implementation ---------------
 		
 		if (blacklistFiles != null && blacklistFiles.contains(",")) {
 			BLACKLIST_FILES = StringUtils.split(blacklistFiles, ',');
@@ -260,9 +337,6 @@ public class Settings {
 			BLACKLIST_FILES = new String[1];
 			BLACKLIST_FILES[0] = blacklistFiles;
 		}
-		
-//		REFRESH_RATE = Integer.valueOf((String) props
-//				.get("iplant.refresh.interval"));
 		
 		IRODS_USERNAME = (String) props.get("iplant.irods.username");
 

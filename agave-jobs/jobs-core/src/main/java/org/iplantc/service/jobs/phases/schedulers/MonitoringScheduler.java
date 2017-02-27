@@ -7,6 +7,7 @@ import java.util.ListIterator;
 
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
@@ -164,7 +165,7 @@ public final class MonitoringScheduler
             }
             
             // Sleep for the prescribed amount of time before trying again.
-            try {Thread.sleep(ZOMBIE_MONITOR_DELAY);}
+            try {Thread.sleep(Settings.JOB_ZOMBIE_MONITOR_MS);}
             catch (InterruptedException e) {
                 // Terminate this thread.
                 if (_log.isInfoEnabled()) {
