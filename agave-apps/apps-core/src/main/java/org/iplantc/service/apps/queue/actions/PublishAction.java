@@ -294,8 +294,23 @@ public class PublishAction extends AbstractWorkerAction<Software> {
                 zippedFile = new File(tempDir, publishedSoftware.getUniqueName() + ".zip");
                 ZipUtil.zip(stagedDir, zippedFile);
                 
-                // ensure the destination directory is present
+                // set the checksum of the zipped archive for validation down the road.
+                FileInputStream in = null;
+            	try {
+            		// could have been deleted from it's temp dir
+            		in = new FileInputStream(zippedFile.getAbsolutePath());
+            		publishedSoftware.setChecksum(DigestUtils.md5Hex(in));
+            	}
+            	catch (IOException e) {
+            		log.error("Unable to calculate checksum of published asset for " + publishedSoftware.getUniqueName() + 
+    						". None will be stored with app.", e);
+            		publishedSoftware.setChecksum(null);
+            	}
+            	finally {
+            		try { in.close(); } catch (Exception e){}
+            	}
                 
+                // ensure the destination directory is present
                 resolveAndCreatePublishedDeploymentPath(publishedSoftwareStorageSystem, publishedSoftwareDataClient); 
                     
                 copyPublicAppArchiveToDeploymentSystem(publishedSoftwareDataClient, zippedFile);
@@ -357,15 +372,45 @@ public class PublishAction extends AbstractWorkerAction<Software> {
                     + publishedSoftware.getStorageSystem().getSystemId(), e);
         }
         
-         if (publishedSoftwareDataClient.doesExist(publishedSoftware.getDeploymentPath())) 
-        {
-            String localChecksum = DigestUtils.md5Hex(new FileInputStream(zippedFile));
-            publishedSoftware.setChecksum(localChecksum);
-        } 
-        else 
-        {
-            throw new FileNotFoundException("Failed to copy public app to iPlant Data Store");
-        }
+        // don't make a check here. the remote system could give false negatives
+        // due to consist
+        
+//        if (publishedSoftwareDataClient.doesExist(publishedSoftware.getDeploymentPath())) 
+//        {
+//        	String checksum = null;
+//        	FileInputStream in = null;
+//        	try {
+//        		// could have been deleted from it's temp dir
+//        		if (zippedFile.exists()) {
+//        			in = new FileInputStream(zippedFile.getAbsolutePath());
+//        			checksum = DigestUtils.md5Hex(in);
+//        		}
+//        		else { 
+//        			try {
+//        				checksum = publishedSoftwareDataClient.checksum(publishedSoftware.getDeploymentPath());
+//        			}
+//        			catch (Exception e) {
+//        				log.error("Unable to calculate checksum of published asset for " + publishedSoftware.getUniqueName() + 
+//        						". None will be stored with app.");
+//        			}
+//        			
+//        		}
+//        	}
+//        	catch(IOException e) {
+//        		throw new FileNotFoundException("Unable to calcaulate checksum for published app assets at agave://" + 
+//                		publishedSoftware.getStorageSystem().getSystemId() + "/" + publishedSoftware.getDeploymentPath());
+//        	}
+//        	finally {
+//        		try { in.close(); } catch (Exception e){}
+//        	}
+//        	
+//          publishedSoftware.setChecksum(checksum);
+//        } 
+//        else 
+//        {
+//            throw new FileNotFoundException("Failed to copy public app to public deployment system at agave://" + 
+//            		publishedSoftware.getStorageSystem().getSystemId() + "/" + publishedSoftware.getDeploymentPath());
+//        }
     }
 
     /**

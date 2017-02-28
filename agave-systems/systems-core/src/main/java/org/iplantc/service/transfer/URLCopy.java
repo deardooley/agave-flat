@@ -290,7 +290,8 @@ public class URLCopy
     						TransferTaskDao.persist(transferTask);
     					}
     					
-    					if (childTransferTask.getStatus().equals(TransferStatusType.CANCELLED)) {
+    					if (childTransferTask != null && 
+    							TransferStatusType.CANCELLED == childTransferTask.getStatus()) {
     						transferTask.setStatus(TransferStatusType.CANCELLED);
     						break;
     					}
@@ -642,8 +643,12 @@ public class URLCopy
 				        getProtocolForClass(sourceClient.getClass()),
 				        getProtocolForClass(destClient.getClass())));
 			}
-			log.info("Deleting relay cache file " + tempDir.getAbsolutePath());
-			FileUtils.deleteQuietly(tempDir);
+			if (sourceClient instanceof Local) {
+				FileUtils.deleteQuietly(tempDir);
+			}
+			else {
+				log.info("Deleting relay cache file " + tempDir.getAbsolutePath());
+			}
 		}
 		
 	}
