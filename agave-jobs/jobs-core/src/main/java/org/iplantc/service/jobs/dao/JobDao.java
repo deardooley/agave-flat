@@ -2131,7 +2131,7 @@ public class JobDao
 			String sql ="SELECT j.id " + 
 						"FROM jobs j " +
 						"WHERE j.status in ('PROCESSING_INPUTS', 'STAGING_INPUTS', 'STAGING_JOB', 'SUBMITTING_JOB', 'SUBMITTING', 'ARCHIVING')  " + 
-						"	   AND NOW() > DATE_ADD(j.last_updated, INTERVAL 15 minute) " +  
+						"	   AND NOW() > DATE_ADD(j.last_updated, INTERVAL 45 minute) " +  
 						"	   AND j.visible = 1 " + 
 						"	   AND j.tenant_id :excludetenant like :tenantId " + 
 						"ORDER BY j.last_updated ASC ";

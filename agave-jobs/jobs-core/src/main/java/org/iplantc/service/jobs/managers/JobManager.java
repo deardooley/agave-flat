@@ -52,6 +52,7 @@ import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobMacroType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.queue.ZombieJobWatch;
+import org.iplantc.service.jobs.queue.factory.AbstractJobProducerFactory;
 import org.iplantc.service.jobs.util.Slug;
 import org.iplantc.service.notification.exceptions.NotificationException;
 import org.iplantc.service.notification.model.Notification;
@@ -76,6 +77,10 @@ import org.iplantc.service.transfer.exceptions.TransferException;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.TransferStatusType;
 import org.joda.time.DateTime;
+import org.quartz.JobExecutionContext;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.impl.StdSchedulerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -2300,10 +2305,63 @@ public class JobManager {
 			updatedJob.addEvent(event);
 			
 			JobDao.persist(updatedJob);
+			
+			releaseLocalJobLock(updatedJob);
+			
 			return updatedJob;
 		}
 		catch (JobException e) {
 			throw new JobException("Failed to reset job to previous state.", e);
 		}
+	}
+
+	/**
+	 * Looks for the job in the currently active quartz jobs for each job phase
+	 * and interrupts the job if present.
+	 * 
+	 * @param updatedJob
+	 * @return true if the job was interrupted, false otherwise;
+	 */
+	public static boolean releaseLocalJobLock(Job updatedJob) {
+		StdSchedulerFactory factory = new org.quartz.impl.StdSchedulerFactory();
+		try {
+			// loop through all schedulers looking for one processing the current job
+			for (Scheduler scheduler: factory.getAllSchedulers()) {
+				List<JobExecutionContext> currentJobs = scheduler.getCurrentlyExecutingJobs();
+				if (currentJobs != null) {
+					for (JobExecutionContext context: currentJobs) {
+						if (context.getMergedJobDataMap().containsKey("uuid") && 
+								StringUtils.equals(updatedJob.getUuid(), context.getMergedJobDataMap().getString("uuid"))) {
+							try {
+								log.debug("Found worker " + context.getJobDetail().getKey().getName() + 
+										" in the " + scheduler.getSchedulerName() + " processing job " + 
+										updatedJob.getUuid() + ". Attempting to interrupt job.");
+								scheduler.interrupt(context.getJobDetail().getKey());
+								log.debug("Interrupted the worker currently processing job " + updatedJob.getUuid());
+							}
+							catch (Exception e) {
+								log.error("Failed to interrupt the worker running job " + updatedJob.getUuid(), e);
+							}
+							
+							return true;
+						}
+					}
+				}
+			}
+			
+			log.debug("No worker found processing job " + updatedJob.getUuid() + ". Releasing local lock on the job.");
+			
+		} catch (SchedulerException e) {
+			log.error("Failed to query container quartz schedulers for job prior to rollback. " +
+					"No existing worker currently processing job " + updatedJob.getUuid() + 
+					" will be interrupted. This may lead to temporary concurrency conflicts. " +
+					"If in doubt, restart this container.", e);
+		}
+		finally {
+			log.debug("Releasing local lock on job " + updatedJob.getUuid() + " after interrupt.");
+			AbstractJobProducerFactory.releaseJob(updatedJob.getUuid());
+		}
+		
+		return false;
 	}
 }

@@ -32,40 +32,40 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 /**
- * This is a reaper task designed to clean up any {@link Job} 
- * who has an unresponsive transfer for more than 15 minutes 
- * or an intermediate status for more than an hour.  
- * 
+ * This is a reaper task designed to clean up any {@link Job}
+ * who has an unresponsive transfer for more than 15 minutes
+ * or an intermediate status for more than an hour.
+ *
  * @author dooley
  */
 @DisallowConcurrentExecution
-public class ZombieJobWatch implements org.quartz.Job 
+public class ZombieJobWatch implements org.quartz.Job
 {
 	private static final Logger	log	= Logger.getLogger(ZombieJobWatch.class);
-	
+
 	public ZombieJobWatch() {}
-	
+
 	private JobExecutionContext context = null;
-	
+
 	public void execute(JobExecutionContext context)
 			throws JobExecutionException
 	{
 		setContext(context);
-		
-		try 
+
+		try
 		{
 			doExecute();
-			
+
 		}
 		catch(JobExecutionException e) {
 			throw e;
 		}
-		catch (Throwable e) 
+		catch (Throwable e)
 		{
 			log.error("Unexpected error during reaping of zombie jobs", e);
 		}
 	}
-	
+
 	public void doExecute() throws JobExecutionException
 	{
 		try
@@ -74,70 +74,70 @@ public class ZombieJobWatch implements org.quartz.Job
 				log.debug("Queue draining has been enabled. Skipping zombie reaping task." );
 				return;
 			}
-			
+
 			List<BigInteger> zombieJobIds = JobDao.findZombieJobs(TenancyHelper.getDedicatedTenantIdForThisService());
 			List<String> resultUuids = new ArrayList<String>();
-			for (BigInteger jobId: zombieJobIds) 
+			for (BigInteger jobId: zombieJobIds)
             {
 				Job job = JobDao.getById(jobId.longValue());
-				
+
 				// this is a new thread and thus has no tenant info loaded. we set it up
-				// here so things like app and system lookups will stay local to the 
+				// here so things like app and system lookups will stay local to the
 				// tenant
 				TenancyHelper.setCurrentTenantId(job.getTenantId());
 				TenancyHelper.setCurrentEndUser(job.getOwner());
-				
+
 				switch(job.getStatus()) {
-					case STAGING_INPUTS: 
-					case ARCHIVING: 
+					case STAGING_INPUTS:
+					case ARCHIVING:
 					case STAGING_JOB:
 					case SUBMITTING:
 						Date lastUpdatedTransferTime = JobEventDao.getMostRecentTransferUpdateForJob(job.getId());
-						if (lastUpdatedTransferTime == null || 
-								new DateTime(lastUpdatedTransferTime).plusMinutes(15).isBeforeNow()) {
-							
-							log.info("Job " + job.getUuid() + " in the " + job.getTenantId() + 
+						if (lastUpdatedTransferTime == null ||
+								new DateTime(lastUpdatedTransferTime).plusMinutes(120).isBeforeNow()) {
+
+							log.info("Job " + job.getUuid() + " in the " + job.getTenantId() +
 								" tenant has not been updated recently, and the last "
-									+ "known transfer associated with the job was last updated at " 
+									+ "known transfer associated with the job was last updated at "
 									+ new DateTime(lastUpdatedTransferTime).toString() + ". This indicates an abandonded job. "
 									+ "Rolling back now." );
-							
+
 							// clean things up and roll th job back. quota will be checked as part
 							// of the cleanup.
 							rollbackJob(job, job.getOwner());
-							
+
 							// add to the list of jobs touched by this execution of the zombie cleanup worker
 							resultUuids.add(job.getUuid());
 						}
 						else {
-							log.debug("Job " + job.getUuid() + " in the " + job.getTenantId() + 
-								" tenant has not been updated recently, but has a transfer task " + 
-									"that was last updated at " + lastUpdatedTransferTime + ". This job will not be touched " + 
+							log.debug("Job " + job.getUuid() + " in the " + job.getTenantId() +
+								" tenant has not been updated recently, but has a transfer task " +
+									"that was last updated at " + lastUpdatedTransferTime + ". This job will not be touched " +
 									"as long as the transfer continues.");
 						}
 						break;
 					case PROCESSING_INPUTS:
-						log.info("Job " + job.getUuid() + " in the " + job.getTenantId() + 
-								" tenant has not been updated since " + 
-								new DateTime(job.getLastUpdated()).toString() + " and appears to be trapped in an " 
+						log.info("Job " + job.getUuid() + " in the " + job.getTenantId() +
+								" tenant has not been updated since " +
+								new DateTime(job.getLastUpdated()).toString() + " and appears to be trapped in an "
 								+ "unrecoverable state. Rolling back now." );
-						
+
 						// clean things up and roll th job back. quota will be checked as part
 						// of the cleanup.
 						rollbackJob(job, job.getOwner());
-						
+
 						// add to the list of jobs touched by this execution of the zombie cleanup worker
 						resultUuids.add(job.getUuid());
-						
+
 						break;
 					default:
-						log.info("Zombie job " + job.getUuid() + " in the " + job.getTenantId() + 
-								" tenant was last updated at " + new DateTime(job.getLastUpdated()).toString() + 
+						log.info("Zombie job " + job.getUuid() + " in the " + job.getTenantId() +
+								" tenant was last updated at " + new DateTime(job.getLastUpdated()).toString() +
 								" and needs rolled back.");
 						break;
 				}
             }
-			
+
 			setJobResult(StringUtils.join(resultUuids, ","));
 		}
 		catch (JobException | JobDependencyException e) {
@@ -147,80 +147,80 @@ public class ZombieJobWatch implements org.quartz.Job
 		{
 			log.error("Failed to resolve one or more zombie tasks. "
 					+ "Reaping will resume shortly.", e);
-		} 
+		}
 	}
 
 	/**
-	 * Rolls back a {@link Job} status to the last stable status prior to the 
-	 * current one. This is akin to release a job back to the queue from which 
-	 * it was previously taken. This is helpful in situations where a job is 
-	 * stuck due to a failed worker or other abandoned process which left the 
+	 * Rolls back a {@link Job} status to the last stable status prior to the
+	 * current one. This is akin to release a job back to the queue from which
+	 * it was previously taken. This is helpful in situations where a job is
+	 * stuck due to a failed worker or other abandoned process which left the
 	 * job is a zombie state from which it would not otherwise recover.
-	 * 
+	 *
 	 * @param job the job that will be rolled back
 	 * @param callingUsername the principal requesting the rollback
 	 * @throws JobException if the job cannot be rolled back due to invalid status
-	 * @throws JobDependencyException 
+	 * @throws JobDependencyException
 	 */
-	public Job rollbackJob(Job job, String callingUsername) 
-	throws JobException, JobDependencyException 
-	{	
-		try 
-		{	
+	public Job rollbackJob(Job job, String callingUsername)
+	throws JobException, JobDependencyException
+	{
+		try
+		{
 			JobStatusType rollbackJobStatus = job.getStatus().rollbackState();
-			
+
 			RemoteSystem executionSystem = new SystemDao().findBySystemId(job.getSystem());
-			
-			if (executionSystem == null) 
+
+			if (executionSystem == null)
 			{
-				if (job.getStatus() == ARCHIVING) 
+				if (job.getStatus() == ARCHIVING)
 				{
-				    job = JobManager.updateStatus(job, JobStatusType.ARCHIVING_FAILED, 
+				    job = JobManager.updateStatus(job, JobStatusType.ARCHIVING_FAILED,
 		    				"Execution system is no longer present.");
-				    job = JobManager.updateStatus(job, JobStatusType.FINISHED, 
+				    job = JobManager.updateStatus(job, JobStatusType.FINISHED,
 		    				"Job completed, but failed to archive.");
 				}
 				else
 				{
-				    job = JobManager.updateStatus(job, JobStatusType.FAILED, 
+				    job = JobManager.updateStatus(job, JobStatusType.FAILED,
 							"Job failed. Execution system is no longer present.");
 				}
-				
-				log.debug("Zombie reaper task is setting status of job " + job.getUuid() + 
-						" to " + job.getStatus() + " because the execution system " + 
+
+				log.debug("Zombie reaper task is setting status of job " + job.getUuid() +
+						" to " + job.getStatus() + " because the execution system " +
 						job.getSystem() + " is no longer present.");
 			}
-			else if (job.getArchiveSystem() == null) 
+			else if (job.getArchiveSystem() == null)
 			{
-				if (job.getStatus() == ARCHIVING) 
+				if (job.getStatus() == ARCHIVING)
 				{
-				    job = JobManager.updateStatus(job, JobStatusType.ARCHIVING_FAILED, 
+				    job = JobManager.updateStatus(job, JobStatusType.ARCHIVING_FAILED,
 		    				"Archive system is no longer present.");
-					job = JobManager.updateStatus(job, JobStatusType.FINISHED, 
+					job = JobManager.updateStatus(job, JobStatusType.FINISHED,
 		    				"Job completed, but failed to archive.");
-		    	} 
+		    	}
 				else
 				{
-				    job = JobManager.updateStatus(job, JobStatusType.FAILED, 
+				    job = JobManager.updateStatus(job, JobStatusType.FAILED,
 							"Job failed. Archive system is no longer present.");
 				}
-				
-				log.debug("Zombie reaper task is setting status of job " + job.getUuid() + 
+
+				log.debug("Zombie reaper task is setting status of job " + job.getUuid() +
 						" to " + job.getStatus() + " because the archive system "
 						+ "is no longer present.");
 			}
-			
+
 			cancelCurrentTransfers(job, callingUsername);
-		    
+
 			if (!isFinished(job.getStatus()))
-			{	
-				log.debug("Zombie reaper task is rolling back status of job " + job.getUuid() + 
+			{
+				log.debug("Zombie reaper task is rolling back status of job " + job.getUuid() +
 						" from " + job.getStatus() + " to " + rollbackJobStatus);
-				
-				if (rollbackJobStatus == CLEANING_UP) 
+
+				if (rollbackJobStatus == CLEANING_UP)
 				{
-		        	if (executionSystem.isAvailable()) 
-		        	{	
+		        	if (executionSystem.isAvailable())
+		        	{
 		            	// roll back the status so it will be picked back up
 		        		if (job.getArchiveSystem().isAvailable())
 		            	{
@@ -229,10 +229,10 @@ public class ZombieJobWatch implements org.quartz.Job
 									+ "archiving to " + job.getArchiveSystem().getSystemId()  + " will resume.");
 		            	}
 		        		else
-		        		{	
+		        		{
 		        		    job = JobManager.updateStatus(job, CLEANING_UP, "Archiving task for this job was "
 									+ "found in a zombie state. Job will be rolled back to the previous state and "
-		            				+ "archiving will resume when the " + job.getArchiveSystem().getSystemId() 
+		            				+ "archiving will resume when the " + job.getArchiveSystem().getSystemId()
 		            				+ " becomes available.");
 		        		}
 		        	}
@@ -240,13 +240,13 @@ public class ZombieJobWatch implements org.quartz.Job
 		        	{
 		        	    job = JobManager.updateStatus(job, JobStatusType.CLEANING_UP, "Archiving task for this job was "
 								+ "found in a zombie state. Job will be rolled back to the previous state and "
-		        				+ "archiving will resume when " + job.getArchiveSystem().getSystemId() 
+		        				+ "archiving will resume when " + job.getArchiveSystem().getSystemId()
 		        				+ " the execution system becomes available.");
 		        	}
 				}
 				else if (rollbackJobStatus == STAGED)
 				{
-					if (executionSystem.isAvailable()) 
+					if (executionSystem.isAvailable())
 		        	{
 					    job = JobManager.updateStatus(job, STAGED, "Submission task for this job was "
 								+ "found in a zombie state. Job will be rolled back to the previous state and "
@@ -262,7 +262,7 @@ public class ZombieJobWatch implements org.quartz.Job
 				}
 				else if (rollbackJobStatus == PENDING)
 				{
-					if (executionSystem.isAvailable()) 
+					if (executionSystem.isAvailable())
 		        	{
 					    job = JobManager.updateStatus(job, PENDING, "Input data staging for this job was "
 								+ "found in a zombie state. Job will be rolled back to the previous state and "
@@ -276,24 +276,24 @@ public class ZombieJobWatch implements org.quartz.Job
 		        				+ "available.");
 					}
 				}
-				else 
+				else
 				{
-					if (executionSystem.isAvailable()) 
+					if (executionSystem.isAvailable())
 		        	{
-					    job = JobManager.updateStatus(job, rollbackJobStatus, 
+					    job = JobManager.updateStatus(job, rollbackJobStatus,
 		    					StringUtils.capitalize(job.getStatus().name())
 		    					+ " for this job was found in a zombie state. Job will be rolled back "
 		    					+ "to the previous state and and resume.");
 		        	}
 					else
 					{
-						job = JobManager.updateStatus(job, rollbackJobStatus, 
+						job = JobManager.updateStatus(job, rollbackJobStatus,
 								StringUtils.capitalize(job.getStatus().name())
 		    					+ " for this job was found in a zombie state. Job will be rolled back "
 								+ "to the previous state and and resume when "
 		    					+ job.getSystem() + " becomes available.");
 					}
-				}	
+				}
 			}
 			else {
 				throw new JobDependencyException("Unabled to roll back status of inactive jobs.");
@@ -318,39 +318,39 @@ public class ZombieJobWatch implements org.quartz.Job
 		{
 			throw new JobException("Failed to roll back job " + job.getUuid() + " to previous state", e);
 		}
-		
+
 		return job;
 	}
-	
+
 	/**
 	 * Cancel all transfer tasks for this job prior to rolling
 	 * back the status so there won't be new transfers
 	 * started before the status is updated.
-	 * 
+	 *
 	 * @param job the job for which to cancel transfers
 	 * @param callingUsername the principal canceling transfers for the job
 	 */
-	private void cancelCurrentTransfers(Job job, String callingUsername) 
-	{	
+	private void cancelCurrentTransfers(Job job, String callingUsername)
+	{
 		// iterate over all job events
-    	for (JobEvent event: job.getEvents()) 
+    	for (JobEvent event: job.getEvents())
 		{
-    		// wherever a transfer task is found for an event, cancel it. This will 
-    		// issue a single SQL update query to set {@link TransferTask#status} to 
+    		// wherever a transfer task is found for an event, cancel it. This will
+    		// issue a single SQL update query to set {@link TransferTask#status} to
     		// {@link TransferStatusType#CANCELLED}
-			if (event.getTransferTask() != null) 
+			if (event.getTransferTask() != null)
 			{
-				try 
-				{ 
-					log.debug("Zombie reaper task is cancelling transfer task " 
+				try
+				{
+					log.debug("Zombie reaper task is cancelling transfer task "
 							+ event.getTransferTask().getUuid() + " for job " + job.getUuid());
-        			
+
 					TransferTaskDao.cancelAllRelatedTransfers(event.getTransferTask().getId());
-					
+
 					NotificationManager.process(event.getTransferTask().getUuid(), TransferTaskEventType.CANCELLED.name(), callingUsername, event.getTransferTask().toJSON());
-					
+
 				} catch (Throwable e) {
-					log.error("Failed to cancel transfer task " + 
+					log.error("Failed to cancel transfer task " +
 							event.getTransferTask().getUuid() + " associated with job " + job.getUuid(), e);
 				}
 			}
@@ -369,8 +369,8 @@ public class ZombieJobWatch implements org.quartz.Job
 	 */
 	public void setContext(JobExecutionContext context) {
 		this.context = context;
-	}	
-	
+	}
+
 	/**
 	 * Set the result object for this job which will be passed to the job listener
 	 * for logging, etc.
