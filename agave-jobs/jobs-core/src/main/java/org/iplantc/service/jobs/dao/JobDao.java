@@ -1579,7 +1579,7 @@ public class JobDao
         buf.append("where ");
         buf.append("((");
         buf.append("j.status in ('PROCESSING_INPUTS', 'STAGING_INPUTS', 'STAGING_JOB', 'SUBMITTING', 'ARCHIVING') ");
-        buf.append("and NOW() > DATE_ADD(j.last_updated, INTERVAL 15 minute) ");
+        buf.append("and NOW() > DATE_ADD(j.last_updated, INTERVAL 45 minute) ");
         buf.append("and e.transfertask is not null ");
         buf.append(") or (");
         buf.append("j.status in ('PROCESSING_INPUTS', 'STAGING_JOB', 'SUBMITTING') ");

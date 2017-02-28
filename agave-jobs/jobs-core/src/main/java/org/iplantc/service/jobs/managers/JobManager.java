@@ -74,24 +74,24 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  *
  */
 public class JobManager {
-	private static final Logger	log	= Logger.getLogger(JobManager.class);
+    private static final Logger log = Logger.getLogger(JobManager.class);
 
-	/**
-	 * Returns the {@link ExecutionSystem} for the given {@code job}.
-	 * @param job
-	 * @return a valid exection system or null of it no longer exists.
-	 */
-	public static ExecutionSystem getJobExecutionSystem(Job job) throws SystemUnavailableException {
-	    RemoteSystem jobExecutionSystem = new SystemDao().findBySystemId(job.getSystem());
-	    if (jobExecutionSystem == null) {
-	        throw new SystemUnavailableException("Job execution system "
+    /**
+     * Returns the {@link ExecutionSystem} for the given {@code job}.
+     * @param job
+     * @return a valid exection system or null of it no longer exists.
+     */
+    public static ExecutionSystem getJobExecutionSystem(Job job) throws SystemUnavailableException {
+        RemoteSystem jobExecutionSystem = new SystemDao().findBySystemId(job.getSystem());
+        if (jobExecutionSystem == null) {
+            throw new SystemUnavailableException("Job execution system "
                     + job.getSystem() + " is not currently available");
-	    } else {
-	        return (ExecutionSystem)jobExecutionSystem;
-	    }
-	}
+        } else {
+            return (ExecutionSystem)jobExecutionSystem;
+        }
+    }
 
-	/**
+    /**
      * Returns the {@link Software} for the given {@code job}.
      * @param job
      * @return a valid {@link Software} object or null of it no longer exists.
@@ -100,108 +100,108 @@ public class JobManager {
         return SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
     }
 
-	/**
-	 * Removes the job work directory in the event staging fails too many times.
-	 *
-	 * @param job
-	 * @throws SystemUnavailableException
-	 * @throws JobException
-	 */
-	public static Job deleteStagedData(Job job) throws JobException
-	{
-		ExecutionSystem system = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
+    /**
+     * Removes the job work directory in the event staging fails too many times.
+     *
+     * @param job
+     * @throws SystemUnavailableException
+     * @throws JobException
+     */
+    public static Job deleteStagedData(Job job) throws JobException
+    {
+        ExecutionSystem system = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
 
-		if (system == null || !system.isAvailable() || !system.getStatus().equals(SystemStatusType.UP))
-		{
-			throw new JobException("System " + system.getName() + " is not available for staging.");
-		}
+        if (system == null || !system.isAvailable() || !system.getStatus().equals(SystemStatusType.UP))
+        {
+            throw new JobException("System " + system.getName() + " is not available for staging.");
+        }
 
-		if (log.isDebugEnabled())
-		    log.debug("Cleaning up staging directory for failed job " + job.getUuid());
-		job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, "Cleaning up remote work directory.");
+        if (log.isDebugEnabled())
+            log.debug("Cleaning up staging directory for failed job " + job.getUuid());
+        job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, "Cleaning up remote work directory.");
 
-		ExecutionSystem remoteExecutionSystem = null;
-		RemoteDataClient remoteExecutionDataClient = null;
-		String remoteWorkPath = null;
+        ExecutionSystem remoteExecutionSystem = null;
+        RemoteDataClient remoteExecutionDataClient = null;
+        String remoteWorkPath = null;
         try
-		{
-			// copy to remote execution work directory
-			remoteExecutionSystem = (ExecutionSystem)new SystemDao().findBySystemId(job.getSystem());
-			remoteExecutionDataClient = remoteExecutionSystem.getRemoteDataClient(job.getInternalUsername());
-			remoteExecutionDataClient.authenticate();
+        {
+            // copy to remote execution work directory
+            remoteExecutionSystem = (ExecutionSystem)new SystemDao().findBySystemId(job.getSystem());
+            remoteExecutionDataClient = remoteExecutionSystem.getRemoteDataClient(job.getInternalUsername());
+            remoteExecutionDataClient.authenticate();
 
-			Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
+            Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
 
-			if (!StringUtils.isEmpty(software.getExecutionSystem().getScratchDir())) {
-				remoteWorkPath = software.getExecutionSystem().getScratchDir();
-			} else if (!StringUtils.isEmpty(software.getExecutionSystem().getWorkDir())) {
-				remoteWorkPath = software.getExecutionSystem().getWorkDir();
-			}
+            if (!StringUtils.isEmpty(software.getExecutionSystem().getScratchDir())) {
+                remoteWorkPath = software.getExecutionSystem().getScratchDir();
+            } else if (!StringUtils.isEmpty(software.getExecutionSystem().getWorkDir())) {
+                remoteWorkPath = software.getExecutionSystem().getWorkDir();
+            }
 
-			if (!StringUtils.isEmpty(remoteWorkPath)) {
-				if (!remoteWorkPath.endsWith("/")) remoteWorkPath += "/";
-			} else {
-				remoteWorkPath = "";
-			}
+            if (!StringUtils.isEmpty(remoteWorkPath)) {
+                if (!remoteWorkPath.endsWith("/")) remoteWorkPath += "/";
+            } else {
+                remoteWorkPath = "";
+            }
 
-			remoteWorkPath += job.getOwner() +
-					"/job-" + job.getUuid() + "-" + Slug.toSlug(job.getName());
+            remoteWorkPath += job.getOwner() +
+                    "/job-" + job.getUuid() + "-" + Slug.toSlug(job.getName());
 
-			if (remoteExecutionDataClient.doesExist(remoteWorkPath))
-			{
-				remoteExecutionDataClient.delete(remoteWorkPath);
-				if (log.isDebugEnabled())
-				    log.debug("Successfully deleted remote work directory " + remoteWorkPath + " for failed job " + job.getUuid());
-				job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, "Completed cleaning up remote work directory.");
-			} else {
-			    if (log.isDebugEnabled())
-			        log.debug("Skipping deleting remote work directory " + remoteWorkPath + " for failed job " + job.getUuid() + ". Directory not present.");
-				job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, "Completed cleaning up remote work directory.");
-			}
+            if (remoteExecutionDataClient.doesExist(remoteWorkPath))
+            {
+                remoteExecutionDataClient.delete(remoteWorkPath);
+                if (log.isDebugEnabled())
+                    log.debug("Successfully deleted remote work directory " + remoteWorkPath + " for failed job " + job.getUuid());
+                job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, "Completed cleaning up remote work directory.");
+            } else {
+                if (log.isDebugEnabled())
+                    log.debug("Skipping deleting remote work directory " + remoteWorkPath + " for failed job " + job.getUuid() + ". Directory not present.");
+                job = JobManager.updateStatus(job, JobStatusType.STAGING_INPUTS, "Completed cleaning up remote work directory.");
+            }
 
-			return job;
-		}
-		catch (RemoteDataException e) {
-			throw new JobException(e.getMessage(), e);
-		}
-		catch (Exception e)
-		{
-			throw new JobException("Failed to delete remote work directory " + remoteWorkPath, e);
-		}
-		finally
-		{
-			try { remoteExecutionDataClient.disconnect(); } catch (Exception e) {}
-		}
-	}
+            return job;
+        }
+        catch (RemoteDataException e) {
+            throw new JobException(e.getMessage(), e);
+        }
+        catch (Exception e)
+        {
+            throw new JobException("Failed to delete remote work directory " + remoteWorkPath, e);
+        }
+        finally
+        {
+            try { remoteExecutionDataClient.disconnect(); } catch (Exception e) {}
+        }
+    }
 
-	/**
-	 * Kills a running job by updating its status and using the remote
-	 * scheduler command and local id to stop it forcefully.
-	 *
-	 * @param job
-	 * @throws Exception
-	 */
-	public static Job kill(Job job) throws Exception
-	{
-		if (!JobStatusType.hasQueued(job.getStatus()) || job.getStatus() == JobStatusType.ARCHIVING)
-		{
-			// if it's not in queue, just update the status.
-			job = stopRunningJob(job, "Job cancelled by user.");
-			return job;
-		}
-		else if (!job.isRunning())
-		{
-			// nothing to be done for jobs that are not running
-			return job;
-		}
-		else
-		{
-		    JobKiller killer = null;
+    /**
+     * Kills a running job by updating its status and using the remote
+     * scheduler command and local id to stop it forcefully.
+     *
+     * @param job
+     * @throws Exception
+     */
+    public static Job kill(Job job) throws Exception
+    {
+        if (!JobStatusType.hasQueued(job.getStatus()) || job.getStatus() == JobStatusType.ARCHIVING)
+        {
+            // if it's not in queue, just update the status.
+            job = stopRunningJob(job, "Job cancelled by user.");
+            return job;
+        }
+        else if (!job.isRunning())
+        {
+            // nothing to be done for jobs that are not running
+            return job;
+        }
+        else
+        {
+            JobKiller killer = null;
 
-			int retries = 0;
-			while (retries < Settings.JOB_MAX_SUBMISSION_RETRIES)
-			{
-			    try
+            int retries = 0;
+            while (retries < Settings.JOB_MAX_SUBMISSION_RETRIES)
+            {
+                try
                 {
                     log.debug("Attempt " + (retries+1) + " to kill job " + job.getUuid() +
                             " and clean up assets");
@@ -216,9 +216,9 @@ public class JobManager {
 
                     return job;
                 }
-			    catch (SystemUnavailableException  e) {
-			    	
-			    	String message = "Failed to kill job " + job.getUuid()
+                catch (SystemUnavailableException  e) {
+                    
+                    String message = "Failed to kill job " + job.getUuid()
                             + " identified by id " + job.getLocalJobId() + " on " + job.getSystem()
                             + ". The system is currently unavailable.";
 
@@ -229,7 +229,7 @@ public class JobManager {
                             + ". Response from " + job.getSystem() + ": " + e.getMessage());
 
                     throw new JobTerminationException(message, e);
-			    }
+                }
                 catch (RemoteExecutionException e) {
 
                     job = killer.getJob();
@@ -272,33 +272,33 @@ public class JobManager {
                     }
                 }
 
-			}
+            }
 
-			// Occasionally the status check will have run or the job will actually complete
-			// prior to this being called. That will invalidate the current object. Here we
-			// refresh with job prior to updating the status so we don't get a stale state
-			// exception.
-			job = stopRunningJob(job, null);
-			return job;
-		}
-	}
+            // Occasionally the status check will have run or the job will actually complete
+            // prior to this being called. That will invalidate the current object. Here we
+            // refresh with job prior to updating the status so we don't get a stale state
+            // exception.
+            job = stopRunningJob(job, null);
+            return job;
+        }
+    }
 
-	/** Stop a running job by doing the following: 
-	 * 
-	 *     1. Change the job status
-	 *     2. Cancel transfers
-	 *     3. Interrupt the job's worker thread
-	 * 
-	 * @param job to the job to be stopped
-	 * @param stopMsg a custom message saved with the status change or 
-	 *         null to save the standard message
-	 * @return the refreshed job object
-	 * @throws JobException on error
-	 */
-	private static Job stopRunningJob(Job job, String stopMsg) throws JobException
-	{
-	    // ----- Update the job status.
-	    if (stopMsg == null) stopMsg = JobStatusType.STOPPED.getDescription();
+    /** Stop a running job by doing the following: 
+     * 
+     *     1. Change the job status
+     *     2. Cancel transfers
+     *     3. Interrupt the job's worker thread
+     * 
+     * @param job to the job to be stopped
+     * @param stopMsg a custom message saved with the status change or 
+     *         null to save the standard message
+     * @return the refreshed job object
+     * @throws JobException on error
+     */
+    private static Job stopRunningJob(Job job, String stopMsg) throws JobException
+    {
+        // ----- Update the job status.
+        if (stopMsg == null) stopMsg = JobStatusType.STOPPED.getDescription();
         job = JobManager.updateStatus(job, JobStatusType.STOPPED, stopMsg);
 
         // ----- Interrupt the job's worker thread.
@@ -332,8 +332,8 @@ public class JobManager {
         }
         
         return job;
-	}
-	
+    }
+    
     /** Rollback a job to a prior status.
      * 
      * @param job the job to be rolled back
@@ -347,51 +347,51 @@ public class JobManager {
         return JobDao.rollback(job, rollbackMessage);
     }
     
-	/**
-	 * Sets {@link Job#setVisible(Boolean)} to true and
-	 * updates the timestamp. A {@link JobEventType#RESTORED} event
-	 * is thrown.
-	 *
-	 * @param jobId
-	 * @throws JobException
-	 */
-	public static Job restore(long jobId, String invokingUsername) throws JobTerminationException, JobException
-	{
-		Job job = null; 
-				
-		try {
-			job = JobDao.getById(jobId);
-		
-			if ((job != null) && !job.isVisible()) {
-				try {
-				    // Update visible flag.
-				    JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
-				    jobUpdateParameters.setVisible(true);
-					JobDao.update(job, jobUpdateParameters);
-					
-					// Add event to job.
-					job.addEvent(new JobEvent(
-							JobEventType.RESTORED.name(), 
-							"Job was restored by " + invokingUsername,
-							invokingUsername));
-					
-					return job;
-				}
-				catch (Throwable e) {
-					throw new JobException("Failed to restore job " + job.getUuid() + ".", e);
-				}
-			}
-			else {
-				throw new JobException("Job is already visible.");
-			}
-		}
-		catch (UnresolvableObjectException e) {
-			throw new JobException("Unable to restore job. If this persists, please contact your tenant administrator.", e);
-		}
-		catch (JobException e) {
-			throw e;
-		}
-	}
+    /**
+     * Sets {@link Job#setVisible(Boolean)} to true and
+     * updates the timestamp. A {@link JobEventType#RESTORED} event
+     * is thrown.
+     *
+     * @param jobId
+     * @throws JobException
+     */
+    public static Job restore(long jobId, String invokingUsername) throws JobTerminationException, JobException
+    {
+        Job job = null; 
+                
+        try {
+            job = JobDao.getById(jobId);
+        
+            if ((job != null) && !job.isVisible()) {
+                try {
+                    // Update visible flag.
+                    JobUpdateParameters jobUpdateParameters = new JobUpdateParameters();
+                    jobUpdateParameters.setVisible(true);
+                    JobDao.update(job, jobUpdateParameters);
+                    
+                    // Add event to job.
+                    job.addEvent(new JobEvent(
+                            JobEventType.RESTORED.name(), 
+                            "Job was restored by " + invokingUsername,
+                            invokingUsername));
+                    
+                    return job;
+                }
+                catch (Throwable e) {
+                    throw new JobException("Failed to restore job " + job.getUuid() + ".", e);
+                }
+            }
+            else {
+                throw new JobException("Job is already visible.");
+            }
+        }
+        catch (UnresolvableObjectException e) {
+            throw new JobException("Unable to restore job. If this persists, please contact your tenant administrator.", e);
+        }
+        catch (JobException e) {
+            throw e;
+        }
+    }
 
     /**
      * Sets the job's visibility attribute to false and
@@ -486,26 +486,26 @@ public class JobManager {
         return job;
     }
     
-	/**
-	 * Updates the status of a job, updates the timestamps as appropriate
-	 * based on the status, and writes a new JobEvent to the job's history.
-	 * 
-	 * If present, the optional extraUpdates object can contain updates to job fields
-	 * other than the status field.  These updates will be applied in the same 
-	 * transaction as the status update if that update is actually performed.  The
-	 * method's status parameter takes precedence over a status setting in the 
-	 * extraUpdates object.
-	 *
-	 * @param job
-	 * @param status
-	 * @param extraUpdates optional update parameters other than status
-	 * @throws JobException
-	 */
-	public static Job updateStatus(Job job, JobStatusType status, JobUpdateParameters... extraUpdates)
-			throws JobException
-	{
-		return updateStatus(job, status, status.getDescription(), extraUpdates);
-	}
+    /**
+     * Updates the status of a job, updates the timestamps as appropriate
+     * based on the status, and writes a new JobEvent to the job's history.
+     * 
+     * If present, the optional extraUpdates object can contain updates to job fields
+     * other than the status field.  These updates will be applied in the same 
+     * transaction as the status update if that update is actually performed.  The
+     * method's status parameter takes precedence over a status setting in the 
+     * extraUpdates object.
+     *
+     * @param job
+     * @param status
+     * @param extraUpdates optional update parameters other than status
+     * @throws JobException
+     */
+    public static Job updateStatus(Job job, JobStatusType status, JobUpdateParameters... extraUpdates)
+            throws JobException
+    {
+        return updateStatus(job, status, status.getDescription(), extraUpdates);
+    }
 
     /**
      * Updates the status of a job, its timestamps, and writes a new
@@ -533,10 +533,10 @@ public class JobManager {
         return updateStatus(job, status, event, extraUpdates);
     }
 
-	/**
-	 * Updates the status of a job, its timestamps, and writes a new
-	 * JobEvent to the job's history with the given status and message.
-	 *
+    /**
+     * Updates the status of a job, its timestamps, and writes a new
+     * JobEvent to the job's history with the given status and message.
+     *
      * This method and JobDao.update() comprise the two ways that status updates
      * can be safely performed.  This method calls JobManager.update(), which  
      * is ultimately responsible for validating status changes and locking
@@ -551,43 +551,43 @@ public class JobManager {
      * extraUpdates object; the event's description field takes precedence over
      * an errorMessage setting in the extraUpdates object.
      *
-	 * @param job
-	 * @param status
-	 * @param event
-	 * @param extraUpdates optional update parameters other than status and errorMessage
-	 * @return Updated job object
-	 * @throws JobException
-	 */
-	public static Job updateStatus(Job job, JobStatusType status, JobEvent event, 
-	                               JobUpdateParameters... extraUpdates)
-	throws JobException
-	{
-	    // ----------------- Initialize Parms ----------------------
-	    // Create a new parms object if the user did not provide one.
+     * @param job
+     * @param status
+     * @param event
+     * @param extraUpdates optional update parameters other than status and errorMessage
+     * @return Updated job object
+     * @throws JobException
+     */
+    public static Job updateStatus(Job job, JobStatusType status, JobEvent event, 
+                                   JobUpdateParameters... extraUpdates)
+    throws JobException
+    {
+        // ----------------- Initialize Parms ----------------------
+        // Create a new parms object if the user did not provide one.
         JobUpdateParameters parms;
         if (extraUpdates.length > 0) parms = extraUpdates[0];
           else parms = new JobUpdateParameters();
         
         // ----------------- Job Processing ------------------------ 
-	    // Determine if the status and message have changed on visible jobs.
-	    if (job.isVisible() &&
-	        ((status != job.getStatus()) ||
-	        !StringUtils.equals(job.getErrorMessage(), event.getDescription())))
-	    {
-	        // We only change the status on visible jobs 
-	        // when the status or message has changed.
-	        parms.setStatus(status);
-	        parms.setErrorMessage(event.getDescription());
-	    }
-	    else 
-	    {
+        // Determine if the status and message have changed on visible jobs.
+        if (job.isVisible() &&
+            ((status != job.getStatus()) ||
+            !StringUtils.equals(job.getErrorMessage(), event.getDescription())))
+        {
+            // We only change the status on visible jobs 
+            // when the status or message has changed.
+            parms.setStatus(status);
+            parms.setErrorMessage(event.getDescription());
+        }
+        else 
+        {
             // Avoid conflicting signals between explicit 
             // and implicit method parameters when we do
-	        // not want the status or message updated. 
+            // not want the status or message updated. 
             parms.unsetStatus();
             parms.unsetErrorMessage();
-	    }
-	    
+        }
+        
         // Always update dates and timestamps without overwriting existing ones.
         assignStatusDates(job, parms, status);
         
@@ -606,11 +606,11 @@ public class JobManager {
                         " Event will be ignored because job has been deleted.");
                 JobEventDao.persist(event);
             }
-	    
+        
         // Return updated job object.
-		return job;
-	}
-	
+        return job;
+    }
+    
     /** Set various job date fields when changing status.  Date fields
      * in the update parameter are assigned based on the new status and
      * whether the job already has the field assigned.  If the job has
@@ -658,502 +658,502 @@ public class JobManager {
         }
     }
     
-	/**
-	 * This method attempts to archive a job's output by retrieving the
-	 * .agave.archive shadow file from the remote job directory and staging
-	 * everything not in there to the user-supplied Job.archivePath on the
-	 * Job.archiveSystem
-	 *
-	 * @param job
-	 * @throws SystemUnavailableException
-	 * @throws SystemUnknownException
-	 * @throws JobException
-	 */
-	public static void archive(Job job)
-	throws SystemUnavailableException, SystemUnknownException, JobException
-	{
-		ExecutionSystem executionSystem = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
+    /**
+     * This method attempts to archive a job's output by retrieving the
+     * .agave.archive shadow file from the remote job directory and staging
+     * everything not in there to the user-supplied Job.archivePath on the
+     * Job.archiveSystem
+     *
+     * @param job
+     * @throws SystemUnavailableException
+     * @throws SystemUnknownException
+     * @throws JobException
+     */
+    public static void archive(Job job)
+    throws SystemUnavailableException, SystemUnknownException, JobException
+    {
+        ExecutionSystem executionSystem = (ExecutionSystem) new SystemDao().findBySystemId(job.getSystem());
 
-		if (executionSystem == null || !executionSystem.isAvailable() || !executionSystem.getStatus().equals(SystemStatusType.UP))
-		{
-			throw new SystemUnavailableException("Job execution system " + executionSystem.getSystemId() + " is not available.");
-		}
+        if (executionSystem == null || !executionSystem.isAvailable() || !executionSystem.getStatus().equals(SystemStatusType.UP))
+        {
+            throw new SystemUnavailableException("Job execution system " + executionSystem.getSystemId() + " is not available.");
+        }
 
-		if (log.isDebugEnabled())
-		    log.debug("Beginning archive inputs for job " + job.getUuid() + " " + job.getName());
+        if (log.isDebugEnabled())
+            log.debug("Beginning archive inputs for job " + job.getUuid() + " " + job.getName());
 
-		RemoteDataClient archiveDataClient = null;
-		RemoteDataClient executionDataClient = null;
-		RemoteSystem remoteArchiveSystem = null;
+        RemoteDataClient archiveDataClient = null;
+        RemoteDataClient executionDataClient = null;
+        RemoteSystem remoteArchiveSystem = null;
 
-		// we should be able to archive from anywhere. Given that we can stage in condor
-		// job data from remote systems, we should be able to stage it out as well. At
-		// this point we are guaranteed that the worker running this bit of code has
-		// access to the job output folder. The RemoteDataClient abstraction will handle
-		// the rest.
-		File archiveFile = null;
-		try
-		{
-			try
-			{
-				executionDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
-				executionDataClient.authenticate();
-			}
-			catch (Exception e)
-			{
-				throw new JobException("Failed to authenticate to the execution system "
-						+ executionSystem.getSystemId());
-			}
+        // we should be able to archive from anywhere. Given that we can stage in condor
+        // job data from remote systems, we should be able to stage it out as well. At
+        // this point we are guaranteed that the worker running this bit of code has
+        // access to the job output folder. The RemoteDataClient abstraction will handle
+        // the rest.
+        File archiveFile = null;
+        try
+        {
+            try
+            {
+                executionDataClient = executionSystem.getRemoteDataClient(job.getInternalUsername());
+                executionDataClient.authenticate();
+            }
+            catch (Exception e)
+            {
+                throw new JobException("Failed to authenticate to the execution system "
+                        + executionSystem.getSystemId());
+            }
 
-			// copy remote archive file to temp space
-			String remoteArchiveFile = job.getWorkPath() + File.separator + ".agave.archive";
+            // copy remote archive file to temp space
+            String remoteArchiveFile = job.getWorkPath() + File.separator + ".agave.archive";
 
-			String localArchiveFile = FileUtils.getTempDirectoryPath() + File.separator +
-					"job-" + job.getUuid() + "-" + System.currentTimeMillis();
+            String localArchiveFile = FileUtils.getTempDirectoryPath() + File.separator +
+                    "job-" + job.getUuid() + "-" + System.currentTimeMillis();
 
-			// pull remote .archive file and parse it for a list of paths relative
-			// to the job.workDir to exclude from archiving. Generally this will be
-			// the application binaries, but the app itself may have added or removed
-			// things from this file, so we need to process it anyway.
-			List<String> jobFileList = new ArrayList<String>();
-			try
-			{
-				if (executionDataClient.doesExist(remoteArchiveFile))
-				{
-					executionDataClient.get(remoteArchiveFile, localArchiveFile);
+            // pull remote .archive file and parse it for a list of paths relative
+            // to the job.workDir to exclude from archiving. Generally this will be
+            // the application binaries, but the app itself may have added or removed
+            // things from this file, so we need to process it anyway.
+            List<String> jobFileList = new ArrayList<String>();
+            try
+            {
+                if (executionDataClient.doesExist(remoteArchiveFile))
+                {
+                    executionDataClient.get(remoteArchiveFile, localArchiveFile);
 
-					// read it in to find the original job files
-					archiveFile = new File(localArchiveFile);
-					if (archiveFile.exists())
-					{
-						if (archiveFile.isFile())
-						{
-							jobFileList.addAll(FileUtils.readLines(archiveFile));
-						}
-						else
-						{
-							archiveFile = new File(localArchiveFile, ".agave.archive");
-							if (archiveFile.exists() && archiveFile.isFile()) {
-								jobFileList.addAll(FileUtils.readLines(archiveFile));
-							}
-						}
-					}
-				}
-				else
-				{
-				    if (log.isDebugEnabled())
-				        log.debug("No archive file found for job " + job.getUuid() + " on system " +
-							executionSystem.getSystemId() + " at " + remoteArchiveFile +
-							". Entire job directory will be archived.");
-					job = JobManager.updateStatus(job, JobStatusType.ARCHIVING,
-							"No archive file found. Entire job directory will be archived.");
-				}
-			}
-			catch (Exception e)
-			{
-			    if (log.isDebugEnabled())
-			        log.debug("Unable to parse archive file for job " + job.getUuid() + " on system " +
-						executionSystem.getSystemId() + " at " + remoteArchiveFile +
-						". Entire job directory will be archived.");
-				JobManager.updateStatus(job, JobStatusType.ARCHIVING,
-						"Unable to parse job archive file. Entire job directory will be archived.");
-			}
-
-			remoteArchiveSystem = job.getArchiveSystem();
-
-			if (remoteArchiveSystem == null)
-			{
-				throw new SystemUnknownException("Unable to archive job output. No archive system could be found.");
-			}
-			else if (!remoteArchiveSystem.isAvailable() || !remoteArchiveSystem.getStatus().equals(SystemStatusType.UP))
-			{
-				throw new SystemUnavailableException("Unable to archive job output from system " +
-						remoteArchiveSystem.getSystemId() + ". The system is currently unavailable.");
-			}
-			else
-			{
-				try
-				{
-					archiveDataClient = remoteArchiveSystem.getRemoteDataClient(job.getInternalUsername());
-					archiveDataClient.authenticate();
-				}
-				catch (Exception e)
-				{
-					throw new JobException("Failed to authenticate to the archive system "
-							+ remoteArchiveSystem.getSystemId(), e);
-				}
-			}
-
-			try
-			{
-				if (!archiveDataClient.doesExist(job.getArchivePath())) {
-					archiveDataClient.mkdirs(job.getArchivePath());
-					if (archiveDataClient.isPermissionMirroringRequired() && StringUtils.isEmpty(job.getInternalUsername())) {
-					    archiveDataClient.setOwnerPermission(job.getOwner(), job.getArchivePath(), true);
+                    // read it in to find the original job files
+                    archiveFile = new File(localArchiveFile);
+                    if (archiveFile.exists())
+                    {
+                        if (archiveFile.isFile())
+                        {
+                            jobFileList.addAll(FileUtils.readLines(archiveFile));
+                        }
+                        else
+                        {
+                            archiveFile = new File(localArchiveFile, ".agave.archive");
+                            if (archiveFile.exists() && archiveFile.isFile()) {
+                                jobFileList.addAll(FileUtils.readLines(archiveFile));
+                            }
+                        }
                     }
-				}
-			}
-			catch (Exception e)
-			{
-				throw new JobException("Failed to create archive directory "
-						+ job.getArchivePath() + " on " + remoteArchiveSystem.getSystemId(), e);
-			}
+                }
+                else
+                {
+                    if (log.isDebugEnabled())
+                        log.debug("No archive file found for job " + job.getUuid() + " on system " +
+                            executionSystem.getSystemId() + " at " + remoteArchiveFile +
+                            ". Entire job directory will be archived.");
+                    job = JobManager.updateStatus(job, JobStatusType.ARCHIVING,
+                            "No archive file found. Entire job directory will be archived.");
+                }
+            }
+            catch (Exception e)
+            {
+                if (log.isDebugEnabled())
+                    log.debug("Unable to parse archive file for job " + job.getUuid() + " on system " +
+                        executionSystem.getSystemId() + " at " + remoteArchiveFile +
+                        ". Entire job directory will be archived.");
+                JobManager.updateStatus(job, JobStatusType.ARCHIVING,
+                        "Unable to parse job archive file. Entire job directory will be archived.");
+            }
 
-			// read in remote job work directory listing
-			List<RemoteFileInfo> outputFiles = null;
-			try
-			{
-				outputFiles = executionDataClient.ls(job.getWorkPath());
-			}
-			catch (Exception e) {
-				throw new JobException("Failed to retrieve directory listing of "
-						+ job.getWorkPath() + " from " + executionSystem.getSystemId(), e);
-			}
+            remoteArchiveSystem = job.getArchiveSystem();
 
-			// iterate over the work folder and archive everything that wasn't
-			// listed in the archive file. We use URL copy here to abstract the
-			// third party transfer we would like to do. If possible, URLCopy will
-			// do a 3rd party transfer. When not possible, such as when we're going
-			// cross-protocol, it will proxy the transfer.
-			TransferTask rootTask = new TransferTask(
-					"agave://" + job.getSystem() + "/" + job.getWorkPath(),
-					"agave://" + job.getArchiveSystem().getSystemId() + "/" +job.getArchivePath(),
-					job.getOwner(),
-					null,
-					null);
-			TransferTaskDao.persist(rootTask);
+            if (remoteArchiveSystem == null)
+            {
+                throw new SystemUnknownException("Unable to archive job output. No archive system could be found.");
+            }
+            else if (!remoteArchiveSystem.isAvailable() || !remoteArchiveSystem.getStatus().equals(SystemStatusType.UP))
+            {
+                throw new SystemUnavailableException("Unable to archive job output from system " +
+                        remoteArchiveSystem.getSystemId() + ". The system is currently unavailable.");
+            }
+            else
+            {
+                try
+                {
+                    archiveDataClient = remoteArchiveSystem.getRemoteDataClient(job.getInternalUsername());
+                    archiveDataClient.authenticate();
+                }
+                catch (Exception e)
+                {
+                    throw new JobException("Failed to authenticate to the archive system "
+                            + remoteArchiveSystem.getSystemId(), e);
+                }
+            }
 
-			// Add an event to the job.
-			job.addEvent(new JobEvent(
-					job.getStatus(),
-					"Archiving " + rootTask.getSource() + " to " + rootTask.getDest(),
-					rootTask,
-					job.getOwner()));
+            try
+            {
+                if (!archiveDataClient.doesExist(job.getArchivePath())) {
+                    archiveDataClient.mkdirs(job.getArchivePath());
+                    if (archiveDataClient.isPermissionMirroringRequired() && StringUtils.isEmpty(job.getInternalUsername())) {
+                        archiveDataClient.setOwnerPermission(job.getOwner(), job.getArchivePath(), true);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                throw new JobException("Failed to create archive directory "
+                        + job.getArchivePath() + " on " + remoteArchiveSystem.getSystemId(), e);
+            }
 
-			for (RemoteFileInfo outputFile: outputFiles)
-			{
-			    JobDao.refresh(job);
+            // read in remote job work directory listing
+            List<RemoteFileInfo> outputFiles = null;
+            try
+            {
+                outputFiles = executionDataClient.ls(job.getWorkPath());
+            }
+            catch (Exception e) {
+                throw new JobException("Failed to retrieve directory listing of "
+                        + job.getWorkPath() + " from " + executionSystem.getSystemId(), e);
+            }
 
-			    if (job.getStatus() != JobStatusType.ARCHIVING) break;
+            // iterate over the work folder and archive everything that wasn't
+            // listed in the archive file. We use URL copy here to abstract the
+            // third party transfer we would like to do. If possible, URLCopy will
+            // do a 3rd party transfer. When not possible, such as when we're going
+            // cross-protocol, it will proxy the transfer.
+            TransferTask rootTask = new TransferTask(
+                    "agave://" + job.getSystem() + "/" + job.getWorkPath(),
+                    "agave://" + job.getArchiveSystem().getSystemId() + "/" +job.getArchivePath(),
+                    job.getOwner(),
+                    null,
+                    null);
+            TransferTaskDao.persist(rootTask);
 
-				if (StringUtils.equals(outputFile.getName(), ".") || StringUtils.equals(outputFile.getName(), "..")) continue;
+            // Add an event to the job.
+            job.addEvent(new JobEvent(
+                    job.getStatus(),
+                    "Archiving " + rootTask.getSource() + " to " + rootTask.getDest(),
+                    rootTask,
+                    job.getOwner()));
 
-				String workFileName = job.getWorkPath() + File.separator + outputFile.getName();
-				String archiveFileName = job.getArchivePath() + File.separator + outputFile.getName();
-				if (!jobFileList.contains(outputFile.getName()))
-				{
-					final URLCopy urlCopy = new URLCopy(executionDataClient, archiveDataClient);
-					TransferTask childTransferTask = new TransferTask(
-							"agave://" + job.getSystem() + "/" + workFileName,
-							"agave://" + job.getArchiveSystem().getSystemId() + "/" + archiveFileName,
-							job.getOwner(),
-							rootTask,
-							rootTask);
-					try
-					{
-						TransferTaskDao.persist(childTransferTask);
-						urlCopy.copy(workFileName, archiveFileName, childTransferTask);
-						rootTask.updateSummaryStats(childTransferTask);
-						TransferTaskDao.persist(rootTask);
-					}
-					catch (TransferException e) {
-						throw new JobException("Failed to archive file " + workFileName +
-								" to " + childTransferTask.getDest() +
-								" due to an error persisting the transfer record.", e);
-					}
-					catch (Exception e) {
-						throw new JobException("Failed to archive file " + workFileName +
-								" to " + childTransferTask.getDest() +
-								" due to an error during transfer ", e);
-					}
-				}
-			}
+            for (RemoteFileInfo outputFile: outputFiles)
+            {
+                JobDao.refresh(job);
 
-			try
-			{
-			    if (job.getStatus() == JobStatusType.ARCHIVING) {
-			        rootTask.setStatus(TransferStatusType.COMPLETED);
-			    } else {
-			        rootTask.setStatus(TransferStatusType.FAILED);
-			    }
+                if (job.getStatus() != JobStatusType.ARCHIVING) break;
 
-			    rootTask.setEndTime(new DateTime().toDate());
+                if (StringUtils.equals(outputFile.getName(), ".") || StringUtils.equals(outputFile.getName(), "..")) continue;
 
-				TransferTaskDao.persist(rootTask);
-			}
-			catch (Exception e) {
+                String workFileName = job.getWorkPath() + File.separator + outputFile.getName();
+                String archiveFileName = job.getArchivePath() + File.separator + outputFile.getName();
+                if (!jobFileList.contains(outputFile.getName()))
+                {
+                    final URLCopy urlCopy = new URLCopy(executionDataClient, archiveDataClient);
+                    TransferTask childTransferTask = new TransferTask(
+                            "agave://" + job.getSystem() + "/" + workFileName,
+                            "agave://" + job.getArchiveSystem().getSystemId() + "/" + archiveFileName,
+                            job.getOwner(),
+                            rootTask,
+                            rootTask);
+                    try
+                    {
+                        TransferTaskDao.persist(childTransferTask);
+                        urlCopy.copy(workFileName, archiveFileName, childTransferTask);
+                        rootTask.updateSummaryStats(childTransferTask);
+                        TransferTaskDao.persist(rootTask);
+                    }
+                    catch (TransferException e) {
+                        throw new JobException("Failed to archive file " + workFileName +
+                                " to " + childTransferTask.getDest() +
+                                " due to an error persisting the transfer record.", e);
+                    }
+                    catch (Exception e) {
+                        throw new JobException("Failed to archive file " + workFileName +
+                                " to " + childTransferTask.getDest() +
+                                " due to an error during transfer ", e);
+                    }
+                }
+            }
 
-			}
+            try
+            {
+                if (job.getStatus() == JobStatusType.ARCHIVING) {
+                    rootTask.setStatus(TransferStatusType.COMPLETED);
+                } else {
+                    rootTask.setStatus(TransferStatusType.FAILED);
+                }
 
-			// if it all worked as expected, then delete the job work directory
-			try
-			{
-    				executionDataClient.delete(job.getWorkPath());
-    			    JobManager.updateStatus(job, JobStatusType.ARCHIVING_FINISHED,
+                rootTask.setEndTime(new DateTime().toDate());
+
+                TransferTaskDao.persist(rootTask);
+            }
+            catch (Exception e) {
+
+            }
+
+            // if it all worked as expected, then delete the job work directory
+            try
+            {
+                    executionDataClient.delete(job.getWorkPath());
+                    JobManager.updateStatus(job, JobStatusType.ARCHIVING_FINISHED,
                             "Job archiving completed successfully.");
-			}
-			catch (Exception e) {
-				log.error("Archiving of job " + job.getUuid() + " completed, "
-					+ "but an error occurred deleting the remote work directory "
-					+ job.getUuid(), e);
-			}
-		}
-		catch (StaleObjectStateException e) {
-			log.error(e);
-			throw e;
-		}
-		catch (SystemUnavailableException e)
-		{
-			throw e;
-		}
-		catch (SystemUnknownException e)
-		{
-			throw e;
-		}
-		catch (JobException e)
-		{
-			throw e;
-		}
-		catch (Exception e) {
-			throw new JobException("Failed to archive data due to internal failure.", e);
-		}
-		finally
-		{
-			// clean up the local archive file
-			FileUtils.deleteQuietly(archiveFile);
-			try {
-				if (archiveDataClient.isPermissionMirroringRequired() && StringUtils.isEmpty(job.getInternalUsername())) {
-					archiveDataClient.setOwnerPermission(job.getOwner(), job.getArchivePath(), true);
-				}
-			} catch (Exception e) {}
-			try { archiveDataClient.disconnect(); } catch (Exception e) {}
-			try { executionDataClient.disconnect(); } catch (Exception e) {}
-		}
-	}
-	
-	/**
-	 * Takes an existing {@link Job} and sanitizes it for resubmission. During this process
-	 * the {@link Job#archivePath}, {@link Job#archiveSystem}, etc. will be updated. In the 
-	 * event that {@link SoftwareParameter} or {@link SoftwareInput} are no longer valid, the 
-	 * job will fail to validate. This is a good thing as it ensures reproducibility. In 
-	 * situations where reproducibility is not critical, the {@code ignoreInputConflicts} and 
-	 * {@code ignoreParameterConflicts} flags can be set to true to update any hidden field 
-	 * defaults or inject them if not previously present.
-	 *
-	 * @param originalJob the job to resubmit
-	 * @param newJobOwner the owner of the new job
-	 * @param newJobInternalUsername the internal username of the new job
-	 * @param ignoreInputConflicts if true, ignore hidden input conflicts and update accordingly
-	 * @param ignoreParameterConflicts if true, ignore hidden parameter conflicts and update accordingly
-	 * @return a validated {@link Job} representing the resubmitted job with a unique id.
-	 * @throws JobProcessingException
-	 * @throws JsonProcessingException
-	 * @throws IOException
-	 */
-	public static Job resubmitJob(Job originalJob, String newJobOwner, String newJobInternalUsername,
-			boolean ignoreInputConflicts, boolean ignoreParameterConflicts)
-	throws JobProcessingException, JsonProcessingException, IOException
-	{
-		boolean preserveNotifications = false;
-		
-		JobRequestProcessor processor = 
-				new JobResubmissionRequestProcessor(newJobOwner, 
-													newJobInternalUsername,
-													ignoreInputConflicts,
-													ignoreParameterConflicts,
-													preserveNotifications);
-		
-		JsonNode originalJobJson = new ObjectMapper().readTree(originalJob.toJSON());
-		
-		Job newJob = processor.processJob(originalJobJson);
-		
-		return newJob;
-	}
+            }
+            catch (Exception e) {
+                log.error("Archiving of job " + job.getUuid() + " completed, "
+                    + "but an error occurred deleting the remote work directory "
+                    + job.getUuid(), e);
+            }
+        }
+        catch (StaleObjectStateException e) {
+            log.error(e);
+            throw e;
+        }
+        catch (SystemUnavailableException e)
+        {
+            throw e;
+        }
+        catch (SystemUnknownException e)
+        {
+            throw e;
+        }
+        catch (JobException e)
+        {
+            throw e;
+        }
+        catch (Exception e) {
+            throw new JobException("Failed to archive data due to internal failure.", e);
+        }
+        finally
+        {
+            // clean up the local archive file
+            FileUtils.deleteQuietly(archiveFile);
+            try {
+                if (archiveDataClient.isPermissionMirroringRequired() && StringUtils.isEmpty(job.getInternalUsername())) {
+                    archiveDataClient.setOwnerPermission(job.getOwner(), job.getArchivePath(), true);
+                }
+            } catch (Exception e) {}
+            try { archiveDataClient.disconnect(); } catch (Exception e) {}
+            try { executionDataClient.disconnect(); } catch (Exception e) {}
+        }
+    }
+    
+    /**
+     * Takes an existing {@link Job} and sanitizes it for resubmission. During this process
+     * the {@link Job#archivePath}, {@link Job#archiveSystem}, etc. will be updated. In the 
+     * event that {@link SoftwareParameter} or {@link SoftwareInput} are no longer valid, the 
+     * job will fail to validate. This is a good thing as it ensures reproducibility. In 
+     * situations where reproducibility is not critical, the {@code ignoreInputConflicts} and 
+     * {@code ignoreParameterConflicts} flags can be set to true to update any hidden field 
+     * defaults or inject them if not previously present.
+     *
+     * @param originalJob the job to resubmit
+     * @param newJobOwner the owner of the new job
+     * @param newJobInternalUsername the internal username of the new job
+     * @param ignoreInputConflicts if true, ignore hidden input conflicts and update accordingly
+     * @param ignoreParameterConflicts if true, ignore hidden parameter conflicts and update accordingly
+     * @return a validated {@link Job} representing the resubmitted job with a unique id.
+     * @throws JobProcessingException
+     * @throws JsonProcessingException
+     * @throws IOException
+     */
+    public static Job resubmitJob(Job originalJob, String newJobOwner, String newJobInternalUsername,
+            boolean ignoreInputConflicts, boolean ignoreParameterConflicts)
+    throws JobProcessingException, JsonProcessingException, IOException
+    {
+        boolean preserveNotifications = false;
+        
+        JobRequestProcessor processor = 
+                new JobResubmissionRequestProcessor(newJobOwner, 
+                                                    newJobInternalUsername,
+                                                    ignoreInputConflicts,
+                                                    ignoreParameterConflicts,
+                                                    preserveNotifications);
+        
+        JsonNode originalJobJson = new ObjectMapper().readTree(originalJob.toJSON());
+        
+        Job newJob = processor.processJob(originalJobJson);
+        
+        return newJob;
+    }
 
-	/**
-	 * Takes a JsonNode representing a job request and parses it into a job object.
-	 *
-	 * @param json a JsonNode containing the job request
-	 * @return validated job object ready for submission
-	 * @throws JobProcessingException
-	 */
-	public static Job processJob(JsonNode json, String username, String internalUsername)
-	throws JobProcessingException
-	{
-		JobRequestProcessor processor = new JobRequestProcessor(username, internalUsername);
-		return processor.processJob(json);
-	}
+    /**
+     * Takes a JsonNode representing a job request and parses it into a job object.
+     *
+     * @param json a JsonNode containing the job request
+     * @return validated job object ready for submission
+     * @throws JobProcessingException
+     */
+    public static Job processJob(JsonNode json, String username, String internalUsername)
+    throws JobProcessingException
+    {
+        JobRequestProcessor processor = new JobRequestProcessor(username, internalUsername);
+        return processor.processJob(json);
+    }
 
-	/**
-	 * Takes a Form representing a job request and parses it into a job object. This is a
-	 * stripped down, unstructured version of the other processJob method.
-	 *
-	 * @param json a JsonNode containing the job request
-	 * @return validated job object ready for submission
-	 * @throws JobProcessingException
-	 */
-	public static Job processJob(Map<String, Object> jobRequestMap, String username, String internalUsername)
-	throws JobProcessingException
-	{
-		JobRequestProcessor processor = new JobRequestProcessor(username, internalUsername);
-		return processor.processJob(jobRequestMap);
-		
-	}
+    /**
+     * Takes a Form representing a job request and parses it into a job object. This is a
+     * stripped down, unstructured version of the other processJob method.
+     *
+     * @param json a JsonNode containing the job request
+     * @return validated job object ready for submission
+     * @throws JobProcessingException
+     */
+    public static Job processJob(Map<String, Object> jobRequestMap, String username, String internalUsername)
+    throws JobProcessingException
+    {
+        JobRequestProcessor processor = new JobRequestProcessor(username, internalUsername);
+        return processor.processJob(jobRequestMap);
+        
+    }
 
-	/**
-	 * Finds queue on the given executionSystem that supports the given number of nodes and
-	 * memory per node given.
-	 *
-	 * @param nodes a positive integer value or -1 for no limit
-	 * @param processors positive integer value or -1 for no limit
-	 * @param memory memory in GB or -1 for no limit
-	 * @param requestedTime time in hh:mm:ss format
-	 * @return a BatchQueue matching the given parameters or null if no match can be found
-	 */
-	public static BatchQueue selectQueue(ExecutionSystem executionSystem, Long nodes, Double memory, String requestedTime)
-	{
+    /**
+     * Finds queue on the given executionSystem that supports the given number of nodes and
+     * memory per node given.
+     *
+     * @param nodes a positive integer value or -1 for no limit
+     * @param processors positive integer value or -1 for no limit
+     * @param memory memory in GB or -1 for no limit
+     * @param requestedTime time in hh:mm:ss format
+     * @return a BatchQueue matching the given parameters or null if no match can be found
+     */
+    public static BatchQueue selectQueue(ExecutionSystem executionSystem, Long nodes, Double memory, String requestedTime)
+    {
 
-		return selectQueue(executionSystem, nodes, memory, (long)-1, requestedTime);
-	}
+        return selectQueue(executionSystem, nodes, memory, (long)-1, requestedTime);
+    }
 
-	/**
-	 * Finds queue on the given executionSystem that supports the given number of nodes and
-	 * memory per node given.
-	 *
-	 * @param nodes a positive integer value or -1 for no limit
-	 * @param processors positive integer value or -1 for no limit
-	 * @param memory memory in GB or -1 for no limit
-	 * @param requestedTime time in hh:mm:ss format
-	 * @return a BatchQueue matching the given parameters or null if no match can be found
-	 */
-	public static BatchQueue selectQueue(ExecutionSystem executionSystem, Long nodes, Double memory, Long processors, String requestedTime)
-	{
+    /**
+     * Finds queue on the given executionSystem that supports the given number of nodes and
+     * memory per node given.
+     *
+     * @param nodes a positive integer value or -1 for no limit
+     * @param processors positive integer value or -1 for no limit
+     * @param memory memory in GB or -1 for no limit
+     * @param requestedTime time in hh:mm:ss format
+     * @return a BatchQueue matching the given parameters or null if no match can be found
+     */
+    public static BatchQueue selectQueue(ExecutionSystem executionSystem, Long nodes, Double memory, Long processors, String requestedTime)
+    {
 
-		if (validateBatchSubmitParameters(executionSystem.getDefaultQueue(), nodes, processors, memory, requestedTime))
-		{
-			return executionSystem.getDefaultQueue();
-		}
-		else
-		{
-			BatchQueue[] queues = executionSystem.getBatchQueues().toArray(new BatchQueue[]{});
-			Arrays.sort(queues);
-			for (BatchQueue queue: queues)
-			{
-				if (queue.isSystemDefault())
-					continue;
-				else if (validateBatchSubmitParameters(queue, nodes, processors, memory, requestedTime))
-					return queue;
-			}
-		}
+        if (validateBatchSubmitParameters(executionSystem.getDefaultQueue(), nodes, processors, memory, requestedTime))
+        {
+            return executionSystem.getDefaultQueue();
+        }
+        else
+        {
+            BatchQueue[] queues = executionSystem.getBatchQueues().toArray(new BatchQueue[]{});
+            Arrays.sort(queues);
+            for (BatchQueue queue: queues)
+            {
+                if (queue.isSystemDefault())
+                    continue;
+                else if (validateBatchSubmitParameters(queue, nodes, processors, memory, requestedTime))
+                    return queue;
+            }
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	/**
-	 * Validates that the queue supports the number of nodes, processors per node, memory and
-	 * requestedTime provided. If any of these values are null or the given values exceed the queue
-	 * limits, it returns false.
-	 *
-	 * @param queue the BatchQueue to check against
-	 * @param nodes a positive integer value or -1 for no limit
-	 * @param processors positive integer value or -1 for no limit
-	 * @param memory memory in GB or -1 for no limit
-	 * @param requestedTime time in hh:mm:ss format
-	 * @return true if all the values are non-null and within the limits of the queue
-	 */
-	public static boolean validateBatchSubmitParameters(BatchQueue queue, Long nodes, Long processors, Double memory, String requestedTime)
-	{
-		if (queue == null ||
-			nodes == null ||  nodes == 0 || nodes < -1 ||
-			processors == null || processors == 0 || processors < -1 ||
-			memory == null || memory == 0 || memory < -1 ||
-			StringUtils.isEmpty(requestedTime) || StringUtils.equals("00:00:00", requestedTime))
-		{
-			return false;
-		}
+    /**
+     * Validates that the queue supports the number of nodes, processors per node, memory and
+     * requestedTime provided. If any of these values are null or the given values exceed the queue
+     * limits, it returns false.
+     *
+     * @param queue the BatchQueue to check against
+     * @param nodes a positive integer value or -1 for no limit
+     * @param processors positive integer value or -1 for no limit
+     * @param memory memory in GB or -1 for no limit
+     * @param requestedTime time in hh:mm:ss format
+     * @return true if all the values are non-null and within the limits of the queue
+     */
+    public static boolean validateBatchSubmitParameters(BatchQueue queue, Long nodes, Long processors, Double memory, String requestedTime)
+    {
+        if (queue == null ||
+            nodes == null ||  nodes == 0 || nodes < -1 ||
+            processors == null || processors == 0 || processors < -1 ||
+            memory == null || memory == 0 || memory < -1 ||
+            StringUtils.isEmpty(requestedTime) || StringUtils.equals("00:00:00", requestedTime))
+        {
+            return false;
+        }
 
-		if (queue.getMaxNodes() > 0 && queue.getMaxNodes() < nodes) {
-			return false;
-		}
+        if (queue.getMaxNodes() > 0 && queue.getMaxNodes() < nodes) {
+            return false;
+        }
 
-		if (queue.getMaxProcessorsPerNode() > 0 && queue.getMaxProcessorsPerNode() < processors) {
-			return false;
-		}
+        if (queue.getMaxProcessorsPerNode() > 0 && queue.getMaxProcessorsPerNode() < processors) {
+            return false;
+        }
 
-		if (queue.getMaxMemoryPerNode() > 0 && queue.getMaxMemoryPerNode() < memory) {
-			return false;
-		}
+        if (queue.getMaxMemoryPerNode() > 0 && queue.getMaxMemoryPerNode() < memory) {
+            return false;
+        }
 
-		if (queue.getMaxRequestedTime() != null &&
-				TimeUtils.compareRequestedJobTimes(queue.getMaxRequestedTime(), requestedTime) == -1)
+        if (queue.getMaxRequestedTime() != null &&
+                TimeUtils.compareRequestedJobTimes(queue.getMaxRequestedTime(), requestedTime) == -1)
 
-		{
-			return false;
-		}
+        {
+            return false;
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	/**
-	 * Returns a map of all inputs needed to run the job comprised of the user-supplied
-	 * inputs as well as the default values for hidden and unspecified, but required inputs.
-	 * This is needed during staging and job submission because the original job submission
-	 * may not contain all the inputs actually needed to run the job depending on whether
-	 * or not there are hidden fields in the app description.
-	 *
-	 * @param job
-	 * @return
-	 * @throws JobException
-	 */
-	public static Map<String, String[]> getJobInputMap(Job job) throws JobException
-	{
-		try
-		{
-			Map<String, String[]> map = new HashMap<String, String[]>();
+    /**
+     * Returns a map of all inputs needed to run the job comprised of the user-supplied
+     * inputs as well as the default values for hidden and unspecified, but required inputs.
+     * This is needed during staging and job submission because the original job submission
+     * may not contain all the inputs actually needed to run the job depending on whether
+     * or not there are hidden fields in the app description.
+     *
+     * @param job
+     * @return
+     * @throws JobException
+     */
+    public static Map<String, String[]> getJobInputMap(Job job) throws JobException
+    {
+        try
+        {
+            Map<String, String[]> map = new HashMap<String, String[]>();
 
-			JsonNode jobInputJson = job.getInputsAsJsonObject();
-			Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
-			if (software != null) {
-				for (SoftwareInput input: software.getInputs())
-				{
-					if (jobInputJson.has(input.getKey()))
-					{
-						JsonNode inputJson = jobInputJson.get(input.getKey());
-						String[] inputValues = null;
-						if (inputJson == null || inputJson.isNull() || (inputJson.isArray() && inputJson.size() == 0))
-						{
-							// no inputs, don't even include it in the map
-							continue;
-						}
-						else if (inputJson.isArray())
-						{
-							// should be an array of
-							inputValues = ServiceUtils.getStringValuesFromJsonArray((ArrayNode)inputJson, false);
-						}
-						else
-						{
-							inputValues = new String[]{ inputJson.textValue() };
-						}
-	
-						map.put(input.getKey(), inputValues);
-					}
-					else if (!input.isVisible())
-	 				{
-						String[] inputValues = ServiceUtils.getStringValuesFromJsonArray(input.getDefaultValueAsJsonArray(), false);
-						map.put(input.getKey(), inputValues);
-	 				}
-				}
-	
-				return map;
-			}
-			else {
-				throw new UnknownSoftwareException("No app found for job " + job.getUuid() + " with id " + job.getSoftwareName());
-			}
-		}
-		catch (Throwable e) {
-			throw new JobException("Unable to parse job and app inputs", e);
-		}
-	}
+            JsonNode jobInputJson = job.getInputsAsJsonObject();
+            Software software = SoftwareDao.getSoftwareByUniqueName(job.getSoftwareName());
+            if (software != null) {
+                for (SoftwareInput input: software.getInputs())
+                {
+                    if (jobInputJson.has(input.getKey()))
+                    {
+                        JsonNode inputJson = jobInputJson.get(input.getKey());
+                        String[] inputValues = null;
+                        if (inputJson == null || inputJson.isNull() || (inputJson.isArray() && inputJson.size() == 0))
+                        {
+                            // no inputs, don't even include it in the map
+                            continue;
+                        }
+                        else if (inputJson.isArray())
+                        {
+                            // should be an array of
+                            inputValues = ServiceUtils.getStringValuesFromJsonArray((ArrayNode)inputJson, false);
+                        }
+                        else
+                        {
+                            inputValues = new String[]{ inputJson.textValue() };
+                        }
+    
+                        map.put(input.getKey(), inputValues);
+                    }
+                    else if (!input.isVisible())
+                    {
+                        String[] inputValues = ServiceUtils.getStringValuesFromJsonArray(input.getDefaultValueAsJsonArray(), false);
+                        map.put(input.getKey(), inputValues);
+                    }
+                }
+    
+                return map;
+            }
+            else {
+                throw new UnknownSoftwareException("No app found for job " + job.getUuid() + " with id " + job.getSoftwareName());
+            }
+        }
+        catch (Throwable e) {
+            throw new JobException("Unable to parse job and app inputs", e);
+        }
+    }
 
     /**
      * Determines whether the job has completed archiving and can thus
@@ -1204,12 +1204,12 @@ public class JobManager {
         if (job.isArchiveOutput())
         {
             if (job.getStatus() == JobStatusType.ARCHIVING || 
-            		job.getStatus() == JobStatusType.ARCHIVING_FINISHED || 
-            		job.getStatus() == JobStatusType.ARCHIVING_FAILED) {
+                    job.getStatus() == JobStatusType.ARCHIVING_FINISHED || 
+                    job.getStatus() == JobStatusType.ARCHIVING_FAILED) {
                 return true;
             }
             else if (job.getStatus() == JobStatusType.FINISHED || 
-            		job.getStatus() == JobStatusType.FAILED) {
+                    job.getStatus() == JobStatusType.FAILED) {
                 for (JobEvent event: JobEventDao.getByJobId(job.getId())) {
                     if (StringUtils.equalsIgnoreCase(event.getStatus(), JobStatusType.ARCHIVING.name())) {
                         return true;
@@ -1223,33 +1223,33 @@ public class JobManager {
         return false;
     }
 
-	/**
-	 * Rolls a {@link Job} back to the previously active state based on its current {@link JobStatusType}.
-	 *  
-	 * @param job the job to reset
-	 * @param requestedBy the principal requesting the job be reset
-	 * @throws JobException 
-	 * @throws JobDependencyException 
-	 */
-	public static Job resetToPreviousState(Job job, String requestedBy) 
-	throws JobException, JobDependencyException 
-	{
-		if (job == null) {
-			throw new JobException("Job cannot be null");
-		}
-		
-		Job updatedJob = null;
-		try {
-			updatedJob = ZombieJobUtils.rollbackJob(job, requestedBy);
-			
-			JobEvent event = new JobEvent("RESET", "Job was manually reset to " + 
-					updatedJob.getStatus().name() + " by " + requestedBy, requestedBy);
-			updatedJob.addEvent(event);
-			
-			return updatedJob;
-		}
-		catch (JobException e) {
-			throw new JobException("Failed to reset job to previous state.", e);
-		}
-	}
+    /**
+     * Rolls a {@link Job} back to the previously active state based on its current {@link JobStatusType}.
+     *  
+     * @param job the job to reset
+     * @param requestedBy the principal requesting the job be reset
+     * @throws JobException 
+     * @throws JobDependencyException 
+     */
+    public static Job resetToPreviousState(Job job, String requestedBy) 
+    throws JobException, JobDependencyException 
+    {
+        if (job == null) {
+            throw new JobException("Job cannot be null");
+        }
+        
+        Job updatedJob = null;
+        try {
+            updatedJob = ZombieJobUtils.rollbackJob(job, requestedBy);
+            
+            JobEvent event = new JobEvent("RESET", "Job was manually reset to " + 
+                    updatedJob.getStatus().name() + " by " + requestedBy, requestedBy);
+            updatedJob.addEvent(event);
+            
+            return updatedJob;
+        }
+        catch (JobException e) {
+            throw new JobException("Failed to reset job to previous state.", e);
+        }
+    }
 }

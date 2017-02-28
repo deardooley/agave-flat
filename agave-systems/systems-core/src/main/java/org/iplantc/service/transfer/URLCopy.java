@@ -217,7 +217,7 @@ public class URLCopy
     					String childDestPath = destPath + File.separator + fileInfo.getName();
     
     					String srcUri = "agave://" + getSystemId(transferTask.getSource()) + "/" + childSrcPath;
-    					String destUri = "agave://" + getSystemId(transferTask.getSource()) + "/" + childDestPath;
+    					String destUri = "agave://" + getSystemId(transferTask.getDest()) + "/" + childDestPath;
     
     					TransferTask childTransferTask = TransferTaskDao.getChildTransferTask(transferTask.getId(), srcUri, destUri, transferTask.getOwner());
     
