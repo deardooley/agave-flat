@@ -265,7 +265,7 @@ public class JobCallbackTest extends AbstractDaoTest {
             return JobStatusType.CLEANING_UP;
         } else if (status == JobStatusType.ARCHIVING_FAILED || status == JobStatusType.ARCHIVING_FINISHED) {
             return JobStatusType.ARCHIVING;
-        } else { // PAUSED, KILLED, STOPPED, FINISHED, FAILED, ROLLINGBACK, HEARTBEAT
+        } else { // PAUSED, KILLED, STOPPED, FINISHED, FAILED, HEARTBEAT
             return JobStatusType.PENDING;
         }
     }

@@ -7,6 +7,7 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.JobLease;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -56,7 +57,7 @@ public class JobLeaseDaoTest {
     /* ---------------------------------------------------------------------- */
     /* teardown:                                                              */
     /* ---------------------------------------------------------------------- */
-    @BeforeMethod
+    @AfterMethod
     private void teardown()
     {
         // Destroy existing leases.

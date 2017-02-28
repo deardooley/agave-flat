@@ -1,13 +1,17 @@
 package org.iplantc.service.jobs.phases.utils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.ListIterator;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueConfigMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage;
+import org.iplantc.service.jobs.phases.queuemessages.ShutdownMessage;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -188,6 +192,83 @@ public class TopicMessageSender
     }
     
     /* ---------------------------------------------------------------------- */
+    /* sendShutdownMessage:                                                   */
+    /* ---------------------------------------------------------------------- */
+    /** Put a shutdown message the topic queue for all schedulers.  Each scheduler
+     * will inspect the phases list to determine if the message applies to them.  
+     * 
+     * @param message a shutdown message
+     * @throws JobException on error
+     */
+    public static void sendShutdownMessage(ShutdownMessage message) 
+      throws JobException
+    {
+        // Validate that the message is complete.
+        if (message == null)
+        {
+            String msg = "Null message received by sendShutdownMessage().";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Validate message.
+        message.validate();
+        
+        // Get a new communication channel for each call.
+        Channel topicChannel = getNewOutChannel();
+        
+        try {
+            // Create the durable, non-autodelete topic exchange and topic queue.
+            initQueue(topicChannel);
+        
+            // Serialize message.
+            String json = messageToJson(message);
+            
+            // Assign routing keys.
+            ArrayList<String> routingKeys = new ArrayList<>(4);
+            if (message.phases.isEmpty() || message.phases.contains(JobPhaseType.STAGING))
+                routingKeys.add(QueueConstants.TOPIC_STAGING_ROUTING_KEY);
+            if (message.phases.isEmpty() || message.phases.contains(JobPhaseType.SUBMITTING))
+                routingKeys.add(QueueConstants.TOPIC_SUBMITTING_ROUTING_KEY);
+            if (message.phases.isEmpty() || message.phases.contains(JobPhaseType.MONITORING))
+                routingKeys.add(QueueConstants.TOPIC_MONITORING_ROUTING_KEY);
+            if (message.phases.isEmpty() || message.phases.contains(JobPhaseType.ARCHIVING))
+                routingKeys.add(QueueConstants.TOPIC_ARCHIVING_ROUTING_KEY);
+            
+            // Send the message to all topic threads targeted by the shutdown command. 
+            String routingKey = null;
+            ListIterator<String> it = routingKeys.listIterator();
+            try {
+                while (it.hasNext()) {
+                    // Assign next key.
+                    routingKey = it.next();
+                    
+                    // TODO: Publisher confirm?
+                    topicChannel.basicPublish(QueueConstants.TOPIC_EXCHANGE_NAME, 
+                                              routingKey, 
+                                              QueueConstants.PERSISTENT_JSON, 
+                                              json.getBytes());
+                }
+            } 
+            catch (Exception e) {
+                String msg = "Unable to publish shutdown message to topic " +
+                             QueueConstants.TOPIC_QUEUE_NAME + "with routing key " + 
+                             routingKey + ": " + json;
+                _log.error(msg, e);
+                throw new JobException(msg, e);
+            }
+        }
+        finally {
+            // Always close the topic channel.
+            try {topicChannel.close();}
+            catch (Exception e) {
+                String msg = "Error closing topic channel";
+                _log.error(msg, e);
+            }
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* close:                                                                 */
     /* ---------------------------------------------------------------------- */
     /** Release all resources managed by this class.  This method should be 
@@ -336,7 +417,7 @@ public class TopicMessageSender
     }
     
     /* ---------------------------------------------------------------------- */
-    /* initQueue:                                                             */
+    /* messageToJson:                                                         */
     /* ---------------------------------------------------------------------- */
     /** Serialize a message into a json string.
      * 

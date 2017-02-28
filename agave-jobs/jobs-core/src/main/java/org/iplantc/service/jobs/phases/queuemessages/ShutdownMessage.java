@@ -1,10 +1,11 @@
 package org.iplantc.service.jobs.phases.queuemessages;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 
+import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
-import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCommand;
 
 /** This message is used the shutdown all threads in the listed phases.
  * 
@@ -17,7 +18,7 @@ public final class ShutdownMessage
     /*                                Fields                                  */
     /* ********************************************************************** */
     // Job name and unique id.
-    public List<JobPhaseType> phases;
+    public List<JobPhaseType> phases = new LinkedList<>();
     
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -46,5 +47,22 @@ public final class ShutdownMessage
             throw new IOException(msg);
         }
         return m;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* validate:                                                              */
+    /* ---------------------------------------------------------------------- */
+    /** Make sure all fields are filled in.
+     * 
+     * @throws JobException if any field is not initialized
+     */
+    public void validate() throws JobException
+    {
+        // The list can be empty by not null.
+        if (phases == null) {
+            String msg = "Null phases list in " + 
+                         getClass().getSimpleName() + " object.";
+            throw new JobException(msg);
+        }
     }
 }

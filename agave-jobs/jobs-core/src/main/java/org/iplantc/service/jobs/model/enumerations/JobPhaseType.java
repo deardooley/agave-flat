@@ -7,7 +7,7 @@ package org.iplantc.service.jobs.model.enumerations;
 public enum JobPhaseType
 {
     // Same alphabetic order as defined in the database enumeration.
-    ARCHIVING, MONITORING, ROLLINGBACK, STAGING, SUBMITTING;
+    ARCHIVING, MONITORING, STAGING, SUBMITTING;
 	
 	@Override
 	public String toString() {

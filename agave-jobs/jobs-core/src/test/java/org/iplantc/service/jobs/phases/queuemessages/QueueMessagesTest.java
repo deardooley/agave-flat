@@ -204,5 +204,22 @@ public class QueueMessagesTest {
                                 AgaveStringUtils.toComparableString(m),
                                 "Regenerated message object does not match the original object.");
         }
+        
+        // ------------------------ Shutdown 2 ------------------------
+        {
+            // Generate the json.
+            ShutdownMessage m = new ShutdownMessage();
+            String json = m.toJson();
+            System.out.println(json);
+            Assert.assertEquals(
+                    json, "{\"command\":\"TPC_SHUTDOWN\",\"phases\":[]}", 
+                    "Unexpected JSON generated");
+      
+            // Regenerate the message object.
+            ShutdownMessage m2 = ShutdownMessage.fromJson(json);
+            Assert.assertEquals(AgaveStringUtils.toComparableString(m2),  
+                                AgaveStringUtils.toComparableString(m),
+                                "Regenerated message object does not match the original object.");
+        }
     }
 }

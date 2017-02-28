@@ -39,6 +39,7 @@ import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCom
 import org.iplantc.service.jobs.phases.queuemessages.DeleteJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.PauseJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
+import org.iplantc.service.jobs.phases.queuemessages.ShutdownMessage;
 import org.iplantc.service.jobs.phases.queuemessages.StopJobMessage;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
 import org.iplantc.service.jobs.phases.schedulers.filters.JobQuotaChecker;
@@ -58,6 +59,7 @@ import org.iplantc.service.jobs.phases.workers.SubmittingWorker;
 import org.iplantc.service.jobs.queue.SelectorFilter;
 import org.iplantc.service.jobs.util.TenantQueues;
 import org.iplantc.service.jobs.util.TenantQueues.UpdateResult;
+import org.omg.CosNaming.NamingContextPackage.AlreadyBound;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -227,6 +229,11 @@ public abstract class AbstractPhaseScheduler
     // updates the tenant queues on invocation.
     private static boolean _updatedTenantQueue = false;
     
+    // This is the thread that executes the run() method in this class and,
+    // after initialization completes, executes the schedule() method.  The
+    // topic thread sends interrupts when shutdown messages are received.
+    private Thread _mainSchedulerThread;
+    
     // A thread that listens on the TOPIC_QUEUE_NAME for AbstractQueueMessage.JobCommand
     // messages.  These messages include worker interrupts and scheduler interrupts.  
     private Thread _topicThread;
@@ -384,6 +391,9 @@ public abstract class AbstractPhaseScheduler
     @Override
     public void run() 
     {
+        // Squirrel away the thread on which we are running for interrupt processing.
+        _mainSchedulerThread = Thread.currentThread();
+        
         // Make sure that we are configured to do something.
         if (!Settings.JOB_SCHEDULER_MODE && !Settings.JOB_WORKER_MODE) {
             
@@ -1105,6 +1115,9 @@ public abstract class AbstractPhaseScheduler
               }
               
               // ---------------- Execute Request ---------------
+              // Allow certain message processor to send their own acknowledgements.
+              boolean alreadyAcked = false;
+              
               // Process the command.
               if (ack)
               {
@@ -1122,8 +1135,8 @@ public abstract class AbstractPhaseScheduler
                           // ################# Scheduler Interrupts ##################
                           // ----- Shutdown scheduler
                           case TPC_SHUTDOWN:
-                              _log.info("Topic message TPC_SHUTDOWN not implemented yet.");
-                              ack = false;
+                              doShutdown(command, envelope, properties, body);
+                              alreadyAcked = true;
                               break;
                           // ----- Reset the number of worker threads servicing a queue
                           case TPC_RESET_NUM_WORKERS:
@@ -1171,6 +1184,9 @@ public abstract class AbstractPhaseScheduler
               // Don't leave stale state around.
               TenancyHelper.setCurrentTenantId(null);
               TenancyHelper.setCurrentEndUser(null);
+              
+              // Has the message already been acknowledged?
+              if (alreadyAcked) return;
               
               // Determine whether to ack or nack the request.
               if (ack) {
@@ -1545,7 +1561,8 @@ public abstract class AbstractPhaseScheduler
                 
             } // End polling loop.
         } catch (InterruptedException e) {
-            // Interrupts cause a graceful shutdown.
+            // Interrupts cause a shutdown.
+            _log.info(_phaseType.name() + " shutting due to interrupt: " + e.getMessage());
         } catch (Exception e) {
             // All other exceptions indicate some sort of problem.
             String msg = "Scheduler " + _name + " is shutting down because of an unexpected exception.";
@@ -2205,11 +2222,11 @@ public abstract class AbstractPhaseScheduler
         AbstractQueueJobMessage qjob = null;
         try {
             if (jobCommand == JobCommand.TPC_PAUSE_JOB)
-                qjob = PauseJobMessage.fromJson(body.toString());
+                qjob = PauseJobMessage.fromJson(new String(body));
             else if (jobCommand == JobCommand.TPC_STOP_JOB)
-                qjob = StopJobMessage.fromJson(body.toString());
+                qjob = StopJobMessage.fromJson(new String(body));
             else if (jobCommand == JobCommand.TPC_DELETE_JOB)
-                qjob = DeleteJobMessage.fromJson(body.toString());
+                qjob = DeleteJobMessage.fromJson(new String(body));
             else
             {
                 // This should never happen.
@@ -2264,6 +2281,102 @@ public abstract class AbstractPhaseScheduler
         
         // Success.
         return true;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* doShutdown:                                                            */
+    /* ---------------------------------------------------------------------- */
+    /** Process a shutdown message for this phase if the phase was specified 
+     * implicitly or explicitly in the message.  Implicit specification applies
+     * when no phases are listed in the message, which means all phases are
+     * targeted.  Explicit specification targets only those phases listed in
+     * the message when at least one phase is listed.
+     * 
+     * This processing takes care of message acknowledgement before threads
+     * are interrupted.
+     */
+    protected void doShutdown(JobCommand jobCommand,
+                              Envelope envelope, 
+                              BasicProperties properties, 
+                              byte[] body)
+    {
+        // Tracing.
+        if (_log.isDebugEnabled()) {
+            String msg = getSchedulerName() + 
+                         " received shutdown message using routing key " +
+                         envelope.getRoutingKey() + " on exchange " +
+                         envelope.getExchange() + ".";
+            _log.debug(msg);             
+        }
+        
+        // Assume success.
+        boolean ack = true;
+        
+        // Decode the message.
+        ShutdownMessage shutdownMsg = null;
+        try {shutdownMsg = ShutdownMessage.fromJson(new String(body));}
+        catch (IOException e) {
+            // Log error message.
+            String msg = _phaseType.name() + 
+                         " topic reader cannot decode data from queue " + 
+                         TOPIC_QUEUE_NAME + ": " + e.getMessage();
+            _log.error(msg, e);
+            ack = false;
+        }
+        
+        // Currently, there's only one thing this message can do--interrupt
+        // the main scheduler thread. The thread should never be null, but
+        // we check to be sure.
+        if (_mainSchedulerThread == null) {
+            String msg = "Shutdown message rejected because no assigned main scheduler thread.";
+            _log.error(msg);
+            ack = false;
+        }
+        
+        // Acknowledge the message before interrupting the scheduler thread.
+        // This order of operation avoids any possible race condition in which 
+        // this thread dies before the message acknowledgement is sent.
+        if (ack) {
+            // Don't forget to send the ack!
+            boolean multipleAck = false;
+            try {_topicChannel.basicAck(envelope.getDeliveryTag(), multipleAck);}
+            catch (IOException e) {
+                // We're in trouble if we cannot acknowledge a message.
+                String msg = _phaseType.name() +  
+                      " topic reader cannot acknowledge a TPC_SHUTDOWN message received on topic " + 
+                      TOPIC_QUEUE_NAME + ": " + e.getMessage();
+                _log.error(msg, e);
+            }
+        }
+        else {
+            // Reject this unreadable message so that
+            // it gets discarded or dead-lettered.
+            boolean requeue = false;
+            try {_topicChannel.basicReject(envelope.getDeliveryTag(), requeue);} 
+            catch (IOException e) {
+                // We're in trouble if we cannot reject a message.
+                String msg = _phaseType.name() +  
+                      " topic reader cannot reject a TPC_SHUTDOWN message received on topic " + 
+                      TOPIC_QUEUE_NAME + ": " + e.getMessage();
+                _log.error(msg, e);
+            }
+            
+            // Return from here on rejected messages.
+            return;
+        }
+        
+        // We selectively process messages by phase unless no phases are specified.
+        if (shutdownMsg.phases == null   ||
+            shutdownMsg.phases.isEmpty() || 
+            shutdownMsg.phases.contains(_phaseType)) 
+        {
+            // Pull the trigger!
+            try {if (_mainSchedulerThread != null) _mainSchedulerThread.interrupt();}
+                catch (Exception e) {
+                    String msg = "Unable to interrupt the main scheduler thread.";
+                    _log.error(msg, e);
+                }
+        }
     }
     
     /* ---------------------------------------------------------------------- */
