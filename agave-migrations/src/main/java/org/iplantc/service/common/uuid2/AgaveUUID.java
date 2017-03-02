@@ -1,4 +1,4 @@
-package org.iplantc.service.common.uuid;
+package org.iplantc.service.common.uuid2;
 
 import org.flywaydb.core.internal.util.StringUtils;
 import org.iplantc.service.common.exceptions.UUIDException;

@@ -1,4 +1,4 @@
-package org.iplantc.service.common.uuid;
+package org.iplantc.service.common.uuid2;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

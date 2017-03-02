@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.iplantc.service.common.uuid;
+package org.iplantc.service.common.uuid2;
 
 /**
  * Parent test for all UUID Tests. Handles abstract definitions of the

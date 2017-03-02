@@ -13,8 +13,8 @@ import org.flywaydb.core.api.migration.MigrationChecksumProvider;
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 import org.iplantc.service.common.migration.utils.BackfillUtil;
 import org.iplantc.service.common.migration.utils.ColumnUtil;
-import org.iplantc.service.common.uuid.AgaveUUID;
-import org.iplantc.service.common.uuid.UUIDType;
+import org.iplantc.service.common.uuid2.AgaveUUID;
+import org.iplantc.service.common.uuid2.UUIDType;
 
 /**
  * Backfills valid {@link AgaveUUID} into each row of the jobevents and transfertasks tables
