@@ -132,7 +132,29 @@ public class QueueMessagesTest {
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TPC_RESET_NUM_WORKERS\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"ARCHIVING\",\"numWorkers\":22}", 
+                    json, "{\"command\":\"TPC_RESET_NUM_WORKERS\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"ARCHIVING\",\"numWorkers\":22,\"schedulers\":[]}", 
+                    "Unexpected JSON generated");
+      
+            // Regenerate the message object.
+            ResetNumWorkersMessage m2 = ResetNumWorkersMessage.fromJson(json);
+            Assert.assertEquals(AgaveStringUtils.toComparableString(m2),  
+                                AgaveStringUtils.toComparableString(m),
+                                "Regenerated message object does not match the original object.");
+        }
+        
+        // ------------------------ ResetNumWorkers 2 ----------------
+        {
+            // Generate the json.
+            ResetNumWorkersMessage m = new ResetNumWorkersMessage();
+            m.queueName = "myQueue";
+            m.numWorkers = 33;
+            m.tenantId = "squatter";
+            m.phase = JobPhaseType.STAGING;
+            m.schedulers.add("myScheduler");
+            String json = m.toJson();
+            System.out.println(json);
+            Assert.assertEquals(
+                    json, "{\"command\":\"TPC_RESET_NUM_WORKERS\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"STAGING\",\"numWorkers\":33,\"schedulers\":[\"myScheduler\"]}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.

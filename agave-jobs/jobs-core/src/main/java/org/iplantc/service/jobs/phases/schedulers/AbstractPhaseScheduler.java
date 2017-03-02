@@ -27,6 +27,7 @@ import org.iplantc.service.jobs.dao.JobPublishedDao;
 import org.iplantc.service.jobs.dao.JobQueueDao;
 import org.iplantc.service.jobs.dao.JobWorkerDao;
 import org.iplantc.service.jobs.exceptions.JobException;
+import org.iplantc.service.jobs.exceptions.JobQueueException;
 import org.iplantc.service.jobs.exceptions.JobQueueFilterException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
 import org.iplantc.service.jobs.model.Job;
@@ -39,6 +40,7 @@ import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCom
 import org.iplantc.service.jobs.phases.queuemessages.DeleteJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.PauseJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
+import org.iplantc.service.jobs.phases.queuemessages.ResetNumWorkersMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ShutdownMessage;
 import org.iplantc.service.jobs.phases.queuemessages.StopJobMessage;
 import org.iplantc.service.jobs.phases.schedulers.dto.JobQuotaInfo;
@@ -50,6 +52,7 @@ import org.iplantc.service.jobs.phases.schedulers.strategies.IStrategyAccessors;
 import org.iplantc.service.jobs.phases.schedulers.strategies.ITenantStrategy;
 import org.iplantc.service.jobs.phases.schedulers.strategies.IUserStrategy;
 import org.iplantc.service.jobs.phases.utils.QueueConstants;
+import org.iplantc.service.jobs.phases.utils.QueueUtils;
 import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
@@ -59,7 +62,6 @@ import org.iplantc.service.jobs.phases.workers.SubmittingWorker;
 import org.iplantc.service.jobs.queue.SelectorFilter;
 import org.iplantc.service.jobs.util.TenantQueues;
 import org.iplantc.service.jobs.util.TenantQueues.UpdateResult;
-import org.omg.CosNaming.NamingContextPackage.AlreadyBound;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -184,7 +186,6 @@ public abstract class AbstractPhaseScheduler
     
     // Inbound topic queuing information.
     private static final String TOPIC_EXCHANGE_NAME = QueueConstants.TOPIC_EXCHANGE_NAME;
-    private static final String TOPIC_QUEUE_NAME = QueueConstants.TOPIC_QUEUE_NAME;
     private static final String TOPIC_ALL_BINDING_KEY = QueueConstants.TOPIC_ALL_BINDING_KEY;
     
     // Suffixes used in naming.
@@ -222,6 +223,9 @@ public abstract class AbstractPhaseScheduler
     // listed in priority order.
     private final HashMap<String,List<JobQueue>> _tenantQueues = new HashMap<>();
     
+    // The name of this phase's topic queue is fixed on construction.
+    private final String _topicQueueName;
+    
     // Monotonically increasing sequence number generator used as part of thread names.
     private static final AtomicInteger _threadSeqno = new AtomicInteger(0);
     
@@ -247,6 +251,10 @@ public abstract class AbstractPhaseScheduler
     // making progress.  This thread is only created and started on the single
     // MONITORING scheduler that obtains a lease.
     private Thread _zombieCleanUpThread;
+    
+    // The map of queue names to thread groups, where the thread group contains
+    // all the worker threads that service the queue. 
+    private HashMap<String,ThreadGroup> _queueThreadGroups = new HashMap<>();
     
     // Initialize a reusable mapper for writing queue messages.
     private ObjectMapper queueMessageMapper = new ObjectMapper();
@@ -311,6 +319,9 @@ public abstract class AbstractPhaseScheduler
         
         // Create parent thread group.
         _phaseThreadGroup = new ThreadGroup(phaseType.name() + THREADGROUP_SUFFIX);
+        
+        // Each phase has its own topic queue.
+        _topicQueueName = QueueUtils.getTopicQueueName(phaseType);
         
         // Log our configuration.
         if (_log.isInfoEnabled()) _log.info(getConfigInfo());
@@ -514,7 +525,7 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     protected String getPhaseBindingKey()
     {
-        return TOPIC_QUEUE_NAME + "." + _phaseType.name() + ".#";
+        return _topicQueueName + ".#";
     }
     
     /* ---------------------------------------------------------------------- */
@@ -536,7 +547,7 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* getWorkerThreadGroupName:                                              */
     /* ---------------------------------------------------------------------- */
-    protected String getWorkerThreadGroupName(String tenantId, String queueName)
+    protected String getWorkerThreadGroupName(String queueName)
     {
         // The JobQueueDao enforces that queue names begin with phase.tenantId.
         return queueName + THREADGROUP_SUFFIX;
@@ -545,7 +556,7 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* getWorkerThreadName:                                                   */
     /* ---------------------------------------------------------------------- */
-    protected String getWorkerThreadName(String tenantId, String queueName, int threadNum)
+    protected String getWorkerThreadName(String queueName, int threadNum)
     {
         // The JobQueueDao enforces that queue names begin with phase.tenantId.
         return queueName + "_" + threadNum + THREAD_SUFFIX;
@@ -981,9 +992,9 @@ public abstract class AbstractPhaseScheduler
         durable = true;
         boolean exclusive = false;
         boolean autoDelete = false;
-        try {topicChannel.queueDeclare(TOPIC_QUEUE_NAME, durable, exclusive, autoDelete, null);}
+        try {topicChannel.queueDeclare(_topicQueueName, durable, exclusive, autoDelete, null);}
             catch (IOException e) {
-                String msg = "Unable to declare topic queue " + TOPIC_QUEUE_NAME +
+                String msg = "Unable to declare topic queue " + _topicQueueName +
                              " on " + getPhaseInConnectionName() + "/" + 
                              topicChannel.getChannelNumber() + ": " + e.getMessage();
                 _log.error(msg, e);
@@ -991,9 +1002,9 @@ public abstract class AbstractPhaseScheduler
             }
         
         // Bind the topic queue to the topic exchange with the All binding key.
-        try {topicChannel.queueBind(TOPIC_QUEUE_NAME, TOPIC_EXCHANGE_NAME, TOPIC_ALL_BINDING_KEY);}
+        try {topicChannel.queueBind(_topicQueueName, TOPIC_EXCHANGE_NAME, TOPIC_ALL_BINDING_KEY);}
             catch (IOException e) {
-                String msg = "Unable to bind topic queue " + TOPIC_QUEUE_NAME +
+                String msg = "Unable to bind topic queue " + _topicQueueName +
                          " with binding key " + TOPIC_ALL_BINDING_KEY +
                          " on " + getPhaseInConnectionName() + "/" + 
                          topicChannel.getChannelNumber() + ": " + e.getMessage();
@@ -1002,9 +1013,9 @@ public abstract class AbstractPhaseScheduler
             }
         
         // Bind the topic queue to the topic exchange with the stage-specific binding key.
-        try {topicChannel.queueBind(TOPIC_QUEUE_NAME, TOPIC_EXCHANGE_NAME, getPhaseBindingKey());}
+        try {topicChannel.queueBind(_topicQueueName, TOPIC_EXCHANGE_NAME, getPhaseBindingKey());}
             catch (IOException e) {
-                String msg = "Unable to bind topic queue " + TOPIC_QUEUE_NAME +
+                String msg = "Unable to bind topic queue " + _topicQueueName +
                         " with binding key " + getPhaseBindingKey() +
                          " on " + getPhaseInConnectionName() + "/" + 
                          topicChannel.getChannelNumber() + ": " + e.getMessage();
@@ -1092,7 +1103,7 @@ public abstract class AbstractPhaseScheduler
                   // Log error message.
                   String msg = _phaseType.name() +  
                      " topic reader cannot decode data from topic " + 
-                     TOPIC_QUEUE_NAME + ": " + e.getMessage();
+                     _topicQueueName + ": " + e.getMessage();
                   _log.error(msg, e);
                   ack = false;
               }
@@ -1108,7 +1119,7 @@ public abstract class AbstractPhaseScheduler
                   catch (Exception e) {
                       String msg = _phaseType.name() + 
                            " topic reader decoded an invalid command (" + cmd + 
-                           ") from topic " + TOPIC_QUEUE_NAME + ": " + e.getMessage();
+                           ") from topic " + _topicQueueName + ": " + e.getMessage();
                       _log.error(msg, e);
                       ack = false;
                   }
@@ -1140,8 +1151,7 @@ public abstract class AbstractPhaseScheduler
                               break;
                           // ----- Reset the number of worker threads servicing a queue
                           case TPC_RESET_NUM_WORKERS:
-                              _log.info("Topic message TPC_RESET_NUM_WORKERS not implemented yet.");
-                              ack = false;
+                              ack = doResetNumWorkers(command, envelope, properties, body);
                               break;
                           // ----- Reset a queue's priority 
                           case TPC_RESET_PRIORITY:
@@ -1197,7 +1207,7 @@ public abstract class AbstractPhaseScheduler
                       // We're in trouble if we cannot acknowledge a message.
                       String msg = _phaseType.name() +  
                             " topic reader cannot acknowledge a message received on topic " + 
-                            TOPIC_QUEUE_NAME + ": " + e.getMessage();
+                            _topicQueueName + ": " + e.getMessage();
                       _log.error(msg, e);
                   }
               }
@@ -1210,7 +1220,7 @@ public abstract class AbstractPhaseScheduler
                       // We're in trouble if we cannot reject a message.
                       String msg = _phaseType.name() +  
                             " topic reader cannot reject a message received on topic " + 
-                            TOPIC_QUEUE_NAME + ": " + e.getMessage();
+                            _topicQueueName + ": " + e.getMessage();
                       _log.error(msg, e);
                   }
               }
@@ -1220,19 +1230,19 @@ public abstract class AbstractPhaseScheduler
         // Tracing.
         if (_log.isDebugEnabled())
             _log.debug("[*] " + _phaseType.name() + " scheduler consuming " + 
-                    TOPIC_QUEUE_NAME + " topic.");
+                    _topicQueueName + " topic.");
 
         // We don't auto-acknowledge topic broadcasts.
         boolean autoack = false;
         try {
             // Save the server generated tag for this consumer.  The tag can be used
             // as input on other APIs, such as basicCancel.
-            _topicChannelConsumerTag = _topicChannel.basicConsume(TOPIC_QUEUE_NAME, 
+            _topicChannelConsumerTag = _topicChannel.basicConsume(_topicQueueName, 
                                                                   autoack, consumer);
         }
         catch (IOException e) {
             String msg = _phaseType.name() + " scheduler is unable consume messages from " + 
-                    TOPIC_QUEUE_NAME + " topic.";
+                    _topicQueueName + " topic.";
             _log.error(msg, e);
             throw new JobSchedulerException(msg, e);
         }
@@ -1301,12 +1311,14 @@ public abstract class AbstractPhaseScheduler
             for (JobQueue jobQueue : tenant.getValue()) 
             {
                 // Create the phase/tenant/queue thread group.
-                ThreadGroup queueThreadGroup = 
-                    new ThreadGroup(_phaseThreadGroup, 
-                         getWorkerThreadGroupName(tenantId, jobQueue.getName()));      
+                ThreadGroup queueThreadGroup = createQueueThreadGroup(jobQueue.getName()); 
+                
+                // Don't exceed the configured maximum number of threads per queue. 
+                int numWorkers = Math.min(Settings.JOB_MAX_THREADS_PER_QUEUE, 
+                                          jobQueue.getNumWorkers());
                 
                 // Create the number of worker threads configured for this queue.
-                for (int i = 0; i < jobQueue.getNumWorkers(); i++)
+                for (int i = 0; i < numWorkers; i++)
                 {
                     // Create a new worker daemon thread in the queue-specific group.
                     AbstractPhaseWorker worker = 
@@ -1341,7 +1353,7 @@ public abstract class AbstractPhaseScheduler
         // Initialize parameter passing object.
         PhaseWorkerParms parms = new PhaseWorkerParms();
         parms.threadGroup = threadGroup;
-        parms.threadName = getWorkerThreadName(tenantId, queueName, threadNum);
+        parms.threadName = getWorkerThreadName(queueName, threadNum);
         parms.connection = _inConnection;
         parms.scheduler = this;
         parms.tenantId = tenantId;
@@ -1360,6 +1372,30 @@ public abstract class AbstractPhaseScheduler
         worker.setDaemon(true);
         worker.setUncaughtExceptionHandler(this);
         return worker;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* createQueueThreadGroup:                                                */
+    /* ---------------------------------------------------------------------- */
+    /** Create the queue-based thread groups to which worker threads get assigned.
+     * Maintain the set of these thread groups for later lookup in operations
+     * that alter the number of workers servicing a queue.
+     * 
+     * @param queueName the name of the queue whose workers will be assigned 
+     *                  to the new thread group
+     * @return the queue-specific thread group
+     */
+    private ThreadGroup createQueueThreadGroup(String queueName)
+    {
+        // Create the phase/tenant/queue thread group.
+        ThreadGroup queueThreadGroup = 
+            new ThreadGroup(_phaseThreadGroup, 
+                 getWorkerThreadGroupName(queueName)); 
+        
+        // Save the thread group for later lookup.
+        _queueThreadGroups.put(queueName, queueThreadGroup);
+        
+        return queueThreadGroup;
     }
     
     /* ---------------------------------------------------------------------- */
@@ -2209,7 +2245,6 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /** Process pause job message.
      * 
-     * @param node a parsed json node representation of the message
      * @return true to acknowledge the message, false to reject it
      */
     protected boolean doJobInterrupt(JobCommand jobCommand,
@@ -2217,6 +2252,15 @@ public abstract class AbstractPhaseScheduler
                                      BasicProperties properties, 
                                      byte[] body)
     {
+     // ---------------------- Marshalling ----------------------
+        if (_log.isDebugEnabled()) {
+            String msg = getSchedulerName() + 
+                         " received a " + jobCommand + " message using routing key " +
+                         envelope.getRoutingKey() + " on exchange " +
+                         envelope.getExchange() + ".";
+            _log.debug(msg);             
+        }
+        
         // ---------------------- Marshalling ----------------------
         // Marshal the json message into it message object.
         AbstractQueueJobMessage qjob = null;
@@ -2239,7 +2283,7 @@ public abstract class AbstractPhaseScheduler
             // Log error message.
             String msg = _phaseType.name() + 
                          " topic reader cannot decode data from queue " + 
-                         TOPIC_QUEUE_NAME + ": " + e.getMessage();
+                         _topicQueueName + ": " + e.getMessage();
             _log.error(msg, e);
             return false;
         }
@@ -2303,7 +2347,7 @@ public abstract class AbstractPhaseScheduler
         // Tracing.
         if (_log.isDebugEnabled()) {
             String msg = getSchedulerName() + 
-                         " received shutdown message using routing key " +
+                         " received a " + jobCommand + " message using routing key " +
                          envelope.getRoutingKey() + " on exchange " +
                          envelope.getExchange() + ".";
             _log.debug(msg);             
@@ -2319,7 +2363,7 @@ public abstract class AbstractPhaseScheduler
             // Log error message.
             String msg = _phaseType.name() + 
                          " topic reader cannot decode data from queue " + 
-                         TOPIC_QUEUE_NAME + ": " + e.getMessage();
+                         _topicQueueName + ": " + e.getMessage();
             _log.error(msg, e);
             ack = false;
         }
@@ -2344,7 +2388,7 @@ public abstract class AbstractPhaseScheduler
                 // We're in trouble if we cannot acknowledge a message.
                 String msg = _phaseType.name() +  
                       " topic reader cannot acknowledge a TPC_SHUTDOWN message received on topic " + 
-                      TOPIC_QUEUE_NAME + ": " + e.getMessage();
+                      _topicQueueName + ": " + e.getMessage();
                 _log.error(msg, e);
             }
         }
@@ -2357,7 +2401,7 @@ public abstract class AbstractPhaseScheduler
                 // We're in trouble if we cannot reject a message.
                 String msg = _phaseType.name() +  
                       " topic reader cannot reject a TPC_SHUTDOWN message received on topic " + 
-                      TOPIC_QUEUE_NAME + ": " + e.getMessage();
+                      _topicQueueName + ": " + e.getMessage();
                 _log.error(msg, e);
             }
             
@@ -2366,6 +2410,8 @@ public abstract class AbstractPhaseScheduler
         }
         
         // We selectively process messages by phase unless no phases are specified.
+        // We shouldn't actually receive shutdown messages not intended for this phase
+        // scheduler, but this check gives further assurance.
         if (shutdownMsg.phases == null   ||
             shutdownMsg.phases.isEmpty() || 
             shutdownMsg.phases.contains(_phaseType)) 
@@ -2377,6 +2423,172 @@ public abstract class AbstractPhaseScheduler
                     _log.error(msg, e);
                 }
         }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* doResetNumWorkers:                                                     */
+    /* ---------------------------------------------------------------------- */
+    /** Reset the number of worker on a particular queue within the bound set
+     * by JOB_MAX_THREADS_PER_QUEUE.  The number of workers can be increased or
+     * decreased.  Increases occur immediate when as this method spawns new
+     * threads.  Decrease take place in lazy manner as threads that have be
+     * designated for termination finish their work. 
+     * 
+     * If a queue is not being serviced by any threads and has not had its
+     * dedicated thread group created, this method creates the thread group
+     * and spawns the requested number of threads.
+     * 
+     * Only request for queues already defined in the job_queues tables will be
+     * processed.  The actual number of workers assigned to the queue in the 
+     * database is not considered by this method.
+     * 
+     * @return true to acknowledge the message, false to reject it
+     */
+    protected boolean doResetNumWorkers(JobCommand jobCommand,
+                                        Envelope envelope, 
+                                        BasicProperties properties, 
+                                        byte[] body)
+    {
+        // ------------------------- Decode Message -------------------------
+        // Tracing.
+        if (_log.isDebugEnabled()) {
+            String msg = getSchedulerName() + 
+                         " received a " + jobCommand + " message using routing key " +
+                         envelope.getRoutingKey() + " on exchange " +
+                         envelope.getExchange() + ".";
+            _log.debug(msg);             
+        }
+        
+        // Decode the message.
+        ResetNumWorkersMessage resetMsg = null;
+        try {resetMsg = ResetNumWorkersMessage.fromJson(new String(body));}
+            catch (IOException e) {
+                // Log error message.
+                String msg = _phaseType.name() + 
+                             " topic reader cannot decode data from queue " + 
+                             _topicQueueName + ": " + e.getMessage();
+                _log.error(msg, e);
+                return false;
+            }
+        
+        // Validate the message.
+        try {resetMsg.validate();}
+            catch (Exception e) {
+                String msg = "Invalid " + resetMsg.getClass().getSimpleName() +
+                             " message received: " + e.getMessage();
+                _log.error(msg, e);
+                return false;
+            }
+        
+        // ------------------------- Validate Target ------------------------
+        // Determine if the message is intended for this scheduler.  An empty scheduler
+        // list targets all schedulers in the same phase.  A non-empty list excludes
+        // all schedulers not listed.
+        if (!resetMsg.schedulers.isEmpty() && 
+            !resetMsg.schedulers.contains(getSchedulerName()))
+           return false;
+        
+        // ------------------------- Validate Queue -------------------------
+        JobQueueDao queueDao = new JobQueueDao();
+        JobQueue queue = null;
+        try {queue = queueDao.getQueueByName(resetMsg.queueName, resetMsg.tenantId);}
+            catch (JobQueueException e) {
+                String msg = "Unable to verify that queue " + resetMsg.queueName + 
+                             " exists.  Aborting ResetNumWorkers message processing.";
+                _log.error(msg, e);
+                return false;
+            }
+        if (queue == null) {
+            String msg = "Queue " + resetMsg.queueName + 
+                         " not found.  Aborting ResetNumWorkers message processing.";
+            _log.error(msg);
+            return false;
+        }
+        
+        // ------------------------- Get ThreadGropup -----------------------
+        // Find the queue's worker thread group.
+        ThreadGroup queueThreadGroup = _queueThreadGroups.get(resetMsg.queueName);
+        
+        // Create the thread group if it doesn't exist.
+        if (queueThreadGroup == null) 
+            queueThreadGroup = createQueueThreadGroup(resetMsg.queueName);      
+        
+        // ------------------------- Process ThreadGroup --------------------
+        // Allow only one mutator on a thread group at a time.
+        synchronized (queueThreadGroup) {
+            
+            // Get the number of threads currently in the queue's thread group.
+            int maxAllowedThreads = Settings.JOB_MAX_THREADS_PER_QUEUE;
+            Thread[] threads = new Thread[maxAllowedThreads];
+            int numThreads = queueThreadGroup.enumerate(threads, false);
+
+            // ----- Adding workers
+            if (resetMsg.numWorkers > 0) {
+                
+                // Determine the number of new threads we should start.
+                int numNewThreads = resetMsg.numWorkers;
+                if (numThreads + resetMsg.numWorkers > maxAllowedThreads)
+                    numNewThreads = maxAllowedThreads - numThreads;
+
+                // Start the requested number of threads up to the maximum
+                // allowed.
+                try {
+                    for (int i = 0; i < numNewThreads; i++) {
+                        // Create a new worker daemon thread in the
+                        // queue-specific group.
+                        AbstractPhaseWorker worker = 
+                            createWorkerThread(queueThreadGroup, 
+                                               resetMsg.tenantId,
+                                               resetMsg.queueName, 
+                                               _threadSeqno.incrementAndGet());
+
+                        // Start the thread.
+                        worker.start();
+                    }
+                } catch (Exception e) {
+                    String msg = "Unable to start " + numNewThreads + " new worker threads " + 
+                                 "to service queue " + resetMsg.queueName + ".";
+                    _log.error(msg, e);
+                    return false;
+                }
+
+                // Log the results.
+                _log.info("Started " + numNewThreads + " new worker threads " + 
+                          "to service queue " + resetMsg.queueName + ".");
+            }
+            // ----- Removing workers
+            else {
+                
+                // Get the number of threads to remove.
+                int numWorkers = Math.abs(resetMsg.numWorkers);
+                
+                // Mark worker threads for removal.
+                int removedWorkers = 0;
+                for (int i = 0; i < numThreads; i++) {
+                    
+                    // Only deal with threads that have 
+                    // started and have not yet died.
+                    Thread curThread = threads[i];
+                    if (!curThread.isAlive()) continue;
+                    
+                    // Schedule the worker for termination after 
+                    // it completes current work.
+                    if (((AbstractPhaseWorker)curThread).lazyTerminate()) {
+                        removedWorkers++;
+                        if (_log.isDebugEnabled())
+                            _log.debug("Thread " + curThread.getName() + " marked for lazy termination.");
+                    }
+                    
+                    if (removedWorkers >= numWorkers) break;
+                }
+                
+                // Log the results.
+                _log.info("Marked " + removedWorkers + " worker threads " + 
+                          "servicing queue " + resetMsg.queueName + " for lazy termination.");
+            }
+        } // end synchronized
+        
+        return true;
     }
     
     /* ---------------------------------------------------------------------- */
@@ -2540,6 +2752,8 @@ public abstract class AbstractPhaseScheduler
         buf.append(Settings.JOB_MAX_SUBMISSION_RETRIES);
         buf.append("\n  JOB_QUEUE_CONFIG_FOLDER = ");
         buf.append(Settings.JOB_QUEUE_CONFIG_FOLDER);
+        buf.append("\n  JOB_MAX_THREADS_PER_QUEUE = ");
+        buf.append(Settings.JOB_MAX_THREADS_PER_QUEUE);
         buf.append("\n  DEDICATED_TENANT_ID = ");
         buf.append(Settings.getDedicatedTenantIdFromServiceProperties());
         buf.append("\n  DRAIN_ALL_QUEUES_ENABLED = ");

@@ -11,6 +11,7 @@ import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueConfigMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage;
+import org.iplantc.service.jobs.phases.queuemessages.ResetNumWorkersMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ShutdownMessage;
 
 import com.rabbitmq.client.Channel;
@@ -94,7 +95,7 @@ public class TopicMessageSender
             } 
             catch (Exception e) {
                 String msg = "Unable to publish job interrupt message to topic " +
-                             QueueConstants.TOPIC_QUEUE_NAME + ": " + json;
+                             QueueConstants.TOPIC_QUEUE_PREFIX + ": " + json;
                 _log.error(msg, e);
                 throw new JobException(msg, e);
             }
@@ -176,7 +177,7 @@ public class TopicMessageSender
             } 
             catch (Exception e) {
                 String msg = "Unable to publish queue configuration message to topic " +
-                             QueueConstants.TOPIC_QUEUE_NAME + ": " + json;
+                             QueueConstants.TOPIC_QUEUE_PREFIX + ": " + json;
                 _log.error(msg, e);
                 throw new JobException(msg, e);
             }
@@ -194,8 +195,10 @@ public class TopicMessageSender
     /* ---------------------------------------------------------------------- */
     /* sendShutdownMessage:                                                   */
     /* ---------------------------------------------------------------------- */
-    /** Put a shutdown message the topic queue for all schedulers.  Each scheduler
-     * will inspect the phases list to determine if the message applies to them.  
+    /** Put a shutdown message on the topic queue for selected schedulers or for
+     * all schedulers if none are explicitly specified in the request.  On the
+     * receiving end, each scheduler inspects double-checks the phases list in
+     * the request to determine if the message applies to them.  
      * 
      * @param message a shutdown message
      * @throws JobException on error
@@ -226,14 +229,18 @@ public class TopicMessageSender
             
             // Assign routing keys.
             ArrayList<String> routingKeys = new ArrayList<>(4);
-            if (message.phases.isEmpty() || message.phases.contains(JobPhaseType.STAGING))
-                routingKeys.add(QueueConstants.TOPIC_STAGING_ROUTING_KEY);
-            if (message.phases.isEmpty() || message.phases.contains(JobPhaseType.SUBMITTING))
-                routingKeys.add(QueueConstants.TOPIC_SUBMITTING_ROUTING_KEY);
-            if (message.phases.isEmpty() || message.phases.contains(JobPhaseType.MONITORING))
-                routingKeys.add(QueueConstants.TOPIC_MONITORING_ROUTING_KEY);
-            if (message.phases.isEmpty() || message.phases.contains(JobPhaseType.ARCHIVING))
-                routingKeys.add(QueueConstants.TOPIC_ARCHIVING_ROUTING_KEY);
+            if (message.phases.isEmpty())
+                routingKeys.add(QueueConstants.TOPIC_ALL_ROUTING_KEY);
+            else {
+                if (message.phases.contains(JobPhaseType.STAGING))
+                    routingKeys.add(QueueConstants.TOPIC_STAGING_ROUTING_KEY);
+                if (message.phases.contains(JobPhaseType.SUBMITTING))
+                    routingKeys.add(QueueConstants.TOPIC_SUBMITTING_ROUTING_KEY);
+                if (message.phases.contains(JobPhaseType.MONITORING))
+                    routingKeys.add(QueueConstants.TOPIC_MONITORING_ROUTING_KEY);
+                if (message.phases.contains(JobPhaseType.ARCHIVING))
+                    routingKeys.add(QueueConstants.TOPIC_ARCHIVING_ROUTING_KEY);
+            }
             
             // Send the message to all topic threads targeted by the shutdown command. 
             String routingKey = null;
@@ -252,7 +259,83 @@ public class TopicMessageSender
             } 
             catch (Exception e) {
                 String msg = "Unable to publish shutdown message to topic " +
-                             QueueConstants.TOPIC_QUEUE_NAME + "with routing key " + 
+                             QueueConstants.TOPIC_QUEUE_PREFIX + "with routing key " + 
+                             routingKey + ": " + json;
+                _log.error(msg, e);
+                throw new JobException(msg, e);
+            }
+        }
+        finally {
+            // Always close the topic channel.
+            try {topicChannel.close();}
+            catch (Exception e) {
+                String msg = "Error closing topic channel";
+                _log.error(msg, e);
+            }
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* ResetNumWorkersMessage:                                                */
+    /* ---------------------------------------------------------------------- */
+    /** Put a ResetNumWorkers message the topic queue for schedulers managing
+     * the specified queue.  Each scheduler inspects the phases list to determine 
+     * if the message implicitly or explicitly applies to them.    
+     * 
+     * @param message a shutdown message
+     * @throws JobException on error
+     */
+    public static void sendResetNumWorkersMessage(ResetNumWorkersMessage message) 
+      throws JobException
+    {
+        // Validate that the message is complete.
+        if (message == null)
+        {
+            String msg = "Null message received by sendShutdownMessage().";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Validate message.
+        message.validate();
+        
+        // Get a new communication channel for each call.
+        Channel topicChannel = getNewOutChannel();
+        
+        try {
+            // Create the durable, non-autodelete topic exchange and topic queue.
+            initQueue(topicChannel);
+        
+            // Serialize message.
+            String json = messageToJson(message);
+            
+            // Assign routing keys.
+            String routingKey = null;
+            if (message.phase == JobPhaseType.STAGING)
+                routingKey = QueueConstants.TOPIC_STAGING_ROUTING_KEY;
+            else if ((message.phase == JobPhaseType.SUBMITTING))
+                routingKey = QueueConstants.TOPIC_SUBMITTING_ROUTING_KEY;
+            else if ((message.phase == JobPhaseType.MONITORING))
+                routingKey = QueueConstants.TOPIC_MONITORING_ROUTING_KEY;
+            else if ((message.phase == JobPhaseType.ARCHIVING))
+                routingKey = QueueConstants.TOPIC_ARCHIVING_ROUTING_KEY;
+            else {
+                String msg = "Unknown scheduler phase encountered: " + message.phase.name();
+                _log.error(msg);
+                throw new JobException(msg);
+            }
+            
+            // Send the message to all topic threads targeted by the shutdown command. 
+            try {
+                // TODO: Publisher confirm?
+                topicChannel.basicPublish(QueueConstants.TOPIC_EXCHANGE_NAME, 
+                                          routingKey, 
+                                          QueueConstants.PERSISTENT_JSON, 
+                                          json.getBytes());
+            } 
+            catch (Exception e) {
+                String msg = "Unable to publish ResetNumWorkers message to topic " +
+                             QueueConstants.TOPIC_QUEUE_PREFIX + "with routing key " + 
                              routingKey + ": " + json;
                 _log.error(msg, e);
                 throw new JobException(msg, e);
@@ -400,20 +483,26 @@ public class TopicMessageSender
                 throw new JobException(msg, e);
             }
     
-        // Create the durable topic with a well-known name.
+        // Configure the durable topic queues with a well-known names.
         durable = true;
         boolean exclusive = false;
         boolean autoDelete = false;
-        try {topicChannel.queueDeclare(QueueConstants.TOPIC_QUEUE_NAME, 
-                                       durable, exclusive, autoDelete, null);}
-            catch (IOException e) {
-                String msg = "Unable to declare topic queue " + 
-                             QueueConstants.TOPIC_QUEUE_NAME +
-                             " on " + OUTBOUND_CONNECTION_NAME + "/" + 
-                             topicChannel.getChannelNumber() + ": " + e.getMessage();
-                _log.error(msg, e);
-                throw new JobException(msg, e);
-            }
+        
+        // Create each phase's topic queue if necessary.
+        JobPhaseType[] phases = JobPhaseType.values();
+        for (JobPhaseType phase : phases) {
+            
+            // No harm done if queues already exist and have been created with the same options.
+            String queueName = QueueUtils.getTopicQueueName(phase);
+            try {topicChannel.queueDeclare(queueName, durable, exclusive, autoDelete, null);}
+                catch (IOException e) {
+                    String msg = "Unable to declare topic queue " + 
+                                 queueName + " on " + OUTBOUND_CONNECTION_NAME + "/" + 
+                                 topicChannel.getChannelNumber() + ": " + e.getMessage();
+                    _log.error(msg, e);
+                    throw new JobException(msg, e);
+                }
+        }
     }
     
     /* ---------------------------------------------------------------------- */

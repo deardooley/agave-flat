@@ -66,5 +66,15 @@ public abstract class AbstractQueueConfigMessage
                          getClass().getSimpleName() + " object.";
             throw new JobException(msg);
         }
+        
+        // Make sure the phase, tenant id and queue name conform to each other.
+        String prefix = phase.name() + "." + tenantId;
+        if (!queueName.equals(prefix) && !queueName.startsWith(prefix + ".")) {
+            String msg = "The queue name \"" + queueName + 
+                         "\" does not conform to the <phase.tenantId> naming scheme " + 
+                         "give phase \"" + phase + "\" and tenantId \"" + tenantId + "\".";
+       throw new JobException(msg);
+            
+        }
     }
 }

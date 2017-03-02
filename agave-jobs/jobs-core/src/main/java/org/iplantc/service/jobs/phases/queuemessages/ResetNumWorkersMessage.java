@@ -1,12 +1,14 @@
 package org.iplantc.service.jobs.phases.queuemessages;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 
-/** This message is used to start the specified number of workers on
- * the specified queue.
+/** This message is used to increase or decrease the specified number of workers on
+ * the named queue.
  * 
  * @author rcardone
  */
@@ -18,9 +20,19 @@ public final class ResetNumWorkersMessage
     /* ********************************************************************** */
     // Note that adding fields, or changing the names or ordering, will require 
     // changes to the QueueMessagesTest program.
-    //
-    // Command fields.
-    public int    numWorkers;  // Target number of workers
+    
+    // This value is a delta that specifies changes to the number of workers
+    // servicing the named queue.  Negative numbers decrease workers, positive 
+    // numbers increase workers.
+    public int          numWorkers;
+    
+    // Optional parameter that specifies the unique scheduler instance names
+    // to which this message should be applied.  If the list is empty, then
+    // all scheduler instances assigned to the same phase as the target queue
+    // will run this command.  Otherwise, only those instances in the list will
+    // be affected.  The names returned by AbstractPhaseScheduler.getSchedulerName()
+    // should populate this list.
+    public List<String> schedulers = new LinkedList<>();
     
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -51,9 +63,11 @@ public final class ResetNumWorkersMessage
     public void validate() throws JobException
     {
         super.validate();
-        if (numWorkers < 1) {
+        if (numWorkers == 0) {
             String msg = "Invalid numWorkers value \"" + numWorkers + " in " + 
-                         getClass().getSimpleName() + " object.";
+                         getClass().getSimpleName() + " object.  Specify a " +
+                         "positive or negative integer to add or subtract workers, " +
+                         "respectively.";
             throw new JobException(msg);
         }
     }

@@ -44,12 +44,12 @@ public class ShutdownMsgTest {
     /*                              Test Methods                              */
     /* ********************************************************************** */    
     /* ---------------------------------------------------------------------- */
-    /* getAndReleaseLease:                                                    */
+    /* shutdownAllPhases:                                                     */
     /* ---------------------------------------------------------------------- */
     @Test(enabled=true)
     public void shutdownAllPhases() throws JobException
     {   
-        // This message targets all phased since we don't specifically name any.
+        // This message targets all phases since we don't specifically name any.
         ShutdownMessage shutdownMsg = new ShutdownMessage();
         TopicMessageSender.sendShutdownMessage(shutdownMsg);
     }

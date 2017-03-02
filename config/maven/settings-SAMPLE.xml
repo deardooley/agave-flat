@@ -370,18 +370,28 @@
 
 				<!-- ************************ Jobs service *************************** -->
 
-				<foundation.service.jobs>${foundation.base.url}/jobs/v2</foundation.service.jobs>
-				<foundation.service.jobs.gateway.node>false</foundation.service.jobs.gateway.node>
-				<foundation.service.jobs.allow.fork>false</foundation.service.jobs.allow.fork>
-				<foundation.service.jobs.staging.tasks>2</foundation.service.jobs.staging.tasks>
-				<foundation.service.jobs.archiving.tasks>2</foundation.service.jobs.archiving.tasks>
-				<foundation.service.jobs.submission.tasks>2</foundation.service.jobs.submission.tasks>
-				<foundation.service.jobs.monitoring.tasks>1</foundation.service.jobs.monitoring.tasks>
-				<foundation.service.jobs.max.retries>3</foundation.service.jobs.max.retries>
-				<foundation.service.jobs.local.system.id></foundation.service.jobs.local.system.id>
-				<foundation.service.jobs.jetty.port>13031</foundation.service.jobs.jetty.port>
-				<foundation.service.jobs.jetty.ajp.port>13032</foundation.service.jobs.jetty.ajp.port>
+                <foundation.service.jobs>${foundation.base.url}/jobs/v2</foundation.service.jobs>
+                <foundation.service.jobs.jetty.port>13031</foundation.service.jobs.jetty.port>
+                <foundation.service.jobs.jetty.ajp.port>13032</foundation.service.jobs.jetty.ajp.port>
 
+                <foundation.service.jobs.scheduler.mode>true</foundation.service.jobs.scheduler.mode>
+                <foundation.service.jobs.worker.mode>true</foundation.service.jobs.worker.mode>
+                <foundation.service.jobs.enable.zombie.cleanup>false</foundation.service.jobs.enable.zombie.cleanup>
+                <foundation.service.jobs.claim.poll.iterations>15</foundation.service.jobs.claim.poll.iterations>
+                <foundation.service.jobs.claim.poll.sleep.ms>1000</foundation.service.jobs.claim.poll.sleep.ms>
+                <foundation.service.jobs.uuid.query.limit>1000</foundation.service.jobs.uuid.query.limit>
+                <foundation.service.jobs.scheduler.lease.seconds>250</foundation.service.jobs.scheduler.lease.seconds>
+                <foundation.service.jobs.scheduler.normal.poll.ms>10000</foundation.service.jobs.scheduler.normal.poll.ms>
+                <foundation.service.jobs.interrupt.ttl.seconds>3600</foundation.service.jobs.interrupt.ttl.seconds>
+                <foundation.service.jobs.interrupt.delete.ms>240000</foundation.service.jobs.interrupt.delete.ms>
+                <foundation.service.jobs.zombie.monitor.ms>600000</foundation.service.jobs.zombie.monitor.ms>
+                <foundation.service.jobs.thread.death.ms>10000</foundation.service.jobs.thread.death.ms>
+                <foundation.service.jobs.thread.death.poll.ms>100</foundation.service.jobs.thread.death.poll.ms>
+                <foundation.service.jobs.connection.close.ms>5000</foundation.service.jobs.connection.close.ms>
+                <foundation.service.jobs.worker.init.retry.ms>10000</foundation.service.jobs.worker.init.retry.ms>
+                <foundation.service.jobs.max.submission.retries>3</foundation.service.jobs.max.submission.retries>
+                <foundation.service.jobs.queue.config.folder>basic</foundation.service.jobs.queue.config.folder>
+                <foundation.service.jobs.max.threads.per.queue>50</foundation.service.jobs.max.threads.per.queue>
 
 				<!-- ************************ Meta service *************************** -->
 

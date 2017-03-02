@@ -96,6 +96,10 @@ public abstract class AbstractPhaseWorker
     // has been assigned a finished state.
     private AtomicBoolean _jobSuspended = new AtomicBoolean(false);
     
+    // Allows the thread to finish its current work and then terminate itself
+    // instead of acquiring new work.
+    private AtomicBoolean _lazyTerminate = new AtomicBoolean(false);
+    
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
@@ -218,6 +222,13 @@ public abstract class AbstractPhaseWorker
         // ----------------- Queue Read -------------------------
         // Read loop.
         while (true) {
+            // Were we asked to terminate ourselves?
+            if (_lazyTerminate.get()) {
+                String msg = "Thread " + getName() + " is honoring lazy termination request.";
+                _log.info(msg);
+                break;
+            }
+            
             // Check and clear thread interrupt status.
             // Note the window here before we wait on I/O
             if (Thread.interrupted()) break;
@@ -594,6 +605,22 @@ public abstract class AbstractPhaseWorker
         this._jobInitialEpoch = _jobInitialEpoch;
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* lazyTerminate:                                                         */
+    /* ---------------------------------------------------------------------- */
+    /** Mark this thread for termination.  After the thread finishes its current
+     * or next job processing request, it will check its lazy termination flag
+     * to see if it should continue or not.  If the flag is set, the thread will
+     * terminate.
+     * 
+     * @return true if the flag was flipped from false to true; false if the 
+     *         flag was already set to true
+     */
+    public boolean lazyTerminate() 
+    {
+        return _lazyTerminate.compareAndSet(false, true);
+    }
+    
     /* ---------------------------------------------------------------------- */
     /* checkStopped:                                                          */
     /* ---------------------------------------------------------------------- */

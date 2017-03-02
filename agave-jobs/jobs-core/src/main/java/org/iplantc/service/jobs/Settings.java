@@ -4,15 +4,11 @@
 package org.iplantc.service.jobs;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.ietf.jgss.GSSCredential;
 
 /**
  * @author dooley
@@ -25,9 +21,6 @@ public class Settings {
 	private static final String PROPERTY_FILE = "service.properties";
 	
 	private static Properties					props			= new Properties();
-
-	private static Map<String, GSSCredential>	userProxies		= Collections
-																		.synchronizedMap(new HashMap<String, GSSCredential>());
 
 	/* Trusted user settings */
 	public static List<String> 					TRUSTED_USERS = new ArrayList<String>();
@@ -102,6 +95,7 @@ public class Settings {
 	public static long                          JOB_WORKER_INIT_RETRY_MS;
 	public static int                           JOB_MAX_SUBMISSION_RETRIES;
 	public static String                        JOB_QUEUE_CONFIG_FOLDER;
+	public static int                           JOB_MAX_THREADS_PER_QUEUE;
 	
 	static
 	{
@@ -327,6 +321,13 @@ public class Settings {
             catch (Exception e) {
                 _log.error("Error initializing setting JOB_QUEUE_CONFIG_FOLDER, using default.", e);
                 JOB_QUEUE_CONFIG_FOLDER = "basic";
+            }
+        
+        try {JOB_MAX_THREADS_PER_QUEUE = Integer.valueOf(props
+                .getProperty("iplant.service.jobs.max.threads.per.queue", "50"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_MAX_THREADS_PER_QUEUE, using default.", e);
+                JOB_MAX_THREADS_PER_QUEUE = 50;
             }
         
 		// --------------- End Queue-Based Implementation ---------------
