@@ -225,11 +225,23 @@
 			<groupId>org.jglobus</groupId>
 			<artifactId>ssl-proxies</artifactId>
 			<version>${jglobus.version}</version>
+			<exclusions>
+		   	<exclusion>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcprov-jdk16</artifactId>
+			</exclusion>
+		   </exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.nimbusds</groupId>
 			<artifactId>nimbus-jose-jwt</artifactId>
 			<version>${nimbus-jose-jwt.version}</version>
+			<exclusions>
+		   	<exclusion>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcprov-jdk15on</artifactId>
+			</exclusion>
+		   </exclusions>
 		</dependency>
 		<dependency>
 			<groupId>simple-jndi</groupId>

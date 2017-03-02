@@ -1710,6 +1710,9 @@ public class JobDao
 		
 		if (orderBy == null) {
 			orderBy = new JobSearchFilter().filterAttributeName("lastupdated");
+//			if (orderBy == null) {
+//				orderBy = j.last_updated
+//			}
 		}
 		
 		try

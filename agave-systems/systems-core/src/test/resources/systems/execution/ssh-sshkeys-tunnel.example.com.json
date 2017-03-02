@@ -5,7 +5,7 @@
 	"type": "EXECUTION",
 	"description": "Sample ssh execution system.",
 	"site": "example.com",
-	"executionType": "HPC",
+	"executionType": "CLI",
 	"default": false,
 	"scratchDir": "/tmp",
 	"workDir": "/tmp",
@@ -20,13 +20,13 @@
 			"maxProcessorsPerNode": 16,
 			"maxMemoryPerNode": "2048GB",
 			"maxRequestedTime": "24:00:00",
-			"customDirectives": "#$ -A TG-MCB110022",
+			"customDirectives": null,
 			"default": true
 		}
 	],
 	"login": {
-		"host": "sftphidden",
-		"port": 10044,
+		"host": "sshhidden",
+		"port": 22,
 		"protocol": "SSH",
 		"auth": {
 			"username": "testuser",
@@ -35,14 +35,14 @@
 			"type": "SSHKEYS"
 		},
 		"proxy":{
-			"name":"Example proxy to sftp storage server",
+			"name":"Example proxy to ssh execution server",
 			"host":"docker.example.com",
-			"port":10033
+			"port":10199
 		}
 	},
 	"storage": {
-		"host": "sftphidden",
-		"port": 10044,
+		"host": "sshhidden",
+		"port": 22,
 		"protocol": "SFTP",
 		"rootDir": "/",
 		"homeDir": "/home/testuser",
@@ -53,12 +53,12 @@
 			"type": "SSHKEYS"
 		},
 		"proxy":{
-			"name":"Example proxy to sftp storage server",
+			"name":"Example proxy to ssh execution server",
 			"host":"docker.example.com",
-			"port":10033
+			"port":10199
 		}
 	},
-	"scheduler": "SGE",
+	"scheduler": "FORK",
 	"environment": "",
-	"startupScript": ".bashrc"
+	"startupScript": "~/.bashrc"
 }

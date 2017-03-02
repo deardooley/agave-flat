@@ -35,6 +35,7 @@ import org.iplantc.service.jobs.model.scripts.SubmitScript;
 import org.iplantc.service.jobs.model.scripts.SubmitScriptFactory;
 import org.iplantc.service.jobs.phases.workers.IPhaseWorker;
 import org.iplantc.service.jobs.util.Slug;
+import org.iplantc.service.remote.exceptions.RemoteExecutionException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.enumerations.ExecutionType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
@@ -464,7 +465,7 @@ public class HPCLauncher extends AbstractJobLauncher
 			
 			return jobIdParser.getJobId(submissionResponse);
 		}
-		catch (RemoteJobIDParsingException e) {
+		catch (RemoteJobIDParsingException | RemoteExecutionException e) {
 			throw new JobException(e.getMessage(), e);
 		}
 		catch (JobException e) {
