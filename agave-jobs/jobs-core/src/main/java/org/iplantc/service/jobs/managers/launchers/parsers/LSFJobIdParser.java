@@ -22,7 +22,7 @@ public class LSFJobIdParser implements RemoteJobIdParser {
 	public String getJobId(String output) throws RemoteJobIDParsingException, JobException, SchedulerException
 	{
 		String jobID = null;
-		Pattern pattern = Pattern.compile("Job <([\\d]+)> is submitted (?:.*)");
+		Pattern pattern = Pattern.compile("Job <([\\d]+)> is submitted(?:.*)");
 		Matcher matcher = pattern.matcher(output);
 		
 		// if the response matches the standard LSF verbose bsub response, 

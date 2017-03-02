@@ -9,13 +9,30 @@ ssh:
   hostname: docker.example.com
   ports:
     - '10111:22'
+
+sshtunnel:
+ image: agaveapi/centos-base
+ hostname: tunnel.example.com
+ privileged: true
+ links: 
+   - sshhidden
+ ports:
+   - '10199:22'
    
+sshhidden:
+ image: agaveapi/centos-base
+ hostname: sshhidden
+ privileged: true
+ links: 
+   - ssh   
+      
 gsissh:
   image: agaveapi/gridftp:5
   hostname: docker.example.com
   ports:
     - '2222:2222'
     - '2022:22'
+    - '7515:7512'
 
 slurm:
   image: agaveapi/slurm:latest

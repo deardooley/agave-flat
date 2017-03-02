@@ -32,6 +32,7 @@ public class JSONTestDataUtil {
 	public static String TEST_SOFTWARE_SYSTEM_FILE = TEST_SOFTWARE_FOLDER + "system-software.json";
 	public static String TEST_EXECUTION_SYSTEM_FILE = TEST_SYSTEM_FOLDER + "execution/ssh.example.com.json";
 	public static String TEST_PROXY_EXECUTION_SYSTEM_FILE = TEST_SYSTEM_FOLDER + "execution/ssh-password-tunnel.example.com.json";
+	public static String TEST_GRID_EXECUTION_SYSTEM_FILE = TEST_SYSTEM_FOLDER + "execution/gsissh.example.com.json";
     public static String TEST_STORAGE_SYSTEM_FILE = TEST_SYSTEM_FOLDER + "storage/sftp.example.com.json";
 	public static String TEST_IRODS_STORAGE_SYSTEM_FILE = TEST_SYSTEM_FOLDER + "storage/irods.example.com.json";
     

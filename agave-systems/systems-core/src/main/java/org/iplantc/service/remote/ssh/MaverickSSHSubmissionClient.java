@@ -32,6 +32,7 @@ import com.sshtools.ssh.SshConnector;
 import com.sshtools.ssh.SshException;
 import com.sshtools.ssh.SshSession;
 import com.sshtools.ssh.SshTransport;
+import com.sshtools.ssh.SshTunnel;
 import com.sshtools.ssh.components.ComponentManager;
 import com.sshtools.ssh.components.SshKeyPair;
 import com.sshtools.ssh.components.jce.JCEComponentManager;
@@ -229,7 +230,75 @@ public class MaverickSSHSubmissionClient implements RemoteSubmissionClient
 						&& ssh2.isConnected());
 			}
 			
-			return ssh2.isAuthenticated();
+			// now handle the tunnel if present to auth to the remote side
+			if (!StringUtils.isEmpty(proxyHost)) 
+			{	
+				SshTunnel tunnel = ssh2.openForwardingChannel(hostname, port,
+						"127.0.0.1", 22, "127.0.0.1", 22, null, null);
+
+				forwardedConnection = con.connect(tunnel, username);
+				
+				if (StringUtils.isNotBlank(publicKey) && StringUtils.isNotBlank(privateKey))
+				{
+					/**
+					 * Authenticate the user using password authentication
+					 */
+					auth = new Ssh2PublicKeyAuthentication();
+					
+					do {
+//						com.sshtools.publickey.SshPrivateKeyFile pkfile = com.sshtools.publickey.SshPrivateKeyFileFactory
+//								.parse(privateKey.getBytes());
+//
+//						SshKeyPair pair;
+//						if (pkfile.isPassphraseProtected()) {
+//		                    pair = pkfile.toKeyPair(password);
+//						} else {
+//							pair = pkfile.toKeyPair(null);
+//						}
+//
+//						((PublicKeyAuthentication)auth).setPrivateKey(pair.getPrivateKey());
+//						((PublicKeyAuthentication)auth).setPublicKey(pair.getPublicKey());
+						
+						authStatus = forwardedConnection.authenticate(auth);
+						
+						if (authStatus == SshAuthentication.FURTHER_AUTHENTICATION_REQUIRED && 
+								Arrays.asList(authenticationMethods).contains("keyboard-interactive")) {
+							KBIAuthentication kbi = new KBIAuthentication();
+							kbi.setUsername(username);
+							kbi.setKBIRequestHandler(new MultiFactorKBIRequestHandler(password, null, username, hostname, port));
+							authStatus = forwardedConnection.authenticate(kbi);
+						}
+					}
+					while (authStatus != SshAuthentication.COMPLETE
+							&& authStatus != SshAuthentication.FAILED
+							&& authStatus != SshAuthentication.CANCELLED
+							&& forwardedConnection.isConnected());
+				}
+				else
+				{
+					/**
+					 * Authenticate the user using password authentication
+					 */
+//					auth = new com.sshtools.ssh.PasswordAuthentication();
+					do
+					{
+//						((PasswordAuthentication)auth).setPassword(password);
+						
+						auth = checkForPasswordOverKBI(authenticationMethods);
+						
+						authStatus = forwardedConnection.authenticate(auth);
+					}
+					while (authStatus != SshAuthentication.COMPLETE
+							&& authStatus != SshAuthentication.FAILED
+							&& authStatus != SshAuthentication.CANCELLED
+							&& forwardedConnection.isConnected());
+				}
+				
+				return forwardedConnection.isAuthenticated();
+			}
+			else {
+				return ssh2.isAuthenticated();
+			}
 		}
 		catch (UnknownHostException e) {
 			throw new RemoteExecutionException("Failed to resolve host " + hostname + ":" + port, e);
@@ -291,53 +360,102 @@ public class MaverickSSHSubmissionClient implements RemoteSubmissionClient
 			{
 				if (!StringUtils.isEmpty(proxyHost)) 
 				{
-					final ForwardingClient fwd = new ForwardingClient(ssh2);
-					
-					fwd.allowX11Forwarding("localhost:0");
-					boolean remoteForwardingResponse = fwd.requestRemoteForwarding("127.0.0.1", 0,
-							hostname, port);
-					
-					if ( remoteForwardingResponse ) {
-						throw new RemoteDataException("Failed to establish a remote tunnel to " + 
-								proxyHost + ":" + proxyPort);
-					}
-
 					/**
 					 * Start the users session. It also acts as a thread to service
 					 * incoming channel requests for the port forwarding for both
 					 * versions. Since we have a single threaded API we have to do
 					 * this to send a timely response
 					 */
-					final SshSession session = ssh2.openSessionChannel();
+					final SshSession session = forwardedConnection.openSessionChannel();
 					session.requestPseudoTerminal("vt100", 80, 24, 0, 0);
-					session.startShell();
-
-					/**
-					 * Start local forwarding after starting the users session.
-					 */
-					int randomlyChosenTunnelPort = fwd.startLocalForwardingOnRandomPort("127.0.0.1", 10, hostname, port);
+					if (session.startShell()) {
+						shell = new Shell(forwardedConnection);
+					}
+					else {
+						throw new RemoteExecutionException("Failed to establish interactive shell session to " 
+								+ hostname + ":" + port + " when tunneled through " 
+								+ proxyHost + ":" + proxyPort);
+					}
+						
+					// fork the command on the remote system.
+//					ShellProcess process = shell.executeCommand(command, true, "UTF-8");
+//					InputStream in = null;
+//					try 
+//					{
+////							// no idea why, but this fails if we don't wait for 8 seconds
+//						long start = System.currentTimeMillis();
+//						while (process.isActive() && (System.currentTimeMillis() - start) < (Settings.MAX_REMOTE_OPERATION_TIME * 1000)) {
+//							log.debug("Process has succeeded: " + process.hasSucceeded() + "\n"  
+//							            + "Process exit code: " + process.getExitCode() + "\n" 
+//							            + "Process command output: " + process.getCommandOutput());
+//							
+//							Thread.sleep(1000);
+//						}
+	//
+//						shell.exit();
+//						return process.getCommandOutput();
+//					} catch (Throwable t) {
+//						throw new RemoteExecutionException("Failed to read response from " + hostname, t);
+//					}
+//					finally {
+//						try { in.close(); } catch (Throwable e) {}
+//						try { shell.exit(); } catch (Throwable e) {}
+//					}
+//				}
+//				else {
+//					throw new RemoteExecutionException("Failed to establish interactive shell session to " 
+//							+ hostname + ":" + port + " when tunneled through " 
+//							+ proxyHost + ":" + proxyPort);
+//				}
 					
-					/**
-					 * Now that the local proxy tunnel is running, make the call to
-					 * the target server through the tunnel.
-					 */
-					MaverickSSHSubmissionClient proxySubmissionClient = null;
-					String proxyResponse = null;
-					try {
-						proxySubmissionClient = new MaverickSSHSubmissionClient("127.0.0.1", randomlyChosenTunnelPort, username,
-								password, null, proxyPort, publicKey, privateKey);
-						proxyResponse = proxySubmissionClient.runCommand(command);
-						return proxyResponse;
-					} 
-					catch (RemoteDataException e) {
-						throw e;
-					}
-					catch (Exception e) {
-						throw new RemoteDataException("Failed to connect to destination server " + hostname + ":" + port, e);
-					}
-					finally {
-						try { proxySubmissionClient.close(); } catch (Exception e) {}
-					}
+					
+//					final ForwardingClient fwd = new ForwardingClient(ssh2);
+//					
+//					fwd.allowX11Forwarding("localhost:0");
+//					boolean remoteForwardingResponse = fwd.requestRemoteForwarding("127.0.0.1", 0,
+//							hostname, port);
+//					
+//					if ( !remoteForwardingResponse ) {
+//						throw new RemoteExecutionException("Failed to establish a remote tunnel to " + 
+//								proxyHost + ":" + proxyPort);
+//					}
+//
+//					/**
+//					 * Start the users session. It also acts as a thread to service
+//					 * incoming channel requests for the port forwarding for both
+//					 * versions. Since we have a single threaded API we have to do
+//					 * this to send a timely response
+//					 */
+//					final SshSession session = forwardedConnection.openSessionChannel();
+//					session.requestPseudoTerminal("vt100", 80, 24, 0, 0);
+//					session.startShell();
+//
+//					/**
+//					 * Start local forwarding after starting the users session.
+//					 */
+//					int randomlyChosenTunnelPort = fwd.startLocalForwardingOnRandomPort("127.0.0.1", 10, hostname, port);
+//					
+//					/**
+//					 * Now that the local proxy tunnel is running, make the call to
+//					 * the target server through the tunnel.
+//					 */
+//					MaverickSSHSubmissionClient proxySubmissionClient = null;
+//					String proxyResponse = null;
+//					try {
+//						proxySubmissionClient = new MaverickSSHSubmissionClient("127.0.0.1", randomlyChosenTunnelPort, username,
+//								password, null, proxyPort, publicKey, privateKey);
+//						proxyResponse = proxySubmissionClient.runCommand(command);
+//						return proxyResponse;
+//					} 
+//					catch (RemoteDataException e) {
+//						throw e;
+//					}
+//					catch (Exception e) {
+//						throw new RemoteExecutionException("Failed to connect to destination server " + hostname + ":" + port, e);
+//					}
+//					finally {
+//						try { proxySubmissionClient.close(); } catch (Exception e) {}
+//					}
 				} 
 				else 
 				{
@@ -346,101 +464,41 @@ public class MaverickSSHSubmissionClient implements RemoteSubmissionClient
 					// so to avoid this we create the first session and dont ever use it
 					session = ssh2.openSessionChannel();
 					session.requestPseudoTerminal("vt100", 80, 24, 0, 0);
-//					session.startShell();
 					
-//					String commandOutput = null;
-//					InputStream in = null;
-//					InputStream err = null;
-//					ByteArrayOutputStream out = null;
-//					try {
-//						in = session.getInputStream();
-//						err = session.getStderrInputStream();
-//						
-////						session.getOutputStream().write(command.getBytes());
-//						
-//						if (session.executeComand(command, "UTF-8")) {
-////							
-////							long start = System.currentTimeMillis();
-////							while (!session.isClosed() && 
-////									session.exitCode() != SshSession.EXITCODE_NOT_RECEIVED && 
-////									(System.currentTimeMillis() - start) < (Settings.MAX_REMOTE_OPERATION_TIME * 1000)) {
-////								
-//////								log.debug("Process has succeeded: " + process.hasSucceeded() + "\n"  
-//////								            + "Process exit code: " + process.getExitCode() + "\n" 
-//////								            + "Process command output: " + process.getCommandOutput());
-////								
-////								Thread.sleep(1000);
-////							}
-//	
-//							out = new ByteArrayOutputStream();
-//							byte[] buf = new byte[1024];
-//							int r;
-//							while((r = in.read(buf)) > -1) {
-//								out.write(buf, 0, r);
-//							}
-//							out.flush();
-//							
-//							if (out.size() > 0) {
-//								commandOutput = new String(out.toByteArray());
-//								StringUtils.trimToNull(commandOutput);
-//							}
-////							else {
-////								while((r = err.read(buf)) > -1) {
-////									out.write(buf, 0, r);
-////								}
-////								out.flush();
-////								
-////								if (out.size() > 0) {
-////									commandOutput = new String(out.toByteArray());
-////									StringUtils.trimToNull(commandOutput);
-////								}
-////							}
-//							
-//							return commandOutput;
-//						}
-//						else {
-//							throw new RemoteExecutionException("Server refuse to execute the cp statement: " + command);
-//						}
-//					}
-//					catch (RemoteExecutionException e) {
-//						throw e;
-//					}
-//					catch (Throwable t) {
-//						throw new RemoteExecutionException("Error invoking command, " + command + ", on remote host " + hostname, t);
-//					}
-//					finally {
-//						try { in.close(); } catch (Throwable e) {}
-//						try { out.close(); } catch (Throwable e) {}
-//						try { session.close(); } catch (Throwable e) {}
-//					}
-					
-					session.startShell();
-					shell = new Shell(ssh2);
-					
-					// fork the command on the remote system.
-					ShellProcess process = shell.executeCommand(command, true, "UTF-8");
-					InputStream in = null;
-					try 
-					{
+					if (session.startShell()) {
+						shell = new Shell(ssh2);
+					}
+					else {
+						throw new RemoteExecutionException("Failed to establish interactive shell session to " 
+								+ hostname + ":" + port);
+					}
+				}
+				
+//				
+			
+				// fork the command on the remote system.
+				ShellProcess process = shell.executeCommand(command, true, "UTF-8");
+				InputStream in = null;
+				try 
+				{
 //						// no idea why, but this fails if we don't wait for 8 seconds
-						long start = System.currentTimeMillis();
-						while (process.isActive() && (System.currentTimeMillis() - start) < (Settings.MAX_REMOTE_OPERATION_TIME * 1000)) {
-							log.debug("Process has succeeded: " + process.hasSucceeded() + "\n"  
-							            + "Process exit code: " + process.getExitCode() + "\n" 
-							            + "Process command output: " + process.getCommandOutput());
-							
-							Thread.sleep(1000);
-						}
+					long start = System.currentTimeMillis();
+					while (process.isActive() && (System.currentTimeMillis() - start) < (Settings.MAX_REMOTE_OPERATION_TIME * 1000)) {
+						log.debug("Process has succeeded: " + process.hasSucceeded() + "\n"  
+						            + "Process exit code: " + process.getExitCode() + "\n" 
+						            + "Process command output: " + process.getCommandOutput());
+						
+						Thread.sleep(1000);
+					}
 
-						shell.exit();
-						return process.getCommandOutput();
-					} catch (Throwable t) {
-						throw new RemoteExecutionException("Failed to read response from " + hostname, t);
-					}
-					finally {
-						try { in.close(); } catch (Throwable e) {}
-						try { shell.exit(); } catch (Throwable e) {}
-					}
+					shell.exit();
+					return process.getCommandOutput();
+				} catch (Throwable t) {
+					throw new RemoteExecutionException("Failed to read response from " + hostname, t);
+				}
+				finally {
+					try { in.close(); } catch (Throwable e) {}
+					try { shell.exit(); } catch (Throwable e) {}
 				}
 			}
 			else

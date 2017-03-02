@@ -5,7 +5,7 @@
 	"type": "EXECUTION",
 	"description": "Sample gsissh execution system.",
 	"site": "tacc.xsede.org",
-	"executionType": "HPC",
+	"executionType": "CLI",
 	"default": false,
 	"queues": [
 		{
@@ -55,12 +55,12 @@
 				"id": "docker.example.com",
 				"name": "Agave Dev myproxy Docker container",
 				"endpoint": "docker.example.com",
-				"port": 7514,
+				"port": 7515,
 				"protocol": "MYPROXY"
 			}
 		}
 	},
-	"scheduler": "SGE",
+	"scheduler": "FORK",
 	"environment": "",
-	"startupScript": "./bashrc"
+	"startupScript": "~/.bashrc"
 }
