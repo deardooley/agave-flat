@@ -224,7 +224,7 @@
 	    <commons-validator.version>1.4.0</commons-validator.version>
 	    <c3p0.version>0.9.1.2</c3p0.version>
 	    <el-api.version>2.2</el-api.version>
-	    <flyway-core.version>4.0</flyway-core.version>
+	    <flyway-core.version>4.1.1</flyway-core.version>
 	    <gsissh.version>0.12.1</gsissh.version>
 	    <gson.version>2.2.4</gson.version>
         <guava.version>17.0</guava.version>
@@ -504,7 +504,6 @@
 	<modules>
 		<module>agave-auth</module>
 		<module>agave-common</module>
-		<module>agave-migrations</module>
 		<module>agave-postits</module>
 		<module>agave-usage</module>
 		<module>agave-tenants</module>
@@ -523,5 +522,6 @@
 		<module>agave-stats</module>
 		<module>agave-uuids</module>
 		<module>agave-apidocs</module>
+		<module>agave-migrations</module>
 	</modules>
 </project>
