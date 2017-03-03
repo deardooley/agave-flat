@@ -12,9 +12,9 @@ import org.iplantc.service.jobs.dao.JobQueueDao;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueConfigMessage;
-import org.iplantc.service.jobs.phases.queuemessages.ResetMaxMessagesMessage;
+import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage;
+import org.iplantc.service.jobs.phases.queuemessages.RefreshQueueInfoMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ResetNumWorkersMessage;
-import org.iplantc.service.jobs.phases.queuemessages.ResetPriorityMessage;
 import org.iplantc.service.jobs.phases.utils.TopicMessageSender;
 import org.json.JSONException;
 import org.json.JSONStringer;
@@ -233,7 +233,7 @@ public class JobQueueResource
             return;
         }
         
-        // Convert input to proper types.
+        // Convert input to proper types; initialize to an invalid value.
         int newPriority = -1;
         int newNumWorkers = -1;
         int newMaxMessages = -1;
@@ -299,11 +299,14 @@ public class JobQueueResource
         // Note that concurrently running updates to the same queue definition
         // can lead to inconsistent behavior since we do not lock the queue
         // record in the database between reading it and writing it.
+        int numWorkersDelta = 0;
         if (hasNewPriority && queue.getPriority() != newPriority) 
             queue.setPriority(newPriority);
           else hasNewPriority = false;
-        if (hasNewNumWorkers && queue.getNumWorkers() != newNumWorkers) 
+        if (hasNewNumWorkers && queue.getNumWorkers() != newNumWorkers) {
+            numWorkersDelta = newNumWorkers - queue.getNumWorkers();
             queue.setNumWorkers(newNumWorkers);
+          }
           else hasNewNumWorkers = false;
         if (hasNewMaxMessages && queue.getMaxMessages() != newMaxMessages) 
             queue.setMaxMessages(newMaxMessages);
@@ -330,9 +333,16 @@ public class JobQueueResource
         
         // -------------------------- Message Sending -----------------------
         // Make a best-effort attempt to post a message to the target phase scheduler.
-        if (hasNewNumWorkers) sendConfigMessage(new ResetNumWorkersMessage(), queue);
-        if (hasNewMaxMessages) sendConfigMessage(new ResetMaxMessagesMessage(), queue);
-        if (hasNewPriority) sendConfigMessage(new ResetPriorityMessage(), queue);
+        // Note that order in which the messages are serviced is indeterminent.  The
+        // worker message will always cause a delta change to the number of executing
+        // threads servicing the queue.  The refresh message will always load the 
+        // latest queue information from the database.  These two effects are 
+        // separate, so order doesn't matter.
+        if (hasNewNumWorkers) {
+            sendResetNumWorkerMessage(new ResetNumWorkersMessage(), queue, numWorkersDelta);
+        }
+        if (hasNewMaxMessages || hasNewPriority) 
+           sendQueueMessage(new RefreshQueueInfoMessage());
     }
     
     /* ---------------------------------------------------------------------- */
@@ -722,7 +732,39 @@ public class JobQueueResource
     }
     
     /* ---------------------------------------------------------------------- */
-    /* sendConfigMessage:                                                     */
+    /* sendResetNumWorkerMessage:                                             */
+    /* ---------------------------------------------------------------------- */
+    /** Populate the uninitialized configuration message with information from the 
+     * queue and then post the message.  This method makes a best-effort attempt
+     * to send the message, but does not throw exceptions or indicate failure (the
+     * database has already been updated).
+     * 
+     * @param message an uninitialized configuration message
+     * @param queue the queue object with its updated values
+     * @param delta the difference between the current number of workers and
+     *              the newly assigned target number of workers
+     */
+    private void sendResetNumWorkerMessage(ResetNumWorkersMessage message, 
+                                           JobQueue queue, 
+                                           int delta) 
+    {
+        // Assign the common superclass fields.
+        message.queueName  = queue.getName();
+        message.tenantId   = queue.getTenantId();
+        message.phase      = queue.getPhase();
+        message.numWorkersDelta = delta;
+        
+        // Send the message and hope it gets there...
+        try {TopicMessageSender.sendConfigMessage(message);}
+        catch (Exception e) {
+            String msg = "Unable to post " + message.getClass().getSimpleName() + 
+                         " message for queue " + queue.getName() + ".";
+            _log.error(msg);
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* sendQueueMessage:                                                      */
     /* ---------------------------------------------------------------------- */
     /** Populate the uninitialized configuration message with information from the 
      * queue and then post the message.  This method makes a best-effort attempt
@@ -732,33 +774,23 @@ public class JobQueueResource
      * @param message an uninitialized configuration message
      * @param queue the queue object with its updated values
      */
-    private void sendConfigMessage(AbstractQueueConfigMessage message, JobQueue queue) 
+    private void sendQueueMessage(AbstractQueueMessage message) 
     {
-        // Assign the common superclass fields.
-        message.queueName = queue.getName();
-        message.tenantId  = queue.getTenantId();
-        message.phase     = queue.getPhase();
-        
         // Assign the subclass fields.
-        if (message instanceof ResetNumWorkersMessage) 
-            ((ResetNumWorkersMessage)message).numWorkers = queue.getNumWorkers();
-        else if (message instanceof ResetNumWorkersMessage)
-            ((ResetMaxMessagesMessage)message).maxMessages = queue.getMaxMessages();
-        else if (message instanceof ResetPriorityMessage)
-            ((ResetPriorityMessage)message).priority = queue.getPriority();
+        if (message instanceof RefreshQueueInfoMessage) {
+            // Send the message and hope it gets there...
+            try {TopicMessageSender.sendRefreshQueueInfoMessage((RefreshQueueInfoMessage) message);}
+            catch (Exception e) {
+                String msg = "Unable to post " + message.getClass().getSimpleName() + 
+                             " message.";
+                _log.error(msg);
+            }
+        }
         else {
             String msg = "Unknown configuration message type encountered: " + 
                          message.getClass().getName() + ".";
             _log.error(msg);
             return;
-        }
-        
-        // Send the message and hope it gets there...
-        try {TopicMessageSender.sendConfigMessage(message);}
-        catch (Exception e) {
-            String msg = "Unable to post " + message.getClass().getSimpleName() + 
-                         " message for queue " + queue.getName() + ".";
-            _log.error(msg);
         }
     }
 }

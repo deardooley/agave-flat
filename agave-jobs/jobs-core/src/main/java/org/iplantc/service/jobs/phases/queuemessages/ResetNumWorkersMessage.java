@@ -24,7 +24,7 @@ public final class ResetNumWorkersMessage
     // This value is a delta that specifies changes to the number of workers
     // servicing the named queue.  Negative numbers decrease workers, positive 
     // numbers increase workers.
-    public int          numWorkers;
+    public int          numWorkersDelta;
     
     // Optional parameter that specifies the unique scheduler instance names
     // to which this message should be applied.  If the list is empty, then
@@ -46,7 +46,7 @@ public final class ResetNumWorkersMessage
               queueName, 
               tenantId, 
               phase);
-        this.numWorkers = numWorkers;
+        this.numWorkersDelta = numWorkers;
     }
 
     /* ********************************************************************** */
@@ -63,8 +63,8 @@ public final class ResetNumWorkersMessage
     public void validate() throws JobException
     {
         super.validate();
-        if (numWorkers == 0) {
-            String msg = "Invalid numWorkers value \"" + numWorkers + " in " + 
+        if (numWorkersDelta == 0) {
+            String msg = "Invalid numWorkers value \"" + numWorkersDelta + " in " + 
                          getClass().getSimpleName() + " object.  Specify a " +
                          "positive or negative integer to add or subtract workers, " +
                          "respectively.";

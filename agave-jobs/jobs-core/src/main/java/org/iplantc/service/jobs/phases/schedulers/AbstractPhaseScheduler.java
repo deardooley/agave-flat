@@ -40,6 +40,7 @@ import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage.JobCom
 import org.iplantc.service.jobs.phases.queuemessages.DeleteJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.PauseJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ProcessJobMessage;
+import org.iplantc.service.jobs.phases.queuemessages.RefreshQueueInfoMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ResetNumWorkersMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ShutdownMessage;
 import org.iplantc.service.jobs.phases.queuemessages.StopJobMessage;
@@ -220,8 +221,9 @@ public abstract class AbstractPhaseScheduler
     
     // This phase's tenant/queue mapping. The keys are tenant ids, the values
     // are the lists of job queues defined for that tenant.  The queues are 
-    // listed in priority order.
-    private final HashMap<String,List<JobQueue>> _tenantQueues = new HashMap<>();
+    // listed in priority order.  See doRefreshQueueInfo() for a discussion on
+    // read and write concurrency is managed on this mapping.
+    private HashMap<String,List<JobQueue>> _tenantQueues;
     
     // The name of this phase's topic queue is fixed on construction.
     private final String _topicQueueName;
@@ -422,11 +424,12 @@ public abstract class AbstractPhaseScheduler
             // Update tenant queues.
             updateTenantQueues();
             
+            // Retrieve the latest queue information from the database for this
+            // phase.  This should be called before starting any threads.
+            _tenantQueues = initQueueCache();
+            
             // Connect to the scheduler topic (incoming).
             initJobTopic();
-            
-            // Connect the database.
-            initQueueCache();
             
             // Start each queue's workers.
             startQueueWorkers();
@@ -933,7 +936,10 @@ public abstract class AbstractPhaseScheduler
     /* updateTenantQueues:                                                    */
     /* ---------------------------------------------------------------------- */
     /** Read the queue configuration resource file and add any new queues to the
-     * database.
+     * database.  Since we synchronize on the CLASS object, only one subclass
+     * executes this method at a time.  The subclass that executes this method
+     * set a static flag that prevents further executions of this method in the 
+     * same JVM/classloader.
      */
     private static synchronized void updateTenantQueues()
     {
@@ -1031,8 +1037,11 @@ public abstract class AbstractPhaseScheduler
      * 
      * @throws JobSchedulerException
      */
-    private void initQueueCache() throws JobSchedulerException
+    private HashMap<String,List<JobQueue>> initQueueCache() throws JobSchedulerException
     {
+        // Create the result map.
+        HashMap<String,List<JobQueue>> tenantQueues = new HashMap<>();
+        
         // Retrieve all queues defined for this tenant for this stage.
         JobQueueDao dao = new JobQueueDao();
         
@@ -1055,17 +1064,19 @@ public abstract class AbstractPhaseScheduler
             
             // Get the tenant list for this queue.
             String tenantId = queue.getTenantId();
-            List<JobQueue> tenantList = _tenantQueues.get(tenantId);
+            List<JobQueue> tenantList = tenantQueues.get(tenantId);
             
             // Create this tenant's list if it doesn't exist yet.
             if (tenantList == null) {
                tenantList = new ArrayList<JobQueue>();
-               _tenantQueues.put(tenantId, tenantList);
+               tenantQueues.put(tenantId, tenantList);
             }
             
             // Add the queue to the end of the tenant list.
             tenantList.add(queue);
         }
+        
+        return tenantQueues;
     }
     
     /* ---------------------------------------------------------------------- */
@@ -1154,14 +1165,8 @@ public abstract class AbstractPhaseScheduler
                               ack = doResetNumWorkers(command, envelope, properties, body);
                               break;
                           // ----- Reset a queue's priority 
-                          case TPC_RESET_PRIORITY:
-                              _log.info("Topic message TPC_RESET_PRIORITY not implemented yet.");
-                              ack = false;
-                              break;
-                          // ----- Reset a queue's maximum message bound 
-                          case TPC_RESET_MAX_MESSAGES:
-                              _log.info("Topic message TPC_RESET_MAX_MESSAGES not implemented yet.");
-                              ack = false;
+                          case TPC_REFRESH_QUEUE_INFO:
+                              ack = doRefreshQueueInfo(command, envelope, properties, body);
                               break;
                           // ----- Test message input case   
                           case NOOP:
@@ -1301,7 +1306,9 @@ public abstract class AbstractPhaseScheduler
         // Is this instance configured to run workers?
         if (!Settings.JOB_WORKER_MODE) return;
         
-        // Iterator through each tenant's queue list.
+        // Iterate through each tenant's queue list.
+        // Note the single atomic access to the queue mapping; see
+        // doRefreshQueueInfo() for a concurrency discussion.
         for (Entry<String, List<JobQueue>> tenant : _tenantQueues.entrySet())
         {
             // Create the tenant thread group as a child group of the phase group.
@@ -2087,6 +2094,8 @@ public abstract class AbstractPhaseScheduler
             properties.put("workPath", job.getWorkPath());
         
         // Evaluate each of this tenant's queues in priority order.
+        // Note the single atomic access to the queue mapping; see
+        // doRefreshQueueInfo() for a concurrency discussion.
         String selectedQueueName = null;
         List<JobQueue> queues = _tenantQueues.get(job.getTenantId());
         for (JobQueue queue : queues) {
@@ -2523,11 +2532,11 @@ public abstract class AbstractPhaseScheduler
             int numThreads = queueThreadGroup.enumerate(threads, false);
 
             // ----- Adding workers
-            if (resetMsg.numWorkers > 0) {
+            if (resetMsg.numWorkersDelta > 0) {
                 
                 // Determine the number of new threads we should start.
-                int numNewThreads = resetMsg.numWorkers;
-                if (numThreads + resetMsg.numWorkers > maxAllowedThreads)
+                int numNewThreads = resetMsg.numWorkersDelta;
+                if (numThreads + resetMsg.numWorkersDelta > maxAllowedThreads)
                     numNewThreads = maxAllowedThreads - numThreads;
 
                 // Start the requested number of threads up to the maximum
@@ -2560,7 +2569,7 @@ public abstract class AbstractPhaseScheduler
             else {
                 
                 // Get the number of threads to remove.
-                int numWorkers = Math.abs(resetMsg.numWorkers);
+                int numWorkers = Math.abs(resetMsg.numWorkersDelta);
                 
                 // Mark worker threads for removal.
                 int removedWorkers = 0;
@@ -2591,6 +2600,80 @@ public abstract class AbstractPhaseScheduler
         return true;
     }
     
+    /* ---------------------------------------------------------------------- */
+    /* doRefreshQueueInfo:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Force all schedulers to refresh their queue caches.  This action allows
+     * any changes to queue definitions in the job_queues table to be loaded into
+     * memory.  For example, if the priority of a queue has changed in the 
+     * database, its new priority will be respected after this method executes.
+     * 
+     * How This Works
+     * --------------
+     * Users can execute code in JobQueueDao to change the persistent information
+     * about queues.  These changes, however, are not reflected in the running
+     * system until this method is executed.  Switching out the old cache for the
+     * new cache depends on the Java Language Specification's requirement that
+     * reference assignments be atomically performed.  That is, when updating a 
+     * reference to an object, all threads see either the old address or the new
+     * address, but never a mixture of the two.  Here's the quote from Java 7's
+     * Java Language Specification, section 17.7:
+     * 
+     *    Writes to and reads of references are always atomic, regardless  
+     *    of whether they are implemented as 32-bit or 64-bit values.
+     * 
+     * Our usage of the _tenantQueues mapping abides by these rules:
+     * 
+     *  1) The field is only written on initialization and in this method.
+     *  2) Once created, the mapping is never modified.  This method update's
+     *     the mapping by replacing the field with a reference to a completely
+     *     new and separate mapping.
+     *  3) All reads of the field are single, independent accesses that do
+     *     not intermix data with other reads of the field.
+     * 
+     * These three access patterns, taken together with Java's atomicity guarantee,
+     * means that the _tenantQueues reference can be overwritten at any time
+     * without synchronization between reader and writer threads.
+     * 
+     * @return true to acknowledge the message, false to reject it
+     */
+    protected boolean doRefreshQueueInfo(JobCommand jobCommand, 
+                                         Envelope envelope, 
+                                         BasicProperties properties,
+                                         byte[] body)
+    {
+        // Tracing.
+        if (_log.isDebugEnabled()) {
+            String msg = getSchedulerName() + " received a " + jobCommand + " message using routing key "
+                    + envelope.getRoutingKey() + " on exchange " + envelope.getExchange() + ".";
+            _log.debug(msg);
+        }
+
+        // Decode the message.
+        RefreshQueueInfoMessage refreshMsg = null;
+        try {
+            refreshMsg = RefreshQueueInfoMessage.fromJson(new String(body));
+        } catch (IOException e) {
+            // Log error message.
+            String msg = _phaseType.name() + " topic reader cannot decode data from queue " + 
+                         _topicQueueName + ": " + e.getMessage();
+            _log.error(msg, e);
+            return false;
+        }
+        
+        // Update the cached queue information by atomically replacing the reference to the cache.
+        try {_tenantQueues = initQueueCache();}
+            catch (JobSchedulerException e) {
+                String msg = _phaseType.name() + " is unable to refresh cached queue information: " +
+                             e.getMessage();
+                _log.error(msg, e);
+                return false;
+            }
+
+        // Success.
+        return true;
+    }
+
     /* ---------------------------------------------------------------------- */
     /* doNoop:                                                                */
     /* ---------------------------------------------------------------------- */

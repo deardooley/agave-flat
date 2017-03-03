@@ -8,18 +8,18 @@ import org.testng.annotations.Test;
  * 
  * @author rcardone
  */
-public class ShutdownMsgTest {
+public class RefreshQueueInfoMsgTest {
     /* ********************************************************************** */
     /*                              Test Methods                              */
     /* ********************************************************************** */    
     /* ---------------------------------------------------------------------- */
-    /* shutdownAllPhases:                                                     */
+    /* refresh:                                                               */
     /* ---------------------------------------------------------------------- */
     @Test(enabled=true)
-    public void shutdownAllPhases() throws JobException
+    public void refresh() throws JobException
     {   
-        // This message targets all phases since we don't specifically name any.
-        ShutdownMessage shutdownMsg = new ShutdownMessage();
-        TopicMessageSender.sendShutdownMessage(shutdownMsg);
+        // This message adds new workers.
+        RefreshQueueInfoMessage refreshMsg = new RefreshQueueInfoMessage();
+        TopicMessageSender.sendRefreshQueueInfoMessage(refreshMsg);
     }
 }

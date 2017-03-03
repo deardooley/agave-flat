@@ -126,13 +126,13 @@ public class QueueMessagesTest {
             // Generate the json.
             ResetNumWorkersMessage m = new ResetNumWorkersMessage();
             m.queueName = "myQueue";
-            m.numWorkers = 22;
+            m.numWorkersDelta = 22;
             m.tenantId = "squatter";
             m.phase = JobPhaseType.ARCHIVING;
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TPC_RESET_NUM_WORKERS\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"ARCHIVING\",\"numWorkers\":22,\"schedulers\":[]}", 
+                    json, "{\"command\":\"TPC_RESET_NUM_WORKERS\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"ARCHIVING\",\"numWorkersDelta\":22,\"schedulers\":[]}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
@@ -147,14 +147,14 @@ public class QueueMessagesTest {
             // Generate the json.
             ResetNumWorkersMessage m = new ResetNumWorkersMessage();
             m.queueName = "myQueue";
-            m.numWorkers = 33;
+            m.numWorkersDelta = 33;
             m.tenantId = "squatter";
             m.phase = JobPhaseType.STAGING;
             m.schedulers.add("myScheduler");
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TPC_RESET_NUM_WORKERS\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"STAGING\",\"numWorkers\":33,\"schedulers\":[\"myScheduler\"]}", 
+                    json, "{\"command\":\"TPC_RESET_NUM_WORKERS\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"STAGING\",\"numWorkersDelta\":33,\"schedulers\":[\"myScheduler\"]}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
@@ -164,43 +164,18 @@ public class QueueMessagesTest {
                                 "Regenerated message object does not match the original object.");
         }
         
-        // ------------------------ ResetPriority ------------------
+        // ------------------------ RefreshQueueInfo ---------------
         {
             // Generate the json.
-            ResetPriorityMessage m = new ResetPriorityMessage();
-            m.queueName = "myQueue";
-            m.priority = 339;
-            m.tenantId = "squatter";
-            m.phase = JobPhaseType.ARCHIVING;
+            RefreshQueueInfoMessage m = new RefreshQueueInfoMessage();
             String json = m.toJson();
             System.out.println(json);
             Assert.assertEquals(
-                    json, "{\"command\":\"TPC_RESET_PRIORITY\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"ARCHIVING\",\"priority\":339}", 
+                    json, "{\"command\":\"TPC_REFRESH_QUEUE_INFO\"}", 
                     "Unexpected JSON generated");
       
             // Regenerate the message object.
-            ResetPriorityMessage m2 = ResetPriorityMessage.fromJson(json);
-            Assert.assertEquals(AgaveStringUtils.toComparableString(m2),  
-                                AgaveStringUtils.toComparableString(m),
-                                "Regenerated message object does not match the original object.");
-        }
-        
-        // ------------------------ ResetMaxMessages ------------------
-        {
-            // Generate the json.
-            ResetMaxMessagesMessage m = new ResetMaxMessagesMessage();
-            m.queueName = "myQueue";
-            m.maxMessages = 45;
-            m.tenantId = "squatter";
-            m.phase = JobPhaseType.ARCHIVING;
-            String json = m.toJson();
-            System.out.println(json);
-            Assert.assertEquals(
-                    json, "{\"command\":\"TPC_RESET_MAX_MESSAGES\",\"queueName\":\"myQueue\",\"tenantId\":\"squatter\",\"phase\":\"ARCHIVING\",\"maxMessages\":45}", 
-                    "Unexpected JSON generated");
-      
-            // Regenerate the message object.
-            ResetMaxMessagesMessage m2 = ResetMaxMessagesMessage.fromJson(json);
+            RefreshQueueInfoMessage m2 = RefreshQueueInfoMessage.fromJson(json);
             Assert.assertEquals(AgaveStringUtils.toComparableString(m2),  
                                 AgaveStringUtils.toComparableString(m),
                                 "Regenerated message object does not match the original object.");

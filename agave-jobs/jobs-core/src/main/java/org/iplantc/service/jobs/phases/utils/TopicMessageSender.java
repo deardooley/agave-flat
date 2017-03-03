@@ -11,6 +11,7 @@ import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueConfigMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueJobMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage;
+import org.iplantc.service.jobs.phases.queuemessages.RefreshQueueInfoMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ResetNumWorkersMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ShutdownMessage;
 
@@ -282,7 +283,7 @@ public class TopicMessageSender
      * the specified queue.  Each scheduler inspects the phases list to determine 
      * if the message implicitly or explicitly applies to them.    
      * 
-     * @param message a shutdown message
+     * @param message a reset number of workers message
      * @throws JobException on error
      */
     public static void sendResetNumWorkersMessage(ResetNumWorkersMessage message) 
@@ -291,7 +292,7 @@ public class TopicMessageSender
         // Validate that the message is complete.
         if (message == null)
         {
-            String msg = "Null message received by sendShutdownMessage().";
+            String msg = "Null message received by sendResetNumWorkersMessage().";
             _log.error(msg);
             throw new JobException(msg);
         }
@@ -324,6 +325,64 @@ public class TopicMessageSender
                 _log.error(msg);
                 throw new JobException(msg);
             }
+            
+            // Send the message to all topic threads targeted by the shutdown command. 
+            try {
+                // TODO: Publisher confirm?
+                topicChannel.basicPublish(QueueConstants.TOPIC_EXCHANGE_NAME, 
+                                          routingKey, 
+                                          QueueConstants.PERSISTENT_JSON, 
+                                          json.getBytes());
+            } 
+            catch (Exception e) {
+                String msg = "Unable to publish ResetNumWorkers message to topic " +
+                             QueueConstants.TOPIC_QUEUE_PREFIX + "with routing key " + 
+                             routingKey + ": " + json;
+                _log.error(msg, e);
+                throw new JobException(msg, e);
+            }
+        }
+        finally {
+            // Always close the topic channel.
+            try {topicChannel.close();}
+            catch (Exception e) {
+                String msg = "Error closing topic channel";
+                _log.error(msg, e);
+            }
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* sendRefreshQueueInfoMessage:                                           */
+    /* ---------------------------------------------------------------------- */
+    /** Put a RefreshQueueInfos message on all scheduler queues.      
+     * 
+     * @param message a refresh queue info message
+     * @throws JobException on error
+     */
+    public static void sendRefreshQueueInfoMessage(RefreshQueueInfoMessage message) 
+      throws JobException
+    {
+        // Validate that the message is complete.
+        if (message == null)
+        {
+            String msg = "Null message received by sendRefreshQueueInfoMessage().";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Get a new communication channel for each call.
+        Channel topicChannel = getNewOutChannel();
+        
+        try {
+            // Create the durable, non-autodelete topic exchange and topic queue.
+            initQueue(topicChannel);
+        
+            // Serialize message.
+            String json = messageToJson(message);
+            
+            // All schedulers update their information at once.
+            String routingKey = QueueConstants.TOPIC_ALL_ROUTING_KEY;
             
             // Send the message to all topic threads targeted by the shutdown command. 
             try {
