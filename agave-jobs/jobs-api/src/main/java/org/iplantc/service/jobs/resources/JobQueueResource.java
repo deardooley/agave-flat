@@ -182,6 +182,17 @@ public class JobQueueResource
      * The above operations require URLs of the form jobs/admin/queue/{queuename}.
      * The queuename placeholder can be a queue name or the uuid of a queue.
      * 
+     * These calls update the job_queues table and also trigger an immediate
+     * refresh of the runtime environment.  When assigning a new number of workers
+     * to a queue, the workers started or marked for termination is the difference
+     * between the queue's current worker value in the database and the target
+     * worker value expressed in the query parameter.  Thus, the current number of 
+     * executing workers is not taken into account, though server initialization
+     * parameters such as the maximum worker per queue are respected.
+     * 
+     * The queue maximum messages and priority assignments cause a refresh of 
+     * all queue data in all schedulers after being saved in the job_queues table.
+     * 
      * @param entity the request payload, currently unused
      * @throws ResourceException 
      */

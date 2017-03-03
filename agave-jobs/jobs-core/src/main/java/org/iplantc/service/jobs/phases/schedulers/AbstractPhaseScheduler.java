@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -222,8 +223,8 @@ public abstract class AbstractPhaseScheduler
     // This phase's tenant/queue mapping. The keys are tenant ids, the values
     // are the lists of job queues defined for that tenant.  The queues are 
     // listed in priority order.  See doRefreshQueueInfo() for a discussion on
-    // read and write concurrency is managed on this mapping.
-    private HashMap<String,List<JobQueue>> _tenantQueues;
+    // how read and write concurrency is managed on this mapping.
+    private Map<String,List<JobQueue>> _tenantQueues;
     
     // The name of this phase's topic queue is fixed on construction.
     private final String _topicQueueName;
@@ -1033,13 +1034,17 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* initQueueCache:                                                        */
     /* ---------------------------------------------------------------------- */
-    /** Initialize the mapping of tenants to their prioritized queues.
+    /** Initialize the mapping of tenants to their prioritized queues.  The 
+     * returned map is unmodifiable.  The only way to update the map is to 
+     * replace it with another call to this method.  See doRefreshQueueInfo()
+     * for details.
      * 
+     * @return an unmodifiable map of tenantId to queue list for this phase.
      * @throws JobSchedulerException
      */
-    private HashMap<String,List<JobQueue>> initQueueCache() throws JobSchedulerException
+    private Map<String,List<JobQueue>> initQueueCache() throws JobSchedulerException
     {
-        // Create the result map.
+        // Create the result map of tenantId to queue list in priority order.
         HashMap<String,List<JobQueue>> tenantQueues = new HashMap<>();
         
         // Retrieve all queues defined for this tenant for this stage.
@@ -1076,7 +1081,7 @@ public abstract class AbstractPhaseScheduler
             tenantList.add(queue);
         }
         
-        return tenantQueues;
+        return Collections.unmodifiableMap(tenantQueues);
     }
     
     /* ---------------------------------------------------------------------- */
@@ -2611,13 +2616,16 @@ public abstract class AbstractPhaseScheduler
      * How This Works
      * --------------
      * Users can execute code in JobQueueDao to change the persistent information
-     * about queues.  These changes, however, are not reflected in the running
-     * system until this method is executed.  Switching out the old cache for the
-     * new cache depends on the Java Language Specification's requirement that
-     * reference assignments be atomically performed.  That is, when updating a 
-     * reference to an object, all threads see either the old address or the new
-     * address, but never a mixture of the two.  Here's the quote from Java 7's
-     * Java Language Specification, section 17.7:
+     * about queues, such as the priority of a queue.  These changes, however, 
+     * are not reflected in the running system until this method is executed and
+     * the cached _tenantQueues map is replaced.   
+     * 
+     * Being able to switch out the old _tenantQueues map for a new one in a 
+     * multithreaded environment depends on guarantees implemented in the JVM.  
+     * Specifically, the Java Language Specification requires that reference assignments 
+     * be atomically performed.  That is, when updating a reference to an object, all 
+     * threads see either the old address or the new address, but never a mixture of 
+     * the two.  Here's the quote from Java 7's Java Language Specification, section 17.7:
      * 
      *    Writes to and reads of references are always atomic, regardless  
      *    of whether they are implemented as 32-bit or 64-bit values.
@@ -2625,9 +2633,8 @@ public abstract class AbstractPhaseScheduler
      * Our usage of the _tenantQueues mapping abides by these rules:
      * 
      *  1) The field is only written on initialization and in this method.
-     *  2) Once created, the mapping is never modified.  This method update's
-     *     the mapping by replacing the field with a reference to a completely
-     *     new and separate mapping.
+     *  2) Once created, the mapping is never modified.  This method updates
+     *     the mapping by overwriting the field with a completely new reference.
      *  3) All reads of the field are single, independent accesses that do
      *     not intermix data with other reads of the field.
      * 
