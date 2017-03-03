@@ -33,6 +33,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -420,9 +421,9 @@ public class HTTP implements RemoteDataClient {
 			
 			while (( length = in.read(b)) != -1) {
 				bytesSoFar += length;
-				out.write(b);
+				out.write(b,0,length);
 				callbackCount++;
-				if (listener != null && callbackCount == 4)
+				if (listener != null && callbackCount == 32)
 				{
 					callbackCount = 0;
 					listener.progressed(bytesSoFar);
@@ -982,9 +983,9 @@ public class HTTP implements RemoteDataClient {
 		{
 			URI escapedUri = getUriForPath(remotepath);
 			
-			HttpOptions httpOptions = new HttpOptions(escapedUri);
+			HttpHead httpHead = new HttpHead(escapedUri);
 		    
-			CloseableHttpResponse response = doRequest(escapedUri, httpOptions);
+			CloseableHttpResponse response = doRequest(escapedUri, httpHead);
 			
 			StatusLine statusLine = response.getStatusLine();
 	    	if (statusLine.getStatusCode() >= 200 && statusLine.getStatusCode() < 300) 

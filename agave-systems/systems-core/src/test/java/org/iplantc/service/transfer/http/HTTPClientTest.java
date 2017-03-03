@@ -2,6 +2,7 @@ package org.iplantc.service.transfer.http;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,10 +10,12 @@ import java.io.InputStream;
 import java.net.URI;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.codehaus.plexus.util.FileUtils;
 import org.iplantc.service.transfer.BaseTransferTestCase;
 import org.iplantc.service.transfer.RemoteDataClientFactory;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
+import org.iplantc.service.transfer.sftp.MaverickSFTP;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -45,8 +48,8 @@ public class HTTPClientTest extends BaseTransferTestCase
     protected void beforeClass() throws Exception 
     {
     	super.beforeClass();
-    	httpUri = new URI("http://agaveapi.co/wp-content/themes/agave/images/favicon.ico");
-    	httpsUri = new URI("https://avatars0.githubusercontent.com/u/785202");
+    	httpUri = new URI("http://httpbin.org/stream-bytes/32768");
+    	httpsUri = new URI("https://httpbin.agaveapi.co/stream-bytes/32768");
     	httpPortUri = new URI("http://docker.example.com:10080/public/test_upload.bin");
     	httpsPortUri = new URI("https://docker.example.com:10443/public/test_upload.bin");
     	httpsQueryUri = new URI("https://docker.example.com:10443/public/test_upload.bin?t=now");
@@ -205,6 +208,7 @@ public class HTTPClientTest extends BaseTransferTestCase
     	try 
     	{
     		File downloadDir = FileUtils.getFile(LOCAL_DOWNLOAD_DIR);
+    		
     		Assert.assertTrue(downloadDir.mkdirs(), "Failed to create download directory");
     		
     		// copy the file so it's present to be overwritten without endangering our test data
@@ -220,6 +224,12 @@ public class HTTPClientTest extends BaseTransferTestCase
     		
     		Assert.assertNotEquals(downloadFile.length(), originalSize, 
     				"Local file should be a different size than it was before.");
+    		
+    		Assert.assertEquals(downloadFile.length(), client.length(httpPortUri.getPath()), 
+    				"Downloaded size is not the same as the original length.");
+    		
+    		
+    		
     	} 
     	catch (Exception e) {
         	Assert.fail("Overwriting local file on get should not throw unexpected exception", e);
@@ -244,4 +254,61 @@ public class HTTPClientTest extends BaseTransferTestCase
     		Assert.fail("Getting remote folder to a local directory that does not exist should throw FileNotFoundException.", e);
     	}
 	}
+    
+    @Test(dependsOnMethods = { "getThrowsExceptionWhenDownloadingFileToNonExistentLocalPath" })
+	public void getDownloadedContentMatchesOriginalContent() 
+	{
+    	MaverickSFTP sftp = null;
+    	InputStream originalIn = null, downloadIn = null;
+    	String remotePath = "/var/www/html/public/uploadedFile.bin";
+    	File downloadDir = FileUtils.getFile(LOCAL_DOWNLOAD_DIR);
+		
+    	try 
+    	{
+    		URI knownFileContentDownload = new URI("http://docker.example.com:10080/public/uploadedFile.bin");
+    		
+    		Assert.assertTrue(downloadDir.mkdirs(), "Failed to create download directory");
+    		
+    		File downloadFile = new File(downloadDir, FilenameUtils.getName(LOCAL_BINARY_FILE));
+    		File originalFile = new File(LOCAL_BINARY_FILE);
+    		
+    		sftp = new MaverickSFTP("docker.example.com", 10077, 
+        			"testuser", "testuser","/","/");
+    		
+    		sftp.authenticate();
+    		sftp.put(LOCAL_BINARY_FILE, remotePath);
+    		
+    		Assert.assertEquals(originalFile.length(), sftp.length(remotePath), 
+    				"Local file size is not the same as the uploaded file length.");
+    		
+    		
+    		client = new RemoteDataClientFactory().getInstance(SYSTEM_USER, null, knownFileContentDownload);
+    		
+    		client.get(knownFileContentDownload.getPath(), downloadFile.getAbsolutePath());
+    		
+    		Assert.assertEquals(downloadFile.length(), client.length(knownFileContentDownload.getPath()), 
+    				"Local file size is not the same as the http client reported length.");
+    		
+    		Assert.assertEquals(originalFile.length(), downloadFile.length(), 
+    				"Local file size is not the same as the original file length.");
+    		
+    		originalIn = new FileInputStream(originalFile);
+    		downloadIn = new FileInputStream(downloadFile);
+    		
+    		Assert.assertTrue(IOUtils.contentEquals(originalIn, downloadIn), 
+    				"File contents were not the same after download as before.");
+    		
+    	} 
+    	catch (Exception e) {
+    		Assert.fail("Fetching known file should not throw exception.", e);
+    	}
+    	finally {
+    		try { downloadIn.close(); } catch (Exception e) {}
+    		try { originalIn.close(); } catch (Exception e) {}
+    		try { sftp.delete(remotePath); } catch (Exception e) {}
+    		try { sftp.disconnect(); } catch (Exception e) {}
+    	}
+	}
+    
+    
 }
