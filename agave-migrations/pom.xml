@@ -11,7 +11,7 @@
 
 	<groupId>org.iplantc.agave</groupId>
 	<artifactId>agave-migrations</artifactId>
-	<name>iPlant Agave API Database Migrations</name>
+	<name>Agave Platform Science API Database Migrations</name>
 	<description>Migration definitions and controls for the Agave Platform</description>
 	<packaging>jar</packaging>
 
@@ -21,6 +21,10 @@
 				<filtering>true</filtering>
 				<directory>src/main/resources</directory>
 			</resource>
+			<resource>
+				<filtering>true</filtering>
+				<directory>src/main/docker</directory>
+			</resource>
 		</resources>
 		<testResources>
 			<testResource>
@@ -29,6 +33,25 @@
 			</testResource>
 		</testResources>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<!-- <outputDirectory>${project.build.directory}/lib</outputDirectory> -->
+							<overWriteReleases>false</overWriteReleases>
+							<overWriteSnapshots>false</overWriteSnapshots>
+							<overWriteIfNewer>true</overWriteIfNewer>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<!-- Migration script runs during test setup phase. The result will be 
 				a contain -->
 			<plugin>
@@ -49,16 +72,6 @@
 					</locations>
 					<skip>${skip.migrations}</skip>
 				</configuration>
-				<!-- <executions>
-					<execution>
-						<id>sandbox-data-volume</id>
-						<phase>process-test-sources</phase>
-						<goals>
-							<goal>clean</goal>
-							<goal>migrate</goal>
-						</goals>
-					</execution>
-				</executions> -->
 			</plugin>
 			<!-- <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -81,7 +94,7 @@
 					<!-- Standard build will build an image without the prefix so we don't 
 						force conventions on folks. -->
 					<imageName>${project.artifactId}</imageName>
-					<dockerDirectory>${basedir}/src/main/docker</dockerDirectory>
+					<dockerDirectory>${basedir}/target/docker</dockerDirectory>
 					<serverId>${docker.registry.id}</serverId>
 					<registryUrl>${docker.registry.url}</registryUrl>
 				</configuration>
@@ -104,30 +117,41 @@
 							<forceTags>true</forceTags>
 							<resources>
 								<resource>
-									<targetPath>/source/</targetPath>
-									<directory>${basedir}/../</directory>
-									<include>pom.xml</include>
+									<targetPath>/</targetPath>
+									<directory>${basedir}/target/classes</directory>
+									<include>Dockerfile</include>
 								</resource>
-								<!-- <resource>
-									<targetPath>/source/.m2/repository/org/iplantc/agave/${project.version}/</targetPath>
-									<directory>${settings.localRepository}/org/iplantc/agave/${project.version}</directory>
+								<resource>
+									<targetPath>/conf</targetPath>
+									<directory>${basedir}/target/classes</directory>
+									<include>flyway.conf</include>
+								</resource>
+								<resource>
+									<targetPath>/</targetPath>
+									<directory>${basedir}/target/classes</directory>
+									<include>docker-entrypoint.sh</include>
+								</resource>
+								<resource>
+									<targetPath>/lib</targetPath>
+									<directory>${basedir}/target/</directory>
+									<include>${project.artifactId}-${project.version}.jar</include>
+								</resource>
+								<resource>
+									<targetPath>/lib</targetPath>
+									<directory>${basedir}/target/dependency</directory>
 									<include>**</include>
+									<exclude>mysql*.jar</exclude>
+									<exclude>flyway*.jar</exclude>
 								</resource>
 								<resource>
-									<targetPath>/source/.m2/repository/org/iplantc/agave/</targetPath>
-									<directory>${settings.localRepository}/org/iplantc/agave</directory>
-									<include>**/${project.version}/**</include>
-								</resource> -->
-								<resource>
-									<targetPath>/source/config/maven</targetPath>
-									<directory>${basedir}/../config/maven</directory>
-									<include>settings-SAMPLE.xml</include>
+									<targetPath>/drivers</targetPath>
+									<directory>${basedir}/target/dependency</directory>
+									<include>mysql*.jar</include>
 								</resource>
 								<resource>
-									<targetPath>/source/agave-migrations/</targetPath>
-									<directory>${basedir}</directory>
-									<include>**</include>
-									<exclude>target/docker/**</exclude>
+									<targetPath>/sql</targetPath>
+									<directory>${basedir}/target/classes/db/migration</directory>
+									<include>*.sql</include>
 								</resource>
 							</resources>
 						</configuration>
@@ -279,11 +303,11 @@
 		</dependency>
 		
 		<!-- Java custom migration depedencies -->
-		<dependency>
+		<!-- <dependency>
 			<groupId>com.github.stephenc.eaio-uuid</groupId>
 			<artifactId>uuid</artifactId>
 			<version>${uuid.version}</version>
-		</dependency>
+		</dependency> -->
 		
 		<!-- logging depedencies -->
 		<dependency>
