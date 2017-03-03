@@ -9,8 +9,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.apache.log4j.Logger;
-import org.iplantc.service.common.uuid.AgaveUUID;
-import org.iplantc.service.common.uuid.UUIDType;
+import org.iplantc.service.common.uuid2.AgaveUUID;
+import org.iplantc.service.common.uuid2.UUIDType;
 
 import java.sql.Statement;
 
