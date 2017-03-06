@@ -38,6 +38,16 @@ public final class JobWorkerDao
         public String toString(){return label;}
     };
     
+    // Used to consolidate code that only varies by non-unique lookup key.
+    private enum NonUniqueSelector {
+        SCHEDULER_NAME("scheduler_name"), HOST("host"), CONTAINER_ID("container_id"), ALL("all");
+        
+        private String label;
+        private NonUniqueSelector(String s){label = s;}
+        @Override
+        public String toString(){return label;}
+    };
+    
     /* ********************************************************************** */
     /*                             Public Methods                             */
     /* ********************************************************************** */
@@ -54,8 +64,8 @@ public final class JobWorkerDao
     public static void claimJob(JobClaim claim)
      throws JobException, JobWorkerException
     {
-        claimJob(claim.getJobUuid(), claim.getWorkerUuid(), claim.getHost(),
-                 claim.getContainerId());
+        claimJob(claim.getJobUuid(), claim.getWorkerUuid(), claim.getSchedulerName(),
+                 claim.getHost(), claim.getContainerId());
     }
     
     /* ---------------------------------------------------------------------- */
@@ -78,7 +88,7 @@ public final class JobWorkerDao
      * @throws JobException any error other than constraint violations
      * @throws JobWorkerException an SQL constraint violation on job or worker uuid
      */
-    public static void claimJob(String jobUuid, String workerUuid, 
+    public static void claimJob(String jobUuid, String workerUuid, String schedulerName,
                                 String host, String containerId)
      throws JobException, JobWorkerException
     {
@@ -91,6 +101,11 @@ public final class JobWorkerDao
         }
         if (StringUtils.isBlank(workerUuid)) {
             String msg = "Null or empty worker UUID received.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        if (StringUtils.isBlank(schedulerName)) {
+            String msg = "Null or empty worker schedulerName received.";
             _log.error(msg);
             throw new JobException(msg);
         }
@@ -115,14 +130,15 @@ public final class JobWorkerDao
 
             // Create the insert command.
             String sql = "insert into job_workers " +
-                         "(job_uuid, worker_uuid, host, container_id) " +
+                         "(job_uuid, worker_uuid, scheduler_name, host, container_id) " +
                          "values " +
-                         "(:job_uuid, :worker_uuid, :host, :container_id) ";
+                         "(:job_uuid, :worker_uuid, :scheduler_name, :host, :container_id) ";
             
             // Fill in the placeholders.           
             Query qry = session.createSQLQuery(sql);
             qry.setString("job_uuid", jobUuid);
             qry.setString("worker_uuid", workerUuid);
+            qry.setString("scheduler_name", schedulerName);
             qry.setString("host", host);
             qry.setString("container_id", containerId);
             qry.setCacheable(false);
@@ -181,6 +197,51 @@ public final class JobWorkerDao
     }
     
     /* ---------------------------------------------------------------------- */
+    /* unclaimJobsForScheduler:                                               */
+    /* ---------------------------------------------------------------------- */
+    /** Remove the job claims for the specified scheduler.  
+     * 
+     * @param schedulerName the name of the scheduler whose claims will be removed
+     * @return the number of claims removed
+     * @throws JobException on error
+     */
+    public static int unclaimJobsForScheduler(String schedulerName)
+     throws JobException
+    {
+        return unclaimJobs(NonUniqueSelector.SCHEDULER_NAME, schedulerName);    
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* unclaimJobsForHost:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Remove the job claims for the specified host.  
+     * 
+     * @param host the host whose claims will be removed
+     * @return the number of claims removed
+     * @throws JobException on error
+     */
+    public static int unclaimJobsForHost(String host)
+     throws JobException
+    {
+        return unclaimJobs(NonUniqueSelector.HOST, host);    
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* unclaimJobsForContainer:                                               */
+    /* ---------------------------------------------------------------------- */
+    /** Remove the job claims for the specified container.  
+     * 
+     * @param containerId the id of the container whose claims will be removed
+     * @return the number of claims removed
+     * @throws JobException on error
+     */
+    public static int unclaimJobsForContainer(String containerId)
+     throws JobException
+    {
+        return unclaimJobs(NonUniqueSelector.CONTAINER_ID, containerId);    
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* getJobClaimByJobUuid:                                                  */
     /* ---------------------------------------------------------------------- */
     /** Retrieve a job claim if it exists.
@@ -222,46 +283,54 @@ public final class JobWorkerDao
     public static List<JobClaim> getJobClaims() 
      throws JobException
     {
-        // Initialize result list to fixed number of schedulers.
-        List<JobClaim> list = null;
-        
-        // Dump the complete table..
-        try {
-            // Get a hibernate session.
-            Session session = HibernateUtil.getSession();
-            session.clear();
-            HibernateUtil.beginTransaction();
-
-            // Dump all rows in the table.
-            String sql = "select job_uuid, worker_uuid, host, container_id from job_workers";
-            
-            // Issue the call and populate the lease object.
-            Query qry = session.createSQLQuery(sql);
-            qry.setCacheable(false);
-            qry.setCacheMode(CacheMode.IGNORE);
-            @SuppressWarnings("rawtypes")
-            List qryResuts = qry.list();
-            
-            // Commit the transaction.
-            HibernateUtil.commitTransaction();
-            
-            // Populate the list.
-            list = populateList(qryResuts);
-        }
-        catch (Exception e)
-        {
-            // Rollback transaction.
-            try {HibernateUtil.rollbackTransaction();}
-             catch (Exception e1){_log.error("Rollback failed.", e1);}
-            
-            String msg = "Unable to retrieve leases.";
-            _log.error(msg, e);
-            throw new JobException(msg, e);
-        }
-        
-        return list;
+        return getJobClaims(NonUniqueSelector.ALL, "all");
     }
-    
+        
+    /* ---------------------------------------------------------------------- */
+    /* getJobClaimsForScheduler:                                              */
+    /* ---------------------------------------------------------------------- */
+    /** Get all job claims for specific scheduler.
+     *  
+     * @param schedulerName the name of the scheduler of interest
+     * @return the list of all job claims, which might be empty
+     * @throws JobException on error
+     */
+    public static List<JobClaim> getJobClaimsForScheduler(String schedulerName) 
+     throws JobException
+    {
+        return getJobClaims(NonUniqueSelector.SCHEDULER_NAME, schedulerName);
+    }
+        
+    /* ---------------------------------------------------------------------- */
+    /* getJobClaimsForHost:                                                   */
+    /* ---------------------------------------------------------------------- */
+    /** Get all job claims for specific host.
+     *  
+     * @param host the name of the host of interest
+     * @return the list of all job claims, which might be empty
+     * @throws JobException on error
+     */
+    public static List<JobClaim> getJobClaimsForHost(String host) 
+     throws JobException
+    {
+        return getJobClaims(NonUniqueSelector.HOST, host);
+    }
+        
+    /* ---------------------------------------------------------------------- */
+    /* getJobClaimsForContainer:                                              */
+    /* ---------------------------------------------------------------------- */
+    /** Get all job claims for a specific containerr.
+     *  
+     * @param container the id of the container of interest
+     * @return the list of all job claims, which might be empty
+     * @throws JobException on error
+     */
+    public static List<JobClaim> getJobClaimsForContainer(String containerId) 
+     throws JobException
+    {
+        return getJobClaims(NonUniqueSelector.CONTAINER_ID, containerId);
+    }
+        
     /* ---------------------------------------------------------------------- */
     /* clearClaims:                                                           */
     /* ---------------------------------------------------------------------- */
@@ -312,7 +381,7 @@ public final class JobWorkerDao
     /* lockJobClaim:                                                          */
     /* ---------------------------------------------------------------------- */
     /** This method should only be called during rollback processing where locks
-     * have already been acquire on a job record in the jobs table and we need
+     * have already been acquired on a job record in the jobs table and we need
      * to lock the job's record in the job_workers table.  
      * 
      * The caller is expected to have already begun a transaction on the session
@@ -347,7 +416,7 @@ public final class JobWorkerDao
             // Issue the SELECT FOR UPDATE call.
             // NOTE: Any changes to the job_workers table requires maintenance
             //       here and in the populate routine below.
-            String sql = "select job_uuid, worker_uuid, host, container_id " +
+            String sql = "select job_uuid, worker_uuid, scheduler_name, host, container_id " +
                          "from job_workers " +
                          "where job_uuid = :jobUuid FOR UPDATE";
             
@@ -393,7 +462,7 @@ public final class JobWorkerDao
         // ------------------------- Check Input -------------------------
         // No parameters can be null or empty.
         if (StringUtils.isBlank(selectorValue)) {
-            String msg = "Null or empty UUID received.";
+            String msg = "Null or empty value received.";
             _log.error(msg);
             throw new JobException(msg);
         }
@@ -439,6 +508,69 @@ public final class JobWorkerDao
     }
     
     /* ---------------------------------------------------------------------- */
+    /* unclaimJobs:                                                           */
+    /* ---------------------------------------------------------------------- */
+    /** Remove the claim for the selected jobs.  
+     * 
+     * @param selector the search criterion
+     * @param selectorValue the value of the search criterion
+     * @return the number of claims removed (0 or 1)
+     * @throws JobException on error
+     */
+    private static int unclaimJobs(NonUniqueSelector selector, String selectorValue)
+     throws JobException
+    {
+        // ------------------------- Check Input -------------------------
+        // Not currently used, but included for completeness.
+        if (selector == NonUniqueSelector.ALL) return clearClaims();
+        
+        // No parameters can be null or empty.
+        if (StringUtils.isBlank(selectorValue)) {
+            String msg = "Null or empty value received.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // ------------------------- Call SQL ----------------------------
+        // Remove the job claim.
+        int rows = 0;
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Create the insert command.
+            String sql = "delete from job_workers " +
+                         "where " + selector.toString() + " = :selectorValue";
+            
+            // Fill in the placeholders.           
+            Query qry = session.createSQLQuery(sql);
+            qry.setString("selectorValue", selectorValue);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            
+            // Issue the call.
+            rows = qry.executeUpdate();
+            
+            // Commit the transaction.
+            HibernateUtil.commitTransaction();
+        }
+        catch (Exception e) {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to unclaim jobs using " + selector.name() + 
+                         " value " + selectorValue + ".";
+            _log.error(msg, e);
+            throw new JobException(msg, e);
+        }
+        
+        return rows;
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* getJobClaim:                                                           */
     /* ---------------------------------------------------------------------- */
     /** Retrieve the claim for the specified job or worker if one exists.  The
@@ -455,7 +587,7 @@ public final class JobWorkerDao
         // ------------------------- Check Input -------------------------
         // Null or empty check.
         if (StringUtils.isBlank(selectorValue)) {
-            String msg = "Null or empty UUID received.";
+            String msg = "Null or empty value received.";
             _log.error(msg);
             throw new JobException(msg);
         }
@@ -472,7 +604,7 @@ public final class JobWorkerDao
             // Retrieve the claim record using the selector information.
             // NOTE: Any changes to the job_queues table requires maintenance
             //       here and in the populate routine below.
-            String sql = "select job_uuid, worker_uuid, host, container_id " +
+            String sql = "select job_uuid, worker_uuid, scheduler_name, host, container_id " +
                          "from job_workers " +
                          "where " + selector.toString() + " = :selectorValue";
             
@@ -505,6 +637,78 @@ public final class JobWorkerDao
         }
         
         return jobClaim;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getJobClaims:                                                          */
+    /* ---------------------------------------------------------------------- */
+    /** This is an administrative command that is useful in testing and in
+     * recovery.  The non-unique selector filters the results unless the ALL
+     * selector is used, which returns the all table records.
+     *  
+     * @param selector the non-unique filter
+     * @param selectorValue the non-null value by which selection is filtered
+     * @return the list of all job claims, which might be empty
+     * @throws JobException on error
+     */
+    private static List<JobClaim> getJobClaims(NonUniqueSelector selector, String selectorValue) 
+     throws JobException
+    {
+        // ------------------------- Check Input -------------------------
+        // Null or empty check.
+        if (StringUtils.isBlank(selectorValue)) {
+            String msg = "Null or empty value received.";
+            _log.error(msg);
+            throw new JobException(msg);
+        }
+        
+        // Assign where clause when we are not dumping the whole table.
+        String whereClause;
+        if (selector != NonUniqueSelector.ALL)
+            whereClause = " where " + selector.toString() + " = :selectorValue";
+         else whereClause = "";
+        
+        // Initialize result list to fixed number of schedulers.
+        List<JobClaim> list = null;
+        
+        // ------------------------- Call SQL ----------------------------
+        // Dump the complete table or some part of it.
+        try {
+            // Get a hibernate session.
+            Session session = HibernateUtil.getSession();
+            session.clear();
+            HibernateUtil.beginTransaction();
+
+            // Dump all rows in the table.
+            String sql = "select job_uuid, worker_uuid, scheduler_name, host, container_id from job_workers" +
+                         whereClause;
+            
+            // Issue the call and populate the lease object.
+            Query qry = session.createSQLQuery(sql);
+            if (!whereClause.isEmpty()) qry.setString("selectorValue", selectorValue);
+            qry.setCacheable(false);
+            qry.setCacheMode(CacheMode.IGNORE);
+            @SuppressWarnings("rawtypes")
+            List qryResuts = qry.list();
+            
+            // Commit the transaction.
+            HibernateUtil.commitTransaction();
+            
+            // Populate the list.
+            list = populateList(qryResuts);
+        }
+        catch (Exception e)
+        {
+            // Rollback transaction.
+            try {HibernateUtil.rollbackTransaction();}
+             catch (Exception e1){_log.error("Rollback failed.", e1);}
+            
+            String msg = "Unable to retrieve leases.";
+            _log.error(msg, e);
+            throw new JobException(msg, e);
+        }
+        
+        return list;
     }
     
     /* ---------------------------------------------------------------------- */
@@ -562,8 +766,9 @@ public final class JobWorkerDao
         JobClaim jobClaim = new JobClaim();
         jobClaim.setJobUuid((String) array[0]);
         jobClaim.setWorkerUuid((String) array[1]);
-        jobClaim.setHost((String) array[2]);
-        jobClaim.setContainerId((String) array[3]);
+        jobClaim.setSchedulerName((String) array[2]);
+        jobClaim.setHost((String) array[3]);
+        jobClaim.setContainerId((String) array[4]);
         
         return jobClaim;
     }

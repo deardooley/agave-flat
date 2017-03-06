@@ -499,6 +499,11 @@ public abstract class AbstractPhaseScheduler
         newWorker.start();
     }
     
+    /* ---------------------------------------------------------------------- */
+    /* getSchedulerName:                                                      */
+    /* ---------------------------------------------------------------------- */
+    public String getSchedulerName(){return _name;}
+    
     /* ********************************************************************** */
     /*                           Strategy Accessors                           */
     /* ********************************************************************** */
@@ -514,11 +519,6 @@ public abstract class AbstractPhaseScheduler
     /* ********************************************************************** */
     /*                           Protected Methods                            */
     /* ********************************************************************** */
-    /* ---------------------------------------------------------------------- */
-    /* getSchedulerName:                                                      */
-    /* ---------------------------------------------------------------------- */
-    protected String getSchedulerName(){return _name;}
-    
     /* ---------------------------------------------------------------------- */
     /* getPhaseThreadGroup:                                                   */
     /* ---------------------------------------------------------------------- */
@@ -1516,6 +1516,7 @@ public abstract class AbstractPhaseScheduler
     private void schedule()
     {
         // Go to our lonely corner if we are not running in scheduler mode.
+        // Interrupts and clean up are handled in the wait routine.
         if (!Settings.JOB_SCHEDULER_MODE) {
             waitForever();
             return;
@@ -1617,14 +1618,8 @@ public abstract class AbstractPhaseScheduler
             _log.error(msg, e);
         }
         finally {
-            // Always try to release the lease since we might be holding it.
-            jobLeaseDao.releaseLease();
-            
-            // Interrupt all threads in the phase's threadgroup.
-            interruptThreads();
-            
-            // Close all dedicated connections.
-            closeConnections();
+            // Clean up and shut everthing down.
+            shutdown();
             
             // Announce our termination.
             if (_log.isInfoEnabled()) {
@@ -1729,6 +1724,26 @@ public abstract class AbstractPhaseScheduler
     }
 
     /* ---------------------------------------------------------------------- */
+    /* shutdown:                                                              */
+    /* ---------------------------------------------------------------------- */
+    /** Clean up before shutting down. None of the called methods throw exceptions.*/
+    private void shutdown()
+    {
+        // Try to release any lease that we might be holding.
+        if (Settings.JOB_SCHEDULER_MODE) 
+            (new JobLeaseDao(_phaseType, _name)).releaseLease();
+        
+        // Interrupt all threads in the phase's threadgroup.
+        interruptThreads();
+        
+        // Release any job claims that workers might not have released.
+        releaseJobClaims();
+        
+        // Close all dedicated connections.
+        closeConnections();
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* interruptThreads:                                                      */
     /* ---------------------------------------------------------------------- */
     /** Interrupt all threads spawned by this thread and wait a configured 
@@ -1750,6 +1765,21 @@ public abstract class AbstractPhaseScheduler
             int activeThreads = _phaseThreadGroup.activeCount();
             if (activeThreads == 0) break;
             try {Thread.sleep(THREAD_DEATH_POLL_DELAY);} catch (Exception e){return;}
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* releaseJobClaims:                                                      */
+    /* ---------------------------------------------------------------------- */
+    private void releaseJobClaims()
+    {
+        // There are no claims to release if we didn't start any workers.
+        if (!Settings.JOB_WORKER_MODE) return;
+        
+        try {JobWorkerDao.unclaimJobsForScheduler(getSchedulerName());}
+        catch (Exception e) {
+            String msg = getSchedulerName() + " failed to unclaim jobs."; 
+            _log.error(msg, e);
         }
     }
     
@@ -1875,7 +1905,7 @@ public abstract class AbstractPhaseScheduler
     /* waitForever:                                                           */
     /* ---------------------------------------------------------------------- */
     /** This method keeps the main thread of the core processor alive but 
-     * sleeping until interupted.  This method is only called when the instance
+     * sleeping until interrupted.  This method is only called when the instance
      * is not running in schedule mode.
      */
     private void waitForever()
@@ -1892,11 +1922,8 @@ public abstract class AbstractPhaseScheduler
                 _log.debug(getSchedulerName() + " interrupted in waitForever.");
         }
 
-        // Interrupt all threads in the phase's threadgroup.
-        interruptThreads();
-        
-        // Close all dedicated connections.
-        closeConnections();
+        // Clean up and shut everthing down.
+        shutdown();
         
         // Announce our termination.
         if (_log.isInfoEnabled()) {

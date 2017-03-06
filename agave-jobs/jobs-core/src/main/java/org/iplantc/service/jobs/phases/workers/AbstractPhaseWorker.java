@@ -891,7 +891,9 @@ public abstract class AbstractPhaseWorker
         
         // Claim this job for this worker thread.
         // TODO: assign host and containerid
-        try {JobWorkerDao.claimJob(job.getUuid(), getThreadUuid(), "unknown", "unknown");}
+        try {JobWorkerDao.claimJob(job.getUuid(), getThreadUuid(), 
+                                   _scheduler.getSchedulerName(), 
+                                   "unknown", "unknown");}
         catch (JobWorkerException e) {
             // This job is already claimed!
             String msg = "Worker " + getThreadUuid() + " (" + getName() +

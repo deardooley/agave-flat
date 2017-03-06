@@ -103,6 +103,7 @@ CREATE TABLE `job_published` (
 CREATE TABLE IF NOT EXISTS `job_workers` (
   `job_uuid` varchar(64) NOT NULL,
   `worker_uuid` varchar(64) NOT NULL,
+  `scheduler_name` varchar(64) NOT NULL,
   `host` varchar(255) NOT NULL,
   `container_id` varchar(128) NOT NULL,
   PRIMARY KEY (`job_uuid`),

@@ -8,6 +8,7 @@ public final class JobClaim
     // Database fields.
     private String jobUuid;
     private String workerUuid;
+    private String schedulerName;
     private String host;
     private String containerId;
 
@@ -29,6 +30,14 @@ public final class JobClaim
     public void setWorkerUuid(String workerUuid)
     {
         this.workerUuid = workerUuid;
+    }
+    public String getSchedulerName()
+    {
+        return schedulerName;
+    }
+    public void setSchedulerName(String schedulerName)
+    {
+        this.schedulerName = schedulerName;
     }
     public String getHost()
     {

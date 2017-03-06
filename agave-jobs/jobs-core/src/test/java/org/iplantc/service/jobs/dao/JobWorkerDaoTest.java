@@ -6,8 +6,8 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.model.JobClaim;
 import org.testng.Assert;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /** Tests in this class run when jobs subsystem is NOT RUNNING and the
@@ -18,19 +18,10 @@ import org.testng.annotations.Test;
  */
 public class JobWorkerDaoTest 
 {
-    /* ********************************************************************** */
-    /*                                Constants                               */
-    /* ********************************************************************** */
-    
-    /* ********************************************************************** */
-    /*                            Set Up / Tear Down                          */
-    /* ********************************************************************** */
-    // NOTE: If you add more tests, you may need revisit before/after time.s 
-    
     /* ---------------------------------------------------------------------- */
     /* setup:                                                                 */
     /* ---------------------------------------------------------------------- */
-    @BeforeSuite
+    @BeforeMethod
     private void setup() throws JobException
     {
         JobWorkerDao.clearClaims();
@@ -39,7 +30,7 @@ public class JobWorkerDaoTest
     /* ---------------------------------------------------------------------- */
     /* teardown:                                                              */
     /* ---------------------------------------------------------------------- */
-    @AfterSuite
+    @AfterMethod
     private void teardown() throws JobException
     {
         JobWorkerDao.clearClaims();
@@ -59,7 +50,7 @@ public class JobWorkerDaoTest
         Assert.assertEquals(claimList.size(), 0, "Expected no claims at start");
         
         // Add a claim.
-        JobWorkerDao.claimJob("jobUuid1", "workerUuid1", "host1", "containerId1");
+        JobWorkerDao.claimJob("jobUuid1", "workerUuid1", "scheduler1", "host1", "containerId1");
         
         // Get all the claims.
         claimList = JobWorkerDao.getJobClaims();
@@ -83,12 +74,12 @@ public class JobWorkerDaoTest
         
         // Try to add a duplicate claim.
         boolean exceptionCaught = false;
-        try {JobWorkerDao.claimJob("jobUuid1", "workerUuid1", "host1", "containerId1");}
+        try {JobWorkerDao.claimJob("jobUuid1", "workerUuid1", "scheduler1", "host1", "containerId1");}
         catch (JobWorkerException e){exceptionCaught = true;}
         Assert.assertTrue(exceptionCaught, "Expected duplicate record exception");
         
         // Add another claim.
-        JobWorkerDao.claimJob("jobUuid2", "workerUuid2", "host2", "containerId2");
+        JobWorkerDao.claimJob("jobUuid2", "workerUuid2", "scheduler2", "host2", "containerId2");
         
         // Get all the claims.
         claimList = JobWorkerDao.getJobClaims();
@@ -143,4 +134,70 @@ public class JobWorkerDaoTest
         Assert.assertEquals(deleted, 0);
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* listTest:                                                              */
+    /* ---------------------------------------------------------------------- */
+    @Test(enabled=true)
+    public void listTest() throws JobException
+    {   
+        // Get all the claims.
+        List<JobClaim> claimList = JobWorkerDao.getJobClaims();
+        Assert.assertEquals(claimList.size(), 0, "Expected no claims at start");
+        
+        // Add claims.
+        JobWorkerDao.claimJob("jobUuid1",  "workerUuid1",  "scheduler1", "host1", "containerId1");
+        JobWorkerDao.claimJob("jobUuid1a", "workerUuid1a", "scheduler1", "host1", "containerId1");
+        JobWorkerDao.claimJob("jobUuid2",  "workerUuid2",  "scheduler2", "host2", "containerId2");
+        
+        // Get all the claims.
+        claimList = JobWorkerDao.getJobClaims();
+        Assert.assertEquals(claimList.size(), 3, "Unexpected number of claims returned");
+        
+        // --- Retrieval
+        claimList = JobWorkerDao.getJobClaimsForScheduler("scheduler1");
+        Assert.assertEquals(claimList.size(), 2, "Unexpected number of claims returned for scheduler1");
+        
+        claimList = JobWorkerDao.getJobClaimsForScheduler("scheduler2");
+        Assert.assertEquals(claimList.size(), 1, "Unexpected number of claims returned for scheduler2");
+        
+        claimList = JobWorkerDao.getJobClaimsForHost("host1");
+        Assert.assertEquals(claimList.size(), 2, "Unexpected number of claims returned for host1");
+        
+        claimList = JobWorkerDao.getJobClaimsForHost("host2");
+        Assert.assertEquals(claimList.size(), 1, "Unexpected number of claims returned for host2");
+        
+        claimList = JobWorkerDao.getJobClaimsForContainer("containerId1");
+        Assert.assertEquals(claimList.size(), 2, "Unexpected number of claims returned for containerId1");
+        
+        claimList = JobWorkerDao.getJobClaimsForContainer("containerId2");
+        Assert.assertEquals(claimList.size(), 1, "Unexpected number of claims returned for containerId2");
+        
+        // --- Removal (with reinsertion)
+        int deleted = JobWorkerDao.unclaimJobsForScheduler("scheduler1");
+        Assert.assertEquals(deleted, 2);
+        claimList = JobWorkerDao.getJobClaims();
+        Assert.assertEquals(claimList.size(), 1, "Unexpected number of claims returned");
+        
+        // Reinsert
+        JobWorkerDao.claimJob("jobUuid1",  "workerUuid1",  "scheduler1", "host1", "containerId1");
+        JobWorkerDao.claimJob("jobUuid1a", "workerUuid1a", "scheduler1", "host1", "containerId1");
+        claimList = JobWorkerDao.getJobClaims();
+        Assert.assertEquals(claimList.size(), 3, "Unexpected number of claims returned");
+        
+        deleted = JobWorkerDao.unclaimJobsForHost("host1");
+        Assert.assertEquals(deleted, 2);
+        claimList = JobWorkerDao.getJobClaims();
+        Assert.assertEquals(claimList.size(), 1, "Unexpected number of claims returned");
+        
+        // Reinsert
+        JobWorkerDao.claimJob("jobUuid1",  "workerUuid1",  "scheduler1", "host1", "containerId1");
+        JobWorkerDao.claimJob("jobUuid1a", "workerUuid1a", "scheduler1", "host1", "containerId1");
+        claimList = JobWorkerDao.getJobClaims();
+        Assert.assertEquals(claimList.size(), 3, "Unexpected number of claims returned");
+        
+        deleted = JobWorkerDao.unclaimJobsForContainer("containerId1");
+        Assert.assertEquals(deleted, 2);
+        claimList = JobWorkerDao.getJobClaims();
+        Assert.assertEquals(claimList.size(), 1, "Unexpected number of claims returned");
+    }
 }
