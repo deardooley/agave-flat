@@ -38,6 +38,7 @@ import org.iplantc.service.common.model.CaseInsensitiveEnumDeserializer;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
+import org.iplantc.service.notification.exceptions.NotificationException;
 import org.iplantc.service.tags.exceptions.TagValidationException;
 import org.joda.time.DateTime;
 
@@ -47,6 +48,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -384,9 +386,20 @@ public class Tag  {
         	} else {
         		throw new TagValidationException(violations.iterator().next().getMessage()); 
         	}
-		} catch (TagValidationException e) {
+		} catch (UnrecognizedPropertyException e) {
+        	String message = "Unknown property " + e.getPropertyName();
+        	if (StringUtils.startsWithIgnoreCase(e.getPropertyName(), "assoc")) {
+        		message += ". Did you mean associationIds?";
+        	}
+        	else if (StringUtils.startsWithIgnoreCase(e.getPropertyName(), "na")) {
+        		message += ". Did you mean name?";
+        	}
+        	throw new TagValidationException(message);
+		}
+		catch (TagValidationException e) {
         	throw e;
-        } catch (Exception e) {
+        } 
+		catch (Exception e) {
         	throw new TagValidationException("Unexpected error while validating tag.", e); 
         }
 	}

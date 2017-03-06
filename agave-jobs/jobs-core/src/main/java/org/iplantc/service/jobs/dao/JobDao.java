@@ -1612,7 +1612,6 @@ public class JobDao
 	 * @return
 	 * @throws JobException
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<JobDTO> findMatching(String username,
 			Map<SearchTerm, Object> searchCriteria,
 			int offset, int limit) throws JobException

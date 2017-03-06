@@ -378,17 +378,18 @@ public class SoftwareResourceImpl extends AbstractSoftwareResource implements So
             
             if (ApplicationManager.isManageableByUser(software, getAuthenticatedUsername())) {
                 if (software.isPubliclyAvailable()) {
-                    software.setAvailable(false);
-                    SoftwareDao.persist(software);
+                	ApplicationManager.deleteApplication(software, getAuthenticatedUsername());
+//                    software.setAvailable(false);
+//                    SoftwareDao.persist(software);
                 } else {
                     ApplicationManager.eraseSoftware(software, getAuthenticatedUsername());
 //                      ApplicationManager.deleteApplication(software);
                 }
                 
-                eventProcessor.processSoftwareContentEvent(software, 
-                        SoftwareEventType.DELETED, 
-                        "App was deleted by " + getAuthenticatedUsername(), 
-                        getAuthenticatedUsername());
+//                eventProcessor.processSoftwareContentEvent(software, 
+//                        SoftwareEventType.DELETED, 
+//                        "App was deleted by " + getAuthenticatedUsername(), 
+//                        getAuthenticatedUsername());
                 
                 return Response.ok(new AgaveSuccessRepresentation()).build();
             } else {

@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Embeddable
 @JsonAutoDetect(fieldVisibility = com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
 @ValidNotifiationPolicy
-@JsonIgnoreProperties(ignoreUnknown = true)
+//@JsonIgnoreProperties(ignoreUnknown = true)
 public class NotificationPolicy
 {
 	@Enumerated(EnumType.STRING)
