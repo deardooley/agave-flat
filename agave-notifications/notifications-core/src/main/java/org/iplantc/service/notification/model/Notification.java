@@ -44,12 +44,15 @@ import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonMappingException.Reference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.CaseFormat;
 
 /**
  * A {@link Notification} represents a subscription target to which one or more {@link #event}s is published.
@@ -540,8 +543,59 @@ public class Notification
         } catch (NotificationException e) {
         	throw e;
         } catch (UnrecognizedPropertyException e) {
-        	throw new NotificationException(e.getMessage(), e);
-        } catch (Exception e) {
+        	
+        	String nestedField = "";
+        	if (e.getReferringClass() == NotificationPolicy.class) {
+        		nestedField = "policy.";
+        	}
+        	
+        	String message = "Unknown property " + nestedField + e.getPropertyName();
+        	
+        	String recommendation = null;
+        	String propName = CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, e.getPropertyName().toLowerCase());
+        	int closestLevenshteinMatch = Integer.MAX_VALUE;
+        	for (Object prop: e.getKnownPropertyIds()) {
+        		int currentLevenshteinMatch = StringUtils.getLevenshteinDistance(prop.toString().toLowerCase(), propName);
+        		
+        		if (StringUtils.startsWith(prop.toString().toLowerCase(), propName)) {
+        			currentLevenshteinMatch = 0;
+        		}
+        		
+        		if (currentLevenshteinMatch < 6) {
+        			if (currentLevenshteinMatch == closestLevenshteinMatch) {
+        				if (recommendation == null) {
+        					recommendation = ". Did you mean " + nestedField + prop.toString();
+        				}
+        				else {
+        					recommendation += ", " + nestedField + prop.toString();
+        				}
+        				closestLevenshteinMatch = currentLevenshteinMatch;
+        			}
+        			else if (currentLevenshteinMatch < closestLevenshteinMatch) {
+        				recommendation = ". Did you mean " + nestedField + prop.toString();
+        				closestLevenshteinMatch = currentLevenshteinMatch;
+        			}
+        		}
+        	}
+        	
+        	if (recommendation == null) {
+        		recommendation = ". Valid values are: " + nestedField + StringUtils.join(e.getKnownPropertyIds(), ", "+nestedField);
+        	}
+        	else {
+        		recommendation += "?";
+        	}
+        	
+        	throw new NotificationException(message + recommendation);
+        }
+		catch (JsonMappingException e) {
+			String message = "Invalid value for ";
+			for (Reference ref: e.getPath()) {
+				message += ref.getFieldName() + ".";
+			}
+			 
+			throw new NotificationException(message);
+		}
+		catch (Exception e) {
         	throw new NotificationException("Unexpected error while validating notification.", e); 
         }
         

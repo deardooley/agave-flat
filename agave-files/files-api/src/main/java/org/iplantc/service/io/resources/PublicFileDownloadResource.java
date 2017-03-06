@@ -91,14 +91,16 @@ public class PublicFileDownloadResource extends AbstractFileResource {
         try {
 	        // Instantiate remote data client to the correct system
         	Series<Header> headers = Request.getCurrent().getHeaders();
-        	Header xForwardHostHeader = headers.getFirst("x-forwarded-host", true);
+//        	Header xForwardHostHeader = 
+			String xForwardHostHeaderValues = headers.getValues("x-forwarded-host");
         	Tenant tenant = null;
-        	String xForwardHost = xForwardHostHeader.getValue();
-    		if (StringUtils.isEmpty(xForwardHost)) {
+//        	String hosts = 
+//        	String xForwardHost = xForwardHostHeader.getValue();
+    		if (StringUtils.isEmpty(xForwardHostHeaderValues)) {
     			log.error("No x-forward-host header found in the request for " + Request.getCurrent().getOriginalRef().toString());
     		}
     		else {
-    			for (String hostname: StringUtils.split(xForwardHost, ",")) {
+    			for (String hostname: StringUtils.split(xForwardHostHeaderValues, ",")) {
     				tenant = new TenantDao().findByBaseUrl(hostname);
     				if (tenant != null) break;
     			}
@@ -108,9 +110,9 @@ public class PublicFileDownloadResource extends AbstractFileResource {
         		
 	        
 	        if (tenant == null) {
-	        	log.error("No tenant found matching the x-forward-host url of " + xForwardHost);
+	        	log.error("No tenant found matching the x-forward-host url of " + xForwardHostHeaderValues);
 	        	throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "No system found with the given id.", 
-	        			new SystemUnknownException("No tenant found matching the x-forward-host url of " + xForwardHost));
+	        			new SystemUnknownException("No tenant found matching the x-forward-host url of " + xForwardHostHeaderValues));
 	        } else {
 	        	TenancyHelper.setCurrentTenantId(tenant.getTenantCode());
 	        	TenancyHelper.setCurrentEndUser(Settings.PUBLIC_USER_USERNAME);

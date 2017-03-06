@@ -36,6 +36,7 @@ import org.iplantc.service.common.model.CaseInsensitiveEnumDeserializer;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
+import org.iplantc.service.notification.exceptions.NotificationException;
 import org.iplantc.service.tags.exceptions.PermissionValidationException;
 import org.iplantc.service.tags.model.constraints.ValidAgaveUuid;
 import org.iplantc.service.tags.model.enumerations.PermissionType;
@@ -52,6 +53,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
@@ -333,7 +335,18 @@ public class TagPermission { //extends AbstractPermissionEntity<Tag> {
         	} else {
         		throw new PermissionValidationException(violations.iterator().next().getMessage()); 
         	}
-        } catch (PermissionValidationException e) {
+        } 
+		catch (UnrecognizedPropertyException e) {
+        	String message = "Unknown property " + e.getPropertyName();
+        	if (StringUtils.startsWithIgnoreCase(e.getPropertyName(), "pe")) {
+        		message += ". Did you mean permission?";
+        	}
+        	else if (StringUtils.startsWithIgnoreCase(e.getPropertyName(), "us")) {
+        		message += ". Did you mean username?";
+        	}
+        	throw new PermissionValidationException(message);
+		}
+		catch (PermissionValidationException e) {
         	throw e;
         } catch (Exception e) {
         	throw new PermissionValidationException("Unexpected error while validating permission.", e); 

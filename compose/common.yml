@@ -43,6 +43,7 @@ services:
       - 'IPLANT_DEFAULT_PAGE_SIZE=100'
       - 'MYSQL_HOST=mysql'
       - 'MYSQL_PORT=3306'
+      - 'MYSQL_USERNAME=agaveuser'
       - 'MYSQL_PASSWORD=password'
       - 'MYSQL_DATABASE=agavecore'
       - 'IPLANT_METADATA_DB_HOST=mongodb'

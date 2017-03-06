@@ -48,6 +48,7 @@ import org.restlet.representation.Representation;
 import org.restlet.resource.ResourceException;
 import org.testng.log4testng.Logger;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -369,10 +370,14 @@ public class NotificationCollectionImpl extends AbstractNotificationCollection i
 			throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
 					"Unable to save notification: " + e.getMessage(), e);
 	    }
+		catch (JsonParseException e) {
+			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
+					"Unable to parse the notification json description. " + e.getOriginalMessage(), e);
+		}
 		catch (JsonProcessingException e)
 		{
 			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-					"Unable to process the notification json description.", e);
+					"Unable to process the notification json description. ", e);
 		}
 		catch (ResourceException e) {
 			throw e;
