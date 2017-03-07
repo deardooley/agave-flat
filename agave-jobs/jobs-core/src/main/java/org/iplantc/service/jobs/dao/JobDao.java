@@ -235,10 +235,10 @@ public class JobDao
 			        .addEntity(Job.class)
 					.setString("uuid",  uuid)
 					.setCacheable(false)
-                    .setCacheMode(CacheMode.REFRESH)
+					.setCacheMode(CacheMode.IGNORE)
                     .uniqueResult();
 			
-			session.flush();
+			if (forceFlush) session.flush();
 			
 			return job;
 

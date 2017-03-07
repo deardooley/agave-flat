@@ -64,3 +64,5 @@ science-api-samples
 appendonly.aof
 compose/scratch
 config/testbed/mongodb
+data.log
+data.20170307.b54a18f1d645b48d9.log

@@ -96,7 +96,13 @@ services:
     networks:
       - backend
       - thirdparty
-
+#    logging:
+#      driver: fluentd
+#      options:
+#        fluentd-address: "docker.example.com:24224"
+#        tag: "{{.ImageName}}/{{.Name}}/{{.ID}}"
+          
+  
   php_api:
     hostname: api.example.com
     mem_limit: 1024m
@@ -159,6 +165,11 @@ services:
     networks:
       - backend
       - thirdparty
+#    logging:
+#      driver: fluentd
+#      options:
+#        fluentd-address: "docker.example.com:24224"
+#        tag: "{{.ImageName}}/{{.Name}}/{{.ID}}"
 
   migrations:
     image: agave-migrations:$AGAVE_VERSION

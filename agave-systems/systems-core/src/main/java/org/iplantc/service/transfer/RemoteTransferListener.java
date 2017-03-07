@@ -46,8 +46,7 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 	 */
 	public synchronized TransferTask getTransferTask()
 	{
-	    
-		return this.transferTask;
+	    return this.transferTask;
 	}
 
 	/**
