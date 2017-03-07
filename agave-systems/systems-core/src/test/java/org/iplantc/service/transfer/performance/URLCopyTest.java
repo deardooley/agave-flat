@@ -50,18 +50,18 @@ public class URLCopyTest extends BaseTransferTestCase
 		super.beforeClass();
 		clearLogicalFiles();
 		clearTransferTasks();
-		testSrcTypes.add(StorageProtocolType.GRIDFTP);
-		testSrcTypes.add(StorageProtocolType.S3);
+//		testSrcTypes.add(StorageProtocolType.GRIDFTP);
+//		testSrcTypes.add(StorageProtocolType.S3);
 		testSrcTypes.add(StorageProtocolType.SFTP);
-		testSrcTypes.add(StorageProtocolType.FTP);
-		testSrcTypes.add(StorageProtocolType.IRODS);
+//		testSrcTypes.add(StorageProtocolType.FTP);
+//		testSrcTypes.add(StorageProtocolType.IRODS);
 		testSrcTypes.add(StorageProtocolType.LOCAL);
 		
-		testDestTypes.add(StorageProtocolType.GRIDFTP);
-		testDestTypes.add(StorageProtocolType.S3);
+//		testDestTypes.add(StorageProtocolType.GRIDFTP);
+//		testDestTypes.add(StorageProtocolType.S3);
 		testDestTypes.add(StorageProtocolType.SFTP);
-		testDestTypes.add(StorageProtocolType.FTP);
-		testDestTypes.add(StorageProtocolType.IRODS);
+//		testDestTypes.add(StorageProtocolType.FTP);
+//		testDestTypes.add(StorageProtocolType.IRODS);
 		testDestTypes.add(StorageProtocolType.LOCAL);
 	}
 
@@ -148,7 +148,7 @@ public class URLCopyTest extends BaseTransferTestCase
 	}
 
 	@DataProvider(name = "httpImportProvider")
-	public Object[][] httpImportProvider() throws RemoteDataException, RemoteCredentialException, PermissionException
+	protected Object[][] httpImportProvider() throws RemoteDataException, RemoteCredentialException, PermissionException
 	{
 		List<Object[]> testCases = new ArrayList<Object[]>();
 		for(StorageProtocolType destType: testDestTypes) {
@@ -230,7 +230,7 @@ public class URLCopyTest extends BaseTransferTestCase
 	}
 	
 	@DataProvider(name = "ftpFileImportProvider")
-	public Object[][] ftpFileImportProvider() throws RemoteDataException, RemoteCredentialException, PermissionException
+	protected Object[][] ftpFileImportProvider() throws RemoteDataException, RemoteCredentialException, PermissionException
 	{
 		List<Object[]> testCases = new ArrayList<Object[]>();
 		for (StorageProtocolType destType: testDestTypes) 
@@ -314,7 +314,7 @@ public class URLCopyTest extends BaseTransferTestCase
 	}
 	
 	@DataProvider(name = "ftpDirectoryImportProvider")
-	public Object[][] ftpDirectoryImportProvider() throws RemoteDataException, RemoteCredentialException, PermissionException
+	protected Object[][] ftpDirectoryImportProvider() throws RemoteDataException, RemoteCredentialException, PermissionException
 	{
 		List<Object[]> testCases = new ArrayList<Object[]>();
 		for (StorageProtocolType destType: testDestTypes) 
@@ -389,7 +389,7 @@ public class URLCopyTest extends BaseTransferTestCase
 	}
 	
 	@DataProvider(name = "copyProvider", parallel=false)
-	public Object[][] copyProvider()
+	protected Object[][] copyProvider()
 	{
 		List<Object[]> testCases = new ArrayList<Object[]>();
 		

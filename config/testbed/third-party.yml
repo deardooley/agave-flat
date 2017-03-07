@@ -90,7 +90,7 @@ redisvol:
   image: redis:3.0.6-alpine
   command: sleep 120
   mem_limit: 64m
-  
+
 ##############################################################
 # Beanstalkd
 ##############################################################
@@ -102,8 +102,10 @@ beanstalkd:
   labels:
     agaveapi.test: "utest"
   restart: on-failure
-  volumes_from:
-    - beanstalkdvol
+  #volumes_from:
+  #  - beanstalkdvol
+  volumes:
+    - ./mongodb:/data/db
   ports:
     - '11300:11300'
 
@@ -250,3 +252,32 @@ pushpin:
   ports:
     - '7999:7999'
     - '5561:5561'
+
+###############################################################
+## Fluentd
+###############################################################
+#
+#fluentd: 
+#  image: fluent/fluentd
+#  hostname: fluentd.example.com
+#  restart: on-failure
+#  ports:
+#    - 24224:24224
+#  volumes:
+#    - ../logs/fluentd:/fluentd/log
+#  labels:
+#    - "traefik.enable=false"
+
+logs:
+  image: gerchardon/docker-logio
+  links:
+   - logio:logio
+  volumes:
+   - /var/run/docker.sock:/var/run/docker.sock
+  command: -h logio -n docker
+  privileged: true
+logio:
+  image: temal/logio-server
+  ports:
+   - 28777:28777
+   - 28778:28778

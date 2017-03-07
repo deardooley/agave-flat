@@ -1,6 +1,36 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+
+## 2.1.10 - 2017-03-06
+
+### Added
+- nothing
+
+### Changed
+
+- APPS: Routing call to delete an app through the Application Manager to prevent duplicate events and centralize the cleanup activities. This closes issue 
+- FILES: Updated parsing of `X-Forwarded-Host` header to allow for multiple header fields. This is critical in resolving the proper tenant ID against the original requesting URL for public download links. When more than one proxy is present and this is not done, the service cannot resolve the tenant and the public file is not accessible.
+- JOBS: Updating job fetch by id to ignore cache by default.
+- JOBS: Added more robust parsing of LSF scheduler output for interpretation in job status and local id discovery.
+- NOTIFICATIONS: Fixed a bug in notification api where invalid json returned an ambiguous error message.
+- NOTIFICATIONS: Added field hinting when users post notification, policy, and permission objects with unknown fields. The response message will ask them if they meant to specify one or more valid fields using a fuzzy match on the invalid field name based on a Levenshtein distance calculation over all valid fields.  
+- SYSTEMS: 	AH-178 Fixed bug in relay transfer log preventing status of backside transfer to update to FINISHED.
+- SYSTEMS: Added code to create transfer task for all transfers, even local.
+- SYSTEMS: AH-180 Fixed bug in HTTP download where the entire byte array was being written at the end of a copy rather than just the read bits. This caused data corruption on each "GET" operation. It was never an issue with streaming downloads, which is why this looked like a regression issue. Unit tests were added to verify behavior.
+- TAGS: Fixed a bug in tags api where invalid json returned an ambiguous error message.
+- TAGS: Added field hinting when users post tag and permission objects with bad field names. 
+- MIGRATIONS: Refactored migrations to run with the Flyway CLI. The resulting Docker image only contains a handful of dependency jars and runs instantly. Massive improvement here.  
+
+- ALL: Adding placeholder for logging to fluentd through the docker daemon by default.
+- ALL: Added active dev code in the static stack for all containers to log to log.io. Server UI is included, running on port 28778.
+- ALL: Adding default my.cnf to expand the number of available db connections in the dev stack.
+- ALL: Full Stack external build task now comes up with aggregated logging to a local log.io container.
+ 
+### Removed
+- nothing
+
+
 ## 2.1.10 - 2017-02-18
 
 ### Added
