@@ -113,6 +113,8 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 		TransferTask task = getTransferTask();
         if (task != null)
 		{
+        	log.debug("Transfer " + transferStatus.getTransferState().name() + " callback received for task " + transferTask.getUuid() + ".\n" + transferStatus.toString());
+        	
 			if (transferStatus.getTransferState().equals(TransferStatus.TransferState.OVERALL_INITIATION)) {
 				task.setStatus(TransferStatusType.TRANSFERRING);
 				task.setStartTime(new Date());
@@ -129,6 +131,9 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 			
 			setTransferTask(task);
 		}
+        else {
+        	log.debug("Transfer " + transferStatus.getTransferState().name() + " callback received for task unknown.\n" + transferStatus.toString());
+        }
         
         if (hasChanged()) {
 			throw new JargonException("Listener received a cancel request for transfer " 
@@ -149,6 +154,8 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 		TransferTask task = getTransferTask();
         if (task != null)
 		{
+        	log.debug("Transfer " + transferStatus.getTransferState().name() + " callback received for task " + transferTask.getUuid() + ".\n" + transferStatus.toString());
+        	
 			if (transferStatus.getTransferState().equals(TransferStatus.TransferState.OVERALL_INITIATION)) {
 				task.setStatus(TransferStatusType.TRANSFERRING);
 				task.setStartTime(new Date());
@@ -187,13 +194,10 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 			task.setLastUpdated(new Date());
 			
 			setTransferTask(task);
-//			try {
-//				transferTask);
-//			} catch (TransferException e) {
-//				log.error("Failed to update status of irods transfer task " + task.getUuid() + " to " + task.getStatus(), e);
-//			}
 		}
-		
+        else {
+        	log.debug("Transfer " + transferStatus.getTransferState().name() + " callback received for task unknown.\n" + transferStatus.toString());
+        }
         return FileStatusCallbackResponse.CONTINUE;
 	}
 
@@ -218,6 +222,8 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 		TransferTask task = getTransferTask();
         if (task != null)
 		{
+        	log.debug("Transfer started callback received for task " + task.getUuid() + ".\n" + remoteFile + " => " + bytesTotal);
+        	
 			task.setTotalFiles(task.getTotalFiles() + 1);
 			task.setStatus(TransferStatusType.TRANSFERRING);
 			task.setStartTime(new Date());
@@ -231,6 +237,9 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 			
 			setTransferTask(task);
 		}
+        else {
+        	log.debug("Transfer started callback received for task unknown.\n" + remoteFile + " => " + bytesTotal);
+        }
 	}
 
 	@Override
@@ -249,6 +258,8 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 	    TransferTask task = getTransferTask();
         if (task != null)
 		{
+        	
+        	
 //			if (task.getBytesTransferred() > bytesSoFar) {
 //				task.setBytesTransferred(task.getBytesTransferred() + bytesSoFar);
 //			} else {
@@ -261,10 +272,14 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
                 setTransferTask(task);
                 lastUpdated = currentTime;
                 bytesLastCheck = bytesSoFar;
-//			    log.debug("Moved " + bytesSoFar + " bytes @ " + progress + "B/s");
+			    log.debug("Transfer prograess callback received for task " + task.getUuid() + ".\n" + task.getSource() + " => " + bytesSoFar);
 		        
 			}
 		}
+        else {
+        	log.debug("Transfer progress callback received for task unknown.\nunknown => " + bytesSoFar);
+        	
+        }
 	}
 	
 	/**
@@ -277,11 +292,17 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 		TransferTask task = getTransferTask();
         if (task != null)
 		{
+        	log.debug("Transfer progress callback received for task " + task.getUuid() + ".\n" + task.getSource());
+        	
 			task.setStatus(TransferStatusType.CANCELLED);
 			task.setEndTime(new Date());
 			task.updateTransferRate();
 			setTransferTask(task);
 		}
+        else {
+        	log.debug("Transfer progress callback received for task unknown.\nunknown");
+        	
+        }
         
         // set this listener to dirty
         log.debug("RemoteTransferListender for " + (task == null ? " anonymous transfer " : task.getUuid()) + 
@@ -298,11 +319,17 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 		TransferTask task = getTransferTask();
         if (task != null)
 		{
+        	log.debug("Transfer completed callback received for task " + task.getUuid() + ".\n" + task.getSource());
+        	
 			task.setStatus(TransferStatusType.COMPLETED);
 			task.setEndTime(new Date());
 			task.updateTransferRate();
 			setTransferTask(task);
 		}
+        else {
+        	log.debug("Transfer completed callback received for task unknown.\nunknown");
+        	
+        }
 	}
 	
 	public void failed()
@@ -310,10 +337,16 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 		TransferTask task = getTransferTask();
         if (task != null)
 		{
-			task.setStatus(TransferStatusType.FAILED);
+        	log.debug("Transfer failed callback received for task " + task.getUuid() + ".\n" + task.getSource());
+        	
+        	task.setStatus(TransferStatusType.FAILED);
 			task.setEndTime(new Date());
 			setTransferTask(task);
 		}
+        else {
+        	log.debug("Transfer failed callback received for task unknown.\nunknown");
+        	
+        }
 	}
 	
 	/*************************************************************

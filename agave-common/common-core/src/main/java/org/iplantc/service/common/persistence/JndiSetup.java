@@ -55,9 +55,12 @@ public class JndiSetup
         try {
             ic = new InitialContext();
             ic.createSubcontext("java:comp/env/jdbc");
-            ic.close();
+            
         } catch (NamingException e) {
             e.printStackTrace();
+        }
+        finally {
+        	try {ic.close();} catch (Exception e){}
         }
     }
 }

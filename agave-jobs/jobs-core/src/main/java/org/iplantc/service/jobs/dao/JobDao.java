@@ -1703,15 +1703,7 @@ public class JobDao
 			
 			for (SearchTerm searchTerm: searchCriteria.keySet()) 
 			{
-				// we have to format
-//				if (searchTerm.getSafeSearchField().equalsIgnoreCase("runtime") || 
-//						searchTerm.getSafeSearchField().equalsIgnoreCase("walltime")) {
-//					sql += "\n       AND       " + 
-//						StringUtils.replace(searchTerm.getExpression(), "__MYSQL_DATE_FORMAT__", "%Y-%m-%d %H:%i:%s.0");
-//				}
-//				else {
-					sql += "\n       AND       " + searchTerm.getExpression();
-//				}
+				sql += "\n       AND       " + searchTerm.getExpression();
 			}
 			
 			if (!sql.contains("j.visible")) {

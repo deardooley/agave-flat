@@ -754,10 +754,11 @@ public class URLCopy
 				        getProtocolForClass(destClient.getClass())));
 			}
 			if (sourceClient instanceof Local) {
-				FileUtils.deleteQuietly(tempDir);
+				log.info("Skipping deleting relay cache file " + tempDir.getAbsolutePath() + " as source originated from this host.");
 			}
 			else {
 				log.info("Deleting relay cache file " + tempDir.getAbsolutePath());
+				FileUtils.deleteQuietly(tempDir);
 			}
 		}
 		
