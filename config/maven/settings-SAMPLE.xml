@@ -376,6 +376,7 @@
 
                 <foundation.service.jobs.scheduler.mode>true</foundation.service.jobs.scheduler.mode>
                 <foundation.service.jobs.worker.mode>true</foundation.service.jobs.worker.mode>
+                <foundation.service.jobs.admin.mode>false</foundation.service.jobs.admin.mode>
                 <foundation.service.jobs.enable.zombie.cleanup>false</foundation.service.jobs.enable.zombie.cleanup>
                 <foundation.service.jobs.claim.poll.iterations>15</foundation.service.jobs.claim.poll.iterations>
                 <foundation.service.jobs.claim.poll.sleep.ms>1000</foundation.service.jobs.claim.poll.sleep.ms>

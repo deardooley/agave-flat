@@ -408,17 +408,9 @@ public abstract class AbstractPhaseScheduler
         // Squirrel away the thread on which we are running for interrupt processing.
         _mainSchedulerThread = Thread.currentThread();
         
-        // Make sure that we are configured to do something.
-        if (!Settings.JOB_SCHEDULER_MODE && !Settings.JOB_WORKER_MODE) {
-            
-            // Let's exit the JVM.
-            String msg = _phaseType.name() + 
-                         " phase scheduler must be configured to run in " +
-                         "scheduler mode, worker mode or both.  Aborting " +
-                         getSchedulerName() + ".";
-            _log.error(msg); 
-            throw new RuntimeException(msg);
-        }
+        // Make sure that we are configured correctly.  
+        // A runtime exception can be thrown here.
+        checkExecutionMode();
         
         // Initialize this phase scheduler and start working.
         try {
@@ -1516,7 +1508,8 @@ public abstract class AbstractPhaseScheduler
     private void schedule()
     {
         // Go to our lonely corner if we are not running in scheduler mode.
-        // Interrupts and clean up are handled in the wait routine.
+        // Interrupts and clean up are handled in the wait routine.  Note that
+        // when not in scheduler mode, we are either in worker or admin mode.
         if (!Settings.JOB_SCHEDULER_MODE) {
             waitForever();
             return;
@@ -2826,6 +2819,40 @@ public abstract class AbstractPhaseScheduler
     }
     
     /* ---------------------------------------------------------------------- */
+    /* checkExecutionMode:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Make sure we are starting in a valid mode. */
+    private void checkExecutionMode()
+    {
+        // Some mode must be enabled.
+        if (!Settings.JOB_ADMIN_MODE     && 
+            !Settings.JOB_SCHEDULER_MODE && 
+            !Settings.JOB_WORKER_MODE) 
+        {
+            // Let's exit the JVM.
+            String msg = _phaseType.name() + 
+                         " phase scheduler must be configured to run in scheduler, " +
+                         "worker, admin, or scheduler and worker mode.  Aborting " +
+                         getSchedulerName() + ".";
+            _log.error(msg); 
+            throw new RuntimeException(msg);
+        }
+        
+        // Admin mode checks.
+        if (Settings.JOB_ADMIN_MODE && 
+            (Settings.JOB_SCHEDULER_MODE || Settings.JOB_WORKER_MODE))
+        {
+            // Let's exit the JVM.
+            String msg = _phaseType.name() + 
+                         " phase scheduler cannot run in admin " +
+                         "mode and also in scheduler or worker mode.  Aborting " +
+                         getSchedulerName() + ".";
+            _log.error(msg); 
+            throw new RuntimeException(msg);
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* getConfigInfo:                                                         */
     /* ---------------------------------------------------------------------- */
     /** Print our configuration parameters to the log. */
@@ -2839,6 +2866,8 @@ public abstract class AbstractPhaseScheduler
         buf.append(Settings.JOB_SCHEDULER_MODE);
         buf.append("\n  JOB_WORKER_MODE = ");
         buf.append(Settings.JOB_WORKER_MODE);
+        buf.append("\n  JOB_ADMIN_MODE = ");
+        buf.append(Settings.JOB_ADMIN_MODE);
         buf.append("\n  JOB_ENABLE_ZOMBIE_CLEANUP = ");
         buf.append(Settings.JOB_ENABLE_ZOMBIE_CLEANUP);
         buf.append("\n  JOB_CLAIM_POLL_ITERATIONS = ");

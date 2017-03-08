@@ -80,6 +80,7 @@ public class Settings {
 	// Configuration value used in queue-based implementation (RabbitMQ). 
 	public static boolean                       JOB_SCHEDULER_MODE;
 	public static boolean                       JOB_WORKER_MODE;
+	public static boolean                       JOB_ADMIN_MODE;
 	public static boolean                       JOB_ENABLE_ZOMBIE_CLEANUP;
 	public static int                           JOB_CLAIM_POLL_ITERATIONS;
 	public static long                          JOB_CLAIM_POLL_SLEEP_MS;
@@ -218,6 +219,13 @@ public class Settings {
                 JOB_WORKER_MODE = true;
             }
 		
+        try {JOB_ADMIN_MODE = Boolean.valueOf(props
+                .getProperty("iplant.service.jobs.admin.mode", "false"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_ADMIN_MODE, using default.", e);
+                JOB_ADMIN_MODE = false;
+            }
+        
         try {JOB_ENABLE_ZOMBIE_CLEANUP = Boolean.valueOf((String) props
                 .getProperty("iplant.service.jobs.enable.zombie.cleanup", "false"));}
             catch (Exception e) {

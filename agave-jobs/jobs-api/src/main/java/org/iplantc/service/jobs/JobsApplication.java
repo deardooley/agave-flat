@@ -10,11 +10,15 @@ import org.iplantc.service.jobs.phases.schedulers.ArchivingScheduler;
 import org.iplantc.service.jobs.phases.schedulers.MonitoringScheduler;
 import org.iplantc.service.jobs.phases.schedulers.StagingScheduler;
 import org.iplantc.service.jobs.phases.schedulers.SubmittingScheduler;
+import org.iplantc.service.jobs.resources.JobClaimsResource;
 import org.iplantc.service.jobs.resources.JobDocumentationResource;
 import org.iplantc.service.jobs.resources.JobHistoryResource;
+import org.iplantc.service.jobs.resources.JobInterruptsResource;
+import org.iplantc.service.jobs.resources.JobLeaseResource;
 import org.iplantc.service.jobs.resources.JobListAttributeResource;
 import org.iplantc.service.jobs.resources.JobManageResource;
 import org.iplantc.service.jobs.resources.JobPermissionsResource;
+import org.iplantc.service.jobs.resources.JobPublishedResource;
 import org.iplantc.service.jobs.resources.JobQueueResource;
 import org.iplantc.service.jobs.resources.JobSearchResource;
 import org.iplantc.service.jobs.resources.JobStatusResource;
@@ -41,6 +45,23 @@ public class JobsApplication extends AgaveApplication
 		// Define the resource for the static usage page
         router.attach(getStandalonePrefix() + "/usage", JobDocumentationResource.class);
         router.attach(getStandalonePrefix() + "/usage/", JobDocumentationResource.class);
+        
+        // Job queue api.
+        secureEndpoint(router, "/admin/queues", JobQueueResource.class); 
+        secureEndpoint(router, "/admin/queues/{queuename}", JobQueueResource.class); 
+        
+        // Job api that provides r/w access to internal job tracking and management data.
+        secureEndpoint(router, "/admin/claims", JobClaimsResource.class);
+        secureEndpoint(router, "/admin/claims/job/{jobid}", JobClaimsResource.class);
+        secureEndpoint(router, "/admin/claims/worker/{workerid}", JobClaimsResource.class);
+        secureEndpoint(router, "/admin/claims/container/{containerid}", JobClaimsResource.class);
+        secureEndpoint(router, "/admin/claims/scheduler/{schedulerid}", JobClaimsResource.class);
+        secureEndpoint(router, "/admin/published", JobPublishedResource.class);
+        secureEndpoint(router, "/admin/published/{phase}", JobPublishedResource.class);
+        secureEndpoint(router, "/admin/published/{phase}/{jobid}", JobPublishedResource.class);
+        secureEndpoint(router, "/admin/lease", JobLeaseResource.class);
+        secureEndpoint(router, "/admin/interrupts", JobInterruptsResource.class);
+        secureEndpoint(router, "/admin/interrupts/{jobid}", JobInterruptsResource.class);
         
         if (!Settings.SLAVE_MODE)
 		{
@@ -69,10 +90,6 @@ public class JobsApplication extends AgaveApplication
 			secureEndpoint(router,"/search/{attribute1}/{value1}/{attribute2}/{value2}/{attribute3}/{value3}/{attribute4}/{value4}/{attribute5}/{value5}/{attribute6}/{value6}/{attribute7}/{value7}",JobSearchResource.class);
 			secureEndpoint(router,"/search/{attribute1}/{value1}/{attribute2}/{value2}/{attribute3}/{value3}/{attribute4}/{value4}/{attribute5}/{value5}/{attribute6}/{value6}/{attribute7}/{value7}/",JobSearchResource.class);
             
-            // Job queue api.
-            secureEndpoint(router, "/admin/queues", JobQueueResource.class); 
-            secureEndpoint(router, "/admin/queues/{queuename}", JobQueueResource.class); 
-			
 			// individual job description(GET), X update(POST), and kill(DELETE)
 			secureEndpoint(router, "/{jobid}", JobManageResource.class);  
 			secureEndpoint(router, "/{jobid}/", JobManageResource.class); 

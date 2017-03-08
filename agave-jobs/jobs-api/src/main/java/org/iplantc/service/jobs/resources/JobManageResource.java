@@ -11,7 +11,6 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.iplantc.service.common.auth.AuthorizationHelper;
 import org.iplantc.service.common.clients.AgaveLogServiceClient;
-import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.common.representation.IplantErrorRepresentation;
 import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.jobs.dao.JobDao;
@@ -103,28 +102,6 @@ public class JobManageResource extends AbstractJobResource {
 				if (!pTable.containsKey("action")) {
 					throw new JobException("No action specified");
 				}
-				
-//				if (pTable.get("action").equalsIgnoreCase("archive"))
-//				{
-//					if (!job.isFinished()) {
-//						throw new JobException("Job has not reached a finished state. " +
-//								"Please wait until the job stops to archive its output");
-//					}
-//					
-//					String itemsToArchive = null;
-//					if (!pTable.containsKey("itemsToArchive")) {
-//						throw new JobException("itemsToArchive not specified");
-//					} else if (!ServiceUtils.isValid(pTable.get("itemsToArchive"))) {
-//						throw new JobException("itemsToArchive cannot be empty");
-//					}
-//					
-//					String path = null;
-//					if (!pTable.containsKey("path")) {
-//						throw new JobException("path not specified");
-//					} else if (!ServiceUtils.isValid(pTable.get("path"))) {
-//						throw new JobException("path cannot be empty");
-//					}
-//				}
 				else if (pTable.get("action").equalsIgnoreCase("restore")) {
 					
 					AgaveLogServiceClient.log(AgaveLogServiceClient.ServiceKeys.JOBS02.name(), 

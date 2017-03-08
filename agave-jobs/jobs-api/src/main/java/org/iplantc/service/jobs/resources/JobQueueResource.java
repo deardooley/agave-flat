@@ -11,7 +11,6 @@ import org.iplantc.service.common.representation.IplantSuccessRepresentation;
 import org.iplantc.service.jobs.dao.JobQueueDao;
 import org.iplantc.service.jobs.model.JobQueue;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
-import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueConfigMessage;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueMessage;
 import org.iplantc.service.jobs.phases.queuemessages.RefreshQueueInfoMessage;
 import org.iplantc.service.jobs.phases.queuemessages.ResetNumWorkersMessage;
@@ -490,7 +489,7 @@ public class JobQueueResource
             String msg = "Failed to retrieve a job queue using name " + queueName + ".";
             _log.error(msg, e);
             
-            // Determine if our code threw the exception or some subsytem did.
+            // Determine if our code threw the exception or some subsystem did.
             Status restStatus;
             if (e.getCause() == null) restStatus = Status.CLIENT_ERROR_BAD_REQUEST;
                 else restStatus = Status.SERVER_ERROR_INTERNAL;
@@ -531,7 +530,7 @@ public class JobQueueResource
             String msg = "Failed to retrieve a job queue using UUID " + uuid + ".";
             _log.error(msg, e);
             
-            // Determine if our code threw the exception or some subsytem did.
+            // Determine if our code threw the exception or some subsystem did.
             Status restStatus;
             if (e.getCause() == null) restStatus = Status.CLIENT_ERROR_BAD_REQUEST;
                 else restStatus = Status.SERVER_ERROR_INTERNAL;
