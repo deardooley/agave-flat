@@ -55,7 +55,8 @@ import com.sshtools.ssh2.Ssh2Context;
  */
 public class AgaveSftpConnect {
 
-	public static int ITERATIONS = 10;
+	public static int ITERATIONS = 2;
+	public static int BOCK_COUNT = 50000;
 	
 	public static void calculateTime(long uend, long ustart, long dend, long dstart, long length) {
 		long ue = uend - ustart;
@@ -174,15 +175,17 @@ public class AgaveSftpConnect {
 //				 * Generate a temporary file for uploading/downloading
 //				 */
 				File f = new File(System.getProperty("user.home"), "sftp-file");
-				java.util.Random rnd = new java.util.Random();
-
-				FileOutputStream out = new FileOutputStream(f);
-				byte[] buf = new byte[4096];
-				for (int i = 0; i < 500; i++) {
-					rnd.nextBytes(buf);
-					out.write(buf);
+				if (!f.exists() || f.length() != BOCK_COUNT * 4096) {
+					java.util.Random rnd = new java.util.Random();
+				
+					FileOutputStream out = new FileOutputStream(f);
+					byte[] buf = new byte[4096];
+					for (int i = 0; i < BOCK_COUNT; i++) {
+						rnd.nextBytes(buf);
+						out.write(buf);
+					}
+					out.close();
 				}
-				out.close();
 				long length = f.length();
 				long t1=0, t2=0, t3, t4;
 				
