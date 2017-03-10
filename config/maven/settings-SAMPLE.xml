@@ -393,6 +393,8 @@
                 <foundation.service.jobs.max.submission.retries>3</foundation.service.jobs.max.submission.retries>
                 <foundation.service.jobs.queue.config.folder>basic</foundation.service.jobs.queue.config.folder>
                 <foundation.service.jobs.max.threads.per.queue>50</foundation.service.jobs.max.threads.per.queue>
+                <foundation.service.jobs.thread.restart.seconds>300</foundation.service.jobs.thread.restart.seconds>
+                <foundation.service.jobs.thread.restart.limit>50</foundation.service.jobs.thread.restart.limit>
 
 				<!-- ************************ Meta service *************************** -->
 

@@ -21,6 +21,7 @@ import org.iplantc.service.jobs.phases.schedulers.strategies.impl.TenantRandom;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.UserRandom;
 import org.iplantc.service.jobs.phases.utils.ZombieJobUtils;
 import org.joda.time.DateTime;
+import org.restlet.Application;
 
 /** Concrete job phase scheduler
  * 
@@ -47,12 +48,18 @@ public final class MonitoringScheduler
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
-    public MonitoringScheduler() throws JobException
+    /** Initialize the phase scheduler.
+     * 
+     * @param application the restlet application that we run under
+     * @throws JobException when construction fails
+     */
+    public MonitoringScheduler(Application application) throws JobException
     {
         super(JobPhaseType.MONITORING,
               new TenantRandom(),
               new UserRandom(),
-              new JobCreateOrder());
+              new JobCreateOrder(),
+              application);
     }
 
     /* ********************************************************************** */

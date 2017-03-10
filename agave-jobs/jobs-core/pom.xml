@@ -80,5 +80,10 @@
             <artifactId>statefulj-fsm-java7</artifactId>
             <version>${statefulj.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.restlet.jse</groupId>
+            <artifactId>org.restlet</artifactId>
+            <version>${restlet.version}</version>
+        </dependency>
 	</dependencies>
 </project>

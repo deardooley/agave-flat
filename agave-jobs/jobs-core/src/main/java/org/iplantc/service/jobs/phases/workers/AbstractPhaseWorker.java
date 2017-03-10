@@ -236,17 +236,18 @@ public abstract class AbstractPhaseWorker
             // Wait for next request.
             QueueingConsumer.Delivery delivery = null;
             try {
-                // TODO: figure out how to handle interruptions; for now we just exit.
-                //       Also, might need a timeout to check on interrupts that occur before I/O wait.
+                // Synchronous call.
                 delivery = consumer.nextDelivery();
             } catch (ShutdownSignalException e) {
                 _log.info("Shutdown signal received by thread " + getName(), e);
                 break;
             } catch (ConsumerCancelledException e) {
+                // This should never happen since we don't cancel consumers.
                 _log.info("Cancelled signal received by thread " + getName(), e);
-                continue;
+                break;
             } catch (InterruptedException e) {
-                _log.info("Interrupted signal received by thread " + getName(), e);
+                // No need to log exception details.
+                _log.info("Interrupted signal received by thread " + getName()); 
                 break;
             } catch (Exception e) {
                 _log.error("Unexpected exception received by thread " + getName(), e);

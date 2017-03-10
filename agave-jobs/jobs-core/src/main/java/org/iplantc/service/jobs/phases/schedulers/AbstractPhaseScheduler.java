@@ -55,6 +55,7 @@ import org.iplantc.service.jobs.phases.schedulers.strategies.ITenantStrategy;
 import org.iplantc.service.jobs.phases.schedulers.strategies.IUserStrategy;
 import org.iplantc.service.jobs.phases.utils.QueueConstants;
 import org.iplantc.service.jobs.phases.utils.QueueUtils;
+import org.iplantc.service.jobs.phases.utils.Throttle;
 import org.iplantc.service.jobs.phases.workers.AbstractPhaseWorker;
 import org.iplantc.service.jobs.phases.workers.ArchivingWorker;
 import org.iplantc.service.jobs.phases.workers.MonitoringWorker;
@@ -64,6 +65,7 @@ import org.iplantc.service.jobs.phases.workers.SubmittingWorker;
 import org.iplantc.service.jobs.queue.SelectorFilter;
 import org.iplantc.service.jobs.util.TenantQueues;
 import org.iplantc.service.jobs.util.TenantQueues.UpdateResult;
+import org.restlet.Application;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -215,6 +217,9 @@ public abstract class AbstractPhaseScheduler
     // A unique name for this scheduler.
     private final String _name;
     
+    // Reference to our restlet application.
+    private final Application _application;
+    
     // The parent thread group of all thread groups created by this scheduler.
     // By default, this thread group is not a daemon, so it will not be destroyed
     // if it becomes empty.
@@ -235,6 +240,9 @@ public abstract class AbstractPhaseScheduler
     // This flag is set by the one scheduler instance that 
     // updates the tenant queues on invocation.
     private static boolean _updatedTenantQueue = false;
+    
+    // Shutdown if we detect a thread restart storm.
+    private static final Throttle _threadRestartThrottle = initThreadRestartThrottle();
     
     // This is the thread that executes the run() method in this class and,
     // after initialization completes, executes the schedule() method.  The
@@ -284,7 +292,8 @@ public abstract class AbstractPhaseScheduler
     protected AbstractPhaseScheduler(JobPhaseType phaseType,
                                      ITenantStrategy tenantStrategy,
                                      IUserStrategy userStrategy,
-                                     IJobStrategy jobStrategy)
+                                     IJobStrategy jobStrategy,
+                                     Application application)
      throws JobException
     {
         // Check input.
@@ -308,6 +317,9 @@ public abstract class AbstractPhaseScheduler
             _log.error(msg);
             throw new JobException(msg);
         }
+        
+        // Assign the restlet application that spawned us. 
+        _application = application;
         
         // Set the strategy fields.
         _tenantStrategy = tenantStrategy;
@@ -450,45 +462,112 @@ public abstract class AbstractPhaseScheduler
     /* uncaughtException:                                                     */
     /* ---------------------------------------------------------------------- */
     /** Recover worker threads from an unexpected exceptions.  The JVM calls 
-     * this method when a worker dies.  The intent is to start another worker 
-     * thread with the same parameters as the dying thread after we log the 
-     * incident.  
+     * this method when a worker or other registered thread dies.  The intent is 
+     * to start another thread of the same type as the dying thread after we log
+     * the incident.  
      */
     @Override
     public void uncaughtException(Thread t, Throwable e) 
     {
-        // Print basic exception information.
         _log.error(e.toString());
         e.printStackTrace(); // stderr
         
-        // Restart worker threads only.
-        if (!(t instanceof AbstractPhaseWorker)) return;
+        // Restart worker threads.
+        if (t instanceof AbstractPhaseWorker) {
         
-        // Get the dead worker.
-        AbstractPhaseWorker oldWorker = (AbstractPhaseWorker) t;
+            // Get the dead worker.
+            AbstractPhaseWorker oldWorker = (AbstractPhaseWorker) t;
         
-        // Do our best to release any jobs listed in the published table.
-        releasePublishedJob(oldWorker);
+            // Do our best to release any jobs listed in the published table.
+            releasePublishedJob(oldWorker);
         
-        // Do our best to release any job claim.
-        releaseJobClaim(oldWorker);
+            // Do our best to release any job claim.
+            releaseJobClaim(oldWorker);
         
-        // Create the new thread object.
-        int newThreadNum = _threadSeqno.incrementAndGet();
-        AbstractPhaseWorker newWorker = createWorkerThread(oldWorker.getThreadGroup(), 
-                                                           oldWorker.getTenantId(), 
-                                                           oldWorker.getQueueName(), 
-                                                           newThreadNum);
+            // Are we in a restart storm?
+            if (_threadRestartThrottle.record()) {
+                // Create the new thread object.
+                int newThreadNum = _threadSeqno.incrementAndGet();
+                AbstractPhaseWorker newWorker = createWorkerThread(oldWorker.getThreadGroup(), 
+                                                                   oldWorker.getTenantId(), 
+                                                                   oldWorker.getQueueName(), 
+                                                                   newThreadNum);
           
-        // Log more information.
-        String msg = "Phase worker thread " + oldWorker.getName() + 
-                     " (" + oldWorker.getThreadUuid() + ") died unexpectedly. " +
-                     "Starting new worker " + newWorker.getName() + 
-                     " (" + newWorker.getThreadUuid() + ").";
-        _log.error(msg);
+                // Log more information.
+                String msg = "Phase worker thread " + oldWorker.getName() + 
+                             " (" + oldWorker.getThreadUuid() + ") died unexpectedly. " +
+                             "Starting new worker " + newWorker.getName() + 
+                             " (" + newWorker.getThreadUuid() + ").";
+                _log.error(msg);
         
-        // Let it rip.
-        newWorker.start();
+                // Let it rip.
+                newWorker.start();
+            }
+            else {
+                // Too many restarts in the configured time window.
+                String msg = "Unable to restart worker thread " + oldWorker.getName() +
+                             " because th limit of " + _threadRestartThrottle.getLimit() +
+                             " thread restarts in " + _threadRestartThrottle.getSeconds() + 
+                             " seconds was exceeded. Shutting down jobs instance.";
+                _log.error(msg);
+                _mainSchedulerThread.interrupt(); // rude but effective
+            }
+        }
+        else if (getTopicThreadName().equals(t.getName())) {
+            String msg = "Topic thread " + getTopicThreadName() + " failed on " + getSchedulerName();
+            if (_threadRestartThrottle.record()) {
+                msg += " - starting a new topic thread.";
+                _log.error(msg);
+                startTopicThread();
+            } 
+            else {
+                msg += " - limit of " + _threadRestartThrottle.getLimit() +
+                       " thread restarts in " + _threadRestartThrottle.getSeconds() + 
+                       " seconds exceeded. Shutting down jobs instance.";
+                _log.error(msg);
+                _mainSchedulerThread.interrupt(); // rude but effective
+            }
+        }
+        else if (getInterruptCleanUpThreadName().equals(t.getName())) {
+            String msg = "Interrupt clean up thread " + getInterruptCleanUpThreadName() + 
+                         " failed on " + getSchedulerName(); 
+            if (_threadRestartThrottle.record()) {
+                msg += " - starting a new interrupt clean up thread.";
+                _log.error(msg);
+                startInterruptCleanUpThread();
+            } 
+            else {
+                msg += " - limit of " + _threadRestartThrottle.getLimit() +
+                       " thread restarts in " + _threadRestartThrottle.getSeconds() + 
+                       " seconds exceeded. Shutting down jobs instance.";
+                _log.error(msg);
+                _mainSchedulerThread.interrupt(); // rude but effective
+            }
+        }
+        else if (getZombieCleanUpThreadName().equals(t.getName())) {
+            String msg = "Zombie clean up thread " + getZombieCleanUpThreadName() + 
+                         " failed on " + getSchedulerName();
+            if (_threadRestartThrottle.record()) {
+                msg += " - starting a new zombie clean up thread.";
+                _log.error(msg);
+                startZombieCleanUpThread();
+            } 
+            else {
+                msg += " - limit of " + _threadRestartThrottle.getLimit() +
+                       " thread restarts in " + _threadRestartThrottle.getSeconds() + 
+                       " seconds exceeded. Shutting down jobs instance.";
+                _log.error(msg);
+                _mainSchedulerThread.interrupt(); // rude but effective
+            }
+        }
+        else {
+            // This shouldn't happen since we determine a compile time which
+            // threads we are going to restart using this method.
+            String msg = "Thread " + t.getName() + ":" + t.getId() +
+                         " of unknown type threw an " +
+                         "uncaught exception.  Unable to restart the thread.";
+            _log.error(msg);
+        }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -1604,14 +1683,14 @@ public abstract class AbstractPhaseScheduler
             } // End polling loop.
         } catch (InterruptedException e) {
             // Interrupts cause a shutdown.
-            _log.info(_phaseType.name() + " shutting due to interrupt: " + e.getMessage());
+            _log.info(_name + " shutting due to interrupt: " + e.getMessage());
         } catch (Exception e) {
             // All other exceptions indicate some sort of problem.
             String msg = "Scheduler " + _name + " is shutting down because of an unexpected exception.";
             _log.error(msg, e);
         }
         finally {
-            // Clean up and shut everthing down.
+            // Clean up and shut everything down.
             shutdown();
             
             // Announce our termination.
@@ -1678,45 +1757,6 @@ public abstract class AbstractPhaseScheduler
     }
     
     /* ---------------------------------------------------------------------- */
-    /* getTenantUserJobMap:                                                   */
-    /* ---------------------------------------------------------------------- */
-    /** Create a map of tenants->users->jobs for use by scheduling algorithms.
-     * The outermost keys are tenant IDs and their values is a map with user
-     * keys.  The value associated with each user key is a list of jobs ready
-     * to be processed for that user.
-     * 
-     * @param jobs all jobs ready to process in this phase
-     * @return the ready jobs reorganized into a 2-level hash map
-     */
-    private HashMap<String,HashMap<String,List<Job>>> getTenantUserJobMap(List<Job> jobs)
-    {
-        // A map of tenants->users->jobs.
-        HashMap<String,HashMap<String,List<Job>>> tenantMap = new HashMap<>();
-        
-        // Cycle through all the jobs placing them in their proper place in the map.
-        for (Job job : jobs) {
-            // Get the tenant bucket for this job.
-            HashMap<String,List<Job>> userMap = tenantMap.get(job.getTenantId());
-            if (userMap == null) {
-                userMap = new HashMap<>();
-                tenantMap.put(job.getTenantId(), userMap);
-            }
-            
-            // Get the user bucket for this job.
-            List<Job> userJobList = userMap.get(job.getOwner());
-            if (userJobList == null) {
-                userJobList = new ArrayList<Job>();
-                userMap.put(job.getOwner(), userJobList);
-            }
-            
-            // Add the job to its list.
-            userJobList.add(job);
-        }
-        
-        return tenantMap;
-    }
-
-    /* ---------------------------------------------------------------------- */
     /* shutdown:                                                              */
     /* ---------------------------------------------------------------------- */
     /** Clean up before shutting down. None of the called methods throw exceptions.*/
@@ -1734,6 +1774,18 @@ public abstract class AbstractPhaseScheduler
         
         // Close all dedicated connections.
         closeConnections();
+        
+        // We arbitrarily choose one scheduler thread to stop our application;
+        if (_phaseType == JobPhaseType.STAGING)
+            try {
+                // Give the other threads a chance to shutdown.
+                try{Thread.sleep(1000);} catch (Exception e){}
+                _application.stop();
+            }
+            catch (Exception e) {
+                String msg = "Failure stopping application.";
+                _log.error(msg, e);
+            }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -2676,7 +2728,8 @@ public abstract class AbstractPhaseScheduler
             _log.debug(msg);
         }
 
-        // Decode the message.
+        // Decode the message.  Since there's no data in the message,
+        // as long as it decodes successfully we're ok.
         RefreshQueueInfoMessage refreshMsg = null;
         try {
             refreshMsg = RefreshQueueInfoMessage.fromJson(new String(body));
@@ -2810,7 +2863,7 @@ public abstract class AbstractPhaseScheduler
      * milliseconds between 0 to 999 to avoid having all scheduler polling at 
      * the exact same time.
      * 
-     * @return the number of millisecond to wait before polling again.
+     * @return the number of milliseconds to wait before polling again.
      */
     private int getSkewedPollTime()
     {
@@ -2850,6 +2903,19 @@ public abstract class AbstractPhaseScheduler
             _log.error(msg); 
             throw new RuntimeException(msg);
         }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* initThreadRestartThrottle:                                             */
+    /* ---------------------------------------------------------------------- */
+    /** Initialize the thread restart throttle using configuration settings.
+     * 
+     * @return the configured throttle
+     */
+    private static Throttle initThreadRestartThrottle()
+    {
+        return new Throttle(Settings.JOB_SCHEDULER_LEASE_SECONDS, 
+                            Settings.JOB_THREAD_RESTART_LIMIT);
     }
     
     /* ---------------------------------------------------------------------- */
@@ -2900,6 +2966,10 @@ public abstract class AbstractPhaseScheduler
         buf.append(Settings.JOB_QUEUE_CONFIG_FOLDER);
         buf.append("\n  JOB_MAX_THREADS_PER_QUEUE = ");
         buf.append(Settings.JOB_MAX_THREADS_PER_QUEUE);
+        buf.append("\n  JOB_THREAD_RESTART_SECONDS = ");
+        buf.append(Settings.JOB_THREAD_RESTART_SECONDS);
+        buf.append("\n  JOB_THREAD_RESTART_LIMIT = ");
+        buf.append(Settings.JOB_THREAD_RESTART_LIMIT);
         buf.append("\n  DEDICATED_TENANT_ID = ");
         buf.append(Settings.getDedicatedTenantIdFromServiceProperties());
         buf.append("\n  DRAIN_ALL_QUEUES_ENABLED = ");

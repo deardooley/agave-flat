@@ -143,28 +143,28 @@ public class JobsApplication extends AgaveApplication
             TaskService taskService = getTaskService();
             
             // Spawn each scheduler.
-            try {taskService.execute(new StagingScheduler());}
+            try {taskService.execute(new StagingScheduler(this));}
                 catch (Exception e)
                 {
                     String msg = "Unable to start StagingScheduler.";
                     _log.error(msg, e);
                     throw e;
                 }
-            try {taskService.execute(new SubmittingScheduler());}
+            try {taskService.execute(new SubmittingScheduler(this));}
                 catch (Exception e)
                 {
                     String msg = "Unable to start SubmittingScheduler.";
                     _log.error(msg, e);
                     throw e;
                 }
-            try {taskService.execute(new MonitoringScheduler());}
+            try {taskService.execute(new MonitoringScheduler(this));}
                 catch (Exception e)
                 {
                     String msg = "Unable to start MonitoringScheduler.";
                     _log.error(msg, e);
                     throw e;
                 }
-            try {taskService.execute(new ArchivingScheduler());}
+            try {taskService.execute(new ArchivingScheduler(this));}
                 catch (Exception e)
                 {
                     String msg = "Unable to start ArchivingScheduler.";

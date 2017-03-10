@@ -97,6 +97,8 @@ public class Settings {
 	public static int                           JOB_MAX_SUBMISSION_RETRIES;
 	public static String                        JOB_QUEUE_CONFIG_FOLDER;
 	public static int                           JOB_MAX_THREADS_PER_QUEUE;
+	public static int                           JOB_THREAD_RESTART_SECONDS;
+	public static int                           JOB_THREAD_RESTART_LIMIT;
 	
 	static
 	{
@@ -336,6 +338,20 @@ public class Settings {
             catch (Exception e) {
                 _log.error("Error initializing setting JOB_MAX_THREADS_PER_QUEUE, using default.", e);
                 JOB_MAX_THREADS_PER_QUEUE = 50;
+            }
+        
+        try {JOB_THREAD_RESTART_SECONDS = Integer.valueOf(props
+                .getProperty("iplant.service.jobs.thread.restart.seconds", "300"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_THREAD_RESTART_SECONDS, using default.", e);
+                JOB_THREAD_RESTART_SECONDS = 300;
+            }
+        
+        try {JOB_THREAD_RESTART_LIMIT = Integer.valueOf(props
+                .getProperty("iplant.service.jobs.thread.restart.limit", "50"));}
+            catch (Exception e) {
+                _log.error("Error initializing setting JOB_THREAD_RESTART_LIMIT, using default.", e);
+                JOB_THREAD_RESTART_LIMIT = 50;
             }
         
 		// --------------- End Queue-Based Implementation ---------------
