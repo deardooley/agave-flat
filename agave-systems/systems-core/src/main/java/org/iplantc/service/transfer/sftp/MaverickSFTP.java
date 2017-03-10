@@ -276,8 +276,8 @@ public class MaverickSFTP implements RemoteDataClient
 			
 			t.setTcpNoDelay(true);
 			t.setPerformancePreferences(0, 1, 2);
-			t.setSendBufferSize(MAX_BUFFER_SIZE);
-	        t.setReceiveBufferSize(MAX_BUFFER_SIZE);
+//			t.setSendBufferSize(MAX_BUFFER_SIZE);
+//	        t.setReceiveBufferSize(MAX_BUFFER_SIZE);
 			
 			SshClient ssh = con.connect(new com.sshtools.net.SocketWrapper(t), username);
 			
@@ -439,8 +439,14 @@ public class MaverickSFTP implements RemoteDataClient
 				} else {
 					sftpClient = new SftpClient(ssh2);
 				}
-				sftpClient.setBufferSize(50 * MAX_BUFFER_SIZE);
+				// set only if the file size is larger than we're confortable 
+				// putting in memory. by default this is -1, which means the 
+				// entire file is read into memory on a get/put
+//				sftpClient.setBufferSize(50*MAX_BUFFER_SIZE);
 				sftpClient.setMaxAsyncRequests(256);
+				sftpClient.setBufferSize(500*1024*1024);
+				sftpClient.setTransferMode(SftpClient.MODE_BINARY);
+				
 			}
 			
 			return sftpClient;

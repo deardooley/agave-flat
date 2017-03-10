@@ -22,19 +22,28 @@ package org.iplantc.service.transfer.sftp;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 
-import com.sshtools.net.SocketTransport;
+import org.apache.commons.io.FileUtils;
+import org.apache.log4j.lf5.util.StreamUtils;
+
 import com.sshtools.publickey.ConsoleKnownHostsKeyVerification;
+import com.sshtools.publickey.SshPrivateKeyFile;
+import com.sshtools.publickey.SshPrivateKeyFileFactory;
 import com.sshtools.sftp.SftpClient;
-import com.sshtools.sftp.SftpFile;
-import com.sshtools.sftp.SftpFileAttributes;
-import com.sshtools.ssh.PasswordAuthentication;
+import com.sshtools.ssh.PublicKeyAuthentication;
 import com.sshtools.ssh.SshAuthentication;
 import com.sshtools.ssh.SshClient;
 import com.sshtools.ssh.SshConnector;
+import com.sshtools.ssh.components.SshKeyPair;
 import com.sshtools.ssh2.Ssh2Client;
 import com.sshtools.ssh2.Ssh2Context;
+import com.sshtools.ssh2.Ssh2PublicKeyAuthentication;
 
 /**
  * This example demonstrates the connection process connecting to an SSH2 server
@@ -43,7 +52,35 @@ import com.sshtools.ssh2.Ssh2Context;
  * @author Lee David Painter
  */
 public class SftpConnect {
-
+	public static int ITERATIONS = 2;
+	public static int BOCK_COUNT = 50000;
+	
+	public static void calculateTime(long uend, long ustart, long dend, long dstart, long length) {
+		long ue = uend - ustart;
+//		System.out.println("Took " + String.valueOf(e)
+//				+ " milliseconds");
+		float ukbs = 0;
+		if (ue >= 1000) {
+			ukbs = ((float) length / 1024) / ((float) ue / 1000);
+//			System.out.println("Upload Transfered at "
+//					+ String.valueOf(kbs) + " kbs");
+		}
+		
+		long de = dend - dstart;
+//		System.out.println("Took " + String.valueOf(e)
+//				+ " milliseconds");
+		float dkbs = 0;
+		if (de >= 1000) {
+			dkbs = ((float) length / 1024) / ((float) de / 1000);
+//			System.out.println("Upload Transfered at "
+//					+ String.valueOf(kbs) + " kbs");
+		}
+		
+		System.out.println(String.valueOf(length) 
+				+ "\t" + String.valueOf(ue) + "\t" + String.valueOf(ukbs)
+				+ "\t" + String.valueOf(de) + "\t" + String.valueOf(dkbs));
+	}
+	
 	public static void main(String[] args) {
 
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(
@@ -51,27 +88,35 @@ public class SftpConnect {
 
 		try {
 			System.out.print("Hostname: ");
-			String hostname;
-			hostname = reader.readLine();
+			String hostname = "dtn01.prod.agaveapi.co";
+//			hostname = reader.readLine();
 
-			int idx = hostname.indexOf(':');
+//			int idx = hostname.indexOf(':');
 			int port = 22;
-			if (idx > -1) {
-				port = Integer.parseInt(hostname.substring(idx + 1));
-				hostname = hostname.substring(0, idx);
+//			if (idx > -1) {
+//				port = Integer.parseInt(hostname.substring(idx + 1));
+//				hostname = hostname.substring(0, idx);
+//
+//			}
+//
+//			System.out.print("Username [Enter for "
+//					+ System.getProperty("user.name") + "]: ");
+//
+//			String username;
+//			username = reader.readLine();
+//
+//			if (username == null || username.trim().equals(""))
+//				username = System.getProperty("user.name");
+//			System.out.println("Connecting to " + hostname);
 
-			}
-
-			System.out.print("Username [Enter for "
-					+ System.getProperty("user.name") + "]: ");
-
-			String username;
-			username = reader.readLine();
-
-			if (username == null || username.trim().equals(""))
-				username = System.getProperty("user.name");
+			String	username = System.getProperty("user.name");
 			System.out.println("Connecting to " + hostname);
-
+			
+			String privateKey = FileUtils.readFileToString(new File(System.getProperty("user.home") + "/.ssh/id_rsa"));
+			String publicKey = FileUtils.readFileToString(new File(System.getProperty("user.home") + "/.ssh/id_rsa.pub"));
+			
+			String password = "";
+			
 			/**
 			 * Create an SshConnector instance
 			 */
@@ -87,96 +132,110 @@ public class SftpConnect {
 			/**
 			 * Connect to the host
 			 */
-			SocketTransport t = new SocketTransport(hostname, port);
+//			SocketTransport t = new SocketTransport(hostname, port);
+//			t.setTcpNoDelay(true);
+//
+//			SshClient ssh = con.connect(t, username, true);
+			
+			SocketAddress sockaddr = null; 
+	        Socket t = new Socket();
+
+			sockaddr = new InetSocketAddress(hostname, port);
+			
+			t.connect(sockaddr, 15000);
+			
 			t.setTcpNoDelay(true);
-
-			SshClient ssh = con.connect(t, username, true);
-
+			t.setPerformancePreferences(0, 1, 2);
+//			t.setSendBufferSize(4096*BOCK_COUNT/10);
+//	        t.setReceiveBufferSize(4096*BOCK_COUNT/10);
+			
+			SshClient ssh = con.connect(new com.sshtools.net.SocketWrapper(t), username);
+			
 			Ssh2Client ssh2 = (Ssh2Client) ssh;
-			/**
-			 * Authenticate the user using password authentication
-			 */
-			PasswordAuthentication pwd = new PasswordAuthentication();
+//			/**
+//			 * Authenticate the user using password authentication
+//			 */
+//			PasswordAuthentication pwd = new PasswordAuthentication();
+//
+//			do {
+//				System.out.print("Password: ");
+//				pwd.setPassword(reader.readLine());
+//				pwd.setPassword(");
+//			} while (ssh2.authenticate(pwd) != SshAuthentication.COMPLETE
+//					&& ssh.isConnected());
 
+			Ssh2PublicKeyAuthentication auth = new Ssh2PublicKeyAuthentication();
+			int authStatus = 0;
 			do {
-				System.out.print("Password: ");
-				pwd.setPassword(reader.readLine());
-			} while (ssh2.authenticate(pwd) != SshAuthentication.COMPLETE
-					&& ssh.isConnected());
+				SshPrivateKeyFile pkfile = SshPrivateKeyFileFactory.parse(privateKey.getBytes());
+				
+				SshKeyPair pair;
+				if (pkfile.isPassphraseProtected()) {
+                    pair = pkfile.toKeyPair(password);
+				} else {
+				    pair = pkfile.toKeyPair(null);
+				
+				}
 
+				((PublicKeyAuthentication)auth).setPrivateKey(pair.getPrivateKey());
+				((PublicKeyAuthentication)auth).setPublicKey(pair.getPublicKey());
+				authStatus = ssh2.authenticate(auth);
+			}
+			while (authStatus != SshAuthentication.COMPLETE 
+					&& authStatus != SshAuthentication.FAILED
+					&& authStatus != SshAuthentication.CANCELLED
+					&& ssh.isConnected());
+			
 			/**
 			 * Start a session and do basic IO
 			 */
 			if (ssh.isAuthenticated()) {
 
 				SftpClient sftp = new SftpClient(ssh2);
-
+				
+//				/**
+//				 * List the contents of the directory
+//				 */
+//				SftpFile[] ls = sftp.ls();
+//				for (int i = 0; i < ls.length; i++) {
+//					ls[i].getParent();
+//					System.out.println(SftpClient.formatLongname(ls[i]));
+//				}
+				/**
+				 * Generate a temporary file for uploading/downloading
+				 */
+				File f = new File(System.getProperty("user.home"), "sftp-file");
+				if (!f.exists() || f.length() != BOCK_COUNT * 4096) {
+					java.util.Random rnd = new java.util.Random();
+	
+					FileOutputStream out = new FileOutputStream(f);
+					byte[] buf = new byte[4096];
+					for (int i = 0; i < BOCK_COUNT; i++) {
+						rnd.nextBytes(buf);
+						out.write(buf);
+					}
+					out.close();
+				}
+				long t1=0,t2=0,t3=0,t4=0;
+				long length = f.length();
+				
+				
 				/**
 				 * Perform some text mode operations
 				 */
 //				sftp.setTransferMode(SftpClient.MODE_TEXT);
 				sftp.setTransferMode(SftpClient.MODE_BINARY);
 				
-				/**
-				 * List the contents of the directory
-				 */
-				SftpFile[] ls = sftp.ls();
-				for (int i = 0; i < ls.length; i++) {
-					ls[i].getParent();
-					System.out.println(SftpClient.formatLongname(ls[i]));
-				}
-				/**
-				 * Generate a temporary file for uploading/downloading
-				 */
-				File f = new File(System.getProperty("user.home"), "sftp-file");
-				java.util.Random rnd = new java.util.Random();
 
-				FileOutputStream out = new FileOutputStream(f);
-				byte[] buf = new byte[4096];
-				for (int i = 0; i < 500; i++) {
-					rnd.nextBytes(buf);
-					out.write(buf);
-				}
-				out.close();
-				
-				sftp.setBufferSize((int)f.length());
-				
+//				sftp.setBufferSize((int)f.length());
+//				sftp.setBufferSize(-1);
+//				sftp.setBufferSize(4096*BOCK_COUNT/10);
+//				sftp.setBlockSize(32768*4);
 				/**
 				 * Create a directory
 				 */
-				String remoteDirName = "test-sftp-" + System.currentTimeMillis() + "/test-files";
+				String remoteDirName = "test-sftp-" + System.currentTimeMillis();
 				sftp.mkdirs(remoteDirName);
-
-				/**
-				 * Change directory
-				 */
-				sftp.cd(remoteDirName);
-
-				/**
-				 * Put a file into our new directory
-				 */
-				long length = f.length();
-				System.out.println("Putting file");
-				long t1 = System.currentTimeMillis();
-				sftp.put(f.getAbsolutePath());
-				long t2 = System.currentTimeMillis();
-				System.out.println("Completed.");
-				long e = t2 - t1;
-				System.out.println("Took " + String.valueOf(e)
-						+ " milliseconds");
-				float kbs;
-				if (e >= 1000) {
-					kbs = ((float) length / 1024) / ((float) e / 1000);
-					System.out.println("Upload Transfered at "
-							+ String.valueOf(kbs) + " kbs");
-				}
-				/**
-				 * Get the attributes of the uploaded file
-				 */
-				System.out.println("Getting attributes of the remote file");
-				SftpFileAttributes attrs = sftp.stat(f.getName());
-				System.out
-						.println(SftpClient.formatLongname(attrs, f.getName()));
 
 				/**
 				 * Download the file inot a new location
@@ -184,28 +243,100 @@ public class SftpConnect {
 				File f2 = new File(System.getProperty("user.home"),
 						"downloaded");
 				f2.mkdir();
+				System.out.println("Test: (maverick legacy native api)");
+				for(int z=0;z<ITERATIONS;z++)
+				{
+					/**
+					 * Change directory
+					 */
+					sftp.cd(remoteDirName);
+	
+					/**
+					 * Put a file into our new directory
+					 */
+					
+//					System.out.println("Putting file");
+					t1 = System.currentTimeMillis();
+					sftp.put(f.getAbsolutePath());
+					t2 = System.currentTimeMillis();
+	//				System.out.println("Completed.");
+	//				long e = t2 - t1;
+	//				System.out.println("Took " + String.valueOf(e)
+	//						+ " milliseconds");
+	//				float kbs;
+	//				if (e >= 1000) {
+	//					kbs = ((float) length / 1024) / ((float) e / 1000);
+	//					System.out.println("Upload Transfered at "
+	//							+ String.valueOf(kbs) + " kbs");
+	//				}
+	//				/**
+	//				 * Get the attributes of the uploaded file
+	//				 */
+	//				System.out.println("Getting attributes of the remote file");
+	//				SftpFileAttributes attrs = sftp.stat(f.getName());
+	//				System.out
+	//						.println(SftpClient.formatLongname(attrs, f.getName()));
+	
+					
+					sftp.lcd(f2.getAbsolutePath());
+	
+//					sftp.setTransferMode(SftpClient.MODE_TEXT);
+//					sftp.setBlockSize(32*1024 * 16);
+//					System.out.println("Getting file");
+					
+					InputStream in = null;
+					OutputStream out = null;
+					try {
+						in = sftp.getInputStream(f.getName());
+						out = new FileOutputStream("/dev/null");
+						byte[] buf = new byte[1024*1024];
+					    int bytesRead = in.read(buf);
+					    
+					    t3 = System.currentTimeMillis();
+						
+					    while (bytesRead != -1) {
+							out.write(buf, 0, bytesRead);
+					      bytesRead = in.read(buf);
+					    }
+					    out.flush();
 
-				sftp.lcd(f2.getAbsolutePath());
-
-				System.out.println("Getting file");
-				t1 = System.currentTimeMillis();
-				sftp.get(f.getName());
-				t2 = System.currentTimeMillis();
-				System.out.println("Completed.");
-				e = t2 - t1;
-				System.out.println("Took " + String.valueOf(e)
-						+ " milliseconds");
-				if (e >= 1000) {
-					kbs = ((float) length / 1024) / ((float) e / 1000);
-					System.out.println("Download Transfered at "
-							+ String.valueOf(kbs) + " kbs");
+						
+						t4 = System.currentTimeMillis();
+					}
+					catch (Exception e) {
+						try { in.close();} catch (Exception e1){}
+						try { out.close();} catch (Exception e1){}
+					}
+					
+//					sftp.setMaxAsyncRequests(2048);
+//					t3 = System.currentTimeMillis();
+//					sftp.get(f.getName(), "/dev/null");
+//					t4 = System.currentTimeMillis();
+					
+					
+//					System.out.println("Completed.");
+//					e = t2 - t1;
+//					System.out.println("Took " + String.valueOf(e)
+//							+ " milliseconds");
+//					if (e >= 1000) {
+//						kbs = ((float) length / 1024) / ((float) e / 1000);
+//						System.out.println("Download Transfered at "
+//								+ String.valueOf(kbs) + " kbs");
+//					}
+					
+					calculateTime(t2, t1, t4, t3, length);
+					
+					// cd back to teh original directory
+					sftp.cd("");
 				}
-				// cd back to teh original directory
-				sftp.cd("");
 				
 				// delete the test directory
 				sftp.rm(remoteDirName, true, true);
 
+				System.out.println("Cleaning up local directory");
+				FileUtils.deleteQuietly(f);
+				FileUtils.deleteQuietly(f2);
+				
 //				/**
 //				 * Set the permissions on the file and check they were changed
 //				 * they should be -rw-r--r--
