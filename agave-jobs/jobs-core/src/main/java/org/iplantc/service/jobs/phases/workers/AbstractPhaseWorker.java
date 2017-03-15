@@ -19,6 +19,7 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobFinishedException;
 import org.iplantc.service.jobs.exceptions.JobWorkerException;
 import org.iplantc.service.jobs.managers.JobManager;
+import org.iplantc.service.jobs.managers.JobSchedulerEventProcessor;
 import org.iplantc.service.jobs.managers.SystemAvailabilityCheck;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
@@ -29,6 +30,7 @@ import org.iplantc.service.jobs.phases.schedulers.AbstractPhaseScheduler;
 import org.iplantc.service.jobs.phases.utils.JobInterruptUtils;
 import org.iplantc.service.jobs.phases.utils.QueueConstants;
 import org.iplantc.service.jobs.queue.actions.WorkerAction;
+import org.iplantc.service.notification.events.enumerations.JobSchedulerEventType;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.enumerations.StorageProtocolType;
 import org.joda.time.DateTime;
@@ -156,6 +158,17 @@ public abstract class AbstractPhaseWorker
         if (_log.isDebugEnabled())
             _log.debug("-> Starting worker thread " + getName() + ".");
         
+        // Send event.
+        JobSchedulerEventProcessor.sendWorkerThreadEvent(
+                JobSchedulerEventType.WORKER_THREAD_STARTED,
+                _scheduler.getSchedulerUUID(), 
+                getTenantId(),
+                _scheduler.getPhaseType(), 
+                Thread.currentThread().getName(), 
+                getThreadUuid(),
+                getThreadNum(), 
+                getQueueName());
+        
         // ----------------- Job Queue Set Up -------------------
         // Initialization retry loop.
         QueueingConsumer consumer = null;
@@ -251,6 +264,16 @@ public abstract class AbstractPhaseWorker
                 break;
             } catch (Exception e) {
                 _log.error("Unexpected exception received by thread " + getName(), e);
+                
+                // Send event.
+                JobSchedulerEventProcessor.sendThreadException(
+                        JobSchedulerEventType.WORKER_THREAD_EXCEPTION,
+                        _scheduler.getSchedulerUUID(),
+                        getTenantId(),
+                        getPhaseType(),
+                        Thread.currentThread().getName(),
+                        e, 
+                        "No action required; worker thread will be restarted.");
                 break;
             }
             

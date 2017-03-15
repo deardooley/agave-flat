@@ -11,6 +11,7 @@ import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
+import org.iplantc.service.jobs.managers.JobSchedulerEventProcessor;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
@@ -20,6 +21,7 @@ import org.iplantc.service.jobs.phases.schedulers.strategies.impl.JobCreateOrder
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.TenantRandom;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.UserRandom;
 import org.iplantc.service.jobs.phases.utils.ZombieJobUtils;
+import org.iplantc.service.notification.events.enumerations.JobSchedulerEventType;
 import org.joda.time.DateTime;
 import org.restlet.Application;
 
@@ -159,6 +161,17 @@ public final class MonitoringScheduler
                 String msg = getZombieCleanUpThreadName() + 
                              " failed to process zombie jobs but will try again.";
                 _log.error(msg);
+                
+                // Send event.
+                JobSchedulerEventProcessor.sendThreadException(
+                        JobSchedulerEventType.ZOMBIE_THREAD_EXECPTION,
+                        getSchedulerUUID(),
+                        "*",
+                        getPhaseType(),
+                        Thread.currentThread().getName(),
+                        e, 
+                        "Determine why zombie clean up thread experienced an exception. " +
+                          "Job service continues to run.");
             }
             
             // Check for interrupts before sleeping.

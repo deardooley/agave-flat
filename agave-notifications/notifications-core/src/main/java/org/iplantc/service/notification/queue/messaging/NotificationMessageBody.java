@@ -6,7 +6,6 @@ package org.iplantc.service.notification.queue.messaging;
 import org.iplantc.service.common.messaging.DefaultMessageBody;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author dooley

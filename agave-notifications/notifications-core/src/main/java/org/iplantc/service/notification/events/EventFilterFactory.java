@@ -18,6 +18,8 @@ public class EventFilterFactory {
 			return new InternalUserNotificationEvent(uuid, notification,event, owner);
 		} else if (eventResourceType.equals(UUIDType.JOB)) {
 			return new JobNotificationEvent(uuid, notification,event, owner);
+        } else if (eventResourceType.equals(UUIDType.JOB_SCHEDULER)) {
+            return new JobSchedulerNotificationEvent(uuid, notification,event, owner);
 		} else if (eventResourceType.equals(UUIDType.METADATA)) {
 			return new MetadataNotificationEvent(uuid, notification,event, owner);
 		} else if (eventResourceType.equals(UUIDType.MONITOR)) {

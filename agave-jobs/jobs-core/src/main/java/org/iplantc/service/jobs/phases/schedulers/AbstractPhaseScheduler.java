@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.UUID;
+import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.common.uuid.AgaveUUID;
+import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.jobs.Settings;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.dao.JobInterruptDao;
@@ -31,9 +33,11 @@ import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobQueueException;
 import org.iplantc.service.jobs.exceptions.JobQueueFilterException;
 import org.iplantc.service.jobs.exceptions.JobSchedulerException;
+import org.iplantc.service.jobs.managers.JobSchedulerEventProcessor;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobInterrupt;
 import org.iplantc.service.jobs.model.JobQueue;
+import org.iplantc.service.jobs.model.JobSchedulerEvent;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueJobMessage;
@@ -65,6 +69,7 @@ import org.iplantc.service.jobs.phases.workers.SubmittingWorker;
 import org.iplantc.service.jobs.queue.SelectorFilter;
 import org.iplantc.service.jobs.util.TenantQueues;
 import org.iplantc.service.jobs.util.TenantQueues.UpdateResult;
+import org.iplantc.service.notification.events.enumerations.JobSchedulerEventType;
 import org.restlet.Application;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -214,7 +219,12 @@ public abstract class AbstractPhaseScheduler
     private final IUserStrategy   _userStrategy;
     private final IJobStrategy    _jobStrategy;
 
-    // A unique name for this scheduler.
+    // Assign an agave uuid to all scheduler instances that run in this server.  
+    // All phase specific subclasses use the same uuid as long as they run
+    // in the same JVM.
+    private static final AgaveUUID _uuid = new AgaveUUID(UUIDType.JOB_SCHEDULER);
+    
+    // A unique name for this scheduler incorporates the uuid;
     private final String _name;
     
     // Reference to our restlet application.
@@ -238,8 +248,9 @@ public abstract class AbstractPhaseScheduler
     private static final AtomicInteger _threadSeqno = new AtomicInteger(0);
     
     // This flag is set by the one scheduler instance that 
-    // updates the tenant queues on invocation.
-    private static boolean _updatedTenantQueue = false;
+    // updates the tenant queues and performs other one-time
+    // initialization upon invocation.
+    private static boolean _oneTimeInitialized = false;
     
     // Shutdown if we detect a thread restart storm.
     private static final Throttle _threadRestartThrottle = initThreadRestartThrottle();
@@ -329,8 +340,10 @@ public abstract class AbstractPhaseScheduler
         // Assign our phase identity.
         _phaseType = phaseType;
         
-        // Assign our unique name.
-        _name = phaseType.name() + "-" + UUID.randomUUID();
+        // Assign our unique name that is phase-specific.
+        // Note that the uuid is the same for all schedulers
+        // in this JVM.
+        _name = phaseType.name() + "-" + _uuid.toString();
         
         // Create parent thread group.
         _phaseThreadGroup = new ThreadGroup(phaseType.name() + THREADGROUP_SUFFIX);
@@ -426,8 +439,8 @@ public abstract class AbstractPhaseScheduler
         
         // Initialize this phase scheduler and start working.
         try {
-            // Update tenant queues.
-            updateTenantQueues();
+            // Update tenant queues, etc.
+            oneTimeInitialization();
             
             // Retrieve the latest queue information from the database for this
             // phase.  This should be called before starting any threads.
@@ -450,10 +463,16 @@ public abstract class AbstractPhaseScheduler
         }
         catch (Exception e)
         {
-            // Let's try to shutdown the JVM.
+            // Record the error.
             String msg = getSchedulerName() + 
                          " phase scheduler initialization failure.  Aborting.";
             _log.error(msg); // Already logged initial exception message.
+            
+            // Send event.
+            JobSchedulerEventProcessor.sendSchedulerException(
+                getSchedulerUUID(), _phaseType, getSchedulerName(), e, "Restart jobs service");
+
+            // Let's surface this problem to the restlet subsystem.
             throw new RuntimeException(msg, e);
         }
     }
@@ -569,6 +588,11 @@ public abstract class AbstractPhaseScheduler
             _log.error(msg);
         }
     }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getSchedulerUUID:                                                      */
+    /* ---------------------------------------------------------------------- */
+    public static AgaveUUID getSchedulerUUID(){return _uuid;}
     
     /* ---------------------------------------------------------------------- */
     /* getSchedulerName:                                                      */
@@ -1005,20 +1029,50 @@ public abstract class AbstractPhaseScheduler
     /*                            Private Methods                             */
     /* ********************************************************************** */
     /* ---------------------------------------------------------------------- */
-    /* updateTenantQueues:                                                    */
+    /* oneTimeInitialization:                                                 */
     /* ---------------------------------------------------------------------- */
-    /** Read the queue configuration resource file and add any new queues to the
-     * database.  Since we synchronize on the CLASS object, only one subclass
+    /** Only one instance of this class performs the one-time initialization for 
+     * all instances.  Since we synchronize on the CLASS object, only one subclass
      * executes this method at a time.  The subclass that executes this method
-     * set a static flag that prevents further executions of this method in the 
-     * same JVM/classloader.
+     * sets a static flag that prevents further executions of this method in the 
+     * same JVM/classloader. 
      */
-    private static synchronized void updateTenantQueues()
+    private static synchronized void oneTimeInitialization()
     {
         // Only one scheduler gets to update the tenant queues
         // on any jobs-core invocation.
-        if (_updatedTenantQueue) return;
+        if (_oneTimeInitialized) return;
         
+        // We get only one attempt for this initialization to succeed.
+        try {
+            // Best effort attempt to update the queue 
+            // definitions in the database for all tenants.
+            updateTenantQueues();
+            
+            // Best effort attempt to send notification
+            // that this scheduler instances has started.
+            JobSchedulerEventProcessor.sendSchedulerStartedEvent(getSchedulerUUID());
+        }
+        catch (Exception e) {
+            // Currently all one-time initialization is best effort,
+            // so we just log the problem an continue;
+            String msg = "One-time initialization failure";
+            _log.error(msg, e);
+        }
+        finally {
+            // We only get one shot at queue refresh.
+            _oneTimeInitialized = true;
+        }
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* updateTenantQueues:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Read the queue configuration resource file and add any new queues to the
+     * database.  
+     */
+    private static void updateTenantQueues()
+    {
         // Call the update utility.
         TenantQueues tenantQueues = new TenantQueues();
         try {
@@ -1034,10 +1088,6 @@ public abstract class AbstractPhaseScheduler
         }
         catch (Exception e) {
             _log.error("Tenant queue definition not refreshed, using existing definitions.");
-        }
-        finally {
-            // We only get one shot at queue refresh.
-            _updatedTenantQueue = true;
         }
     }
     
@@ -1347,21 +1397,40 @@ public abstract class AbstractPhaseScheduler
                 if (_log.isDebugEnabled())
                     _log.debug("-> Starting topic thread " + getName() + ".");
                 
+                // Send event.
+                JobSchedulerEventProcessor.sendThreadStarted(
+                        JobSchedulerEventType.TOPIC_THREAD_STARTED,   
+                        getSchedulerUUID(), _phaseType, getTopicThreadName());
+                
+                // Wait for topic messages.
                 try {subscribeToJobTopic();}
                 catch (JobSchedulerException e) {
                     String msg = getTopicThreadName() + " aborting! "  +
                          _phaseType.name() + 
                          " scheduler cannot receive any administrative requests.";
-                    _log.error(msg);
-                    throw new RuntimeException(msg);
+                    _log.error(msg, e);
+                    
+                    // Send event.
+                    JobSchedulerEventProcessor.sendThreadException(
+                            JobSchedulerEventType.TOPIC_THREAD_EXECPTION,
+                            getSchedulerUUID(),
+                            "*",
+                            getPhaseType(),
+                            Thread.currentThread().getName(),
+                            e, 
+                            "Determine why topic thread terminated, then restart jobs service.");
+                    
+                    // Throw runtime exception.
+                    throw new RuntimeException(msg, e);
                 }
+                finally {
+                    // This thread is terminating.
+                    if (_log.isDebugEnabled())
+                        _log.debug("<- Exiting topic thread " + getName() + ".");
                 
-                // This thread is terminating.
-                if (_log.isDebugEnabled())
-                    _log.debug("<- Exiting topic thread " + getName() + ".");
-                
-                // Clear the thread reference.
-                _topicThread = null;
+                    // Clear the thread reference.
+                    _topicThread = null;
+                }
             }
         };
         
@@ -1530,6 +1599,12 @@ public abstract class AbstractPhaseScheduler
                 if (_log.isDebugEnabled())
                     _log.debug("-> Starting interrupt clean up thread " + getName() + ".");
                 
+                // Send event.
+                JobSchedulerEventProcessor.sendThreadStarted(
+                        JobSchedulerEventType.INTERRUPT_THREAD_STARTED,
+                        getSchedulerUUID(), _phaseType, getInterruptCleanUpThreadName());
+                
+                // Keep interrupt table tidy.
                 deleteExpiredInterrupts();
                 
                 // This thread is terminating.
@@ -1562,6 +1637,12 @@ public abstract class AbstractPhaseScheduler
                 if (_log.isDebugEnabled())
                     _log.debug("-> Starting zombie clean up thread " + getName() + ".");
                 
+                // Send event.
+                JobSchedulerEventProcessor.sendThreadStarted(
+                        JobSchedulerEventType.ZOMBIE_THREAD_STARTED,
+                        getSchedulerUUID(), _phaseType, getZombieCleanUpThreadName());
+                
+                // Do the work.
                 monitorZombies();
                 
                 // This thread is terminating.
@@ -1688,6 +1769,10 @@ public abstract class AbstractPhaseScheduler
             // All other exceptions indicate some sort of problem.
             String msg = "Scheduler " + _name + " is shutting down because of an unexpected exception.";
             _log.error(msg, e);
+            
+            // Send event.
+            JobSchedulerEventProcessor.sendSchedulerException(
+                    getSchedulerUUID(), _phaseType, getSchedulerName(), e, "Restart jobs service");
         }
         finally {
             // Clean up and shut everything down.
@@ -1762,6 +1847,13 @@ public abstract class AbstractPhaseScheduler
     /** Clean up before shutting down. None of the called methods throw exceptions.*/
     private void shutdown()
     {
+        // Try to send off the event before we shutdown.
+        JobSchedulerEventProcessor.sendSchedulerName(
+                JobSchedulerEventType.SCHEDULER_STOPPING,
+                getSchedulerUUID(),
+                getPhaseType(),
+                getSchedulerName());
+        
         // Try to release any lease that we might be holding.
         if (Settings.JOB_SCHEDULER_MODE) 
             (new JobLeaseDao(_phaseType, _name)).releaseLease();
@@ -2000,6 +2092,17 @@ public abstract class AbstractPhaseScheduler
                 String msg = getInterruptCleanUpThreadName() + 
                              " failed to delete expired interrupts but will try again.";
                 _log.error(msg);
+                
+                // Send event.
+                JobSchedulerEventProcessor.sendThreadException(
+                        JobSchedulerEventType.INTERRUPT_THREAD_EXECPTION,
+                        getSchedulerUUID(),
+                        "*",
+                        getPhaseType(),
+                        Thread.currentThread().getName(),
+                        e, 
+                        "Determine why interrupt clean up thread experienced an exception. " +
+                          "Job service continues to run.");
             }
             
             // Check for interrupts before sleeping.
@@ -2350,13 +2453,20 @@ public abstract class AbstractPhaseScheduler
         // ---------------------- Marshalling ----------------------
         // Marshal the json message into it message object.
         AbstractQueueJobMessage qjob = null;
+        JobSchedulerEventType eventType = null;
         try {
-            if (jobCommand == JobCommand.TPC_PAUSE_JOB)
+            if (jobCommand == JobCommand.TPC_PAUSE_JOB) {
                 qjob = PauseJobMessage.fromJson(new String(body));
-            else if (jobCommand == JobCommand.TPC_STOP_JOB)
+                eventType = JobSchedulerEventType.TPC_PAUSE_JOB_RECEIVED;
+            }
+            else if (jobCommand == JobCommand.TPC_STOP_JOB) {
                 qjob = StopJobMessage.fromJson(new String(body));
-            else if (jobCommand == JobCommand.TPC_DELETE_JOB)
+                eventType = JobSchedulerEventType.TPC_STOP_JOB_RECEIVED;
+            }
+            else if (jobCommand == JobCommand.TPC_DELETE_JOB) {
                 qjob = DeleteJobMessage.fromJson(new String(body));
+                eventType = JobSchedulerEventType.TPC_DELETE_JOB_RECEIVED;
+            }
             else
             {
                 // This should never happen.
@@ -2409,6 +2519,15 @@ public abstract class AbstractPhaseScheduler
             return false;
         }
         
+        // Send event.
+        JobSchedulerEventProcessor.sendJobEvent(eventType,
+                                                getSchedulerUUID(),
+                                                job.getTenantId(),
+                                                getPhaseType(),
+                                                job.getName(),
+                                                job.getUuid(),
+                                                job.getEpoch());
+                                                
         // Success.
         return true;
     }
@@ -2502,6 +2621,13 @@ public abstract class AbstractPhaseScheduler
             shutdownMsg.phases.isEmpty() || 
             shutdownMsg.phases.contains(_phaseType)) 
         {
+            // Try to send off the event before we shutdown.
+            JobSchedulerEventProcessor.sendSchedulerName(
+                    JobSchedulerEventType.TPC_SHUTDOWN_RECEIVED,
+                    getSchedulerUUID(),
+                    getPhaseType(),
+                    getSchedulerName());
+            
             // Pull the trigger!
             try {if (_mainSchedulerThread != null) _mainSchedulerThread.interrupt();}
                 catch (Exception e) {
@@ -2591,6 +2717,13 @@ public abstract class AbstractPhaseScheduler
             return false;
         }
         
+        // Send event.
+        JobSchedulerEventProcessor.sendQueueRefresh(getSchedulerUUID(),
+                                                    resetMsg.tenantId,
+                                                    resetMsg.phase,
+                                                    resetMsg.queueName,
+                                                    resetMsg.numWorkersDelta);
+        
         // ------------------------- Get ThreadGropup -----------------------
         // Find the queue's worker thread group.
         ThreadGroup queueThreadGroup = _queueThreadGroups.get(resetMsg.queueName);
@@ -2659,10 +2792,22 @@ public abstract class AbstractPhaseScheduler
                     
                     // Schedule the worker for termination after 
                     // it completes current work.
-                    if (((AbstractPhaseWorker)curThread).lazyTerminate()) {
+                    AbstractPhaseWorker workerThread = (AbstractPhaseWorker) curThread;
+                    if (workerThread.lazyTerminate()) {
                         removedWorkers++;
                         if (_log.isDebugEnabled())
                             _log.debug("Thread " + curThread.getName() + " marked for lazy termination.");
+                        
+                        // Send event.
+                        JobSchedulerEventProcessor.sendWorkerThreadEvent(
+                                JobSchedulerEventType.WORKER_THREAD_SCHEDULED_TO_STOP,
+                                getSchedulerUUID(), 
+                                workerThread.getTenantId(),
+                                getPhaseType(), 
+                                curThread.getName(), 
+                                workerThread.getThreadUuid(),
+                                workerThread.getThreadNum(), 
+                                workerThread.getQueueName());
                     }
                     
                     if (removedWorkers >= numWorkers) break;
@@ -2741,6 +2886,13 @@ public abstract class AbstractPhaseScheduler
             return false;
         }
         
+        // Send event.
+        JobSchedulerEventProcessor.sendSchedulerName(
+                JobSchedulerEventType.TPC_REFRESH_QUEUE_INFO,
+                getSchedulerUUID(),
+                getPhaseType(),
+                getSchedulerName());
+        
         // Update the cached queue information by atomically replacing the reference to the cache.
         try {_tenantQueues = initQueueCache();}
             catch (JobSchedulerException e) {
@@ -2774,6 +2926,11 @@ public abstract class AbstractPhaseScheduler
             _log.info(_phaseType.name() +  
                     " topic reader received NOOP test message:\n > " + testMessage + "\n");
         }
+        
+        // Send event.
+        JobSchedulerEventProcessor.sendNoopMessage(getSchedulerUUID(),
+                                                   getPhaseType(),
+                                                   testMessage);
         
         // Always release message from queue.
         return true;

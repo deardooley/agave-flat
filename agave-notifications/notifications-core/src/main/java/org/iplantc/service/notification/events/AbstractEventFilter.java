@@ -34,8 +34,6 @@ public abstract class AbstractEventFilter implements EventFilter
 	protected int responseCode = -1;
 	private String customNotificationMessageContextData = null;
 	
-//	private String attemptUuid;
-    
 	public AbstractEventFilter(AgaveUUID associatedUuid, Notification notification, String event, String owner) {
 		this.associatedUuid = associatedUuid;
 		this.notification = notification;
@@ -48,96 +46,9 @@ public abstract class AbstractEventFilter implements EventFilter
 	}
 	
 	public AbstractEventFilter(AgaveUUID associatedUuid, Notification notification, String event, String owner, String customNotificationMessageContextData) {
-        this.associatedUuid = associatedUuid;
-        this.notification = notification;
-        if (StringUtils.isEmpty(event)) {
-            this.event = notification.getEvent();
-        } else {
-            this.event = event;
-        }
-        this.owner = owner;
+        this(associatedUuid, notification, event, owner);
         this.setCustomNotificationMessageContextData(customNotificationMessageContextData);
     }
-	
-//	@Override
-//	public void fire() throws NotificationException
-//	{
-//		log.debug("Processing webhook for notification: " + notification.getCallbackUrl());
-//		
-//		NotificationAttempt attempt = NotificationAttemptFactory.getInstance(notification);
-//		
-//		NotificationException trappedException = null;
-//		try 
-//		{
-//			
-//			// forward message based on destination. Email is detected by URL regex
-//			if (ServiceUtils.isValidEmailAddress(notification.getCallbackUrl())) {
-//				ObjectMapper mapper = new ObjectMapper();
-//				ObjectNode json = mapper.createObjectNode().put("subject", getEmailSubject()).put("message", getEmailBody());
-//				
-//				attempt = new NotificationAttempt(this.notification, 
-//						this.event, json.toString(), new Timestamp(System.currentTimeMillis()), 1);
-//				
-//			// realtime push messages are detected based on a prefix match of <pre>{@link Tenant#baseUrl()}/realtime</pre>
-//			} else if (ServiceUtils.isValidRealtimeChannel(notification.getCallbackUrl(), notification.getTenantId())) {
-//			    attempt = new NotificationAttempt(this.notification, 
-//						this.event, json.toString(), new Timestamp(System.currentTimeMillis()), 1);
-//				
-//				pushRealtimeMessage();
-//			
-// 			// SMS is detected by phone number regex match.
-// 			// uncomment to enable sms notifications via twilio
-// 			//} else if (ServiceUtils.isValidPhoneNumber(notification.getCallbackUrl())) {
-// 			//	responseStatus = smsCallback();
-//			
-//			// otherwise we assume it's a standard http webhook and forward accordingly.
-//			} else {
-//				postCallback();
-//			}
-//		} catch (NotificationException e) {
-//			log.error("[" + attemptUuid + "] " + e.getMessage());
-//			trappedException = e;
-//		}
-//		
-//		notification.setAttempts(notification.getAttempts() + 1);
-//		notification.setResponseCode(this.responseCode);
-//		notification.setLastSent(new Date());
-//		notification.setSuccess(this.responseCode >= 200 && this.responseCode < 300);
-//		if (notification.isSuccess())
-//		{
-//			// if the notification succeeded, but it will be reused, then 
-//			// reset the attempts so the next has a fresh opportunity to 
-//			// succeed
-//			if (notification.isPersistent()) {
-//				notification.setAttempts(0);
-//			}
-//			// otherwise, set the terminated marker to remove it.
-//			else {
-//				notification.setTerminated(true);
-//			}
-//		}
-//		// notification failed
-//		else 
-//		{
-//			// if it failed and we're over the retry limit, terminate the notification 
-//			if (notification.getAttempts() > Settings.MAX_NOTIFICATION_RETRIES) {
-//				notification.setTerminated(true);
-//			} 
-//			// otherwise, let it retry
-//			else {
-//				// dodged a bullet
-//			}
-//		}
-//		
-//		// save and return status
-//		try { dao.persist(notification); } catch (Exception e) {}
-//		
-//		if (trappedException == null) {
-//			return notification.isSuccess();
-//		} else {
-//			throw trappedException;
-//		}
-//	}
 	
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.notification.events.NotificationEvent2#getNotification()

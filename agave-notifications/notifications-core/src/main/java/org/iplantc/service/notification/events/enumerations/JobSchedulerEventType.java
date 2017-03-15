@@ -1,0 +1,28 @@
+package org.iplantc.service.notification.events.enumerations;
+
+/** All possible Job Scheduler events that can be sent as notifications 
+ * to subscribers.
+ * 
+ * @author rcardone
+ */
+public enum JobSchedulerEventType {
+    SCHEDULER_STARTED, 
+    SCHEDULER_EXCEPTION, 
+    SCHEDULER_STOPPING,
+    TOPIC_THREAD_STARTED,
+    TOPIC_THREAD_EXECPTION,
+    INTERRUPT_THREAD_STARTED,
+    INTERRUPT_THREAD_EXECPTION,
+    ZOMBIE_THREAD_STARTED,
+    ZOMBIE_THREAD_EXECPTION,
+    WORKER_THREAD_STARTED,
+    WORKER_THREAD_EXCEPTION,
+    WORKER_THREAD_SCHEDULED_TO_STOP,
+    TPC_DELETE_JOB_RECEIVED,
+    TPC_PAUSE_JOB_RECEIVED,
+    TPC_STOP_JOB_RECEIVED,
+    TPC_SHUTDOWN_RECEIVED,
+    TPC_RESET_NUM_WORKERS_RECEIVED,
+    TPC_REFRESH_QUEUE_INFO,
+    TPC_NOOP_RECEIVED
+}
