@@ -19,8 +19,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class JobSchedulerNotificationEvent extends AbstractEventFilter {
 
+    /* ********************************************************************** */
+    /*                                Constants                               */
+    /* ********************************************************************** */
 	private static final Logger _log = Logger.getLogger(JobSchedulerNotificationEvent.class);
 	
+    /* ********************************************************************** */
+    /*                                 Fields                                 */
+    /* ********************************************************************** */
 	// Reuse the same json mapper object.
 	private static final ObjectMapper mapper = new ObjectMapper();
 	
@@ -28,6 +34,9 @@ public class JobSchedulerNotificationEvent extends AbstractEventFilter {
 	// custom data after construction if necessary.
 	private Properties _properties;
 	
+    /* ********************************************************************** */
+    /*                              Constructors                              */
+    /* ********************************************************************** */
 	// Constructor
     public JobSchedulerNotificationEvent(AgaveUUID associatedUuid, Notification notification, String event, String owner)
     {
@@ -43,6 +52,12 @@ public class JobSchedulerNotificationEvent extends AbstractEventFilter {
 		super(associatedUuid, notification, event, owner, customData);
 	}
 	
+    /* ********************************************************************** */
+    /*                             Public Methods                             */
+    /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* getEmailBody:                                                          */
+    /* ---------------------------------------------------------------------- */
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.notification.events.EventFilter#getEmailBody()
 	 */
@@ -249,6 +264,9 @@ public class JobSchedulerNotificationEvent extends AbstractEventFilter {
 		return buf.toString();
 	}
 	
+    /* ---------------------------------------------------------------------- */
+    /* getHtmlEmailBody:                                                      */
+    /* ---------------------------------------------------------------------- */
 	/* (non-Javadoc)
      * @see org.iplantc.service.notification.events.EventFilter#getHtmlEmailBody()
      */
@@ -451,6 +469,9 @@ public class JobSchedulerNotificationEvent extends AbstractEventFilter {
         return buf.toString();
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* getEmailSubject:                                                       */
+    /* ---------------------------------------------------------------------- */
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.notification.events.EventFilter#getEmailSubject()
 	 */
@@ -461,6 +482,9 @@ public class JobSchedulerNotificationEvent extends AbstractEventFilter {
 		return subject;
 	}
 
+    /* ---------------------------------------------------------------------- */
+    /* resolveMacros:                                                         */
+    /* ---------------------------------------------------------------------- */
 	/* (non-Javadoc)
 	 * @see org.iplantc.service.notification.events.AbstractNotificationEvent#resolveMacros(java.lang.String, boolean)
 	 */
@@ -470,6 +494,12 @@ public class JobSchedulerNotificationEvent extends AbstractEventFilter {
 		return body;
 	}
 	
+    /* ********************************************************************** */
+    /*                            Private Methods                             */
+    /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* assignProperties:                                                      */
+    /* ---------------------------------------------------------------------- */
 	/** Convert any custom json data into a properties object and assign
 	 * it to the properties field.  If no json data is available or if 
 	 * the conversion fails, assign the field an empty properties object.
