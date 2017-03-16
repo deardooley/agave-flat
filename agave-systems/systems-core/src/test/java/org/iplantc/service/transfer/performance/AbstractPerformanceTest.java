@@ -71,12 +71,12 @@ public abstract class AbstractPerformanceTest extends SystemsModelTestCommon {
 		downloadFile = new File(tempDir, "download.dat");
 		sourceFile = new File(tempDir, "upload.dat");
 		
-		RandomDirectoryTree randomDirectoryTree = new RandomDirectoryTree(tempDir);
-		randomDirectoryTree.createFile(sourceFile, 1024 * 1024 * 1024);
-		
-		sourceFileChecksum = calculateChecksum(sourceFile);
-		
-		sourceTree = randomDirectoryTree.createTree(true);
+//		RandomDirectoryTree randomDirectoryTree = new RandomDirectoryTree(tempDir);
+//		randomDirectoryTree.createFile(sourceFile, 1024 * 1024 * 1024);
+//		
+//		sourceFileChecksum = calculateChecksum(sourceFile);
+//		
+//		sourceTree = randomDirectoryTree.createTree(true);
 		
 		
 		
