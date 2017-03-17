@@ -12,7 +12,6 @@ import org.iplantc.service.jobs.phases.schedulers.filters.ReadyJobs;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.JobCreateOrder;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.TenantRandom;
 import org.iplantc.service.jobs.phases.schedulers.strategies.impl.UserRandom;
-import org.restlet.Application;
 
 /** Concrete job phase scheduler.
  * 
@@ -41,13 +40,12 @@ public final class SubmittingScheduler
      * @param application the restlet application that we run under
      * @throws JobException when construction fails
      */
-    public SubmittingScheduler(Application application) throws JobException
+    public SubmittingScheduler() throws JobException
     {
         super(JobPhaseType.SUBMITTING,
               new TenantRandom(),
               new UserRandom(),
-              new JobCreateOrder(),
-              application);
+              new JobCreateOrder());
     }
 
     /* ********************************************************************** */

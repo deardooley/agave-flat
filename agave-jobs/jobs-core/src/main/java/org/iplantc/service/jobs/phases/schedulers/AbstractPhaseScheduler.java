@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,7 +36,6 @@ import org.iplantc.service.jobs.managers.JobSchedulerEventProcessor;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.JobInterrupt;
 import org.iplantc.service.jobs.model.JobQueue;
-import org.iplantc.service.jobs.model.JobSchedulerEvent;
 import org.iplantc.service.jobs.model.enumerations.JobPhaseType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.phases.queuemessages.AbstractQueueJobMessage;
@@ -70,7 +68,6 @@ import org.iplantc.service.jobs.queue.SelectorFilter;
 import org.iplantc.service.jobs.util.TenantQueues;
 import org.iplantc.service.jobs.util.TenantQueues.UpdateResult;
 import org.iplantc.service.notification.events.enumerations.JobSchedulerEventType;
-import org.restlet.Application;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -227,9 +224,6 @@ public abstract class AbstractPhaseScheduler
     // A unique name for this scheduler incorporates the uuid;
     private final String _name;
     
-    // Reference to our restlet application.
-    private final Application _application;
-    
     // The parent thread group of all thread groups created by this scheduler.
     // By default, this thread group is not a daemon, so it will not be destroyed
     // if it becomes empty.
@@ -303,8 +297,7 @@ public abstract class AbstractPhaseScheduler
     protected AbstractPhaseScheduler(JobPhaseType phaseType,
                                      ITenantStrategy tenantStrategy,
                                      IUserStrategy userStrategy,
-                                     IJobStrategy jobStrategy,
-                                     Application application)
+                                     IJobStrategy jobStrategy)
      throws JobException
     {
         // Check input.
@@ -329,10 +322,7 @@ public abstract class AbstractPhaseScheduler
             throw new JobException(msg);
         }
         
-        // Assign the restlet application that spawned us. 
-        _application = application;
-        
-        // Set the strategy fields.
+       // Set the strategy fields.
         _tenantStrategy = tenantStrategy;
         _userStrategy = userStrategy;
         _jobStrategy = jobStrategy;
@@ -1866,18 +1856,6 @@ public abstract class AbstractPhaseScheduler
         
         // Close all dedicated connections.
         closeConnections();
-        
-        // We arbitrarily choose one scheduler thread to stop our application;
-        if (_phaseType == JobPhaseType.STAGING)
-            try {
-                // Give the other threads a chance to shutdown.
-                try{Thread.sleep(1000);} catch (Exception e){}
-                _application.stop();
-            }
-            catch (Exception e) {
-                String msg = "Failure stopping application.";
-                _log.error(msg, e);
-            }
     }
     
     /* ---------------------------------------------------------------------- */
