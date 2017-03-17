@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -254,6 +255,9 @@ public abstract class AbstractPhaseScheduler
     // topic thread sends interrupts when shutdown messages are received.
     private Thread _mainSchedulerThread;
     
+    // Shared set of main scheduler threads used during shutdown.
+    private static final ConcurrentHashMap<Thread, Thread> _schedulerThreads = new ConcurrentHashMap<>();
+    
     // A thread that listens on the TOPIC_QUEUE_NAME for AbstractQueueMessage.JobCommand
     // messages.  These messages include worker interrupts and scheduler interrupts.  
     private Thread _topicThread;
@@ -422,10 +426,13 @@ public abstract class AbstractPhaseScheduler
     {
         // Squirrel away the thread on which we are running for interrupt processing.
         _mainSchedulerThread = Thread.currentThread();
-        
+
         // Make sure that we are configured correctly.  
         // A runtime exception can be thrown here.
         checkExecutionMode();
+        
+        // Add our main thread to the set of scheduler threads.
+        _schedulerThreads.put(_mainSchedulerThread, _mainSchedulerThread);
         
         // Initialize this phase scheduler and start working.
         try {
@@ -464,6 +471,10 @@ public abstract class AbstractPhaseScheduler
 
             // Let's surface this problem to the restlet subsystem.
             throw new RuntimeException(msg, e);
+        }
+        finally {
+        	// Remove ourselves from the scheduler thread map.
+        	_schedulerThreads.remove(_mainSchedulerThread);
         }
     }
     
@@ -1673,6 +1684,9 @@ public abstract class AbstractPhaseScheduler
         // Create the lease access object.
         JobLeaseDao jobLeaseDao = new JobLeaseDao(_phaseType, _name);
         
+        // Initialize shutdown condition to be normal.
+        boolean shutdownOnException = false;
+        
         // Enter infinite scheduling loop.
         try {
             for (;;) {
@@ -1756,6 +1770,9 @@ public abstract class AbstractPhaseScheduler
             // Interrupts cause a shutdown.
             _log.info(_name + " shutting due to interrupt: " + e.getMessage());
         } catch (Exception e) {
+        	// We're taking everybody down.
+        	shutdownOnException = true;
+        	
             // All other exceptions indicate some sort of problem.
             String msg = "Scheduler " + _name + " is shutting down because of an unexpected exception.";
             _log.error(msg, e);
@@ -1766,7 +1783,7 @@ public abstract class AbstractPhaseScheduler
         }
         finally {
             // Clean up and shut everything down.
-            shutdown();
+            shutdown(shutdownOnException);
             
             // Announce our termination.
             if (_log.isInfoEnabled()) {
@@ -1834,15 +1851,44 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* shutdown:                                                              */
     /* ---------------------------------------------------------------------- */
-    /** Clean up before shutting down. None of the called methods throw exceptions.*/
-    private void shutdown()
+    /** Clean up before shutting down. None of the called methods throw exceptions.
+     * The onError flags indicates that an unexpected exception occurred and all
+     * scheduler threads should terminate.
+     * 
+     * @param onError a serious error occurred requiring this jobs service
+     *                    instance to completely shutdown
+     * */
+    private void shutdown(boolean onError)
     {
         // Try to send off the event before we shutdown.
-        JobSchedulerEventProcessor.sendSchedulerName(
+    	try {
+    		JobSchedulerEventProcessor.sendSchedulerName(
                 JobSchedulerEventType.SCHEDULER_STOPPING,
                 getSchedulerUUID(),
                 getPhaseType(),
                 getSchedulerName());
+    	}
+    	catch (Exception e) {
+    		String msg = getSchedulerName() + " is unable to send a SCHEDULER_STOPPING event.";
+    		_log.error(msg, e);
+    	}
+        
+        // Are we shutting down due to an error condition.
+        // If so, we take all scheduler threads down with us.
+        if (onError)
+        {
+        	// Interrupt each of the other scheduler threads.
+        	try {
+        		for (Thread schedulerThread: _schedulerThreads.keySet())
+        			if (schedulerThread != _mainSchedulerThread)
+        				schedulerThread.interrupt();
+        	}
+        	catch (Exception e) {
+        		String msg = getSchedulerName() + 
+        				     " is unable to interrupt all other job scheduler threads.";
+        		_log.error(msg, e);
+        	}
+        }
         
         // Try to release any lease that we might be holding.
         if (Settings.JOB_SCHEDULER_MODE) 
@@ -2038,7 +2084,7 @@ public abstract class AbstractPhaseScheduler
         }
 
         // Clean up and shut everthing down.
-        shutdown();
+        shutdown(false);
         
         // Announce our termination.
         if (_log.isInfoEnabled()) {
