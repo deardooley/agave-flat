@@ -1932,9 +1932,8 @@ public abstract class AbstractPhaseScheduler
     	}
         
         // Are we shutting down due to an error condition?
-        // If so, we take all scheduler threads down with us.
-    	// This may be redundant (but harmless) if we are already  
-    	// shutting down all schedulers.
+        // If so, we take all scheduler threads down with us
+    	// unless we are already shutting down all schedulers.
         if (onError && !_shuttingDown)
         {
         	// Interrupt each of the other scheduler threads.
