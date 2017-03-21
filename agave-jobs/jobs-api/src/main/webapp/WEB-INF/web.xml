@@ -49,6 +49,10 @@ id="WebApp_ID" version="2.5" metadata-complete="true">
     <listener-class>org.iplantc.service.common.persistence.HibernateListener</listener-class>
   </listener>
 
+  <listener>
+    <listener-class>org.iplantc.service.jobs.JobsApplication</listener-class>
+  </listener>
+
   <resource-ref>
     <description>Agave SessionFactory</description>
     <res-ref-name>jdbc/iplant_io</res-ref-name>

@@ -225,6 +225,11 @@ public abstract class AbstractPhaseScheduler
     // A unique name for this scheduler incorporates the uuid;
     private final String _name;
     
+    // The root thread group only contains the main scheduler thread for this phase.
+    // By default, this thread group is not a daemon, so it will not be destroyed
+    // if it becomes empty.
+    private final ThreadGroup _phaseRootThreadGroup;
+    
     // The parent thread group of all thread groups created by this scheduler.
     // By default, this thread group is not a daemon, so it will not be destroyed
     // if it becomes empty.
@@ -249,6 +254,9 @@ public abstract class AbstractPhaseScheduler
     
     // Shutdown if we detect a thread restart storm.
     private static final Throttle _threadRestartThrottle = initThreadRestartThrottle();
+    
+    // Indicator that we are shutting down and no new threads or work should start.
+    private static volatile boolean _shuttingDown = false;
     
     // This is the thread that executes the run() method in this class and,
     // after initialization completes, executes the schedule() method.  The
@@ -339,8 +347,12 @@ public abstract class AbstractPhaseScheduler
         // in this JVM.
         _name = phaseType.name() + "-" + _uuid.toString();
         
+        // Create the root thread group for this phase's main scheduler thread.
+        _phaseRootThreadGroup = new ThreadGroup(phaseType.name() + "_ROOT" + THREADGROUP_SUFFIX);
+        
         // Create parent thread group.
-        _phaseThreadGroup = new ThreadGroup(phaseType.name() + THREADGROUP_SUFFIX);
+        _phaseThreadGroup = new ThreadGroup(_phaseRootThreadGroup,
+        		                            phaseType.name() + THREADGROUP_SUFFIX);
         
         // Each phase has its own topic queue.
         _topicQueueName = QueueUtils.getTopicQueueName(phaseType);
@@ -411,71 +423,42 @@ public abstract class AbstractPhaseScheduler
     /* ---------------------------------------------------------------------- */
     /* run:                                                                   */
     /* ---------------------------------------------------------------------- */
-    /** Initialize all appropriate thread groups, threads, channels, queues and 
-     * exchanges used by this scheduler on start up depending on its execution
-     * mode.  
-     * 
-     * When running in scheduler mode, this thread will begin polling the database
-     * for new work for this scheduler's assigned phase.  When running in worker
-     * mode, the worker threads are spawned and wait for input on their assigned
-     * queues.  A scheduler instance can be configured to run in both scheduler
-     * and worker modes simultaneously.
-     */
     @Override
     public void run() 
     {
-        // Squirrel away the thread on which we are running for interrupt processing.
-        _mainSchedulerThread = Thread.currentThread();
-
-        // Make sure that we are configured correctly.  
-        // A runtime exception can be thrown here.
-        checkExecutionMode();
-        
-        // Add our main thread to the set of scheduler threads.
-        _schedulerThreads.put(_mainSchedulerThread, _mainSchedulerThread);
-        
-        // Initialize this phase scheduler and start working.
-        try {
-            // Update tenant queues, etc.
-            oneTimeInitialization();
-            
-            // Retrieve the latest queue information from the database for this
-            // phase.  This should be called before starting any threads.
-            _tenantQueues = initQueueCache();
-            
-            // Connect to the scheduler topic (incoming).
-            initJobTopic();
-            
-            // Start each queue's workers.
-            startQueueWorkers();
-            
-            // Subscribe to job topic and continuously monitor it.
-            startTopicThread();
-            
-            // Initialize scheduler communication.
-            initScheduler();
-            
-            // Begin scheduling read loop.
-            schedule();
-        }
-        catch (Exception e)
-        {
-            // Record the error.
-            String msg = getSchedulerName() + 
-                         " phase scheduler initialization failure.  Aborting.";
-            _log.error(msg); // Already logged initial exception message.
-            
-            // Send event.
-            JobSchedulerEventProcessor.sendSchedulerException(
-                getSchedulerUUID(), _phaseType, getSchedulerName(), e, "Restart jobs service");
-
-            // Let's surface this problem to the restlet subsystem.
-            throw new RuntimeException(msg, e);
-        }
-        finally {
-        	// Remove ourselves from the scheduler thread map.
-        	_schedulerThreads.remove(_mainSchedulerThread);
-        }
+    	// Squirrel away the main thread for interrupt processing.  Note that we
+    	// create the thread in its own threadgroup to manage it separately. 
+    	_mainSchedulerThread = new Thread(_phaseRootThreadGroup, getMainThreadName()) {
+            @Override
+            public void run() {
+            	// Run the scheduler on non-restlet threads completely under
+            	// our control so, for example, we can make them daemons.
+            	runOnMainThread();
+            }
+    	};
+    	
+    	// Announce our intention.
+    	_log.info(Thread.currentThread().getName() + " starting main thread for scheduler " +
+                  getSchedulerName() + ".");
+    	
+        // Configure and start the thread.
+    	_mainSchedulerThread.setDaemon(true);
+    	_mainSchedulerThread.start();
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* interruptScheduler:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Interrupt this scheduler's main thread after setting the shutdown flag.
+     * Setting the flag prevents threads from being started or restarted. 
+     * 
+     */
+    public void interruptScheduler()
+    {
+    	_shuttingDown = true;
+    	if (_mainSchedulerThread == null) return;
+    	_log.debug("Interrupting main scheduler thread: " + _mainSchedulerThread.getName());
+    	_mainSchedulerThread.interrupt();
     }
     
     /* ---------------------------------------------------------------------- */
@@ -505,7 +488,7 @@ public abstract class AbstractPhaseScheduler
             releaseJobClaim(oldWorker);
         
             // Are we in a restart storm?
-            if (_threadRestartThrottle.record()) {
+            if (!_shuttingDown && _threadRestartThrottle.record()) {
                 // Create the new thread object.
                 int newThreadNum = _threadSeqno.incrementAndGet();
                 AbstractPhaseWorker newWorker = createWorkerThread(oldWorker.getThreadGroup(), 
@@ -523,61 +506,61 @@ public abstract class AbstractPhaseScheduler
                 // Let it rip.
                 newWorker.start();
             }
-            else {
+            else if (!_shuttingDown) {
                 // Too many restarts in the configured time window.
                 String msg = "Unable to restart worker thread " + oldWorker.getName() +
                              " because th limit of " + _threadRestartThrottle.getLimit() +
                              " thread restarts in " + _threadRestartThrottle.getSeconds() + 
                              " seconds was exceeded. Shutting down jobs instance.";
                 _log.error(msg);
-                _mainSchedulerThread.interrupt(); // rude but effective
+                interruptScheduler(); // rude but effective
             }
         }
         else if (getTopicThreadName().equals(t.getName())) {
             String msg = "Topic thread " + getTopicThreadName() + " failed on " + getSchedulerName();
-            if (_threadRestartThrottle.record()) {
+            if (!_shuttingDown && _threadRestartThrottle.record()) {
                 msg += " - starting a new topic thread.";
                 _log.error(msg);
                 startTopicThread();
             } 
-            else {
+            else if (!_shuttingDown) {
                 msg += " - limit of " + _threadRestartThrottle.getLimit() +
                        " thread restarts in " + _threadRestartThrottle.getSeconds() + 
                        " seconds exceeded. Shutting down jobs instance.";
                 _log.error(msg);
-                _mainSchedulerThread.interrupt(); // rude but effective
+                interruptScheduler(); // rude but effective
             }
         }
         else if (getInterruptCleanUpThreadName().equals(t.getName())) {
             String msg = "Interrupt clean up thread " + getInterruptCleanUpThreadName() + 
                          " failed on " + getSchedulerName(); 
-            if (_threadRestartThrottle.record()) {
+            if (!_shuttingDown && _threadRestartThrottle.record()) {
                 msg += " - starting a new interrupt clean up thread.";
                 _log.error(msg);
                 startInterruptCleanUpThread();
             } 
-            else {
+            else if (!_shuttingDown) {
                 msg += " - limit of " + _threadRestartThrottle.getLimit() +
                        " thread restarts in " + _threadRestartThrottle.getSeconds() + 
                        " seconds exceeded. Shutting down jobs instance.";
                 _log.error(msg);
-                _mainSchedulerThread.interrupt(); // rude but effective
+                interruptScheduler(); // rude but effective
             }
         }
         else if (getZombieCleanUpThreadName().equals(t.getName())) {
             String msg = "Zombie clean up thread " + getZombieCleanUpThreadName() + 
                          " failed on " + getSchedulerName();
-            if (_threadRestartThrottle.record()) {
+            if (!_shuttingDown && _threadRestartThrottle.record()) {
                 msg += " - starting a new zombie clean up thread.";
                 _log.error(msg);
                 startZombieCleanUpThread();
             } 
-            else {
+            else if (!_shuttingDown) {
                 msg += " - limit of " + _threadRestartThrottle.getLimit() +
                        " thread restarts in " + _threadRestartThrottle.getSeconds() + 
                        " seconds exceeded. Shutting down jobs instance.";
                 _log.error(msg);
-                _mainSchedulerThread.interrupt(); // rude but effective
+                interruptScheduler(); // rude but effective
             }
         }
         else {
@@ -660,6 +643,15 @@ public abstract class AbstractPhaseScheduler
     {
         // The JobQueueDao enforces that queue names begin with phase.tenantId.
         return queueName + "_" + threadNum + THREAD_SUFFIX;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getMainThreadName:                                                     */
+    /* ---------------------------------------------------------------------- */
+    protected String getMainThreadName()
+    {
+        // Topic thread processing spans all tenants and queues.
+        return _phaseType.name() + "_main" + THREAD_SUFFIX;
     }
     
     /* ---------------------------------------------------------------------- */
@@ -1029,6 +1021,72 @@ public abstract class AbstractPhaseScheduler
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* runOnMainThread:                                                       */
+    /* ---------------------------------------------------------------------- */
+    /** Initialize all appropriate thread groups, threads, channels, queues and 
+     * exchanges used by this scheduler on start up depending on its execution
+     * mode.  
+     * 
+     * When running in scheduler mode, this thread will begin polling the database
+     * for new work for this scheduler's assigned phase.  When running in worker
+     * mode, the worker threads are spawned and wait for input on their assigned
+     * queues.  A scheduler instance can be configured to run in both scheduler
+     * and worker modes simultaneously.
+     */
+    private void runOnMainThread() 
+    {
+        // Make sure that we are configured correctly.  
+        // A runtime exception can be thrown here.
+        checkExecutionMode();
+        
+        // Add our main thread to the set of scheduler threads.
+        _schedulerThreads.put(_mainSchedulerThread, _mainSchedulerThread);
+        
+        // Initialize this phase scheduler and start working.
+        try {
+            // Update tenant queues, etc.
+            oneTimeInitialization();
+            
+            // Retrieve the latest queue information from the database for this
+            // phase.  This should be called before starting any threads.
+            _tenantQueues = initQueueCache();
+            
+            // Connect to the scheduler topic (incoming).
+            initJobTopic();
+            
+            // Start each queue's workers.
+            startQueueWorkers();
+            
+            // Subscribe to job topic and continuously monitor it.
+            startTopicThread();
+            
+            // Initialize scheduler communication.
+            initScheduler();
+            
+            // Begin scheduling read loop.
+            schedule();
+        }
+        catch (Exception e)
+        {
+            // Record the error.
+            String msg = getSchedulerName() + 
+                         " phase scheduler initialization failure.  Aborting.";
+            _log.error(msg); // Already logged initial exception message.
+            
+            // Send event.
+            JobSchedulerEventProcessor.sendSchedulerException(
+                getSchedulerUUID(), _phaseType, getSchedulerName(), e, "Restart jobs service");
+
+            // Let's surface this problem to the restlet subsystem.
+            throw new RuntimeException(msg, e);
+        }
+        finally {
+        	// Remove ourselves from the scheduler thread map.
+        	_schedulerThreads.remove(_mainSchedulerThread);
+        }
+    }
+    
     /* ---------------------------------------------------------------------- */
     /* oneTimeInitialization:                                                 */
     /* ---------------------------------------------------------------------- */
@@ -1873,9 +1931,11 @@ public abstract class AbstractPhaseScheduler
     		_log.error(msg, e);
     	}
         
-        // Are we shutting down due to an error condition.
+        // Are we shutting down due to an error condition?
         // If so, we take all scheduler threads down with us.
-        if (onError)
+    	// This may be redundant (but harmless) if we are already  
+    	// shutting down all schedulers.
+        if (onError && !_shuttingDown)
         {
         	// Interrupt each of the other scheduler threads.
         	try {
@@ -1925,7 +1985,7 @@ public abstract class AbstractPhaseScheduler
             // We can immediately return when no descendant threads are still active.
             int activeThreads = _phaseThreadGroup.activeCount();
             if (activeThreads == 0) break;
-            try {Thread.sleep(THREAD_DEATH_POLL_DELAY);} catch (Exception e){return;}
+            try {Thread.sleep(THREAD_DEATH_POLL_DELAY);} catch (Exception e){}
         }
     }
     
@@ -2083,7 +2143,7 @@ public abstract class AbstractPhaseScheduler
                 _log.debug(getSchedulerName() + " interrupted in waitForever.");
         }
 
-        // Clean up and shut everthing down.
+        // Clean up and shut down this scheduler.
         shutdown(false);
         
         // Announce our termination.
@@ -2653,7 +2713,7 @@ public abstract class AbstractPhaseScheduler
                     getSchedulerName());
             
             // Pull the trigger!
-            try {if (_mainSchedulerThread != null) _mainSchedulerThread.interrupt();}
+            try {interruptScheduler();}
                 catch (Exception e) {
                     String msg = "Unable to interrupt the main scheduler thread.";
                     _log.error(msg, e);

@@ -3,6 +3,9 @@
  */
 package org.iplantc.service.jobs;
 
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+
 import org.apache.log4j.Logger;
 import org.iplantc.service.common.persistence.JndiSetup;
 import org.iplantc.service.common.restlet.AgaveApplication;
@@ -34,10 +37,25 @@ import org.restlet.service.TaskService;
  * @author dooley
  * 
  */
-public class JobsApplication extends AgaveApplication 
+public class JobsApplication extends AgaveApplication implements ServletContextListener 
 {
     // Tracing.
     private static final Logger _log = Logger.getLogger(JobsApplication.class);
+    
+    // Static links to each of the schedulers that we start.  These links are used
+    // to help shutdown gracefully.  For example, if shutdown is invoked from the 
+    // command line using "catalina.sh stop", then we can use a servlet context
+    // listener (see web.xml) to detect when tomcat is shutting us down.  Once
+    // detected, we can interrupt all core threads.
+    //
+    // These fields are static because a new instance of this class is dynamically 
+    // created by the servlet engine when a listener method is invoked.  If the no-arg 
+    // constructor of this class ever needs to do real work, then a separate listener 
+    // class should be created to avoid duplicating that work.
+    private static StagingScheduler    _stagingScheduler;
+    private static SubmittingScheduler _submittingScheduler;
+    private static MonitoringScheduler _monitoringScheduler;
+    private static ArchivingScheduler  _archivingScheduler;
     
 	@Override
 	protected void mapServiceEndpoints(Router router)
@@ -143,28 +161,32 @@ public class JobsApplication extends AgaveApplication
             TaskService taskService = getTaskService();
             
             // Spawn each scheduler.
-            try {taskService.execute(new StagingScheduler());}
+            _stagingScheduler = new StagingScheduler();
+            try {taskService.execute(_stagingScheduler);}
                 catch (Exception e)
                 {
                     String msg = "Unable to start StagingScheduler.";
                     _log.error(msg, e);
                     throw e;
                 }
-            try {taskService.execute(new SubmittingScheduler());}
+            _submittingScheduler = new SubmittingScheduler();
+            try {taskService.execute(_submittingScheduler);}
                 catch (Exception e)
                 {
                     String msg = "Unable to start SubmittingScheduler.";
                     _log.error(msg, e);
                     throw e;
                 }
-            try {taskService.execute(new MonitoringScheduler());}
+            _monitoringScheduler = new MonitoringScheduler();
+            try {taskService.execute(_monitoringScheduler);}
                 catch (Exception e)
                 {
                     String msg = "Unable to start MonitoringScheduler.";
                     _log.error(msg, e);
                     throw e;
                 }
-            try {taskService.execute(new ArchivingScheduler());}
+            _archivingScheduler = new ArchivingScheduler();
+            try {taskService.execute(_archivingScheduler);}
                 catch (Exception e)
                 {
                     String msg = "Unable to start ArchivingScheduler.";
@@ -173,7 +195,7 @@ public class JobsApplication extends AgaveApplication
                 }
         }
     }
-
+    
     public static void main(String[] args) throws Exception 
 	{	
 		JndiSetup.init();
@@ -188,4 +210,33 @@ public class JobsApplication extends AgaveApplication
         
         launchServer(component);
     }
+
+    /* ********************************************************************** */
+    /*                      ServletContextListener Methods                    */
+    /* ********************************************************************** */
+	@Override
+	public void contextInitialized(ServletContextEvent sce) {}
+
+	@Override
+	public void contextDestroyed(ServletContextEvent sce) {
+		
+		// Announce our demise.
+		String msg = "JobApplication listener received a contextDestroyed event.";
+		if (sce != null) msg += " Shutting down context " + 
+		                        sce.getServletContext().getServletContextName() + ".";
+		_log.info(msg);
+		
+		// Interrupt the main scheduler threads.
+		if (_stagingScheduler != null)    _stagingScheduler.interruptScheduler();
+		if (_submittingScheduler != null) _submittingScheduler.interruptScheduler();
+		if (_monitoringScheduler != null) _monitoringScheduler.interruptScheduler();
+		if (_archivingScheduler != null)  _archivingScheduler.interruptScheduler();
+		
+		// Give the scheduler threads a chances to die.  We use the same timeout
+		// value as used in AbstractPhaseScheduler.interruptThreads().
+		_log.info("** JobApplication.contextDestroyed() sleeping for " + Settings.JOB_THREAD_DEATH_MS + " milliseconds.");
+		try {Thread.sleep(Settings.JOB_THREAD_DEATH_MS);}
+			catch (InterruptedException e) {}
+		_log.info("** JobApplication.contextDestroyed() continuing shutdown process.");
+	}
 }
