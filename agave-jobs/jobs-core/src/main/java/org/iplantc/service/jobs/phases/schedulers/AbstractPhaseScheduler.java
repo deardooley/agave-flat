@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
@@ -356,9 +358,6 @@ public abstract class AbstractPhaseScheduler
         
         // Each phase has its own topic queue.
         _topicQueueName = QueueUtils.getTopicQueueName(phaseType);
-        
-        // Log our configuration.
-        if (_log.isInfoEnabled()) _log.info(getConfigInfo());
     }
     
     /* ********************************************************************** */
@@ -1101,6 +1100,9 @@ public abstract class AbstractPhaseScheduler
         // Only one scheduler gets to update the tenant queues
         // on any jobs-core invocation.
         if (_oneTimeInitialized) return;
+        
+        // Log our configuration.
+        if (_log.isInfoEnabled()) _log.info(getConfigInfo());
         
         // We get only one attempt for this initialization to succeed.
         try {
@@ -3162,11 +3164,12 @@ public abstract class AbstractPhaseScheduler
     /* getConfigInfo:                                                         */
     /* ---------------------------------------------------------------------- */
     /** Print our configuration parameters to the log. */
-    private String getConfigInfo()
+    private static String getConfigInfo()
     {
         StringBuilder buf = new StringBuilder(512);
         buf.append("\n");
-        buf.append(getSchedulerName());
+        buf.append("Schedulers with uuid ");
+        buf.append(getSchedulerUUID().toString());
         buf.append(" starting with these configuration parameters:\n");
         buf.append("\n  JOB_SCHEDULER_MODE = ");
         buf.append(Settings.JOB_SCHEDULER_MODE);
@@ -3215,6 +3218,25 @@ public abstract class AbstractPhaseScheduler
         buf.append("\n  DRAIN_ALL_QUEUES_ENABLED = ");
         buf.append(Settings.isDrainingQueuesEnabled());
         buf.append("\n");
+        
+        // Dump environment variables.
+        buf.append("\nEnvironment variables:\n");
+        TreeMap<String,String> env = new TreeMap<String,String>(System.getenv());
+        for (Entry<String, String> entry : env.entrySet())
+        	buf.append("\n " + entry.getKey() + " = " + entry.getValue());
+        buf.append("\n");
+        
+        // Dump Java properties.
+        buf.append("\nJava Properties:\n");
+        Properties properties = System.getProperties();
+        ArrayList<String> list = new ArrayList<String>(properties.stringPropertyNames());
+        Collections.sort(list);
+        for (String key : list) {
+        	if (key.equals("line.separator")) continue; // avoid skipping line
+        	buf.append("\n " + key + " = " + properties.getProperty(key));
+        }
+        buf.append("\n");	
+        
         return buf.toString();
     }
 }
