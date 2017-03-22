@@ -3166,9 +3166,9 @@ public abstract class AbstractPhaseScheduler
     /** Print our configuration parameters to the log. */
     private static String getConfigInfo()
     {
-        StringBuilder buf = new StringBuilder(512);
+        StringBuilder buf = new StringBuilder(1024);
         buf.append("\n");
-        buf.append("Schedulers with uuid ");
+        buf.append("Job schedulers with uuid ");
         buf.append(getSchedulerUUID().toString());
         buf.append(" starting with these configuration parameters:\n");
         buf.append("\n  JOB_SCHEDULER_MODE = ");
