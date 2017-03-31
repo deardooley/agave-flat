@@ -353,6 +353,10 @@ public class URLCopy
 					{
 				        long srcFileLength = sourceClient.length(srcPath);
 				        long availableBytes = new File("/").getUsableSpace();
+		        System.out.println("****************** URLCopy srcFileLength = " + srcFileLength);
+		        log.debug("****************** URLCopy srcFileLength = " + srcFileLength);
+		        System.out.println("****************** URLCopy availableBytes = " + availableBytes);
+		        log.debug("****************** URLCopy availableBytes = " + availableBytes);
                         
 				        if (Settings.ALLOW_RELAY_TRANSFERS 
 				                && srcFileLength < (Settings.MAX_RELAY_TRANSFER_SIZE * Math.pow(2, 30))) 
