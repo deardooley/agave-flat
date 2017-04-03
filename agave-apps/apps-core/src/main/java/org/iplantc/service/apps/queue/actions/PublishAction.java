@@ -310,6 +310,13 @@ public class PublishAction extends AbstractWorkerAction<Software> {
             		try { in.close(); } catch (Exception e){}
             	}
                 
+    	        System.out.println("****************** PublishAction.publish(), zippedFile = " + zippedFile.getAbsolutePath() + 
+    	        		           ", exists = " + zippedFile.exists() + ", canRead = " + zippedFile.canRead() +
+    	        		           ", length = " + zippedFile.length());
+    	        log.debug("****************** PublishAction.publish(), zippedFile = " + zippedFile.getAbsolutePath() + 
+     		           ", exists = " + zippedFile.exists() + ", canRead = " + zippedFile.canRead() +
+     		           ", length = " + zippedFile.length());
+            	
                 // ensure the destination directory is present
                 resolveAndCreatePublishedDeploymentPath(publishedSoftwareStorageSystem, publishedSoftwareDataClient); 
                     
