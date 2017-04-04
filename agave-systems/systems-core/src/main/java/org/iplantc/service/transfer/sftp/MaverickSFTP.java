@@ -1,10 +1,10 @@
 package org.iplantc.service.transfer.sftp;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -18,17 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.iplantc.service.remote.exceptions.RemoteExecutionException;
 import org.iplantc.service.remote.ssh.MaverickSSHSubmissionClient;
 import org.iplantc.service.remote.ssh.shell.Shell;
-import org.iplantc.service.remote.ssh.shell.ShellProcess;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.RemoteTransferListener;
@@ -39,6 +34,10 @@ import org.iplantc.service.transfer.model.RemoteFilePermission;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
 
+import com.sshtools.publickey.SshPrivateKeyFile;
+import com.sshtools.publickey.SshPrivateKeyFileFactory;
+import com.sshtools.sftp.DirectoryOperation;
+import com.sshtools.sftp.SftpClient;
 import com.sshtools.sftp.SftpFile;
 import com.sshtools.sftp.SftpFileAttributes;
 import com.sshtools.sftp.SftpStatusException;
@@ -50,25 +49,14 @@ import com.sshtools.ssh.SshAuthentication;
 import com.sshtools.ssh.SshClient;
 import com.sshtools.ssh.SshConnector;
 import com.sshtools.ssh.SshException;
-import com.sshtools.ssh.SshSession;
 import com.sshtools.ssh.SshTunnel;
 import com.sshtools.ssh.components.ComponentManager;
 import com.sshtools.ssh.components.SshKeyPair;
 import com.sshtools.ssh.components.jce.JCEComponentManager;
-import com.sshtools.ssh.SshClient;
-import com.sshtools.ssh2.AuthenticationProtocol;
 import com.sshtools.ssh2.KBIAuthentication;
-import com.sshtools.ssh2.KBIPrompt;
-import com.sshtools.ssh2.KBIRequestHandler;
 import com.sshtools.ssh2.Ssh2Client;
 import com.sshtools.ssh2.Ssh2Context;
 import com.sshtools.ssh2.Ssh2PublicKeyAuthentication;
-import com.sshtools.net.ForwardingClient;
-import com.sshtools.net.SocketWrapper;
-import com.sshtools.publickey.SshPrivateKeyFile;
-import com.sshtools.publickey.SshPrivateKeyFileFactory;
-import com.sshtools.sftp.DirectoryOperation;
-import com.sshtools.sftp.SftpClient;
 
 /**
  * Generic SFTP client to interact with remote systems.
@@ -94,8 +82,6 @@ public class MaverickSFTP implements RemoteDataClient
 	private SftpClient sftpClient = null;
 	private Ssh2Client ssh2 = null;
 	private SshClient forwardedConnection = null;
-	
-	private String mac = "hmac-sha1";
 	
 	protected String host;
 	protected int port;
@@ -476,14 +462,11 @@ public class MaverickSFTP implements RemoteDataClient
 		// a file that does not exist.
 		if (!doesExist(path)) 
 		{
-			File tmpFile = null;
 			try
 			{
-				tmpFile = new File(FileUtils.getTempDirectory(), FilenameUtils.getName(path));
-				FileUtils.write(tmpFile, "");
-				
-				client.put(tmpFile.getAbsolutePath(), resolvedPath);
-				
+				// Upload a file with the content of an empty string.
+				ByteArrayInputStream ins = new ByteArrayInputStream("".getBytes());
+				client.put(ins, resolvedPath);
 			}
 			catch (SftpStatusException e) {
 				if (e.getMessage().toLowerCase().contains("no such file")) {
@@ -492,16 +475,9 @@ public class MaverickSFTP implements RemoteDataClient
 					throw new RemoteDataException("Failed to establish output stream to " + path, e);
 				}
 			}
-			catch (IOException e) {
-				throw e;
-			} 
-			catch (Exception e)
-			{
+			catch (Exception e) {
 				throw new RemoteDataException("Failed to open an output stream to " + path, e);
 			} 
-			finally {
-				FileUtils.deleteQuietly(tmpFile);
-			}
 		}
 		
 		return new MaverickSFTPOutputStream(client, resolvedPath);
