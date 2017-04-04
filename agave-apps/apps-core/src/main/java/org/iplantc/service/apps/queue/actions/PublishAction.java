@@ -371,46 +371,6 @@ public class PublishAction extends AbstractWorkerAction<Software> {
             throw new SoftwareException("Failed to copy public application assets to the default public storage system, " 
                     + publishedSoftware.getStorageSystem().getSystemId(), e);
         }
-        
-        // don't make a check here. the remote system could give false negatives
-        // due to consist
-        
-//        if (publishedSoftwareDataClient.doesExist(publishedSoftware.getDeploymentPath())) 
-//        {
-//        	String checksum = null;
-//        	FileInputStream in = null;
-//        	try {
-//        		// could have been deleted from it's temp dir
-//        		if (zippedFile.exists()) {
-//        			in = new FileInputStream(zippedFile.getAbsolutePath());
-//        			checksum = DigestUtils.md5Hex(in);
-//        		}
-//        		else { 
-//        			try {
-//        				checksum = publishedSoftwareDataClient.checksum(publishedSoftware.getDeploymentPath());
-//        			}
-//        			catch (Exception e) {
-//        				log.error("Unable to calculate checksum of published asset for " + publishedSoftware.getUniqueName() + 
-//        						". None will be stored with app.");
-//        			}
-//        			
-//        		}
-//        	}
-//        	catch(IOException e) {
-//        		throw new FileNotFoundException("Unable to calcaulate checksum for published app assets at agave://" + 
-//                		publishedSoftware.getStorageSystem().getSystemId() + "/" + publishedSoftware.getDeploymentPath());
-//        	}
-//        	finally {
-//        		try { in.close(); } catch (Exception e){}
-//        	}
-//        	
-//          publishedSoftware.setChecksum(checksum);
-//        } 
-//        else 
-//        {
-//            throw new FileNotFoundException("Failed to copy public app to public deployment system at agave://" + 
-//            		publishedSoftware.getStorageSystem().getSystemId() + "/" + publishedSoftware.getDeploymentPath());
-//        }
     }
 
     /**
