@@ -357,7 +357,7 @@ public class URLCopy
 				        if (Settings.ALLOW_RELAY_TRANSFERS 
 				                && srcFileLength < (Settings.MAX_RELAY_TRANSFER_SIZE * Math.pow(2, 30))) 
 						{
-				            if (false && (availableBytes > (srcFileLength + (5*Math.pow(2, 30))))) 
+				            if (availableBytes > (srcFileLength + (5*Math.pow(2, 30)))) 
 				            {
 				                log.debug("Local disk has " + availableBytes + " unused bytes  prior to "
 				                        + "relay transfer of " + srcFileLength + " bytes for transfer task " 
