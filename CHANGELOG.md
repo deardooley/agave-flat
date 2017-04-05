@@ -1,6 +1,20 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.1.11 - 2017-04-06
+
+### Added
+- nothing
+
+### Changed
+- APPS: Fixed the failure to publish an application problem (AH-184, AD-1316).
+- NOTIFICATIONS: Added index to notifications table to improve performance.
+
+- ALL: Disable sslv3 support in web servers for security compliance.
+
+### Removed
+- nothing
+
 
 ## 2.1.10 - 2017-03-06
 
