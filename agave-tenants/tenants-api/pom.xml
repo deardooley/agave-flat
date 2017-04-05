@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.iplantc.agave</groupId>
 		<artifactId>tenants</artifactId>
-		<version>2.1.10</version>
+		<version>2.1.11</version>
 	</parent>
 	<artifactId>tenants-api</artifactId>
 	<name>iPlant Agave API Tenants Service API Endpoints</name>
