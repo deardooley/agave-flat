@@ -30,7 +30,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.lf5.util.StreamUtils;
 
 import com.sshtools.publickey.ConsoleKnownHostsKeyVerification;
 import com.sshtools.publickey.SshPrivateKeyFile;

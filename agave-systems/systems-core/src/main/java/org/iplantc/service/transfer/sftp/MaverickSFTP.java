@@ -43,8 +43,6 @@ import com.sshtools.sftp.SftpFileAttributes;
 import com.sshtools.sftp.SftpStatusException;
 import com.sshtools.ssh.PasswordAuthentication;
 import com.sshtools.ssh.PublicKeyAuthentication;
-//import com.sshtools.ssh.Shell;
-//import com.sshtools.ssh.ShellProcess;
 import com.sshtools.ssh.SshAuthentication;
 import com.sshtools.ssh.SshClient;
 import com.sshtools.ssh.SshConnector;
@@ -97,7 +95,11 @@ public class MaverickSFTP implements RemoteDataClient
 	protected SshAuthentication auth;
 	private Map<String, SftpFileAttributes> fileInfoCache = new ConcurrentHashMap<String, SftpFileAttributes>();
 	
-    protected static final int MAX_BUFFER_SIZE = 32768 * 64; // 1MB
+	// Not clear what's going on here.  MAX_BUFFER_SIZE is commented out in all
+	// but one place--the one place with external visibility.  Defined the jumbo
+	// size here to avoid inline magic number usage.  No justification for value.  
+    private static final int MAX_BUFFER_SIZE = 32768 * 64;           // 2 MB
+    private static final int JUMBO_BUFFER_SIZE = 500 * 1024 * 1024;  // 500 MB
 	
     public MaverickSFTP(String host, int port, String username, String password, String rootDir, String homeDir)
 	{
@@ -408,7 +410,11 @@ public class MaverickSFTP implements RemoteDataClient
 
     @Override
     public int getMaxBufferSize() {
-        return MAX_BUFFER_SIZE;
+    	// Why is the max buffer size being returned when it is never used
+    	// elsewhere in the code?  The jumbo buffer size value that is used 
+    	// below may have been intended here, but there's no indication one
+    	// way or the other.
+        return MAX_BUFFER_SIZE;  
     }
 
     protected SftpClient getClient() throws IOException, RemoteDataException
@@ -428,9 +434,8 @@ public class MaverickSFTP implements RemoteDataClient
 				// set only if the file size is larger than we're confortable 
 				// putting in memory. by default this is -1, which means the 
 				// entire file is read into memory on a get/put
-//				sftpClient.setBufferSize(50*MAX_BUFFER_SIZE);
 				sftpClient.setMaxAsyncRequests(256);
-				sftpClient.setBufferSize(500*1024*1024);
+				sftpClient.setBufferSize(JUMBO_BUFFER_SIZE);
 				sftpClient.setTransferMode(SftpClient.MODE_BINARY);
 				
 			}

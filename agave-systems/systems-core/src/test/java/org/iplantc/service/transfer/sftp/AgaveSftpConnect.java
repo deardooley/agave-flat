@@ -1,51 +1,16 @@
 package org.iplantc.service.transfer.sftp;
-/**
- * Copyright 2003-2016 SSHTOOLS Limited. All Rights Reserved.
- *
- * For product documentation visit https://www.sshtools.com/
- *
- * This file is part of J2SSH Maverick.
- *
- * J2SSH Maverick is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * J2SSH Maverick is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with J2SSH Maverick.  If not, see <http://www.gnu.org/licenses/>.
- */
-import static org.mockito.Mockito.*;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.iplantc.service.common.persistence.JndiSetup;
-import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.RemoteTransferListener;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.model.TransferTask;
 
-import com.sshtools.net.SocketTransport;
-import com.sshtools.publickey.ConsoleKnownHostsKeyVerification;
 import com.sshtools.sftp.SftpClient;
-import com.sshtools.sftp.SftpFile;
-import com.sshtools.sftp.SftpFileAttributes;
-import com.sshtools.ssh.PasswordAuthentication;
-import com.sshtools.ssh.SshAuthentication;
-import com.sshtools.ssh.SshClient;
-import com.sshtools.ssh.SshConnector;
-import com.sshtools.ssh2.Ssh2Client;
-import com.sshtools.ssh2.Ssh2Context;
 
 /**
  * This example demonstrates the connection process connecting to an SSH2 server
