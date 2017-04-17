@@ -152,18 +152,6 @@
 
 		<!-- Testing -->
 		<dependency>
-			<groupId>org.uncommons</groupId>
-			<artifactId>reportng</artifactId>
-			<version>${reportng.METADATA.version}</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.testng</groupId>
-					<artifactId>testng</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>

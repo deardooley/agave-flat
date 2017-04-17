@@ -68,14 +68,6 @@
 	                </systemPropertyVariables>
 				</configuration>
 			</plugin>
-			<!-- Attach testng to the surefire execution -->
-			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-surefire-plugin</artifactId> 
-				<configuration> <suiteXmlFiles> <suiteXmlFile>src/test/resources/testng-model.xml</suiteXmlFile> 
-				<suiteXmlFile>src/test/resources/testng-transfer.xml</suiteXmlFile> </suiteXmlFiles> 
-				<properties> <property> <name>usedefaultlisteners</name> <value>false</value> 
-				</property> <property> <name>listener</name> <value>org.uncommons.reportng.HTMLReporter,org.uncommons.reportng.JUnitXMLReporter</value> 
-				</property> </properties> </configuration> </plugin> -->
-
 		</plugins>
 	</build>
 

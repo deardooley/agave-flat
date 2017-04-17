@@ -210,7 +210,6 @@
 	    <powermock.version>1.6.4</powermock.version>
 	    <quartz.version>2.1.7</quartz.version>
 	    <reflections.version>0.9.9-RC1</reflections.version>
-	    <reportng.version>1.1.4</reportng.version>
 	    <restlet.version>2.3.4</restlet.version>
 	    <sendgrid-java.version>2.2.2</sendgrid-java.version>
 	    <servlet-api.version>2.4</servlet-api.version>
@@ -227,7 +226,6 @@
 
 	    <!-- LIBRARY Version special cases -->
 	    <hibernate-validator.PROFILES.version>5.0.1.Final</hibernate-validator.PROFILES.version>
-	    <reportng.METADATA.version>1.1.2</reportng.METADATA.version>
 
 	    <!-- OTHER properties (in alphabetical order) -->
 	    <docker.image.commit.hash>${buildNumber}</docker.image.commit.hash>

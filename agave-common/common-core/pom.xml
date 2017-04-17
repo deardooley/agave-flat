@@ -191,19 +191,6 @@
 			<artifactId>powermock-api-mockito</artifactId>
 			<version>${powermock.version}</version>
 		</dependency>
-		<!-- <dependency>
-			<groupId>org.uncommons</groupId>
-			<artifactId>reportng</artifactId>
-			<version>${reportng.version}</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.testng</groupId>
-					<artifactId>compile</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency> -->
-
 
 		<!-- Globus -->
 		<dependency>
