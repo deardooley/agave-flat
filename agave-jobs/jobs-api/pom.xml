@@ -93,16 +93,6 @@
 
 			<!-- Use TestNG as the test runner -->
 
-
-			<!-- ************************************ -->
-			<!-- *** CODE COVERAGE ** -->
-			<!-- ************************************ -->
-
-			<plugin>
-				<groupId>org.codehaus.sonar</groupId>
-				<artifactId>sonar-maven-plugin</artifactId>
-			</plugin>
-
 			<!-- ************************************ -->
 			<!-- *** WAR BUILDER ** -->
 			<!-- ************************************ -->
