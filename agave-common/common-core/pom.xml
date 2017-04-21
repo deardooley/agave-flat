@@ -242,11 +242,6 @@
 			<version>${slf4j-log4j12.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>c3p0</groupId>
-			<artifactId>c3p0</artifactId>
-			<version>${c3p0.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.jboss.logging</groupId>
 			<artifactId>jboss-logging</artifactId>
 			<version>${jboss-logging.version}</version>

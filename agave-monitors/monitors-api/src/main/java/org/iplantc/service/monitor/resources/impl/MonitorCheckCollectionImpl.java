@@ -7,6 +7,7 @@ import static org.iplantc.service.common.clients.AgaveLogServiceClient.ActivityK
 import static org.iplantc.service.common.clients.AgaveLogServiceClient.ActivityKeys.MonitorTrigger;
 import static org.iplantc.service.common.clients.AgaveLogServiceClient.ServiceKeys.MONITORS02;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -41,8 +42,6 @@ import org.joda.time.DateTime;
 import org.restlet.Request;
 import org.restlet.data.Status;
 import org.restlet.resource.ResourceException;
-
-import com.mchange.v1.util.ArrayUtils;
 
 /**
  * @author dooley
@@ -154,7 +153,7 @@ public class MonitorCheckCollectionImpl extends AbstractAgaveResource implements
 						} catch (Exception e) {
 							throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
 									"Invalid result value. If provided, please specify one of " + 
-									ArrayUtils.toString(MonitorStatusType.values()));
+									Arrays.toString(MonitorStatusType.values()));
 						}
 					}
 					
@@ -166,7 +165,7 @@ public class MonitorCheckCollectionImpl extends AbstractAgaveResource implements
                         } catch (Exception e) {
                             throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
                                     "Invalid type value. If provided, please specify one of " + 
-                                    ArrayUtils.toString(MonitorCheckType.values()));
+                                    Arrays.toString(MonitorCheckType.values()));
                         }
                     }
 						

@@ -162,7 +162,6 @@
 	    <commons-lang.version>2.5</commons-lang.version>
 	    <commons-math3.version>3.5</commons-math3.version>
 	    <commons-validator.version>1.4.0</commons-validator.version>
-	    <c3p0.version>0.9.1.2</c3p0.version>
 	    <el-api.version>2.2</el-api.version>
 	    <flyway-core.version>4.1.1</flyway-core.version>
 	    <gsissh.version>0.12.1</gsissh.version>
