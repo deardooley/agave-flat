@@ -73,19 +73,6 @@
 					<skip>${skip.migrations}</skip>
 				</configuration>
 			</plugin>
-			<!-- <plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>${maven-shade-plugin.version}</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin> -->
 			<!-- Package the service up as a Docker image. -->
 			<plugin>
 				<groupId>com.spotify</groupId>
@@ -301,13 +288,6 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<version>${mysql-connector-java.version}</version>
 		</dependency>
-		
-		<!-- Java custom migration depedencies -->
-		<!-- <dependency>
-			<groupId>com.github.stephenc.eaio-uuid</groupId>
-			<artifactId>uuid</artifactId>
-			<version>${uuid.version}</version>
-		</dependency> -->
 		
 		<!-- logging depedencies -->
 		<dependency>

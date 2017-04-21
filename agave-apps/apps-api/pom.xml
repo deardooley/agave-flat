@@ -44,52 +44,6 @@
 		<plugins>
 
 			<!-- ************************************ -->
-			<!-- *** DEPLOYMENT *** -->
-			<!-- ************************************ -->
-
-			<!-- Install a jar with the source code into maven when installing the
-				primary artifact -->
-			<!-- <plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>install</id>
-						<phase>install</phase>
-						<goals>
-							<goal>sources</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin> -->
-
-
-			<!-- ************************************ -->
-			<!-- *** COMPILE ** -->
-			<!-- ************************************ -->
-
-			<!-- Boilerplace compile -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>default-compile</id>
-						<phase>compile</phase>
-						<goals>
-							<goal>compile</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<proc>none</proc>
-					<debug>true</debug>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
-
-			<!-- ************************************ -->
 			<!-- *** TESTING ** -->
 			<!-- ************************************ -->
 
@@ -154,18 +108,6 @@
 					</webResources>
 				</configuration>
 			</plugin>
-
-			<!-- ********************** jetty plugin properties ************************* -->
-			<!-- <plugin> <groupId>org.mortbay.jetty</groupId> <artifactId>jetty-maven-plugin</artifactId>
-				<version>8.1.9.v20130131</version> <configuration> <skip>${maven.test.skip}</skip>
-				<stopKey>STOP</stopKey> <stopPort>9999</stopPort> <scanIntervalSeconds>5</scanIntervalSeconds>
-				<connectors> <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
-				<port>8182</port> </connector> </connectors> <webAppConfig> <contextPath>/apps</contextPath>
-				</webAppConfig> </configuration> <executions> <execution> <id>start-jetty</id>
-				<phase>pre-integration-test</phase> <goals> <goal>stop</goal> <goal>run-war</goal>
-				</goals> <configuration> <scanIntervalSeconds>0</scanIntervalSeconds> <daemon>true</daemon>
-				</configuration> </execution> <execution> <id>stop-jetty</id> <phase>post-integration-test</phase>
-				<goals> <goal>stop</goal> </goals> </execution> </executions> </plugin> -->
 
 			<!-- Don't deploy the war -->
 			<plugin>

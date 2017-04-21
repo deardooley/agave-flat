@@ -40,28 +40,6 @@
 			</testResource>
 		</testResources>
 		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>default-compile</id>
-						<phase>compile</phase>
-						<goals>
-							<goal>compile</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<proc>none</proc>
-					<debug>true</debug>
-					<source>1.7</source>
-					<target>1.7</target>
-					<testSource>1.6</testSource>
-					<testTarget>1.6</testTarget>
-				</configuration>
-			</plugin>
-
-
 			<!-- ************************************ -->
 			<!-- *** WAR BUILDER ** -->
 			<!-- ************************************ -->

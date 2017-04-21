@@ -116,6 +116,10 @@
 	    <!-- This build's label -->
 	    <foundation.service.version>${project.version}-r${buildNumber}</foundation.service.version>
 
+        <!-- Java version -->
+        <java-source.version>1.8</java-source.version>
+        <java-target.version>1.8</java-target.version>
+        
 	    <!-- Below are the version numbers for all software on which we explicitly depend. -->
 	    <!-- If a library or plugin appears as a dependency in some pom file, then that    -->
 	    <!-- artifact's version number should in the lists below for easy managment and    -->
@@ -237,16 +241,6 @@
 
 	<build>
 		<plugins>
-			<!-- <plugin> <groupId>com.mycila</groupId> <artifactId>license-maven-plugin</artifactId>
-				<version>2.6</version> <configuration> <header>LICENSE</header> <properties>
-				<owner>Texas Advanced Computing Center</owner> <year>2014</year> <email>dooley@tacc.utexas.edu</email>
-				<url>https://bitbucket.org/taccaci/oa4mp-wso2</url> </properties> <excludes>
-				<exclude>target/**</exclude> <exclude>src/main/html/**</exclude> <exclude>**/README.md</exclude>
-				<exclude>**/*.conf</exclude> <exclude>**/*.config</exclude> <exclude>**/*.config</exclude>
-				<exclude>**/LICENSE</exclude> <exclude>**/.gitignore</exclude> <exclude>src/test/resources/**</exclude>
-				<exclude>src/main/resources/**</exclude> </excludes> </configuration> <executions>
-				<execution> <goals> <goal>check</goal> </goals> </execution> </executions>
-				</plugin> -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>buildnumber-maven-plugin</artifactId>
@@ -316,18 +310,10 @@
 					<configuration>
 						<proc>none</proc>
 						<debug>true</debug>
-						<source>1.7</source>
-						<target>1.7</target>
+                        <source>${java-source.version}</source>
+                        <target>${java-target.version}</target>
 					</configuration>
 				</plugin>
-
-				<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-resources-plugin</artifactId>
-					<version>2.7</version> <executions> <execution> <id>copy-resources</id> here
-					the phase you need <phase>process-sources</phase> <goals> <goal>copy-resources</goal>
-					</goals> <configuration> <outputDirectory>${basedir}/target/test-classes</outputDirectory>
-					<resources> <resource> <directory>src/test/resources</directory> <nonFilteredFileExtension>img</nonFilteredFileExtension>
-					<filtering>true</filtering> </resource> </resources> </configuration> </execution>
-					</executions> </plugin> -->
 
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -393,14 +379,6 @@
 						</lifecycleMappingMetadata>
 					</configuration>
 				</plugin>
-				<!-- <plugin> <groupId>external.atlassian.jgitflow</groupId> <artifactId>jgitflow-maven-plugin</artifactId>
-					<version>1.0-m5.1</version> <configuration> <allowSnapshots>false</allowSnapshots>
-					<allowUntracked>false</allowUntracked> <autoVersionSubmodules>true</autoVersionSubmodules>
-					<updateDependencies>true</updateDependencies> <flowInitContext> <masterBranchName>master</masterBranchName>
-					<developBranchName>devel</developBranchName> <featureBranchPrefix>feature-</featureBranchPrefix>
-					<releaseBranchPrefix>release-</releaseBranchPrefix> <hotfixBranchPrefix>hotfix-</hotfixBranchPrefix>
-					<versionTagPrefix>blither-</versionTagPrefix> </flowInitContext> </configuration>
-					</plugin> -->
 			</plugins>
 		</pluginManagement>
 	</build>
