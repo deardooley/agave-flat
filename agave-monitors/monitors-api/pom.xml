@@ -23,7 +23,6 @@
 		<force.check.version>false</force.check.version>
 		<service.war.name>monitors</service.war.name>
 		<hibernate.hbm2ddl>update</hibernate.hbm2ddl>
-		<jetty.daemon>true</jetty.daemon>
 	</properties>
 
 	<build>

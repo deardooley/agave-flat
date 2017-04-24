@@ -23,7 +23,6 @@
 		<force.check.update>false</force.check.update>
 		<service.war.name>systems</service.war.name>
 		<hibernate.hbm2ddl>update</hibernate.hbm2ddl>
-		<jetty.daemon>true</jetty.daemon>
 	</properties>
 
 	<build>

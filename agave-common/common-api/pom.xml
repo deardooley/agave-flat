@@ -83,11 +83,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.restlet.jse</groupId>
-			<artifactId>org.restlet.ext.jetty</artifactId>
-			<version>${restlet.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.restlet.jse</groupId>
 			<artifactId>org.restlet.ext.fileupload</artifactId>
 			<version>${restlet.version}</version>
 		</dependency>
@@ -127,26 +122,6 @@
 			<groupId>javax.servlet</groupId>
 			<artifactId>servlet-api</artifactId>
 			<version>${servlet-api.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mortbay</groupId>
-			<artifactId>jetty.ajp</artifactId>
-			<version>${jetty.ajp.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mortbay</groupId>
-			<artifactId>jetty.https</artifactId>
-			<version>${jetty.https.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mortbay</groupId>
-			<artifactId>jetty.core</artifactId>
-			<version>${jetty.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mortbay</groupId>
-			<artifactId>jetty.util</artifactId>
-			<version>${jetty.util.version}</version>
 		</dependency>
 	</dependencies>
 

@@ -3,7 +3,6 @@
  */
 package org.iplantc.service.jobs;
 
-import org.iplantc.service.common.persistence.JndiSetup;
 import org.iplantc.service.common.representation.QuartzUtilityResource;
 import org.iplantc.service.common.restlet.AgaveApplication;
 import org.iplantc.service.jobs.resources.JobDocumentationResource;
@@ -18,7 +17,6 @@ import org.iplantc.service.jobs.resources.JobsResource;
 import org.iplantc.service.jobs.resources.OutputFileDownloadResource;
 import org.iplantc.service.jobs.resources.OutputFileListingResource;
 import org.iplantc.service.jobs.resources.QuartzResource;
-import org.restlet.Component;
 import org.restlet.Router;
 
 /**
@@ -108,18 +106,4 @@ public class JobsApplication extends AgaveApplication
 		return !isStandaloneMode() ? "" : "/jobs";
 	}
     
-    public static void main(String[] args) throws Exception 
-	{	
-		JndiSetup.init();
-		
-		// Create a new Component.
-        Component component = new Component();
-
-        // Attach the AppsApplication
-        JobsApplication application = new JobsApplication();
-        application.setStandaloneMode(true);
-        component.getDefaultHost().attach(application);
-        
-        launchServer(component);
-    }
 }
