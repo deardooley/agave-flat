@@ -122,9 +122,15 @@
         
 	    <!-- Below are the version numbers for all software on which we explicitly depend. -->
 	    <!-- If a library or plugin appears as a dependency in some pom file, then that    -->
-	    <!-- artifact's version number should in the lists below for easy managment and    -->
+	    <!-- artifact's version number should be in the lists below for easy managment and -->
 	    <!-- access.  Version numbers are organized into 2 lists, one for plugins and the  -->
 	    <!-- other for library dependencies.                                               -->
+	    <!--                                                                               -->
+	    <!-- Note that we specify the versions of the base maven plugins so that they      -->
+	    <!-- don't change from underneath us.  This approach requires us to manually       -->
+	    <!-- upgrade the plugins we use; a reasonable upgrade cycle would be every 6-12    -->
+	    <!-- months.  See http://maven.apache.org/plugins/index.html for latest plugin     -->
+	    <!-- listing.  Last upgrade occurred on 4/24/2017.                                 -->
 	    <!--                                                                               -->
 	    <!--                    PLEASE KEEP THESE LISTS ALPHABETIZED                       -->
 
@@ -135,25 +141,19 @@
 	    <flyway-maven-plugin.version>4.0</flyway-maven-plugin.version>
 	    <flyway-maven-plugin.versionRange>[4.0,)</flyway-maven-plugin.versionRange>
 	    <gmaven-plugin.versionRange>[1.5,)</gmaven-plugin.versionRange>
-	    <jetty-maven-plugin.version>8.1.9.v20130131</jetty-maven-plugin.version>
 	    <jgitflow-maven-plugin.version>1.0-m5.1</jgitflow-maven-plugin.version>
-	    <maven-antrun-plugin.versionRange>[1.7,)</maven-antrun-plugin.versionRange>
-	    <maven-assembly-plugin.version>2.2-beta-2</maven-assembly-plugin.version>
-	    <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
-	    <maven-deploy-plugin.version>2.5</maven-deploy-plugin.version>
-	    <maven-install-plugin.version>2.5.1</maven-install-plugin.version>
-	    <maven-jar-plugin.version>2.5</maven-jar-plugin.version>
-	    <maven-jar-plugin.versionRange>[2.5,)</maven-jar-plugin.versionRange>
+        <maven-antrun-plugin.versionRange>[1.8,)</maven-antrun-plugin.versionRange>
+	    <maven-assembly-plugin.version>3.0.0</maven-assembly-plugin.version>
+	    <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
+	    <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
+	    <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
+	    <maven-jar-plugin.version>3.0.2</maven-jar-plugin.version>
 	    <maven-php-plugin.version>2.0.2</maven-php-plugin.version>
-	    <maven-shade-plugin.version>2.4.3</maven-shade-plugin.version>
-	    <maven-site-plugin.version>3.3</maven-site-plugin.version>
-	    <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
-	    <maven-war-plugin.version>2.4</maven-war-plugin.version>
+	    <maven-shade-plugin.version>3.0.0</maven-shade-plugin.version>
+	    <maven-site-plugin.version>3.6</maven-site-plugin.version>
+	    <maven-surefire-plugin.version>2.20</maven-surefire-plugin.version>
+	    <maven-war-plugin.version>3.0.0</maven-war-plugin.version>
 	    <org.eclipse.m2e.lifecycle-mapping.version>1.0.0</org.eclipse.m2e.lifecycle-mapping.version>
-
-	    <!-- PLUGIN Version special cases -->
-	    <maven-compiler-plugin.METADATA.version>2.3.2</maven-compiler-plugin.METADATA.version>
-	    <maven-surefire-plugin.METADATA.version>2.13</maven-surefire-plugin.METADATA.version>
 
 	    <!-- LIBRARY Versions (in alphabetical order) -->
 	    <amqp-client.version>3.1.4</amqp-client.version>
@@ -190,7 +190,6 @@
 	    <jetty.core.version>6.1</jetty.core.version>
 	    <jetty.https.version>6.1</jetty.https.version>
 	    <jetty.util.version>6.1</jetty.util.version>
-	    <!-- <jglobus.version>2.1.0</jglobus.version> -->
 	    <jglobus.version>2.1.0</jglobus.version>
 	    <bcprov.jdk15on>1.5.0</bcprov.jdk15on>
 	    <joda-time.version>2.2</joda-time.version>

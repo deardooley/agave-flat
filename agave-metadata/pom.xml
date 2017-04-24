@@ -37,7 +37,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>${maven-surefire-plugin.METADATA.version}</version>
+					<version>${maven-surefire-plugin.version}</version>
 					<configuration>
 						<suiteXmlFiles>
 							<suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
