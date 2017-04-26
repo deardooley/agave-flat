@@ -5,7 +5,7 @@
 #  The image can be built by issuing this command from the 
 #  directory containing this file:
 #
-#   docker build -t agaveapi/java:8-maven
+#   docker build -t agaveapi/java:8-maven .
 #
 #############################################################
 
