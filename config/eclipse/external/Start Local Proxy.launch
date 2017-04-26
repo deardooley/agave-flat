@@ -2,7 +2,7 @@
 <launchConfiguration type="org.eclipse.ui.externaltools.ProgramLaunchConfigurationType">
 <mapAttribute key="org.eclipse.debug.core.environmentVariables">
 <mapEntry key="AGAVE_DOCKER_REGISTRY_USERNAME" value="agaveapi"/>
-<mapEntry key="AGAVE_VERSION" value="2.1.11"/>
+<mapEntry key="AGAVE_VERSION" value="2.2.0"/>
 <mapEntry key="PATH" value="${env_var:PATH}:/usr/local/bin"/>
 </mapAttribute>
 <listAttribute key="org.eclipse.debug.ui.favoriteGroups">

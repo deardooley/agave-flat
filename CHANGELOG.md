@@ -1,6 +1,19 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.2.0 - 2017-04-28
+
+### Added
+- nothing
+
+### Changed
+- Migrated from Java 1.7 to Java 1.8.102
+
+- ALL: Disable sslv3 support in web servers for security compliance.
+
+### Removed
+- nothing
+
 ## 2.1.11 - 2017-04-06
 
 ### Added
