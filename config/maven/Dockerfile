@@ -1,10 +1,15 @@
 #############################################################
 #  Build image for java code
-#  tag: agaveapi/java:7-maven instead
+#  tag: agaveapi/java:8-maven instead
+#
+#  The image can be built by issuing this command from the 
+#  directory containing this file:
+#
+#   docker build -t agaveapi/java:8-maven
 #
 #############################################################
 
-FROM jeanblanchard/java:7
+FROM jeanblanchard/java:8
 
 MAINTAINER Rion Dooley <dooley@tacc.utexas.edu>
 
