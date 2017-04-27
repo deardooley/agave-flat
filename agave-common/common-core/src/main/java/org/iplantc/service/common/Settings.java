@@ -59,8 +59,6 @@ public class Settings
     
     public static String        API_VERSION;
     public static String        SERVICE_VERSION;
-    public static int           JETTY_PORT;
-    public static int           JETTY_AJP_PORT;
     
     public static String        PUBLIC_USER_USERNAME;
     public static String        WORLD_USER_USERNAME;
@@ -248,20 +246,6 @@ public class Settings
         VERIFY_JWT_SIGNATURE = Boolean.valueOf((String) props.getProperty("iplant.verify.jwt.signature", "no"));
         
         API_VERSION = (String)props.getProperty("iplant.api.version");
-        
-        if (!StringUtils.isEmpty(System.getProperty("jetty.port"))) {
-            JETTY_PORT = Integer.valueOf(System.getProperty("jetty.port"));
-        }
-        if (JETTY_PORT == 0) {
-            JETTY_PORT = Integer.valueOf((String)props.getProperty("jetty.port", "8182"));
-        }
-        
-        if (!StringUtils.isEmpty(System.getProperty("jetty.ajp.port"))) {
-            JETTY_AJP_PORT = Integer.valueOf(System.getProperty("jetty.ajp.port"));
-        }
-        if (JETTY_AJP_PORT == 0) {
-            JETTY_AJP_PORT = Integer.valueOf((String)props.getProperty("jetty.ajp.port", "8183"));
-        }
         
         TEMP_DIRECTORY = (String) props.getProperty("iplant.server.temp.dir", "/scratch");
         

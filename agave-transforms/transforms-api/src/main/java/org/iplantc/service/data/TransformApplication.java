@@ -3,7 +3,6 @@
  */
 package org.iplantc.service.data;
 
-import org.iplantc.service.common.persistence.JndiSetup;
 import org.iplantc.service.common.representation.QuartzUtilityResource;
 import org.iplantc.service.common.restlet.AgaveApplication;
 import org.iplantc.service.data.resources.AsyncFileTransformResource;
@@ -11,9 +10,7 @@ import org.iplantc.service.data.resources.DecodingCallbackResource;
 import org.iplantc.service.data.resources.QuartzResource;
 import org.iplantc.service.data.resources.SyncFileTransformResource;
 import org.iplantc.service.data.resources.TransformListingResource;
-import org.iplantc.service.data.resources.TransformTagListingResource;
 import org.iplantc.service.data.resources.TransformsDocumentationResource;
-import org.restlet.Component;
 import org.restlet.Router;
 
 /**
@@ -54,20 +51,5 @@ public class TransformApplication extends AgaveApplication
     @Override
 	protected String getStandalonePrefix() {
 		return !isStandaloneMode() ? "" : "/transforms";
-	}
-    
-    public static void main(String[] args) throws Exception 
-	{	
-		JndiSetup.init();
-		
-		// Create a new Component.
-        Component component = new Component();
-
-        // Attach the AppsApplication
-        TransformApplication application = new TransformApplication();
-        application.setStandaloneMode(true);
-        component.getDefaultHost().attach(application);
-        
-        launchServer(component);
 	}
 }

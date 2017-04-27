@@ -4,7 +4,6 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 
 import org.apache.log4j.Logger;
-import org.iplantc.service.common.persistence.JndiSetup;
 import org.iplantc.service.common.restlet.AgaveApplication;
 import org.iplantc.service.metadata.resources.MetadataCollection;
 import org.iplantc.service.metadata.resources.MetadataDocumentationResource;
@@ -13,7 +12,6 @@ import org.iplantc.service.metadata.resources.MetadataSchemaCollection;
 import org.iplantc.service.metadata.resources.MetadataSchemaResource;
 import org.iplantc.service.metadata.resources.MetadataSchemaShareResource;
 import org.iplantc.service.metadata.resources.MetadataShareResource;
-import org.restlet.Component;
 import org.restlet.Restlet;
 import org.restlet.Router;
 import org.restlet.util.Template;
@@ -77,21 +75,6 @@ public class MetadataApplication extends AgaveApplication
 	protected String getStandalonePrefix() {
 		return !isStandaloneMode() ? "" : "/meta";
 	}
-    
-    public static void main(String[] args) throws Exception 
-	{	
-		JndiSetup.init();
-		
-		// Create a new Component.
-        Component component = new Component();
-
-        // Attach the AppsApplication
-        MetadataApplication application = new MetadataApplication();
-        application.setStandaloneMode(true);
-        component.getDefaultHost().attach(application);
-        
-        launchServer(component);
-    }
     
     public MongoClient getMongoClient() throws UnknownHostException
     {

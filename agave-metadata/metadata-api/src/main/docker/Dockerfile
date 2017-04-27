@@ -1,4 +1,4 @@
-FROM agaveapi/java-api-base:alpine
+FROM agaveapi/java-api-base:8.0.43-java8
 
 MAINTAINER Rion Dooley <dooley@tacc.utexas.edu>
 

@@ -14,18 +14,12 @@ import org.iplantc.service.common.auth.MyProxyGuardFactory;
 import org.iplantc.service.common.auth.NullGuardFactory;
 import org.iplantc.service.common.resource.RuntimeConfigurationResource;
 import org.restlet.Application;
-import org.restlet.Component;
 import org.restlet.Guard;
 import org.restlet.Restlet;
 import org.restlet.Router;
-import org.restlet.Server;
 import org.restlet.data.ChallengeScheme;
 import org.restlet.data.MediaType;
 import org.restlet.data.Method;
-import org.restlet.data.Protocol;
-import org.restlet.ext.jetty.AjpServerHelper;
-import org.restlet.ext.jetty.HttpServerHelper;
-import org.restlet.ext.jetty.JettyServerHelper;
 import org.restlet.resource.Resource;
 
 /**
@@ -137,33 +131,5 @@ public abstract class AgaveApplication extends Application
 			router.attach(getStandalonePrefix() + path, targetResource);
 		}
 	}
-	
-	protected static void launchServer(Component component) throws Exception 
-	{	
-		 // create embedding jetty server
-        Server embedingJettyServer = new Server(
-	        component.getContext().createChildContext(),
-	        Protocol.HTTP,
-	        Settings.JETTY_PORT,
-	        component
-        );
-        
-        //construct and start JettyServerHelper
-        JettyServerHelper jettyServerHelper = new HttpServerHelper(embedingJettyServer);
-        jettyServerHelper.start();
-
-        //create embedding AJP Server
-        Server embedingJettyAJPServer=new Server(
-            component.getContext(),
-            Protocol.HTTP,
-            Settings.JETTY_AJP_PORT,
-            component
-        );
-
-        //construct and start AjpServerHelper
-        AjpServerHelper ajpServerHelper = new AjpServerHelper(embedingJettyAJPServer);
-        ajpServerHelper.start();
-	}
-	
 	
 }

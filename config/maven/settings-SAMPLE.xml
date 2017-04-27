@@ -340,7 +340,6 @@
 				<foundation.v1.db.username>agaveuser</foundation.v1.db.username>
 				<foundation.v1.db.password>password</foundation.v1.db.password>
 
-
 				<!-- ************************ PostIts service ************************ -->
 				<foundation.service.proxy>${foundation.base.url}</foundation.service.proxy>
 				<foundation.service.postits>${foundation.base.url}/postits/v2</foundation.service.postits>
@@ -356,17 +355,11 @@
 				<!-- ************************ Apps service *************************** -->
 
 				<foundation.service.apps>${foundation.base.url}/apps/v2</foundation.service.apps>
-				<foundation.service.apps.jetty.port>13001</foundation.service.apps.jetty.port>
-				<foundation.service.apps.jetty.ajp.port>13002</foundation.service.apps.jetty.ajp.port>
-
 
 				<!-- ************************ Files service ************************** -->
 
 				<foundation.service.files>${foundation.base.url}/files/v2</foundation.service.files>
 				<foundation.service.files.disk.quota>-1</foundation.service.files.disk.quota>
-				<foundation.service.files.jetty.port>13021</foundation.service.files.jetty.port>
-				<foundation.service.files.jetty.ajp.port>13022</foundation.service.files.jetty.ajp.port>
-
 
 				<!-- ************************ Jobs service *************************** -->
 
@@ -379,9 +372,6 @@
 				<foundation.service.jobs.monitoring.tasks>1</foundation.service.jobs.monitoring.tasks>
 				<foundation.service.jobs.max.retries>3</foundation.service.jobs.max.retries>
 				<foundation.service.jobs.local.system.id></foundation.service.jobs.local.system.id>
-				<foundation.service.jobs.jetty.port>13031</foundation.service.jobs.jetty.port>
-				<foundation.service.jobs.jetty.ajp.port>13032</foundation.service.jobs.jetty.ajp.port>
-
 
 				<!-- ************************ Meta service *************************** -->
 
@@ -393,9 +383,6 @@
 				<foundation.service.meta.db.scheme>api</foundation.service.meta.db.scheme>
 				<foundation.service.meta.collection>metadata</foundation.service.meta.collection>
 				<foundation.service.meta.schema.collection>schemata</foundation.service.meta.schema.collection>
-				<foundation.service.meta.jetty.port>13041</foundation.service.meta.jetty.port>
-				<foundation.service.meta.jetty.ajp.port>13042</foundation.service.meta.jetty.ajp.port>
-
 
 				<!-- ************************ Monitor service ******************* -->
 
@@ -405,8 +392,6 @@
 				<foundation.service.montior.max.q.failures>5</foundation.service.montior.max.q.failures>
 				<foundation.service.monitor.max.retries>1</foundation.service.monitor.max.retries>
 				<foundation.service.monitor.max.tasks>2</foundation.service.monitor.max.tasks>
-				<foundation.service.monitor.jetty.port>13051</foundation.service.monitor.jetty.port>
-				<foundation.service.monitor.jetty.ajp.port>13052</foundation.service.monitor.jetty.ajp.port>
 				<foundation.service.min.monitor.repeat.interval>0</foundation.service.min.monitor.repeat.interval>
 
 				<!-- ************************ Notification service ******************* -->
@@ -418,8 +403,6 @@
 				<foundation.service.notif.retry.topic>devretry.notifications.queue</foundation.service.notif.retry.topic>
 				<foundation.service.notif.max.retries>5</foundation.service.notif.max.retries>
 				<foundation.service.notif.max.tasks>1</foundation.service.notif.max.tasks>
-				<foundation.service.notif.jetty.port>13051</foundation.service.notif.jetty.port>
-				<foundation.service.notif.jetty.ajp.port>13052</foundation.service.notif.jetty.ajp.port>
 
 				<foundation.service.notif.failed.db.host>mongodb</foundation.service.notif.failed.db.host>
 				<foundation.service.notif.failed.db.port>27017</foundation.service.notif.failed.db.port>
@@ -448,22 +431,16 @@
 				<foundation.service.profiles.trellis.url>https://user.iplantcollaborative.org/api/v1/users/</foundation.service.profiles.trellis.url>
 				<foundation.service.profiles.trellis.secret></foundation.service.profiles.trellis.secret>
 				<foundation.service.profiles.trellis.key></foundation.service.profiles.trellis.key>
-				<foundation.service.profiles.jetty.port>13061</foundation.service.profiles.jetty.port>
-				<foundation.service.profiles.jetty.ajp.port>13062</foundation.service.profiles.jetty.ajp.port>
 
 				<!-- ************************ Systems service ************************ -->
 
 				<foundation.service.systems>${foundation.base.url}/systems/v2</foundation.service.systems>
 				<foundation.test.credentials.username>agave</foundation.test.credentials.username>
 				<foundation.test.credentials.password>password</foundation.test.credentials.password>
-				<foundation.service.systems.jetty.port>13071</foundation.service.systems.jetty.port>
-				<foundation.service.systems.jetty.ajp.port>13072</foundation.service.systems.jetty.ajp.port>
-
 
 				<!-- ************************ Tags service ********************* -->
 
 				<foundation.service.tags>${foundation.base.url}/tags/v2</foundation.service.tags>
-				
 				
 				<!-- ************************ Transforms service ********************* -->
 
@@ -472,9 +449,6 @@
 				<foundation.service.transforms.file.path>/opt/tomcat/webapps/transforms/WEB-INF/classes/transforms.xml</foundation.service.transforms.file.path>
 				<foundation.service.transforms.conversion.map.path>/opt/tomcat/webapps/transforms/WEB-INF/classes/transform_conversion_map.xml</foundation.service.transforms.conversion.map.path>
 				<foundation.service.transforms.dir.path>/opt/tomcat/webapps/transforms/WEB-INF/classes/transforms</foundation.service.transforms.dir.path>
-				<foundation.service.transforms.jetty.port>13081</foundation.service.transforms.jetty.port>
-				<foundation.service.transforms.jetty.ajp.port>13082</foundation.service.transforms.jetty.ajp.port>
-
 
 				<!-- ************************ Transfers service ********************** -->
 
@@ -482,8 +456,6 @@
 				<foundation.service.transfers.max.tasks>5</foundation.service.transfers.max.tasks>
 				<foundation.service.transfers.max.simultaneous>-1</foundation.service.transfers.max.simultaneous>
 				<foundation.service.transfers.max.retries>3</foundation.service.transfers.max.retries>
-				<foundation.service.transfers.jetty.port>13091</foundation.service.transfers.jetty.port>
-				<foundation.service.transfers.jetty.ajp.port>13092</foundation.service.transfers.jetty.ajp.port>
 				<foundation.service.transfers.max.relay.size>2</foundation.service.transfers.max.relay.size>
 				<foundation.service.transfers.allow.relays>true</foundation.service.transfers.allow.relays>
 				

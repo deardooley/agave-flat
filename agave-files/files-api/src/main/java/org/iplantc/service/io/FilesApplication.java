@@ -27,14 +27,11 @@ import org.restlet.Component;
 import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.Restlet;
-import org.restlet.Server;
 import org.restlet.data.ChallengeScheme;
 import org.restlet.data.CharacterSet;
 import org.restlet.data.MediaType;
 import org.restlet.data.Protocol;
 import org.restlet.data.Status;
-import org.restlet.ext.jetty.HttpServerHelper;
-import org.restlet.ext.jetty.JettyServerHelper;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Resource;
 import org.restlet.resource.ResourceException;
@@ -43,7 +40,6 @@ import org.restlet.routing.Router;
 import org.restlet.routing.Template;
 import org.restlet.security.ChallengeAuthenticator;
 import org.restlet.security.Verifier;
-import org.restlet.service.CorsService;
 import org.restlet.service.MetadataService;
 import org.restlet.service.StatusService;
 
@@ -226,19 +222,4 @@ public class FilesApplication extends Application
 //       launchServer(component);
     }
 	
-	protected static void launchServer(Component component) throws Exception 
-	{	
-		 // create embedding jetty server
-        Server embedingJettyServer = new Server(
-	        component.getContext().createChildContext(),
-	        Protocol.HTTP,
-//	        org.iplantc.service.common.Settings.JETTY_PORT,
-	        8080,
-	        component
-        );
-        
-        //construct and start JettyServerHelper
-        JettyServerHelper jettyServerHelper = new HttpServerHelper(embedingJettyServer);
-        jettyServerHelper.start();
-	}
 }

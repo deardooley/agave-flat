@@ -1,4 +1,4 @@
-FROM agaveapi/java:7-maven
+FROM agaveapi/java:8-maven
 
 MAINTAINER Rion Dooley <dooley@tacc.utexas.edu>
 
