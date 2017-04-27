@@ -7,6 +7,11 @@ ENV FLYWAY_HOME /source/flyway-$FLYWAY_VERSION
 
 WORKDIR /source
 
+# Allow wget to connect to the maven repo without an ssl error.
+RUN apk update \
+    && apk add ca-certificates wget \
+    && update-ca-certificates
+
 RUN apk --update add bash && \
 	wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/$FLYWAY_VERSION/flyway-commandline-$FLYWAY_VERSION.tar.gz && \ 
 
