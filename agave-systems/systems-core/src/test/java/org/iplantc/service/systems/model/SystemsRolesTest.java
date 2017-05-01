@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 /**
  * Logic tests for the system role object
  */
+@Test(groups={"unit"})
 public class SystemsRolesTest
 {
 	private SystemRole role;

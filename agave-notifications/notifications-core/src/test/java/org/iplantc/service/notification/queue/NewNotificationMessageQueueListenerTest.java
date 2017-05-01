@@ -1,8 +1,6 @@
 package org.iplantc.service.notification.queue;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -16,7 +14,6 @@ import org.iplantc.service.notification.TestDataHelper;
 import org.iplantc.service.notification.dao.NotificationDao;
 import org.iplantc.service.notification.exceptions.NotificationException;
 import org.iplantc.service.notification.model.Notification;
-import org.iplantc.service.notification.model.NotificationAttempt;
 import org.iplantc.service.notification.model.enumerations.NotificationEventType;
 import org.iplantc.service.notification.model.enumerations.NotificationStatusType;
 import org.iplantc.service.notification.queue.messaging.NotificationMessageBody;
@@ -43,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class NewNotificationMessageQueueListenerTest extends AbstractNotificationTest 
 {
 

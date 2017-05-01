@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class ProfileTest extends ModelTestCommon{
 
 	private Tenant defaultTenant = null;

@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"s3","sanitization"})
+@Test(singleThreaded=true, groups= {"s3","sanitization","integration"})
 public class S3PathSanitizationTest extends AbstractPathSanitizationTest {
 
     /* (non-Javadoc)

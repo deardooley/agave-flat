@@ -1,8 +1,6 @@
 package org.iplantc.service.tags.model;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.iplantc.service.common.exceptions.UUIDException;
@@ -12,7 +10,6 @@ import org.iplantc.service.tags.AbstractTagTest;
 import org.iplantc.service.tags.TestDataHelper;
 import org.iplantc.service.tags.exceptions.TagException;
 import org.iplantc.service.tags.model.enumerations.PermissionType;
-import org.json.JSONException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -22,6 +19,7 @@ import org.testng.annotations.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@Test(groups={"integration"})
 public class TagPermissionTest extends AbstractTagTest {
 	
 	@BeforeClass

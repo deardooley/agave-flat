@@ -3,12 +3,10 @@
  */
 package org.iplantc.service.remote;
 
-import java.io.File;
+import static org.iplantc.service.systems.model.JSONTestDataUtil.TEST_OWNER;
+
 import java.io.IOException;
 
-import static org.iplantc.service.systems.model.JSONTestDataUtil.*;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.systems.dao.SystemDao;
@@ -16,10 +14,6 @@ import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.JSONTestDataUtil;
 import org.iplantc.service.systems.model.LoginConfig;
-import org.iplantc.service.systems.model.StorageConfig;
-import org.iplantc.service.systems.model.StorageSystem;
-import org.iplantc.service.transfer.AbstractRemoteDataClientTest;
-import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,7 +27,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"transfer", "irods.filesystem.init","broken"})
+@Test(singleThreaded=true, groups= {"transfer", "irods.filesystem.init","broken","integration"})
 public abstract class AbstractRemoteSubmissionClientTest {
 
 	protected ThreadLocal<RemoteSubmissionClient> threadClient = new ThreadLocal<RemoteSubmissionClient>();

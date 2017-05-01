@@ -10,7 +10,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.JSONTestDataUtil;
-import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.SystemsModelTestCommon;
 import org.joda.time.DateTime;
 import org.testng.Assert;
@@ -20,6 +19,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class SystemSearchTest  extends SystemsModelTestCommon {
 
     private SystemDao systemDao = new SystemDao();

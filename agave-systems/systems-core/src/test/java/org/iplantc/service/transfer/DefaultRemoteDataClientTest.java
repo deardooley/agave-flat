@@ -29,8 +29,6 @@ import org.iplantc.service.systems.model.StorageSystem;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.iplantc.service.transfer.model.TransferTask;
-import org.iplantc.service.transfer.s3.S3Jcloud;
-import org.jclouds.blobstore.BlobStore;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
@@ -41,7 +39,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(singleThreaded=true, groups= {"transfer", "irods.filesystem.init"})
+@Test(singleThreaded=true, groups= {"transfer", "irods.filesystem.init", "integration"})
 public abstract class DefaultRemoteDataClientTest extends BaseTransferTestCase 
 {
 	protected File tmpFile = null;

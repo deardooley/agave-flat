@@ -22,6 +22,7 @@ import org.testng.annotations.DataProvider;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@Test(groups={"integration"})
 public class LogicalFileTest extends BaseTestCase {
 
 	@BeforeClass

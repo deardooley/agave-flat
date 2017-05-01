@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
  * 
  * @author rcardone
  */
+@Test(groups={"integration"})
 public class TenantDaoTest2 {
 
     private static final String TENANT_CODE = "example.com"; 

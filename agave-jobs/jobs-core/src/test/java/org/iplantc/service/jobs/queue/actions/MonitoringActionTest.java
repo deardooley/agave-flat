@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class MonitoringActionTest extends AbstractJobSubmissionTest {
     
     

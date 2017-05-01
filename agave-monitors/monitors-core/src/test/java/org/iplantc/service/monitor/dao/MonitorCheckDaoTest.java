@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.hibernate.Session;
 import org.iplantc.service.monitor.AbstractMonitorTest;
-import org.iplantc.service.monitor.exceptions.MonitorException;
 import org.iplantc.service.monitor.model.Monitor;
 import org.iplantc.service.monitor.model.MonitorCheck;
 import org.iplantc.service.monitor.model.enumeration.MonitorCheckType;
@@ -15,7 +13,7 @@ import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-@Test(singleThreaded=true)
+@Test(singleThreaded=true, groups={"integration"})
 public class MonitorCheckDaoTest extends AbstractMonitorTest {
 	
 	@AfterMethod

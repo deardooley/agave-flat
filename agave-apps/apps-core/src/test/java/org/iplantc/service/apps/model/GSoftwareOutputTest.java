@@ -17,6 +17,7 @@ import org.testng.annotations.Test;
  * Time: 12:50 PM
  * To change this template use File | Settings | File Templates.
  */
+@Test(groups={"unit"})
 public class GSoftwareOutputTest extends GModelTestCommon{
     SoftwareOutput output = new SoftwareOutput();
 

@@ -1,13 +1,14 @@
 package org.iplantc.service.tags.dao;
 
-import static org.iplantc.service.tags.TestDataHelper.*;
+import static org.iplantc.service.tags.TestDataHelper.TEST_OTHERUSER;
+import static org.iplantc.service.tags.TestDataHelper.TEST_SHAREUSER;
+import static org.iplantc.service.tags.TestDataHelper.TEST_USER;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
-import org.apache.commons.collections.PredicateUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.iplantc.service.common.uuid.AgaveUUID;
 import org.iplantc.service.common.uuid.UUIDType;
@@ -19,6 +20,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class TagDaoTest extends AbstractTagTest 
 {
 	@BeforeMethod

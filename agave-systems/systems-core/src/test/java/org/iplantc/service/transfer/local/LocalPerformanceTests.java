@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
-@Test(groups = { "local", "performance" })
+@Test(groups = { "local", "performance", "integration" })
 public class LocalPerformanceTests extends BaseTransferTestCase {
     private static final Logger log = Logger.getLogger(LocalPerformanceTests.class);
     private Local local = null;

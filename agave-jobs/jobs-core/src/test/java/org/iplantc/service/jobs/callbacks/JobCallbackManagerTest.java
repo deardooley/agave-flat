@@ -33,6 +33,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class JobCallbackManagerTest extends AbstractDaoTest {
 
     private static final Logger log = Logger.getLogger(JobCallbackManagerTest.class);

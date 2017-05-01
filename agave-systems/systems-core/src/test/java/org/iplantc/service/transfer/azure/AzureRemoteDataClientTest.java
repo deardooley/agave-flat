@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
  *
  */
 
-@Test(groups= {"azure","filesystem"})
+@Test(groups= {"azure","filesystem", "integration"})
 public class AzureRemoteDataClientTest extends AbstractRemoteDataClientTest {
 
 	@Override

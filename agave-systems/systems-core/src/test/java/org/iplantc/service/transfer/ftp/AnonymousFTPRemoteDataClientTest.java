@@ -10,7 +10,6 @@ import org.iplantc.service.transfer.AbstractRemoteDataClientTest;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -18,7 +17,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"ftp","ftp-anonymous","filesystem","broken"})
+@Test(singleThreaded=true, groups= {"ftp","ftp-anonymous","filesystem","broken", "integration"})
 public class AnonymousFTPRemoteDataClientTest extends AbstractRemoteDataClientTest {
 
 	/* (non-Javadoc)

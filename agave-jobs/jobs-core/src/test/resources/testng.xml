@@ -1,23 +1,33 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="iPlant Jobs Services" verbose="2" parallel="false">
+<suite name="Agave jobs-core" verbose="2" parallel="none">
     <groups>
         <run>
             <exclude name="broken"/>
             <exclude name="notReady"/>
         </run>
     </groups>
-	<test name="jobs">
+	<test name="jobs-core">
 		 <packages>
-			<!-- <package name="org.iplantc.service.jobs.model" /> -->
+			<package name="org.iplantc.service.jobs.callbacks" /> 
 			<package name="org.iplantc.service.jobs.dao" /> 
 			<package name="org.iplantc.service.jobs.managers" />
 			<package name="org.iplantc.service.jobs.manager.launchers" />
-			<package name="org.iplantc.service.jobs.manager.killers" />
+			<package name="org.iplantc.service.jobs.manager.launchers.parsers" />
 			<package name="org.iplantc.service.jobs.manager.monitors" />
-			<package name="org.iplantc.service.jobs.manager.parsers" />
+			<package name="org.iplantc.service.jobs.manager.moniters.parsers" />
+			<package name="org.iplantc.service.jobs.model" />
+			<package name="org.iplantc.service.jobs.model.enumerations" />
+			<package name="org.iplantc.service.jobs.notifications" />
 			<package name="org.iplantc.service.jobs.queue" />
+			<package name="org.iplantc.service.jobs.queue.actions" />
+			<package name="org.iplantc.service.jobs.scheduling" />
+			<package name="org.iplantc.service.jobs.search" />
+			<package name="org.iplantc.service.jobs.submission" />
 			<package name="org.iplantc.service.jobs.util" />
+			<package name="org.iplantc.service.notification" />
+			<package name="org.iplantc.service.notification.events" />
+			<package name="org.iplantc.service.transfer" />
 		</packages>
 	</test>
 </suite>

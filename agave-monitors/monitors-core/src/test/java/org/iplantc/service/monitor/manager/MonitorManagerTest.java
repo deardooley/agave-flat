@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-@Test(singleThreaded=true, groups={"broken"})
+@Test(singleThreaded=true, groups={"broken", "integration"})
 public class MonitorManagerTest extends AbstractMonitorTest {
 
 	protected MonitorManager manager = new MonitorManager();

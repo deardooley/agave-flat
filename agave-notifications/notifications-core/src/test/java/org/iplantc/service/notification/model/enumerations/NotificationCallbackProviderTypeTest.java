@@ -8,7 +8,6 @@ import static org.iplantc.service.notification.model.enumerations.NotificationCa
 import static org.iplantc.service.notification.model.enumerations.NotificationCallbackProviderType.WEBHOOK;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.iplantc.service.common.Settings;
@@ -17,6 +16,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class NotificationCallbackProviderTypeTest {
 
 	@DataProvider

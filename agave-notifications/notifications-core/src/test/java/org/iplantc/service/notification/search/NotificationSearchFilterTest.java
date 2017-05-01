@@ -1,7 +1,9 @@
 package org.iplantc.service.notification.search;
 
 import org.iplantc.service.notification.AbstractNotificationTest;
+import org.testng.annotations.Test;
 
+@Test(groups={"broken", "integration"})
 public class NotificationSearchFilterTest extends AbstractNotificationTest
 {
     

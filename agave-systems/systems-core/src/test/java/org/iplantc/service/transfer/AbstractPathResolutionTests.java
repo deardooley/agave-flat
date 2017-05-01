@@ -3,10 +3,8 @@ package org.iplantc.service.transfer;
 import java.io.IOException;
 
 import org.apache.commons.lang.StringUtils;
-import org.ietf.jgss.GSSCredential;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.model.StorageSystem;
-import org.iplantc.service.transfer.gridftp.GridFTP;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;
@@ -16,7 +14,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(singleThreaded=true, groups= {"unit", "path-resolution"})
+@Test(singleThreaded=true, groups= {"path-resolution","integration"})
 public abstract class AbstractPathResolutionTests extends BaseTransferTestCase 
 {
 	protected abstract JSONObject getSystemJson() throws JSONException, IOException;

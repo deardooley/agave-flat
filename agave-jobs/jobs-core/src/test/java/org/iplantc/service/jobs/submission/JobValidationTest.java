@@ -8,7 +8,6 @@ import org.iplantc.service.apps.model.SoftwareInput;
 import org.iplantc.service.apps.model.SoftwareOutput;
 import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.jobs.dao.JobDao;
-import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -25,6 +24,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class JobValidationTest extends AbstractJobSubmissionTest{
 	
 	/**

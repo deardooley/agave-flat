@@ -2,8 +2,6 @@ package org.iplantc.service.common.auth;
 
 import java.io.File;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.globus.myproxy.GetParams;
 import org.globus.myproxy.MyProxyException;

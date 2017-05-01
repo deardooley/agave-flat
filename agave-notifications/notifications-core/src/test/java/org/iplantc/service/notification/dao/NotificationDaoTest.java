@@ -27,7 +27,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(singleThreaded=true)
+@Test(singleThreaded=true, groups={"integration"})
 public class NotificationDaoTest extends AbstractNotificationTest 
 {
 	private int totalActiveValidSpecificNotifications = 7;// totalActiveValidSpecificNotificationsForUser + totalActiveValidSpecificNotificationsForStranger;

@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"length"}) //, dependsOnGroups= {"exists"}
+@Test(singleThreaded=true, groups= {"length","integration"}) //, dependsOnGroups= {"exists"}
 public class LengthOperationTest extends BaseRemoteDataClientOperationTest {
 
     private static final Logger log = Logger.getLogger(LengthOperationTest.class);

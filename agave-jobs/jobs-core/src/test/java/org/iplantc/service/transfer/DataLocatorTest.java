@@ -42,6 +42,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class DataLocatorTest
 {
 	public static final String SYSTEM_OWNER = "testuser";

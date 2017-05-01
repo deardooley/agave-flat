@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"sftp","sanitization", "broken"})
+@Test(singleThreaded=true, groups= {"sftp", "sanitization", "broken", "integration"})
 public class SftpSshKeysKBIAuthTest extends BaseTransferTestCase {
 
 private static final Logger log = Logger.getLogger(SftpSshKeysKBIAuthTest.class);

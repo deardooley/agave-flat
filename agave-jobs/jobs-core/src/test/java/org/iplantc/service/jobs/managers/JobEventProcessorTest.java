@@ -1,7 +1,9 @@
 package org.iplantc.service.jobs.managers;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -30,7 +32,7 @@ import org.testng.annotations.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Test(groups={"broken"})
+@Test(groups={"broken", "integration"})
 public class JobEventProcessorTest extends AbstractDaoTest {
 
 	protected NotificationDao ndao = new NotificationDao();

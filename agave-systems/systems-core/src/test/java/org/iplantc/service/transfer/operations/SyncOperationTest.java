@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"sync","upload"})//, dependsOnGroups= {"copy"}
+@Test(singleThreaded=true, groups= {"sync","upload", "integration"})//, dependsOnGroups= {"copy"}
 public class SyncOperationTest extends BaseRemoteDataClientOperationTest {
 
     private static final Logger log = Logger.getLogger(SyncOperationTest.class);

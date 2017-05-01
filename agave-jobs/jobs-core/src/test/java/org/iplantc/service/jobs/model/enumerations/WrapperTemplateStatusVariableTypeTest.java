@@ -9,8 +9,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
+@Test(groups={"unit"})
 public class WrapperTemplateStatusVariableTypeTest {
 
 	@DataProvider 
@@ -22,7 +21,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroAddsCustomEventToCallbackDataProvider", enabled=true)
+	@Test(groups={"broken"}, dataProvider="resolveNotificationEventMacroAddsCustomEventToCallbackDataProvider")
 	public void resolveNotificationEventMacroAddsCustomEventToCallbackData(String providedEventName, String expectedCallbackEventName, String message) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
@@ -43,7 +42,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroAddsCustomDataToCallbackDataProvider", enabled=true)
+	@Test(groups={"broken"}, dataProvider="resolveNotificationEventMacroAddsCustomDataToCallbackDataProvider")
 	public void resolveNotificationEventMacroAddsCustomDataToCallbackData(String[] customVariableNames, String message ) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
@@ -70,7 +69,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroTrimsVariableNamesProvider", enabled=true)
+	@Test(groups={"broken"}, dataProvider="resolveNotificationEventMacroTrimsVariableNamesProvider")
 	public void resolveNotificationEventMacroTrimsVariableNames(String[] customVariableNames, String message ) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
@@ -107,7 +106,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroStripsEmptyVariableNamesProvider", enabled=true)
+	@Test(groups={"broken"}, dataProvider="resolveNotificationEventMacroStripsEmptyVariableNamesProvider")
 	public void resolveNotificationEventMacroStripsEmptyVariableNames(String[] customVariableNames, String message ) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
@@ -152,7 +151,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroStripsBlankVariableNamesProvider", enabled=true)
+	@Test(groups={"broken"}, dataProvider="resolveNotificationEventMacroStripsBlankVariableNamesProvider")
 	public void resolveNotificationEventMacroStripsBlankVariableNames(String[] customVariableNames, String message ) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType
@@ -195,7 +194,7 @@ public class WrapperTemplateStatusVariableTypeTest {
 		};
 	}
 	
-	@Test(dataProvider="resolveNotificationEventMacroStripsNullVariableNamesProvider", enabled=true)
+	@Test(groups={"broken"}, dataProvider="resolveNotificationEventMacroStripsNullVariableNamesProvider")
 	public void resolveNotificationEventMacroStripsNullVariableNames(String[] customVariableNames, String message ) {
 		Job job = new Job();
 		String resolvedWrapperCode = WrapperTemplateStatusVariableType

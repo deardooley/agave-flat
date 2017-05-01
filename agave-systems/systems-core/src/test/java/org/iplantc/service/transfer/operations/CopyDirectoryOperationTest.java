@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"copydirectory"})
+@Test(singleThreaded=true, groups= {"copydirectory","integration"})
 public class CopyDirectoryOperationTest extends BaseRemoteDataClientOperationTest {
 
     private static final Logger log = Logger.getLogger(CopyDirectoryOperationTest.class);

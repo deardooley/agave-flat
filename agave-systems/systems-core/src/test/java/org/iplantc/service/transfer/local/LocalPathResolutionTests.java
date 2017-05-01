@@ -13,7 +13,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
-@Test(groups= {"local","path-resolution"})
+@Test(groups= {"local","path-resolution","integration"})
 public class LocalPathResolutionTests extends AbstractPathResolutionTests
 {
 	@Override

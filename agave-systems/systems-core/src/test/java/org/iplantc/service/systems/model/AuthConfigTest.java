@@ -20,7 +20,7 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
 
-
+@Test(groups={"integration"})
 public class AuthConfigTest extends SystemsModelTestCommon {
 
     @BeforeClass

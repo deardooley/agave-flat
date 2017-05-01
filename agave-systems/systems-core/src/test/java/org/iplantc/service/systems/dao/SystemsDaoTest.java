@@ -18,6 +18,7 @@ import java.util.List;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class SystemsDaoTest extends SystemsModelTestCommon {
 
 	private SystemDao dao = new SystemDao();

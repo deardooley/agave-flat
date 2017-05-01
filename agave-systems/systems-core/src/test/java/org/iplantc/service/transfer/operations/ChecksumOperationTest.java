@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"checksum"})
+@Test(singleThreaded=true, groups= {"checksum","integration"})
 public class ChecksumOperationTest extends BaseRemoteDataClientOperationTest {
 
     private static final Logger log = Logger.getLogger(ChecksumOperationTest.class);

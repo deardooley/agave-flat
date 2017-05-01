@@ -1,5 +1,7 @@
 package org.iplantc.service.systems.manager;
 
+import java.io.IOException;
+
 import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemException;
@@ -9,10 +11,13 @@ import org.iplantc.service.transfer.RemoteDataClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
-import java.io.IOException;
-
+@Test(groups={"integration"})
 public class LoadPublicSystemsTest extends SystemsModelTestCommon {
 	private static String SYSTEM_OWNER = "dooley";
 	

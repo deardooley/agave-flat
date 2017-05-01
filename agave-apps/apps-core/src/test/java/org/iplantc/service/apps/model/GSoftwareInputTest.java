@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.iplantc.service.apps.model.enumerations.SoftwareParameterType;
 import org.iplantc.service.apps.util.ServiceUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -23,6 +22,7 @@ import org.testng.annotations.Test;
  * Time: 4:04 PM
  * To change this template use File | Settings | File Templates.
  */
+@Test(groups={"unit"})
 public class GSoftwareInputTest extends GModelTestCommon {
     SoftwareInput input = new SoftwareInput();
 

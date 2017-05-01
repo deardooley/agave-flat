@@ -27,7 +27,7 @@ import com.google.common.hash.HashCode;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
 
-@Test(groups = { "s3", "performance" })
+@Test(groups = { "s3", "performance", "integration" })
 public class S3PerformanceTests extends BaseTransferTestCase {
     private static final Logger log = Logger.getLogger(S3PerformanceTests.class);
     private S3Jcloud s3 = null;

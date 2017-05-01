@@ -1,12 +1,10 @@
 package org.iplantc.service.systems.manager;
 
 import org.iplantc.service.common.exceptions.PermissionException;
-import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.uuid.UniqueId;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemException;
-import org.iplantc.service.systems.model.AuthConfig;
 import org.iplantc.service.systems.model.BatchQueue;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.JSONTestDataUtil;
@@ -15,7 +13,6 @@ import org.iplantc.service.systems.model.StorageSystem;
 import org.iplantc.service.systems.model.SystemRole;
 import org.iplantc.service.systems.model.SystemsModelTestCommon;
 import org.iplantc.service.systems.model.enumerations.AuthConfigType;
-import org.iplantc.service.systems.model.enumerations.CredentialServerProtocolType;
 import org.iplantc.service.systems.model.enumerations.RoleType;
 import org.json.JSONObject;
 import org.testng.Assert;
@@ -26,6 +23,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class SystemManagerTest extends SystemsModelTestCommon 
 {	
 	private SystemManager manager = new SystemManager();

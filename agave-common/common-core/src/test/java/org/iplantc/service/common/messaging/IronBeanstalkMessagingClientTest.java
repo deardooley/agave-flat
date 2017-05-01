@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import com.surftools.BeanstalkClient.Job;
 import com.surftools.BeanstalkClientImpl.ClientImpl;
 
+@Test(groups={"notReady", "integration"})
 public class IronBeanstalkMessagingClientTest {
 
 	public static String TEST_EXCHANGE_TOPIC = "test.exchange.topic";

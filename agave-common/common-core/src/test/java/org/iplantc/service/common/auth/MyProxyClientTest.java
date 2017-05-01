@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
-@Test(singleThreaded=true)
+@Test(singleThreaded=true, groups = {"integration"} )
 public class MyProxyClientTest {
 
 	@BeforeMethod

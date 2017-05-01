@@ -20,6 +20,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class AuthenticationTokenDaoTest {
 
 	private static final String INTERNAL_USER_CREATOR = "testuser";

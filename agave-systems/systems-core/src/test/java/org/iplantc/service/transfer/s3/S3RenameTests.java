@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
+@Test(groups={"integration"})
 public class S3RenameTests {
 	@Factory
 	public Object[] createInstances() {

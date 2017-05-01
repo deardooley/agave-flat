@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"copyfile"})
+@Test(singleThreaded=true, groups= {"copyfile","integration"})
 public class CopyFileOperationTest extends BaseRemoteDataClientOperationTest {
 
     public CopyFileOperationTest(String systemJsonFilePath,

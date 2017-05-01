@@ -18,7 +18,7 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-@Test(groups={"broken"}) // need to mock the slack call or provide a valid url for this to pass. Tests all work, though
+@Test(groups={"broken", "integration"}) // need to mock the slack call or provide a valid url for this to pass. Tests all work, though
 public class SlackWebhookClientTest {
 
 	public static final String SLACK_INCOMING_WEBHOOK_URL = "https://hooks.slack.com/services/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L";

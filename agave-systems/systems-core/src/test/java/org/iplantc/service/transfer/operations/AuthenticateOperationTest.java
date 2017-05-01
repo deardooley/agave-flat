@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"auth"})
+@Test(singleThreaded=true, groups= {"auth","integration"})
 public class AuthenticateOperationTest extends BaseRemoteDataClientOperationTest {
 
     private static final Logger log = Logger.getLogger(AuthenticateOperationTest.class);
