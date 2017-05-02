@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
  *
  */
 @SuppressWarnings("unused")
+@Test(groups={"integration"})
 public class InternalUserDaoTest {
 
 	private static final String INTERNAL_USER_CREATOR = "testuser";

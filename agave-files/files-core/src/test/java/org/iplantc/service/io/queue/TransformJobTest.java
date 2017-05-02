@@ -36,7 +36,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(singleThreaded=true)
+@Test(singleThreaded=true, groups={"integration"})
 public class TransformJobTest extends BaseTestCase {
 
 	private LogicalFile file;

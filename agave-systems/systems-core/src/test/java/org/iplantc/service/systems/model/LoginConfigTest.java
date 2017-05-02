@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
+@Test(groups={"integration"})
 public class LoginConfigTest extends SystemsModelTestCommon{
 
     @BeforeClass

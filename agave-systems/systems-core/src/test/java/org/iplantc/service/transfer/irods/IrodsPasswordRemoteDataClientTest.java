@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=false, groups= {"transfer", "irods.filesystem", "irods.auth.password", "irods.version.3", "broken"})
+@Test(singleThreaded=false, groups= {"transfer", "irods.filesystem", "irods.auth.password", "irods.version.3", "broken","integration"})
 public class IrodsPasswordRemoteDataClientTest extends AbstractRemoteDataClientTest {
 
 	/* (non-Javadoc)

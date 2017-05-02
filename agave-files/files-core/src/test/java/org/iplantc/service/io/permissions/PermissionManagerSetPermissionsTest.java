@@ -30,6 +30,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class PermissionManagerSetPermissionsTest extends BaseTestCase 
 {
 	private SystemDao dao = new SystemDao();

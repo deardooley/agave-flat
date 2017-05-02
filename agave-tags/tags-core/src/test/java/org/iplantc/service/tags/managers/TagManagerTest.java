@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@Test(groups={"integration"})
 public class TagManagerTest extends AbstractTagTest {
 
 	@DataProvider

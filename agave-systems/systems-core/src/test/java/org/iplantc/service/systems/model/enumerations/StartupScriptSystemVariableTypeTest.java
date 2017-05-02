@@ -11,6 +11,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class StartupScriptSystemVariableTypeTest extends SystemsModelTestCommon {
 	
 	protected ExecutionSystem executionSystem = null;

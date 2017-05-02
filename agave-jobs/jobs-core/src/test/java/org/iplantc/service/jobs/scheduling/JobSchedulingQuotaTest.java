@@ -14,6 +14,7 @@ import org.iplantc.service.systems.model.ExecutionSystem;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class JobSchedulingQuotaTest extends AbstractJobSchedulingTest  
 {
 	/**

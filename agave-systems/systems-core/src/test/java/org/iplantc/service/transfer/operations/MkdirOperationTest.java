@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"mkdir"})
+@Test(singleThreaded=true, groups= {"mkdir","integration"})
 public class MkdirOperationTest extends BaseRemoteDataClientOperationTest {
 
     public MkdirOperationTest(String systemJsonFilePath,

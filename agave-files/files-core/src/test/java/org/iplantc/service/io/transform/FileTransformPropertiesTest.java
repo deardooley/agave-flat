@@ -11,7 +11,9 @@ import org.iplantc.service.io.exceptions.TransformException;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class FileTransformPropertiesTest extends BaseTestCase {
 
 	private FileTransformProperties props;

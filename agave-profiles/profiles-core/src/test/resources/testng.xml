@@ -1,18 +1,19 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
   
-<suite name="iPlant Profile Service" verbose="5" parallel="false">
+<suite name="Agave profiles-core" verbose="5" parallel="none">
   <groups>
     <run>
         <exclude name="broken"/>
         <exclude name="notReady"/>
     </run>
   </groups>
-  <test name="InternalUser" >
-    <classes>
-        <class name="org.iplantc.service.profile.dao.InternalUserDaoTest" />
-        <class name="org.iplantc.service.profile.manager.InternalUserManagerTest" />
-        <class name="org.iplantc.service.profile.model.InternalUserTest" />
-    </classes>
+  <test name="profiles-core" >
+        <packages>
+            <package name="org.iplantc.service.profile" />
+            <package name="org.iplantc.service.profile.dao" />
+            <package name="org.iplantc.service.profile.manager" />
+            <package name="org.iplantc.service.profile.model" />
+        </packages>
   </test>
 
 </suite>

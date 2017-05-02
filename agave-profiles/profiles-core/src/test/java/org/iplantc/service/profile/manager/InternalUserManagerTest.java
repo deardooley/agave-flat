@@ -10,8 +10,10 @@ import org.iplantc.service.profile.dao.InternalUserDao;
 import org.iplantc.service.profile.exceptions.ProfileException;
 import org.iplantc.service.profile.model.InternalUser;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 @SuppressWarnings("unused")
+@Test(groups={"integration"})
 public class InternalUserManagerTest extends ModelTestCommon {
 	
 	private static final String INTERNAL_USER_CREATOR = "testuser";

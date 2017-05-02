@@ -20,6 +20,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class SystemSearchFilterTest extends SystemsModelTestCommon
 {
     

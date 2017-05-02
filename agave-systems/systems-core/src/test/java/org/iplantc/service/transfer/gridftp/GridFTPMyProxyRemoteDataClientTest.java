@@ -11,7 +11,6 @@ import org.iplantc.service.systems.exceptions.RemoteCredentialException;
 import org.iplantc.service.systems.model.StorageConfig;
 import org.iplantc.service.transfer.AbstractRemoteDataClientTest;
 import org.iplantc.service.transfer.RemoteDataClient;
-import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
@@ -22,7 +21,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(groups= {"gridftp","filesystem","broken"})
+@Test(groups= {"gridftp","filesystem","broken","integration"})
 public class GridFTPMyProxyRemoteDataClientTest extends AbstractRemoteDataClientTest {
 
 	/* (non-Javadoc)

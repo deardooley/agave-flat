@@ -9,6 +9,7 @@ import org.iplantc.service.systems.model.enumerations.ExecutionType;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,6 +27,7 @@ import java.util.List;
  * Time: 2:31 PM
  * To change this template use File | Settings | File Templates.
  */
+@Test(groups={"broken", "unit"})
 public class JSONTestDataUtil 
 {
 	public static String TEST_SOFTWARE_FOLDER = "src/test/resources/software/";

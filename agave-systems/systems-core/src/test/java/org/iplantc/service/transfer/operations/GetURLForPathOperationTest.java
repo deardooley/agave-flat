@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"geturlforpath"})
+@Test(singleThreaded=true, groups= {"geturlforpath","integration"})
 public class GetURLForPathOperationTest extends BaseRemoteDataClientOperationTest {
 
     public GetURLForPathOperationTest(String systemJsonFilePath,

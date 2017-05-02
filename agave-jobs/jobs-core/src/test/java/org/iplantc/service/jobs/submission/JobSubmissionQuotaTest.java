@@ -3,13 +3,14 @@
  */
 package org.iplantc.service.jobs.submission;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
-import org.hibernate.cfg.Configuration;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwarePermission;
@@ -22,13 +23,9 @@ import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.jobs.queue.actions.SubmissionAction;
-import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
-import org.iplantc.service.systems.model.SystemRole;
-import org.iplantc.service.systems.model.enumerations.RoleType;
-import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,11 +37,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 //import org.iplantc.service.systems.model.JSONTestDataUtil;
 
-
-
-
-
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -53,6 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class JobSubmissionQuotaTest extends AbstractJobSubmissionTest {
 
 	private Software software;

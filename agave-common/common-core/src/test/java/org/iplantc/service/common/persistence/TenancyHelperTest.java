@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.util.Base64;
 
+@Test(groups={"integration"})
 public class TenancyHelperTest {
 
 	private TenantDao dao = new TenantDao();

@@ -1,6 +1,6 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="iPlant Monitor Service" verbose="5" parallel="false"
+<suite name="Agave tags-core" verbose="5" parallel="none"
 	thread-count="1">
 	<groups>
 		<run>
@@ -8,24 +8,13 @@
 			<exclude name="notReady" />
 		</run>
 	</groups>
-	<test name="model">
+	<test name="tags-core">
 		<packages>
+		    <package name="org.iplantc.service.notification.events" />
 			<package name="org.iplantc.service.tags.model" />
-		</packages>
-	</test>
-	<test name="dao">
-		<packages>
 			<package name="org.iplantc.service.tags.dao" />
-		</packages>
-	</test>
-	<test name="manager">
-		<packages>
 			<package name="org.iplantc.service.tags.manager" />
-		</packages>
-	</test>
-	<test name="queue">
-		<packages>
-			<package name="org.iplantc.service.tags.queue" />
+			<package name="org.iplantc.service.tags.model" />
 		</packages>
 	</test>
 </suite>

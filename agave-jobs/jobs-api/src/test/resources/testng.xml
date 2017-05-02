@@ -1,13 +1,13 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="iPlant Apps Services" verbose="1" parallel="false">
+<suite name="Agave jobs-api" verbose="1" parallel="none">
     <groups>
         <run>
             <exclude name="broken"/>
             <exclude name="notReady"/>
         </run>
     </groups>
-	<test name="apps">
+	<test name="jobs-api">
 		<packages></packages>
 	</test>
 </suite>

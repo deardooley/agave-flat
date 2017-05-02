@@ -2,14 +2,11 @@ package org.iplantc.service.notification.events;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.notification.AbstractNotificationTest;
-import org.iplantc.service.notification.Settings;
 import org.iplantc.service.notification.TestDataHelper;
 import org.iplantc.service.notification.dao.FailedNotificationAttemptQueue;
 import org.iplantc.service.notification.dao.NotificationDao;
@@ -24,13 +21,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoCredential;
-import com.mongodb.MongoException;
-import com.mongodb.ServerAddress;
-
+@Test(groups={"integration"})
 public class NotificationEventTest extends AbstractNotificationTest {
 
 	@BeforeClass

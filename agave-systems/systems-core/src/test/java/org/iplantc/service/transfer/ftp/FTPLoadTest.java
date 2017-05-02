@@ -14,7 +14,6 @@ import org.apache.log4j.Logger;
 import org.codehaus.plexus.util.FileUtils;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.model.StorageSystem;
-import org.iplantc.service.transfer.AbstractRemoteDataClientTest;
 import org.iplantc.service.transfer.BaseTransferTestCase;
 import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
@@ -26,7 +25,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(groups= {"gridftp","performance","broken"})
+@Test(groups= {"gridftp","performance","broken", "integration"})
 public class FTPLoadTest extends BaseTransferTestCase 
 {
 	private static final Logger log = Logger.getLogger(FTPLoadTest.class);

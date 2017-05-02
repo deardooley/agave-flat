@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"getdirectory", "download"})
+@Test(singleThreaded=true, groups= {"getdirectory", "download", "integration"})
 public class GetDirectoryOperationTest extends BaseRemoteDataClientOperationTest {
 
     public GetDirectoryOperationTest(String systemJsonFilePath,

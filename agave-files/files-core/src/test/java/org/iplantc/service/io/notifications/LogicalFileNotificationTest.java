@@ -66,7 +66,7 @@ import com.surftools.BeanstalkClientImpl.ClientImpl;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"notifications","files"})
+@Test(singleThreaded=true, groups= {"integration","notifications","files"})
 public class LogicalFileNotificationTest extends BaseTestCase
 {
 	private static final Logger log = Logger.getLogger(LogicalFileNotificationTest.class);

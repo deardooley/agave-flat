@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class RemoteHPCJobSubmissionTest extends AbstractJobSubmissionTest 
 {
 	private ObjectMapper mapper = new ObjectMapper();

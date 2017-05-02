@@ -1,20 +1,20 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="iPlant Services" verbose="1" parallel="false" thread-count="1" >
+<suite name="Agave apps-core" verbose="1" parallel="none" thread-count="1" >
     <groups>
         <run>
             <exclude name="broken"/>
             <exclude name="notReady"/>
         </run>
     </groups>
-	<test name="iPlant Services Apps">
+	<test name="apps-core">
 		<packages>
 			<package name="org.iplantc.service.apps.model" />
 			<package name="org.iplantc.service.apps.dao" />
 			<package name="org.iplantc.service.apps.managers" />
+            <package name="org.iplantc.service.apps.queue" />
+            <package name="org.iplantc.service.apps.search" />
+            <package name="org.iplantc.service.apps.util" />
 		</packages>
-		<classes>
-			<class name="org.iplantc.service.apps.util.RegexValidator" />
-		</classes>
 	</test>
 </suite>

@@ -1,15 +1,15 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
-  
-<suite name="iPlant Metadata Service" verbose="5" parallel="false">
-  <groups>
-    <run>
-        <exclude name="broken"/>
-        <exclude name="notReady"/>
-    </run>
-  </groups>
-  <test name="dao" >
-  	<packages>
-        <package name="org.iplantc.service.metadata.dao" />
-    </packages>
-  </test>
+
+<suite name="Agave metadata-core" verbose="5" parallel="none">
+	<groups>
+		<run>
+			<exclude name="broken" />
+			<exclude name="notReady" />
+		</run>
+	</groups>
+	<test name="metadata-core">
+		<packages>
+			<package name="org.iplantc.service.metadata.dao" />
+		</packages>
+	</test>
 </suite>

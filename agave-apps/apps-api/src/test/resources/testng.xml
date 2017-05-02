@@ -1,13 +1,15 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="iPlant Apps Services" verbose="1" parallel="false">
+<suite name="Agave apps-api" verbose="1" parallel="none">
     <groups>
         <run>
             <exclude name="broken"/>
             <exclude name="notReady"/>
         </run>
     </groups>
-	<test name="apps">
-		<packages></packages>
+	<test name="apps-api">
+        <packages>
+            <package name="org.iplantc.service.apps.migrations" />
+        </packages>
 	</test>
 </suite>

@@ -16,7 +16,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(groups= {"gridftp","boutique","broken"})
+@Test(groups= {"gridftp","boutique","broken","integration"})
 public class X509CredentialSerializationTest extends SystemsModelTestCommon 
 {
 	private SystemDao dao = new SystemDao();

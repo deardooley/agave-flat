@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"putfile", "upload"})//, dependsOnGroups={"mkdir"}
+@Test(singleThreaded=true, groups= {"putfile", "upload", "integration"})//, dependsOnGroups={"mkdir"}
 public class PutFileOperationTest extends BaseRemoteDataClientOperationTest {
 
     public PutFileOperationTest(String systemJsonFilePath,

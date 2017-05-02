@@ -17,6 +17,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class LogicalFileDaoCaseSensitivityTest extends BaseTestCase 
 {
 	private LogicalFile file;

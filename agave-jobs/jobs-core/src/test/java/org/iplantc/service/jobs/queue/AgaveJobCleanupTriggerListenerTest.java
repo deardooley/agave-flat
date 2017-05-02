@@ -14,6 +14,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+@Test(groups={"unit"})
 public class AgaveJobCleanupTriggerListenerTest {
 	private static Logger log = Logger
 			.getLogger(AgaveJobCleanupTriggerListenerTest.class);

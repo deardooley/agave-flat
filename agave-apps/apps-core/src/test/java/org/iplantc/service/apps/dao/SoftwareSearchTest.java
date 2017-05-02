@@ -26,7 +26,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(groups={"broken"})
+@Test(groups={"broken", "integration"})
 public class SoftwareSearchTest  extends AbstractDaoTest {
 
 	@BeforeClass

@@ -1,13 +1,13 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
   
-<suite name="iPlant Notification Service" verbose="5" parallel="false">
+<suite name="Agave metadata-api" verbose="5" parallel="none">
     <groups>
         <run>
             <exclude name="broken"/>
             <exclude name="notReady"/>
         </run>
     </groups>
-    <test name="api" >
+    <test name="metadata-api" >
   	     <packages>
          </packages>
     </test>

@@ -16,6 +16,7 @@ import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * This test doesn't do anything useful at the moment.
@@ -23,6 +24,7 @@ import org.testng.annotations.BeforeMethod;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class FileAnalyzerTest extends BaseTestCase 
 {
 	private LogicalFile logicalFile;

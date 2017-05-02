@@ -30,7 +30,6 @@ import org.iplantc.service.jobs.managers.JobManager;
 import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.notification.dao.NotificationAttemptDao;
 import org.iplantc.service.notification.dao.NotificationDao;
 import org.iplantc.service.notification.model.Notification;
 import org.iplantc.service.notification.model.enumerations.NotificationStatusType;
@@ -60,6 +59,7 @@ import com.surftools.BeanstalkClientImpl.ClientImpl;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class JobNotificationTest extends AbstractDaoTest
 {
 	private static final Logger log = Logger.getLogger(JobNotificationTest.class);

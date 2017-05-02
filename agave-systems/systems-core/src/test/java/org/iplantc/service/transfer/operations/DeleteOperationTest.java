@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"delete"})
+@Test(singleThreaded=true, groups= {"delete","integration"})
 public class DeleteOperationTest extends BaseRemoteDataClientOperationTest {
 
     private static final Logger log = Logger.getLogger(DeleteOperationTest.class);

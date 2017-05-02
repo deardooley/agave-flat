@@ -4,6 +4,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"notReady", "unit"})
 public class DiscoverableServiceCapabilityTest
 {
 	@Test(dataProvider = "dp")

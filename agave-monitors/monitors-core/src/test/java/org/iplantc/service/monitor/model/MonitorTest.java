@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@Test(groups={"integration"})
 public class MonitorTest extends AbstractMonitorTest {
 
 	@BeforeClass

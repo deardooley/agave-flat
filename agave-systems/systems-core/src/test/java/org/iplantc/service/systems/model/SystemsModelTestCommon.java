@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,6 +18,7 @@ import org.testng.annotations.BeforeTest;
  * Time: 11:09 AM
  * To change this template use File | Settings | File Templates.
  */
+@Test(groups={"integration"})
 public class SystemsModelTestCommon 
 {
     public static final String TENANT_ADMIN = "dooley";

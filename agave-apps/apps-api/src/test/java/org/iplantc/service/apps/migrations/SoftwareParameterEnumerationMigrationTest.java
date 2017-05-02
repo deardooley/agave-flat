@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class SoftwareParameterEnumerationMigrationTest 
 {
 	@SuppressWarnings("unused")

@@ -26,7 +26,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(groups= {"gridftp","performance","broken"})
+@Test(groups= {"gridftp","performance","broken", "integration"})
 public class GridFTPLoadTest extends BaseTransferTestCase 
 {
 	private static final Logger log = Logger.getLogger(AbstractRemoteDataClientTest.class);

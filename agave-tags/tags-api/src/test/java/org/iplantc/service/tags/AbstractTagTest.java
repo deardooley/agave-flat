@@ -21,13 +21,15 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.surftools.BeanstalkClientImpl.ClientImpl;
 
-public class AbstractTagTest {
+@Test(groups={"integration"})
+public abstract class AbstractTagTest {
 
 	protected ObjectMapper mapper = new ObjectMapper();
 	protected NotificationDao notificationDao = new NotificationDao();

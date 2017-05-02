@@ -1,7 +1,6 @@
 package org.iplantc.service.common.discovery.providers.sql;
 
 import java.util.Arrays;
-import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

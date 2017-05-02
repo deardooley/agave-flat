@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.iplantc.service.common.exceptions.UUIDException;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author dooley
  *
  */
+@Test(groups={"broken", "unit"})
 public abstract class AbstractUUIDEntityLookupTest<T> implements AbstractUUIDTest<T> {
 
 	/**

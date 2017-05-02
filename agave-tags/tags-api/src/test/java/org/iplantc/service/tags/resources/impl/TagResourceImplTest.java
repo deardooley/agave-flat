@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-@Test(groups={"broken"})
+@Test(groups={"broken", "integration"})
 public class TagResourceImplTest extends AbstractTagTest 
 {	
 	private Component comp = new Component();

@@ -16,6 +16,7 @@ import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class StoragePermissionManagerReadWriteTest extends AbstractPermissionManagerTest {
 
 	protected RemoteSystem getTestSystemDescription(RemoteSystemType type) throws Exception 

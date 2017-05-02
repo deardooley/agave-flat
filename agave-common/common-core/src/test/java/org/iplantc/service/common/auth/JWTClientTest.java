@@ -9,6 +9,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups = {"broken", "unit"} )
 public class JWTClientTest 
 {
 	public static String JWT_TEST_FOLDER = "src/test/resources/jwt/";
@@ -48,7 +49,7 @@ public class JWTClientTest
 		}
 	}
 	
-	@Test(dataProvider = "parseProvider", dependsOnMethods = {"parse"} )
+	@Test(dataProvider = "parseProvider", dependsOnMethods = {"parse"})
 	public void getCurrentJWSObject(String serializedToken, boolean shouldThrowException, String message) {
 		try 
 		{

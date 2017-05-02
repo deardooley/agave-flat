@@ -1,7 +1,9 @@
 package org.iplantc.service.uuid.resources.impl;
 
 import org.iplantc.service.uuid.AbstractUuidTest;
+import org.testng.annotations.Test;
 
+@Test(groups={"broken", "integration"})
 public class UuidResourceImplTest extends AbstractUuidTest 
 {	
 //	private Component comp = new Component();

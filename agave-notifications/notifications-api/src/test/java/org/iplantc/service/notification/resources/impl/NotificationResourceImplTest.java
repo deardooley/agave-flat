@@ -32,6 +32,7 @@ import org.testng.annotations.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@Test(groups={"integration"})
 public class NotificationResourceImplTest extends AbstractNotificationTest {
 	
 	private NotificationResourceImpl service;

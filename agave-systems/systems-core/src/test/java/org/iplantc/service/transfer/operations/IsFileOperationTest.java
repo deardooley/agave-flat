@@ -23,7 +23,7 @@ import com.google.common.io.Files;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"isfile"})
+@Test(singleThreaded=true, groups= {"isfile","integration"})
 public class IsFileOperationTest extends BaseRemoteDataClientOperationTest {
 
     private static final Logger log = Logger.getLogger(IsFileOperationTest.class);

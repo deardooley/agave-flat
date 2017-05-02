@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class LogicalFileNoFileTest extends BaseTestCase {
 	
 	private StorageSystem system;

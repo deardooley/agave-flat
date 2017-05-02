@@ -1,10 +1,7 @@
 package org.iplantc.service.notification.model;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Set;
 
-import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
@@ -16,7 +13,6 @@ import org.iplantc.service.notification.exceptions.NotificationException;
 import org.iplantc.service.notification.model.enumerations.NotificationStatusType;
 import org.iplantc.service.notification.model.enumerations.RetryStrategyType;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -26,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@Test(groups={"integration"})
 public class NotificationTest extends AbstractNotificationTest {
 
 	@BeforeClass

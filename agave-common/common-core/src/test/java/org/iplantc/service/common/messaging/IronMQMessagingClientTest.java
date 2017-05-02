@@ -10,6 +10,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"notReady", "integration"})
 public class IronMQMessagingClientTest {
 
 	public static String TEST_EXCHANGE_TOPIC = "test.exchange.topic";

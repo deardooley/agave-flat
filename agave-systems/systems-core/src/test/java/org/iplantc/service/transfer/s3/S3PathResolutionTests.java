@@ -7,7 +7,8 @@ import org.iplantc.service.transfer.RemoteDataClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.annotations.Test;
-@Test(groups= {"s3","path-resolution"})
+
+@Test(groups= {"s3","path-resolution","integration"})
 public class S3PathResolutionTests extends AbstractPathResolutionTests
 {
 	@Override

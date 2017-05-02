@@ -4,7 +4,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
 import org.codehaus.plexus.util.FileUtils;
 import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
@@ -28,7 +27,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(groups= {"transfer","performance"})
+@Test(groups= {"transfer","performance","integration"})
 public class URLCopyTest extends BaseTransferTestCase
 {
 	protected static String LOCAL_DIR = "src/test/resources/transfer";

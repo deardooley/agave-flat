@@ -27,6 +27,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class ImplicitFilePermissionsFromSystemRolesTest extends AbstractPermissionManagerTest 
 {
 	class PermissionPredicate implements Predicate {

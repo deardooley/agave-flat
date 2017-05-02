@@ -12,7 +12,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(singleThreaded=true)
+@Test(singleThreaded=true, groups={"integration"})
 public class MonitorDaoTest extends AbstractMonitorTest 
 {
 	private int totalMonitors = 6;

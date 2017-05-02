@@ -1,8 +1,6 @@
 package org.iplantc.service.notification;
 
 import static org.iplantc.service.notification.TestDataHelper.NOTIFICATION_CREATOR;
-import static org.iplantc.service.notification.TestDataHelper.TENANT_ADMIN;
-import static org.iplantc.service.notification.TestDataHelper.ALT_TENANT_ADMIN;
 import static org.iplantc.service.notification.TestDataHelper.NOTIFICATION_STRANGER;
 import static org.iplantc.service.notification.TestDataHelper.TEST_EMAIL_NOTIFICATION;
 import static org.iplantc.service.notification.TestDataHelper.TEST_REALTIME_NOTIFICATION;
@@ -43,9 +41,11 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Test;
 
 import com.surftools.BeanstalkClientImpl.ClientImpl;
 
+@Test(groups={"integration"})
 public class AbstractNotificationTest {
 
 	protected static final String TEST_USER = "ipcservices";

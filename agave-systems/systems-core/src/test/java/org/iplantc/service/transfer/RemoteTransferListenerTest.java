@@ -23,8 +23,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.*;
 
-@Test(singleThreaded = true, groups = { "transfer", "irods.filesystem.init",
-		"broken" })
+@Test(singleThreaded = true, groups = { "transfer", "irods.filesystem.init", "broken", "integration" })
 public class RemoteTransferListenerTest extends BaseTransferTestCase {
 
 	protected File tmpFile = null;

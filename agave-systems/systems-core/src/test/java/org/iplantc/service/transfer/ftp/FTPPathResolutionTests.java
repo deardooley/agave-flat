@@ -9,7 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.annotations.Test;
 
-@Test(groups= {"ftp","path-resolution","broken"})
+@Test(groups= {"ftp","path-resolution","broken", "integration"})
 public class FTPPathResolutionTests extends AbstractPathResolutionTests
 {
 	@Override
