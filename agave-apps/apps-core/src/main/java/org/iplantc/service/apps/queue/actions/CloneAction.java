@@ -39,7 +39,6 @@ import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.StorageSystem;
 import org.iplantc.service.systems.model.enumerations.RoleType;
 import org.iplantc.service.systems.model.enumerations.SystemStatusType;
-import org.iplantc.service.systems.util.ServiceUtils;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.RemoteTransferListener;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
@@ -130,10 +129,6 @@ public class CloneAction extends AbstractWorkerAction<Software> {
                     SoftwareEventType.CLONING_FAILED, 
                     "A cloning action failed for this app. " + e.getMessage(),
                     clonedSoftwareOwner);
-//            ApplicationManager.addEvent(getEntity(), 
-//                    SoftwareEventType.CLONING_FAILED, 
-//                    "A cloning action failed for this app. " + e.getMessage(),
-//                    clonedSoftwareOwner);
             throw new DomainException("Failed to publish app. " + e.getMessage(), e);
         }
         catch (PermissionException | SystemUnknownException e) {
@@ -141,10 +136,6 @@ public class CloneAction extends AbstractWorkerAction<Software> {
                     SoftwareEventType.CLONING_FAILED, 
                     "A cloning action failed for this app. " + e.getMessage(),
                     clonedSoftwareOwner);
-//        	ApplicationManager.addEvent(getEntity(), 
-//                    SoftwareEventType.CLONING_FAILED, 
-//                    "A cloning action failed for this app. " + e.getMessage(),
-//                    clonedSoftwareOwner);
             throw e;
         }
         catch (SystemUnavailableException e) {
@@ -152,10 +143,6 @@ public class CloneAction extends AbstractWorkerAction<Software> {
                     SoftwareEventType.CLONING_FAILED, 
                     "A cloning action failed for this app. " + e.getMessage(),
                     clonedSoftwareOwner);
-//        	ApplicationManager.addEvent(getEntity(), 
-//                    SoftwareEventType.CLONING_FAILED, 
-//                    "A cloning action failed for this app. " + e.getMessage(),
-//                    clonedSoftwareOwner);
             throw e;
         }
         catch (SoftwareException e) {
@@ -163,10 +150,6 @@ public class CloneAction extends AbstractWorkerAction<Software> {
                     SoftwareEventType.CLONING_FAILED, 
                     "A cloning action failed for this app due to an unexpected error. Please try again.",
                     clonedSoftwareOwner);
-//            ApplicationManager.addEvent(getEntity(), 
-//                    SoftwareEventType.CLONING_FAILED, 
-//                    "A cloning action failed for this app due to an unexpected error. Please try again.",
-//                    clonedSoftwareOwner);
             throw new DomainException("Failed to publish app. " + e.getMessage(), e);
         }
     }
@@ -239,17 +222,6 @@ public class CloneAction extends AbstractWorkerAction<Software> {
                 
             // finally save the cloned software instance
             SoftwareDao.persist(clonedSoftware);
-            
-            // throw event notifications
-//            ApplicationManager.addEvent(getEntity(), 
-//                    SoftwareEventType.CLONED, 
-//                    "App was cloned as " + clonedSoftware.getUniqueName() + " by " + clonedSoftwareOwner, 
-//                    clonedSoftwareOwner);
-//            
-//            ApplicationManager.addEvent(clonedSoftware, 
-//                    SoftwareEventType.REGISTERED, 
-//                    "App was originally created as a clone of " + getEntity().getUniqueName(), 
-//                    clonedSoftwareOwner);
             
             return clonedSoftware;
             
@@ -339,17 +311,6 @@ public class CloneAction extends AbstractWorkerAction<Software> {
             copyLocalCachedDeploymentPathToClonedSoftwareDeploymentSystem(clonedSoftware, clonedSoftwareDataClient, locallyCachedPrivateSoftwareDeploymentPath);
                 
             SoftwareDao.persist(clonedSoftware);
-            
-//            // throw event notifications
-//            ApplicationManager.addEvent(getEntity(), 
-//                    SoftwareEventType.CLONED, 
-//                    "App was cloned as " + clonedSoftware.getUniqueName() + " by " + clonedSoftwareOwner, 
-//                    clonedSoftwareOwner);
-//            
-//            ApplicationManager.addEvent(clonedSoftware, 
-//                    SoftwareEventType.REGISTERED, 
-//                    "App was originally created as a clone of " + getEntity().getUniqueName(), 
-//                    clonedSoftwareOwner);
             
             return clonedSoftware;
         }
@@ -600,12 +561,6 @@ public class CloneAction extends AbstractWorkerAction<Software> {
             }
         }
         
-//        if (!clonedSoftwareDataClient.doesExist(clonedSoftware.getDeploymentPath())) 
-//        {
-//            throw new FileNotFoundException("Failed to copy the deploymentPath for " + getEntity().getUniqueName() + 
-//            		" on " +  getEntity().getStorageSystem().getSystemId() + 
-//            		" to the new deployment folder on " + clonedSoftware.getStorageSystem().getSystemId());
-//        }
     }
 
     /**
@@ -718,18 +673,7 @@ public class CloneAction extends AbstractWorkerAction<Software> {
         }
         
         File localDeploymentPath = new File(tempAppDir, FilenameUtils.getName(getEntity().getExecutablePath()));
-//        if (localDeploymentPath.exists()) 
-//        {
-//            tempAppDir = localDeploymentPath.getAbsoluteFile();
-//        } 
-        // otherwise, we need to find the root of the project. This will be a folder such that 
-        // the the Software#getExecutablePath() exists as a relative path to the folder. 
-//        else 
-//        {
-            // this will proably cause problems if the app referred to an executable outside of the 
-            // public Software.getDeploymentPath() tree.
-//            File deploymentSubdirectory = new File(tempAppDir, getEntity().getExecutablePath());
-            
+
         // check to see whether the zip archive bundled everything into a top level folder. We can
         // identify the root of the deploymentPath in the zipped archive by finding the first parent
         // which properly resolves the wrapper template relative path
@@ -855,208 +799,4 @@ public class CloneAction extends AbstractWorkerAction<Software> {
 		this.eventProcessor = eventProcessor;
 	}
     
-
-//  /**
-//   * Creates a {@link RemoteDataClient} to the {@link Software#getStorageSystem()} of the
-//   * the original {@link Software}. The {@link RemoteDataClient} is then
-//   * authenticated and returned for use.
-//   * 
-//   * @return pre-authenticated {@link RemoteDataClient} to the original {@link Software#getStorageSystem()}
-//   * @throws RemoteDataException
-//   * @throws RemoteCredentialException
-//   * @throws SystemUnavailableException
-//   * @throws SystemUnknownException
-//   */
-//  protected RemoteDataClient getSourceRemoteDataClient() 
-//  throws RemoteDataException, RemoteCredentialException, SystemUnavailableException, SystemUnknownException
-//  {    
-//      StorageSystem appDeploymentSystem = new SystemManager().getDefaultStorageSystem();
-//      
-//      // the app assets must be available 
-//      if (appDeploymentSystem == null) {
-//          throw new SystemUnavailableException("The original app deployment system " 
-//                  + "is defined for your tenant. Please contact your tenant administrator "
-//                  + "to configure your tenant for app publishing.");
-//      }
-//      // if the app deployment host is unavailable
-//      else if (!appDeploymentSystem.isAvailable()) {
-//          throw new SystemUnknownException("The original app deployment system " 
-//                  + appDeploymentSystem.getSystemId() 
-//                  + " is not currently available. App publishing will fail until " 
-//                  + "the system comes back online and the app assets are accessible.");
-//      } 
-//      // if the system is in down time or otherwise unavailable...
-//      else if (appDeploymentSystem.getStatus() != SystemStatusType.UP)
-//      {
-//          throw new SystemUnavailableException("The original app deployment system " 
-//                  + appDeploymentSystem.getSystemId() 
-//                  + " is currently " + appDeploymentSystem.getStatus().name() 
-//                  + ". App publishing will fail until " 
-//                  + "the system us UP again and the app assets are accessible.");
-//      }
-//      
-//      // get a handle on the public default storage system
-//      RemoteDataClient srcDataClient = appDeploymentSystem.getRemoteDataClient();
-//      
-//      try 
-//      {
-//          srcDataClient.authenticate();
-//          
-//          return srcDataClient;
-//      }
-//      catch (Exception e) {
-//          throw new SoftwareException("Failed to authenticate to the app deployment system, " 
-//                  + appDeploymentSystem.getSystemId(), e);
-//      }
-//      
-//  }
-
-//  /**
-//   * Validates the {@link Software#getDeploymentPath()} value. 
-//   * @param destDeploymentPath
-//   * @throws DomainException
-//   */
-//  public void setDestDeploymentPath(String destDeploymentPath) 
-//  throws DomainException 
-//  {
-//      // if no deployment path is specified, 
-//      
-//      if (destStorageSystem == null) {
-//          destStorageSystem = new SystemManager().getUserDefaultStorageSystem(destOwner);
-//      }
-//      
-//      if (!destStorageSystem.getUserRole(destOwner).canPublish()) {
-//          throw new PermissionException(
-//                  "Cloning private apps leaves the app assets in their original location "
-//                  + "to preserve the rights of the owner. If you need access to the app "
-//                  + "assets and have access to the storage system, you can copy these "
-//                  + "over after cloning and update the cloned app's deployment path and "
-//                  + "system.");
-//      }
-//      
-//      RemoteDataClient destDataClient = getDestinationRemoteDataClient(destStorageSystem);
-//  
-//      
-//      // if they don't specify a deployment path, put it in their default storage system.
-//      if (StringUtils.isEmpty(destDeploymentPath)) 
-//      {   
-//          
-//          if (!getEntity().isPubliclyAvailable() && StringUtils.isNotEmpty(destDeploymentPath))
-//          {
-//              throw new DomainException(
-//                      "Cloning private apps leaves the app assets in their original location "
-//                      + "to preserve the rights of the owner. If you need access to the app "
-//                      + "assets and have access to the storage system, you can copy these "
-//                      + "over after cloning and update the cloned app's deployment path and "
-//                      + "system.");
-//          }
-//      }
-//  }
-
-  
-//  protected  Software clone() 
-//  throws SystemUnknownException, SystemUnavailableException
-//  {
-//      return getEntity();
-//      StorageSystem destStorageSystem = getDestRemoteDataClient();
-//      String destDeploymentPath = getDestDeploymentPath();
-//      
-//      String destName = getDestName(destName);
-//      String destVersion = getDestVersion(destVersion);
-//      ExecutionSystem destExecutionSystem = getDestExecutionSystem();
-//      
-//      
-//      
-//      RemoteSystem storageSystem = getEntity().getStorageSystem();
-//      if (StringUtils.isNotEmpty(clonedSoftwareStorageSystemId)) 
-//      {
-//          if (!getEntity().isPubliclyAvailable() && StringUtils.isNotmpty(clonedSoftwareStorageSystemId))
-//          {
-//              throw new DomainException(
-//                      "Cloning private apps leaves the app assets in their original location "
-//                      + "to preserve the rights of the owner. If you need access to the app "
-//                      + "assets and have access to the storage system, you can copy these "
-//                      + "over after cloning and update the cloned app's deployment path and "
-//                      + "system.");
-//          } 
-//          else
-//          {
-//              storageSystem = new SystemDao().findBySystemId(clonedSoftwareStorageSystemId);
-//              if (storageSystem == null) {
-//                  throw new SystemUnknownException("Could not resolve the public execution system. "
-//                          + "Please specify a public execution system on which this app should run.");
-//              } 
-//              else if (!storageSystem.getUserRole(getAuthenticatedUsername()).canUse()) 
-//              {
-//                  throw new PermissionException(
-//                          "Permission denied. You do not have permission to " +
-//                          "access data on this system");
-//              } else if (!storageSystem.getType().equals(RemoteSystemType.STORAGE)) {
-//                  throw new DomainException(
-//                          "The provided system " + storageSystemId + " is not a storage system. Please " +
-//                          "provide a storage system as the deployment system " +
-//                          "for the cloned app.");
-//              }
-//          }
-//      }
-//      
-//      RemoteSystem executionSystem = software.getExecutionSystem();
-//      if (postContentData.containsKey("executionSystem")) {
-//          String executionSystemId = postContentData.get("executionSystem");
-//          executionSystem = new SystemDao().findBySystemId(executionSystemId);
-//          if (executionSystem == null) {
-//              throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-//                      "No system found matching " + executionSystemId);
-//          } else if (!executionSystem.getUserRole(username).canPublish()) {
-//              throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-//                      "Permission denied. You do not have permission to " +
-//                      "publish apps on this system");
-//          } else if (!executionSystem.getType().equals(RemoteSystemType.EXECUTION)) {
-//              throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-//                      "The provided system " + executionSystemId + " is not an execution system. Please " +
-//                      "provide an execution system as the execution system " +
-//                      "for the cloned app.");
-//          }
-//      }
-//      
-//      if (SoftwareDao.getSoftwareByNameAndVersion(name, version) != null) 
-//      {
-//          throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-//                  "Permission denied. An application with this unique id already " +
-//                  "exists. Please either change your application name or update the version " +
-//                  "number past " + SoftwareDao.getMaxVersionForSoftwareName(software.getName()));
-//      }
-//      else
-//      {
-//          Software clonedApp = null;
-//          // cloning a public app creates a new copy of deployment path in the home folder
-//          if (software.isPubliclyAvailable() && software.isAvailable()) 
-//          {
-//              clonedApp = ApplicationManager.clonePublicApplication(
-//                      software, username, name, version, deploymentPath, 
-//                      (StorageSystem)storageSystem, (ExecutionSystem)executionSystem);
-//          }
-//          else if (software.isAvailable()) 
-//          {
-//              if (!new SoftwarePermissionManager(software).canRead(username)) 
-//              {
-//                  throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, 
-//                          "User does not have permission to clone this app.");
-//              } 
-//              else 
-//              {
-//                  clonedApp = ApplicationManager.clonePrivateApplication(
-//                          software, username, name, version, (ExecutionSystem)executionSystem);
-//                  
-//              }
-//          }
-//          else
-//          {
-//              throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-//                      "The selected app is not available or has been deleted. Please " +
-//                      "restore the original app prior to cloning.");
-////                        "Permission denied. Only public apps may be cloned. To copy a private app, " +
-////                        "simply republish an existing app with a different name or version number.");
-//          }      
-//  } 
 }
