@@ -2,6 +2,7 @@ package org.iplantc.service.common;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -12,12 +13,10 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.TimeZone;
 
 import javax.net.ssl.HostnameVerifier;
@@ -33,15 +32,6 @@ import org.apache.log4j.Logger;
 import org.iplantc.service.common.util.IPAddressValidator;
 import org.iplantc.service.common.util.OSValidator;
 import org.joda.time.DateTimeZone;
-
-import com.google.common.escape.Escaper;
-import com.google.common.net.UrlEscapers;
-import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
-import com.jayway.jsonpath.spi.json.JsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
-import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
 
 public class Settings 
@@ -191,27 +181,6 @@ public class Settings
     
     static
     {
-//    	Configuration.setDefaults(new Configuration.Defaults() {
-//
-//    	    private final JsonProvider jsonProvider = new JacksonJsonProvider();
-//    	    private final MappingProvider mappingProvider = new JacksonMappingProvider();
-//
-//    	    @Override
-//    	    public JsonProvider jsonProvider() {
-//    	        return jsonProvider;
-//    	    }
-//
-//    	    @Override
-//    	    public MappingProvider mappingProvider() {
-//    	        return mappingProvider;
-//    	    }
-//
-//    	    @Override
-//    	    public Set<Option> options() {
-//    	    	return EnumSet.of(Option.ALWAYS_RETURN_LIST, Option.SUPPRESS_EXCEPTIONS);
-//    	    }
-//    	});
-    	
         // trust everyone. we need this due to the unknown nature of the callback urls
         try { 
             HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier(){ 
@@ -231,7 +200,7 @@ public class Settings
                             context.getSocketFactory());
             
         } catch (Exception e) { // should never happen 
-                e.printStackTrace(); 
+        	log.error("Unexpected errror configuring HTTPS URL connection. Continuing initialization.");
         }
         
         Properties props = loadRuntimeProperties();
@@ -239,33 +208,27 @@ public class Settings
         DateTimeZone.setDefault(DateTimeZone.forID("America/Chicago"));
         TimeZone.setDefault(TimeZone.getTimeZone("America/Chicago"));
         
-        DEBUG = Boolean.valueOf((String)props.get("iplant.debug.mode"));
+        try {DEBUG = Boolean.valueOf(props.getProperty("iplant.debug.mode", "false"));}
+        	catch (Exception e) {
+        		log.error("Failure loading setting iplant.debug.mode.", e);
+        		DEBUG = false;
+        	}
         
-        DEBUG_USERNAME = (String)props.get("iplant.debug.username");
+        DEBUG_USERNAME = props.getProperty("iplant.debug.username");
         
-        AUTH_SOURCE = (String) props.get("iplant.auth.source");
+        AUTH_SOURCE = props.getProperty("iplant.auth.source");
         
-        VERIFY_JWT_SIGNATURE = Boolean.valueOf((String) props.getProperty("iplant.verify.jwt.signature", "no"));
+        try {VERIFY_JWT_SIGNATURE = Boolean.valueOf((String) props.getProperty("iplant.verify.jwt.signature", "no"));}
+        	catch (Exception e) {
+        		log.error("Failure loading setting iplant.verify.jwt.signature", e);
+        		VERIFY_JWT_SIGNATURE = false;
+        	}
         
-        API_VERSION = (String)props.getProperty("iplant.api.version");
+        API_VERSION = props.getProperty("iplant.api.version");
         
-        if (!StringUtils.isEmpty(System.getProperty("jetty.port"))) {
-            JETTY_PORT = Integer.valueOf(System.getProperty("jetty.port"));
-        }
-        if (JETTY_PORT == 0) {
-            JETTY_PORT = Integer.valueOf((String)props.getProperty("jetty.port", "8182"));
-        }
+        TEMP_DIRECTORY = props.getProperty("iplant.server.temp.dir", "/scratch");
         
-        if (!StringUtils.isEmpty(System.getProperty("jetty.ajp.port"))) {
-            JETTY_AJP_PORT = Integer.valueOf(System.getProperty("jetty.ajp.port"));
-        }
-        if (JETTY_AJP_PORT == 0) {
-            JETTY_AJP_PORT = Integer.valueOf((String)props.getProperty("jetty.ajp.port", "8183"));
-        }
-        
-        TEMP_DIRECTORY = (String) props.getProperty("iplant.server.temp.dir", "/scratch");
-        
-        SERVICE_VERSION = (String)props.getProperty("iplant.service.version");
+        SERVICE_VERSION = props.getProperty("iplant.service.version");
         
         IPLANT_LDAP_URL = props.getProperty("iplant.ldap.url");
 
@@ -275,15 +238,15 @@ public class Settings
         
         IPLANT_LDAP_USERNAME = props.getProperty("iplant.ldap.username");
         
-        PUBLIC_USER_USERNAME = (String)props.getProperty("iplant.public.user", "public");
+        PUBLIC_USER_USERNAME = props.getProperty("iplant.public.user", "public");
         
-        WORLD_USER_USERNAME = (String)props.getProperty("iplant.world.user", "world");
+        WORLD_USER_USERNAME = props.getProperty("iplant.world.user", "world");
         
-        COMMUNITY_PROXY_USERNAME = (String)props.get("iplant.community.username");
+        COMMUNITY_PROXY_USERNAME = props.getProperty("iplant.community.username");
         
-        COMMUNITY_PROXY_PASSWORD = (String)props.get("iplant.community.password");
+        COMMUNITY_PROXY_PASSWORD = props.getProperty("iplant.community.password");
         
-        String trustedUsers = (String)props.get("iplant.trusted.users");
+        String trustedUsers = props.getProperty("iplant.trusted.users");
         if (trustedUsers != null && !trustedUsers.equals("")) {
             for (String user: trustedUsers.split(",")) {
                 TRUSTED_USERS.add(user);
@@ -294,7 +257,7 @@ public class Settings
 
         TRUSTSTORE_PATH = props.getProperty("system.truststore.path");
         
-        TACC_MYPROXY_SERVER = (String)props.get("iplant.myproxy.server");
+        TACC_MYPROXY_SERVER = props.getProperty("iplant.myproxy.server");
         
         TACC_MYPROXY_PORT = Integer.valueOf((String)props.getProperty("iplant.myproxy.port", "7512"));
         
@@ -322,71 +285,82 @@ public class Settings
         IPLANT_REPOSITORY_SERVICE   = Settings.getSantizedServiceUrl(props, "iplant.repositories.service", "https://public.agaveapi.co/repositories/v2");
         IPLANT_ABACO_SERVICE     	= Settings.getSantizedServiceUrl(props, "iplant.abaco.service", "https://public.agaveapi.co/abaco/v2");
         
-        NOTIFICATION_QUEUE = (String) props.getProperty("iplant.notification.service.queue", "prod.notifications.queue");
-		NOTIFICATION_TOPIC = (String) props.getProperty("iplant.notification.service.topic", "prod.notifications.queue");
+        NOTIFICATION_QUEUE = props.getProperty("iplant.notification.service.queue", "prod.notifications.queue");
+		NOTIFICATION_TOPIC = props.getProperty("iplant.notification.service.topic", "prod.notifications.queue");
 		
-		NOTIFICATION_RETRY_QUEUE = (String) props.getProperty("iplant.notification.service.retry.queue", "retry." + NOTIFICATION_QUEUE);
-		NOTIFICATION_RETRY_TOPIC = (String) props.getProperty("iplant.notification.service.retry.topic", "retry." + NOTIFICATION_TOPIC);
+		NOTIFICATION_RETRY_QUEUE = props.getProperty("iplant.notification.service.retry.queue", "retry." + NOTIFICATION_QUEUE);
+		NOTIFICATION_RETRY_TOPIC = props.getProperty("iplant.notification.service.retry.topic", "retry." + NOTIFICATION_TOPIC);
 		
-        MESSAGING_SERVICE_PROVIDER = (String)props.get("iplant.messaging.provider");
-        MESSAGING_SERVICE_USERNAME = (String)props.get("iplant.messaging.username");
-        MESSAGING_SERVICE_PASSWORD = (String)props.get("iplant.messaging.password");
-        MESSAGING_SERVICE_HOST = (String)props.get("iplant.messaging.host");
-        MESSAGING_SERVICE_PORT = Integer.valueOf((String)props.get("iplant.messaging.port"));
+        MESSAGING_SERVICE_PROVIDER = props.getProperty("iplant.messaging.provider");
+        MESSAGING_SERVICE_USERNAME = props.getProperty("iplant.messaging.username");
+        MESSAGING_SERVICE_PASSWORD = props.getProperty("iplant.messaging.password");
+        MESSAGING_SERVICE_HOST = props.getProperty("iplant.messaging.host");
+        try {MESSAGING_SERVICE_PORT = Integer.valueOf((String)props.get("iplant.messaging.port"));}
+        	catch (Exception e) {
+        		log.error("Failure loading setting iplant.messaging.port", e);
+        	}
         
-        FILES_ENCODING_QUEUE = (String) props.getProperty("iplant.files.service.encoding.queue", "encoding.prod.files.queue");
-        FILES_ENCODING_TOPIC = (String) props.getProperty("iplant.files.service.encoding.topic", "encoding.prod.files.topic");
-        FILES_STAGING_QUEUE = (String) props.getProperty("iplant.files.service.staging.queue", "staging.prod.files.queue");
-        FILES_STAGING_TOPIC = (String) props.getProperty("iplant.files.service.staging.topic", "staging.prod.files.topic");
+        FILES_ENCODING_QUEUE = props.getProperty("iplant.files.service.encoding.queue", "encoding.prod.files.queue");
+        FILES_ENCODING_TOPIC = props.getProperty("iplant.files.service.encoding.topic", "encoding.prod.files.topic");
+        FILES_STAGING_QUEUE = props.getProperty("iplant.files.service.staging.queue", "staging.prod.files.queue");
+        FILES_STAGING_TOPIC = props.getProperty("iplant.files.service.staging.topic", "staging.prod.files.topic");
         
-        TRANSFERS_DECODING_QUEUE = (String) props.getProperty("iplant.transfers.service.decoding.queue", "decoding.prod.transfers.queue");
-        TRANSFERS_DECODING_TOPIC = (String) props.getProperty("iplant.transfers.service.decoding.topic", "decoding.prod.transfers.topic");
-        TRANSFERS_ENCODING_QUEUE = (String) props.getProperty("iplant.transfers.service.encoding.queue", "encoding.prod.transfers.queue");
-        TRANSFERS_ENCODING_TOPIC = (String) props.getProperty("iplant.transfers.service.encoding.topic", "encoding.prod.transfers.topic");
-        TRANSFERS_STAGING_QUEUE = (String) props.getProperty("iplant.transfers.service.staging.queue", "staging.prod.transfers.queue");
-        TRANSFERS_STAGING_TOPIC = (String) props.getProperty("iplant.transfers.service.staging.topic", "staging.prod.transfers.topic");
+        TRANSFERS_DECODING_QUEUE = props.getProperty("iplant.transfers.service.decoding.queue", "decoding.prod.transfers.queue");
+        TRANSFERS_DECODING_TOPIC = props.getProperty("iplant.transfers.service.decoding.topic", "decoding.prod.transfers.topic");
+        TRANSFERS_ENCODING_QUEUE = props.getProperty("iplant.transfers.service.encoding.queue", "encoding.prod.transfers.queue");
+        TRANSFERS_ENCODING_TOPIC = props.getProperty("iplant.transfers.service.encoding.topic", "encoding.prod.transfers.topic");
+        TRANSFERS_STAGING_QUEUE = props.getProperty("iplant.transfers.service.staging.queue", "staging.prod.transfers.queue");
+        TRANSFERS_STAGING_TOPIC = props.getProperty("iplant.transfers.service.staging.topic", "staging.prod.transfers.topic");
         
-        TRANSFORMS_ENCODING_QUEUE = (String) props.getProperty("iplant.transforms.service.encoding.queue", "encoding.prod.transforms.queue");
-        TRANSFORMS_ENCODING_TOPIC = (String) props.getProperty("iplant.transforms.service.encoding.topic", "decoding.prod.transforms.topic");
-        TRANSFORMS_DECODING_QUEUE = (String) props.getProperty("iplant.transforms.service.decoding.queue", "decoding.prod.transforms.queue");
-        TRANSFORMS_DECODING_TOPIC = (String) props.getProperty("iplant.transforms.service.decoding.topic", "decoding.prod.transforms.topic");
-        TRANSFORMS_STAGING_QUEUE = (String) props.getProperty("iplant.transforms.service.staging.queue", "staging.prod.transforms.queue");
-        TRANSFORMS_STAGING_TOPIC = (String) props.getProperty("iplant.transforms.service.staging.topic", "staging.prod.transforms.topic");
+        TRANSFORMS_ENCODING_QUEUE = props.getProperty("iplant.transforms.service.encoding.queue", "encoding.prod.transforms.queue");
+        TRANSFORMS_ENCODING_TOPIC = props.getProperty("iplant.transforms.service.encoding.topic", "decoding.prod.transforms.topic");
+        TRANSFORMS_DECODING_QUEUE = props.getProperty("iplant.transforms.service.decoding.queue", "decoding.prod.transforms.queue");
+        TRANSFORMS_DECODING_TOPIC = props.getProperty("iplant.transforms.service.decoding.topic", "decoding.prod.transforms.topic");
+        TRANSFORMS_STAGING_QUEUE = props.getProperty("iplant.transforms.service.staging.queue", "staging.prod.transforms.queue");
+        TRANSFORMS_STAGING_TOPIC = props.getProperty("iplant.transforms.service.staging.topic", "staging.prod.transforms.topic");
         
-        JOBS_STAGING_QUEUE = (String) props.getProperty("iplant.jobs.service.staging.queue", "staging.prod.jobs.queue");
-        JOBS_STAGING_TOPIC = (String) props.getProperty("iplant.jobs.service.staging.topic", "staging.prod.jobs.topic");
-        JOBS_SUBMISSION_QUEUE = (String) props.getProperty("iplant.jobs.service.submission.queue", "submission.prod.jobs.queue");
-        JOBS_SUBMISSION_TOPIC = (String) props.getProperty("iplant.jobs.service.submission.topic", "submission.prod.jobs.topic");
-        JOBS_MONITORING_QUEUE = (String) props.getProperty("iplant.jobs.service.monitoring.queue", "monitoring.prod.jobs.queue");
-        JOBS_MONITORING_TOPIC = (String) props.getProperty("iplant.jobs.service.monitoring.topic", "monitoring.prod.jobs.topic");
-        JOBS_ARCHIVING_QUEUE = (String) props.getProperty("iplant.jobs.service.archiving.queue", "archiving.prod.jobs.queue");
-        JOBS_ARCHIVING_TOPIC = (String) props.getProperty("iplant.jobs.service.archiving.topic", "archiving.prod.jobs.topic");
+        JOBS_STAGING_QUEUE = props.getProperty("iplant.jobs.service.staging.queue", "staging.prod.jobs.queue");
+        JOBS_STAGING_TOPIC = props.getProperty("iplant.jobs.service.staging.topic", "staging.prod.jobs.topic");
+        JOBS_SUBMISSION_QUEUE = props.getProperty("iplant.jobs.service.submission.queue", "submission.prod.jobs.queue");
+        JOBS_SUBMISSION_TOPIC = props.getProperty("iplant.jobs.service.submission.topic", "submission.prod.jobs.topic");
+        JOBS_MONITORING_QUEUE = props.getProperty("iplant.jobs.service.monitoring.queue", "monitoring.prod.jobs.queue");
+        JOBS_MONITORING_TOPIC = props.getProperty("iplant.jobs.service.monitoring.topic", "monitoring.prod.jobs.topic");
+        JOBS_ARCHIVING_QUEUE = props.getProperty("iplant.jobs.service.archiving.queue", "archiving.prod.jobs.queue");
+        JOBS_ARCHIVING_TOPIC = props.getProperty("iplant.jobs.service.archiving.topic", "archiving.prod.jobs.topic");
         
-        MONITORS_CHECK_QUEUE = (String) props.getProperty("iplant.monitors.service.checks.queue", "checks.prod.monitors.queue");
-        MONITORS_CHECK_TOPIC = (String) props.getProperty("iplant.monitors.service.checks.topic", "checks.prod.monitors.topic");
+        MONITORS_CHECK_QUEUE = props.getProperty("iplant.monitors.service.checks.queue", "checks.prod.monitors.queue");
+        MONITORS_CHECK_TOPIC = props.getProperty("iplant.monitors.service.checks.topic", "checks.prod.monitors.topic");
         
-        APPS_PUBLISHING_QUEUE = (String) props.getProperty("iplant.apps.service.publishing.queue", "publish.prod.apps.queue");
-        APPS_PUBLISHING_TOPIC = (String) props.getProperty("iplant.apps.service.publishing.topic", "publish.prod.apps.topic");
+        APPS_PUBLISHING_QUEUE = props.getProperty("iplant.apps.service.publishing.queue", "publish.prod.apps.queue");
+        APPS_PUBLISHING_TOPIC = props.getProperty("iplant.apps.service.publishing.topic", "publish.prod.apps.topic");
         
-        USAGETRIGGERS_CHECK_QUEUE = (String) props.getProperty("iplant.usagetriggers.service.queue", "check.prod.usagetriggers.queue");
-        USAGETRIGGERS_CHECK_TOPIC = (String) props.getProperty("iplant.usagetriggers.service.topic", "check.prod.usagetriggers.topic");
+        USAGETRIGGERS_CHECK_QUEUE = props.getProperty("iplant.usagetriggers.service.queue", "check.prod.usagetriggers.queue");
+        USAGETRIGGERS_CHECK_TOPIC = props.getProperty("iplant.usagetriggers.service.topic", "check.prod.usagetriggers.topic");
 
         
-        DEFAULT_PAGE_SIZE = NumberUtils.toInt((String) props.getProperty("iplant.default.page.size", "100"), 100);
+        try {DEFAULT_PAGE_SIZE = NumberUtils.toInt((String) props.getProperty("iplant.default.page.size", "100"), 100);}
+        	catch (Exception e) {
+        		log.error("Failure loading setting iplant.default.page.size", e);
+        		DEFAULT_PAGE_SIZE = 100;
+        	}
         
-        MAX_PAGE_SIZE = NumberUtils.toInt((String) props.getProperty("iplant.max.page.size", "100"), 100);
+        try {MAX_PAGE_SIZE = NumberUtils.toInt((String) props.getProperty("iplant.max.page.size", "100"), 100);}
+    	catch (Exception e) {
+    		log.error("Failure loading setting iplant.max.page.size", e);
+    		DEFAULT_PAGE_SIZE = 100;
+    	}
         
-        PLATFORM_STORAGE_SYSTEM_ID = (String)props.getProperty("iplant.platform.storage.system", "agave-s3-prod");
+        PLATFORM_STORAGE_SYSTEM_ID = props.getProperty("iplant.platform.storage.system", "agave-s3-prod");
         
-        DRAIN_QUEUES = (String)props.getProperty("iplant.drain.all.queues");
+        DRAIN_QUEUES = props.getProperty("iplant.drain.all.queues");
         
-        DEDICATED_TENANT_ID = (String)props.getProperty("iplant.dedicated.tenant.id");
+        DEDICATED_TENANT_ID = props.getProperty("iplant.dedicated.tenant.id");
         
-        DEDICATED_USER_IDS = StringUtils.split((String)props.get("iplant.dedicated.user.id"), ",");
+        DEDICATED_USER_IDS = StringUtils.split(props.getProperty("iplant.dedicated.user.id"), ",");
         
-        DEDICATED_USER_GROUPS = StringUtils.split((String)props.get("iplant.dedicated.user.group.id"), ",");
+        DEDICATED_USER_GROUPS = StringUtils.split(props.getProperty("iplant.dedicated.user.group.id"), ",");
         
-        DEDICATED_SYSTEM_IDS = StringUtils.split((String)props.getProperty("iplant.dedicated.system.id", ""), ",");
+        DEDICATED_SYSTEM_IDS = StringUtils.split(props.getProperty("iplant.dedicated.system.id", ""), ",");
     }
     
     /**
@@ -399,11 +373,17 @@ public class Settings
     public static Properties loadRuntimeProperties()
     {
         Properties props = new Properties();
+        InputStream stream = null;
         try {
-            props.load(Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE));
+        	stream = Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE);
+            props.load(stream);
         }
         catch (Exception e) {
-            e.printStackTrace();
+        	String msg = "Unable to load " + PROPERTY_FILE + ".";
+            log.error(msg, e);
+        }
+        finally {
+        	if (stream != null) try {stream.close();} catch (Exception e){}
         }
         
         Map<String, String> environment = System.getenv();
@@ -423,15 +403,14 @@ public class Settings
     /**
      * Reads in a service url from the properties file and ensures it ends in a 
      * single trailing slash.
-     * @param props the properes to fetch the service url from.
+     * @param props the properties to fetch the service url from.
      * @param propertyKey the key to lookup
      * @param defaultValue value to use if no value is present in the properties object
      * @return
      */
     public static String getSantizedServiceUrl(Properties props, String propertyKey, String defaultValue) {
     	return StringUtils.trimToEmpty(
-    			(String)props.getProperty(propertyKey, defaultValue))
-    				.replaceAll("/$", "") + "/";
+    			props.getProperty(propertyKey, defaultValue)).replaceAll("/$", "") + "/";
 	}
 
 	/**
@@ -444,19 +423,25 @@ public class Settings
         if (StringUtils.isEmpty(DEDICATED_TENANT_ID)) 
         {
             Properties props = new Properties();
+            InputStream stream = null;
             try
             {
-                props.load(Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE));
+            	stream = Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE);
+                props.load(stream);
                 
-                DEDICATED_TENANT_ID = (String)props.get("iplant.dedicated.tenant.id");
+                DEDICATED_TENANT_ID = props.getProperty("iplant.dedicated.tenant.id");
             }
             catch (Exception e)
             {
+            	log.error("Failure loading setting iplant.dedicated.tenant.id", e);
                 DEDICATED_TENANT_ID = null;
+            }
+            finally {
+            	if (stream != null) try {stream.close();} catch (Exception e){}
             }
         }
         
-        return StringUtils.stripToNull(new String(DEDICATED_TENANT_ID));
+        return StringUtils.stripToNull(DEDICATED_TENANT_ID);
     }
     
     /**
@@ -469,9 +454,11 @@ public class Settings
         if (ArrayUtils.isEmpty(DEDICATED_USER_IDS)) 
         {
             Properties props = new Properties();
+            InputStream stream = null;
             try
             {
-                props.load(Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE));
+            	stream = Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE);
+                props.load(stream);
                 
                 List<String> userIds = new ArrayList<String>();
                 for (String userId: StringUtils.split((String)props.getProperty("iplant.dedicated.user.id", ""), ",")) {
@@ -481,12 +468,17 @@ public class Settings
                     }
                 }
                 
-                DEDICATED_USER_IDS = userIds.toArray(new String[] {});
+                String[] stringArray = new String[userIds.size()];
+                DEDICATED_USER_IDS = userIds.toArray(stringArray);
                 
             }
             catch (Exception e)
             {
+            	log.error("Failure loading setting iplant.dedicated.user.id", e);
                 DEDICATED_USER_IDS = new String[] {};
+            }
+            finally {
+            	if (stream != null) try {stream.close();} catch (Exception e){}
             }
         }
         
@@ -503,9 +495,11 @@ public class Settings
         if (ArrayUtils.isEmpty(DEDICATED_USER_GROUPS)) 
         {
             Properties props = new Properties();
+            InputStream stream = null;
             try
             {
-                props.load(Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE));
+            	stream = Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE);
+                props.load(stream);
                 
                 List<String> groupIds = new ArrayList<String>();
                 for (String groupId: StringUtils.split((String)props.getProperty("iplant.dedicated.user.group", ""), ",")) {
@@ -515,11 +509,16 @@ public class Settings
                     }
                 }
                 
-                DEDICATED_USER_GROUPS = groupIds.toArray(new String[] {});
+                String[] stringArray = new String[groupIds.size()];
+                DEDICATED_USER_GROUPS = groupIds.toArray(stringArray);
             }
             catch (Exception e)
             {
+            	log.error("Failure loading setting iplant.dedicated.user.group", e);
                 DEDICATED_USER_GROUPS = new String[] {};
+            }
+            finally {
+            	if (stream != null) try {stream.close();} catch (Exception e){}
             }
         }
         
@@ -540,9 +539,11 @@ public class Settings
         if (ArrayUtils.isEmpty(DEDICATED_SYSTEM_IDS)) 
         {
             Properties props = new Properties();
+            InputStream stream = null;
             try
             {
-                props.load(Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE));
+            	stream = Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE);
+                props.load(stream);
                 
                 List<String> systemIds = new ArrayList<String>();
                 for (String systemId: StringUtils.split((String)props.getProperty("iplant.dedicated.system.id", ""), ",")) {
@@ -552,11 +553,16 @@ public class Settings
                     }
                 }
                 
-                DEDICATED_SYSTEM_IDS = systemIds.toArray(new String[] {});
+                String[] stringArray = new String[systemIds.size()];
+                DEDICATED_SYSTEM_IDS = systemIds.toArray(stringArray);
             }
             catch (Exception e)
             {
+            	log.error("Failure loading setting iplant.dedicated.system.id", e);
                 DEDICATED_SYSTEM_IDS = new String[] {};
+            }
+            finally {
+            	if (stream != null) try {stream.close();} catch (Exception e){}
             }
         }
     
@@ -575,15 +581,21 @@ public class Settings
         if (StringUtils.isEmpty(DRAIN_QUEUES)) 
         {
             Properties props = new Properties();
+            InputStream stream = null;
             try
             {
-                props.load(Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE));
+            	stream = Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE);
+                props.load(stream);
                 
-                DRAIN_QUEUES = (String)props.getProperty("iplant.drain.all.queues");
+                DRAIN_QUEUES = props.getProperty("iplant.drain.all.queues");
             }
             catch (Exception e)
             {
+            	log.error("Failure loading setting iplant.drain.all.queues", e);
                 DRAIN_QUEUES = null;
+            }
+            finally {
+            	if (stream != null) try {stream.close();} catch (Exception e){}
             }
         }
         
@@ -605,8 +617,8 @@ public class Settings
         {
             try {
                 hostname = InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e1) {
-                log.error("Unable to resolve local hostname");
+            } catch (UnknownHostException e) {
+                log.error("Unable to resolve local hostname", e);
                 hostname = "localhost";
             }
         }
@@ -709,7 +721,7 @@ public class Settings
             log.error("Failed to fork command " + command);
         }
         finally {
-            try {reader.close();} catch (Exception e) {}
+            if (reader != null) try {reader.close();} catch (Exception e) {}
         }
         
         return lines;
@@ -775,7 +787,8 @@ public class Settings
     }
     
     public static List<String> getEditableRuntimeConfigurationFields() {
-        return Arrays.asList("DRAIN_QUEUES",
+        return Arrays.asList(
+        		"DRAIN_QUEUES",
                 "DEDICATED_TENANT_ID",
                 "DEDICATED_SYSTEM_IDS",
                 "DEDICATED_USER_IDS",

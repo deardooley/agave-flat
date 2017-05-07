@@ -1413,7 +1413,7 @@ public class FileManagementResource extends AbstractFileResource
 	        schedulerFactory.initialize(props);
 	    }
 	    finally {
-	        try { in.close(); } catch (Exception e) {}
+	    	if (in != null) try { in.close(); } catch (Exception e) {}
 	    }
 	    scheduler = schedulerFactory.getScheduler();
 	    return scheduler;
