@@ -7,15 +7,10 @@ import java.io.StringWriter;
 import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.lf5.util.StreamUtils;
 import org.restlet.Context;
-import org.restlet.data.Method;
 import org.restlet.data.Reference;
-import org.restlet.data.Request;
 import org.restlet.resource.Representation;
 import org.restlet.resource.StringRepresentation;
-
-import com.mchange.lang.ByteUtils;
 
 import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
@@ -93,18 +88,9 @@ public class ContextTemplateLoader implements TemplateLoader {
         	}
         }
         finally {
-        	try { in.close(); } catch (Exception e) {}
+        	if (in != null) try { in.close(); } catch (Exception e) {}
         	try { writer.close(); } catch (Exception e) {}
         }
-//        if (getBaseUri().endsWith("/")) {
-//            fullUri = getBaseUri() + name;
-//        } else {
-//            fullUri = getBaseUri() + "/" + name;
-//        }
-//
-//        return (getContext() == null) ? null : getContext()
-//                .getClientDispatcher().handle(new Request(Method.GET, fullUri))
-//                .getEntity();
     }
 
     /**

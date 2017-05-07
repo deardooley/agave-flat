@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.apache.log4j.Logger;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,6 +42,8 @@ import com.fasterxml.jackson.databind.node.TextNode;
  */
 public class ServiceUtils {
 
+	private static final Logger log = Logger.getLogger(ServiceUtils.class);
+					
 	@SuppressWarnings("unused")
 	public static String exec(String command) throws IOException
 	{
@@ -333,9 +336,10 @@ public class ServiceUtils {
 	{	
 		if (TenancyHelper.isTenantAdmin()) return true;
 		
-		InputStream stream = ServiceUtils.class.getClassLoader().getResourceAsStream("trusted_admins.txt");
+		InputStream stream = null;
 		try
 		{
+			stream = ServiceUtils.class.getClassLoader().getResourceAsStream("trusted_admins.txt");
 			String trustedUserList = IOUtils.toString(stream, "UTF-8");
 			if (isValid(trustedUserList)) {
 				for(String user: trustedUserList.split(",")) {
@@ -350,9 +354,12 @@ public class ServiceUtils {
 		}
 		catch (IOException e)
 		{
-			 //log.error("Failed to locate trusted user file");
+			log.warn("Failed to load trusted user file", e);
 			return false;
 		}
+        finally {
+        	if (stream != null) try {stream.close();} catch (Exception e){}
+        }
 	}
 	
 	public static String explode(String glue, List<?> list)

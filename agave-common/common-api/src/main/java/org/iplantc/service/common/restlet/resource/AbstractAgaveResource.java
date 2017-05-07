@@ -20,6 +20,7 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.log4j.Logger;
 import org.iplantc.service.common.Settings;
 import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.persistence.TenancyHelper;
@@ -44,6 +45,8 @@ import com.google.common.collect.Iterables;
  *
  */
 public class AbstractAgaveResource {
+	
+	private static final Logger log = Logger.getLogger(AbstractAgaveResource.class);
 
 	@Context
 	protected UriInfo uriInfo;
@@ -285,8 +288,16 @@ public class AbstractAgaveResource {
 	 * @return
 	 */
 	public String resolveMimeTime(String filename) {
-		InputStream mimeTypesStream = AbstractAgaveResource.class.getResourceAsStream("mime.types");
-		MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap(mimeTypesStream);
-		return mimeTypesMap.getContentType(filename);
+		InputStream mimeTypesStream = null;
+		try {
+			mimeTypesStream = AbstractAgaveResource.class.getResourceAsStream("mime.types");
+			MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap(mimeTypesStream);
+			return mimeTypesMap.getContentType(filename);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			throw e;
+		} finally {
+			if (mimeTypesStream != null) try {mimeTypesStream.close();} catch (Exception e){}
+		}
 	}
 }

@@ -16,12 +16,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
 import org.iplantc.service.common.auth.AuthorizationHelper;
 import org.iplantc.service.common.clients.beans.Address;
-import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -359,27 +356,6 @@ public class ServiceUtils {
 	public static boolean isPublisher(String username, ExecutionSystem system)
 	{	
 		return system.getUserRole(username).canPublish();
-//		
-//		InputStream stream = AppsApplication.class.getClassLoader().getResourceAsStream("trusted_publishers.txt");
-//		try
-//		{
-//			String trustedUserList = IOUtils.toString(stream, "UTF-8");
-//			if (isValid(trustedUserList)) {
-//				for(String user: trustedUserList.split(",")) {
-//					if (username.equalsIgnoreCase(user.trim())) {
-//						return true;
-//					}
-//				}
-//				return false;
-//			} else {
-//				return false;
-//			}
-//		}
-//		catch (IOException e)
-//		{
-//			 //log.error("Failed to locate trusted user file");
-//			return false;
-//		}
 	}
 	
 	public static String explode(String glue, List<?> list)

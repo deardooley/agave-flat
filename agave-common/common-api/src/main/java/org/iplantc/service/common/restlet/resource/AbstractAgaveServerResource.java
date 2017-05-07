@@ -297,12 +297,22 @@ public class AbstractAgaveServerResource extends ServerResource {
 	 * @return
 	 */
 	public String resolveMimeTime(String filename) {
+		InputStream mimeTypesStream = null;
 		try {
-			InputStream mimeTypesStream = this.getClass().getClassLoader().getResourceAsStream("mime.types");
+			mimeTypesStream = this.getClass().getClassLoader().getResourceAsStream("mime.types");
 			MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap(mimeTypesStream);
 			return mimeTypesMap.getContentType(filename);
 		} catch (Exception e) {
-			return new MimetypesFileTypeMap().getContentType(filename);
+			log.error(e.getMessage(), e);
+			
+			// Try again on a different map.
+			try {return new MimetypesFileTypeMap().getContentType(filename);}
+				catch (Exception e2) {
+					log.error(e2.getMessage(), e2);
+					throw e2;
+				}
+		} finally {
+			if (mimeTypesStream != null) try {mimeTypesStream.close();} catch (Exception e){}
 		}
 	}
 	

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.iplantc.service.io.exceptions.TransformException;
 import org.iplantc.service.io.util.ServiceUtils;
 
@@ -16,44 +17,15 @@ import com.thoughtworks.xstream.io.xml.DomDriver;
 @SuppressWarnings({ "unchecked" })
 public class FileTransformProperties {
 	
+	private static final Logger log = Logger.getLogger(FileTransformProperties.class);
+	
 	private List<FileTransform> transforms;
-//private FileTransformList transforms;
-	// hollow class to help serialize the xml properly
-//	class FileTransformList {
-//		List<FileTransform> transforms = null;
-//		public FileTransformList() {
-//			this.transforms = new ArrayList<FileTransform>();
-//		}
-//	
-//		public FileTransformList(HashSet<FileTransform> transforms) {
-//			this.transforms = new ArrayList<FileTransform>(transforms);
-//		}
-//		
-//		public void add(FileTransform transform) {
-//			this.transforms.add(transform);
-//		}
-//
-//		public List<FileTransform> getTransforms() {
-//			return this.transforms;
-//		}
-//		
-//		public void setTransforms(ArrayList<FileTransform> transforms) {
-//			this.transforms = transforms;
-//		}
-//		
-//		public boolean isEmpty() {
-//			return transforms.isEmpty();
-//		}
-//	}
-	
-	
 	
 	private static XStream xstream = new XStream(new DomDriver());
 	
 	static { 
         xstream.alias("transform", FileTransform.class);
         xstream.alias("filter", FileTransformFilter.class);
-//        xstream.registerConverter(new FileTransformPropertiesConverter());
         xstream.alias("decodingChain", FilterChain.class);
         xstream.alias("transforms", List.class);
         xstream.omitField(FileTransform.class, "enabled");
@@ -113,15 +85,13 @@ public class FileTransformProperties {
                     transform.setEnabled(atleastonefilterexists);
 				}
 			}
-			//return transformList.getTransforms();
+			
 			return transforms;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Unable to retrieve transforms.", e);
 			throw new TransformException("Failed to read in transform file", e);
 		} finally {
-			try {
-				in.close();
-			} catch(IOException e) {}
+			if (in != null) try {in.close();} catch(IOException e) {}
 		}
 	}
 	
