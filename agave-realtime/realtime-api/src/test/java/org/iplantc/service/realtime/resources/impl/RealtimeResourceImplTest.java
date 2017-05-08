@@ -1,25 +1,14 @@
 package org.iplantc.service.realtime.resources.impl;
 
-import org.apache.commons.codec.binary.Base64;
-import org.iplantc.service.common.persistence.JndiSetup;
 import org.iplantc.service.monitor.dao.MonitorDao;
-import org.iplantc.service.monitor.exceptions.MonitorException;
 import org.iplantc.service.realtime.AbstractRealtimeChannelTest;
-import org.iplantc.service.realtime.RealtimeApplication;
-import org.joda.time.DateTime;
 import org.restlet.Client;
 import org.restlet.Component;
 import org.restlet.Context;
-import org.restlet.Server;
 import org.restlet.data.Protocol;
-import org.restlet.ext.jaxrs.JaxRsApplication;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+@Test(groups={"broken", "integration"})
 public class RealtimeResourceImplTest extends AbstractRealtimeChannelTest 
 {	
 	private Component comp = new Component();

@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(groups= {"outstream", "upload"})
+@Test(groups= {"outstream", "upload", "integration"})
 public class GetOutputStreamOperationTest extends BaseRemoteDataClientOperationTest {
 
     private static final Logger log = Logger.getLogger(GetOutputStreamOperationTest.class);

@@ -4,15 +4,13 @@ import org.iplantc.service.monitor.AbstractMonitorTest;
 import org.iplantc.service.monitor.Settings;
 import org.iplantc.service.monitor.exceptions.MonitorException;
 import org.iplantc.service.monitor.model.Monitor;
-import org.iplantc.service.systems.model.RemoteSystem;
-import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.joda.time.DateTime;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(singleThreaded=true)
+@Test(singleThreaded=true, groups={"integration"})
 public class MonitorCronListenerTest extends AbstractMonitorTest 
 {	
 	@BeforeMethod

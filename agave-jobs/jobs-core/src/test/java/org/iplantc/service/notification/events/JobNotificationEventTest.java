@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class JobNotificationEventTest extends AbstractDaoTest {
 
 	protected NotificationDao ndao = new NotificationDao();

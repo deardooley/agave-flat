@@ -8,7 +8,8 @@
  
  import org.apache.commons.io.IOUtils;
  import org.apache.commons.lang.StringUtils;
- import org.iplantc.service.common.persistence.TenancyHelper;
+import org.apache.log4j.Logger;
+import org.iplantc.service.common.persistence.TenancyHelper;
  
  /**
   * Utility class to check for admin status of a given user.
@@ -17,6 +18,7 @@
   */
  public class AuthorizationHelper {
      
+	 private static final Logger log = Logger.getLogger(AuthorizationHelper.class);
      private static final String TRUSTED_ADMIN_FILE = "trusted_admins.txt";
      
      /**
@@ -32,9 +34,10 @@
      {   
          if (TenancyHelper.isTenantAdmin(username)) return true;
          
-         InputStream stream = AuthorizationHelper.class.getClassLoader().getResourceAsStream("trusted_admins.txt");
+         InputStream stream = null;
          try
          {
+        	 stream = AuthorizationHelper.class.getClassLoader().getResourceAsStream("trusted_admins.txt");
              String trustedUserList = IOUtils.toString(stream, "UTF-8");
              if (StringUtils.isNotEmpty(trustedUserList)) {
                  for(String user: trustedUserList.split(",")) {
@@ -49,8 +52,11 @@
          }
          catch (IOException e)
          {
-              //log.error("Failed to locate trusted user file");
+             log.warn("Failed to load trusted user file", e);
              return false;
+         }
+         finally {
+        	 if (stream != null) try {stream.close();} catch (Exception e){} 
          }
      }
      
@@ -79,9 +85,10 @@
      
      private static boolean isUserInLocalConfigurationFile(String username) 
      {
-         InputStream stream = AuthorizationHelper.class.getClassLoader().getResourceAsStream(TRUSTED_ADMIN_FILE);
+         InputStream stream = null;
          try
          {
+        	 stream = AuthorizationHelper.class.getClassLoader().getResourceAsStream(TRUSTED_ADMIN_FILE);
              String trustedUserList = IOUtils.toString(stream, "UTF-8");
              if (StringUtils.isNotEmpty(trustedUserList)) {
                  for(String user: trustedUserList.split(",")) {
@@ -96,7 +103,11 @@
          }
          catch (IOException e)
          {
+        	 log.warn("Failed to load trusted user file", e);
              return false;
+         }
+         finally {
+        	 if (stream != null) try {stream.close();} catch (Exception e){} 
          }
      }
  }

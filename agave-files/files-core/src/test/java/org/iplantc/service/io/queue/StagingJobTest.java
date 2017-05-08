@@ -31,7 +31,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(singleThreaded=true)
+@Test(singleThreaded=true, groups={"integration"})
 public class StagingJobTest extends BaseTestCase {
 	
 	private StagingJob stagingJob;

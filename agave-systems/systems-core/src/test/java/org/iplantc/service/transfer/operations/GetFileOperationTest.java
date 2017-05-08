@@ -21,7 +21,7 @@ import com.google.common.io.Files;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"getFile", "download"})
+@Test(singleThreaded=true, groups= {"getFile", "download", "integration"})
 public class GetFileOperationTest extends BaseRemoteDataClientOperationTest {
 
     public GetFileOperationTest(String systemJsonFilePath,

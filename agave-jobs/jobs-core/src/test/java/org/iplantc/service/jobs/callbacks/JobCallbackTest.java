@@ -19,7 +19,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(groups= {"callback", "status"}, singleThreaded=true)
+@Test(groups= {"integration", "callback", "status"}, singleThreaded=true)
 public class JobCallbackTest extends AbstractDaoTest {
     
     private static final Logger log = Logger.getLogger(JobCallbackTest.class);

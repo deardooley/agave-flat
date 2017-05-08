@@ -12,10 +12,8 @@ import org.iplantc.service.common.uuid.UUIDType;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemArgumentException;
-import org.iplantc.service.systems.manager.SystemRoleManager;
 import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.StorageSystem;
-import org.iplantc.service.systems.util.ApiUriUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
@@ -26,6 +24,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class ApiUriUtilTest
 {
 	public static String STORAGE_SYSTEM_TEMPLATE_DIR = "src/test/resources/systems/storage/";

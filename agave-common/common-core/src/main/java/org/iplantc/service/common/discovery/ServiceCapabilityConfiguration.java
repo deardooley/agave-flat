@@ -12,8 +12,8 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.iplantc.service.common.discovery.providers.sql.DiscoverableService;
-import org.testng.log4testng.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class ServiceCapabilityConfiguration
 {
-	private Logger log = Logger.getLogger(ServiceCapabilityConfiguration.class);
+	private static final Logger log = Logger.getLogger(ServiceCapabilityConfiguration.class);
 	
 	private Set<ServiceCapability> localCapabilities = new HashSet<ServiceCapability>();
 	
@@ -60,10 +60,13 @@ public class ServiceCapabilityConfiguration
 	{
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode json;
+		InputStream capabilitiesStream = null;
 		try 
 		{
 			// read in json list of capabilities
-			json = mapper.readTree(ServiceDiscoveryFactory.class.getClassLoader().getResourceAsStream("capabilities.json"));
+			capabilitiesStream = 
+				ServiceDiscoveryFactory.class.getClassLoader().getResourceAsStream("capabilities.json");
+			json = mapper.readTree(capabilitiesStream);
 			if (json != null)
 			{
 				// is there an array of json capabilities?
@@ -95,12 +98,17 @@ public class ServiceCapabilityConfiguration
 						}
 					}
 				}
+				catch (Exception e) {
+					log.error("Unable to load capabilities text file.", e);
+				}
 				finally {
-					try { in.close(); } catch (Exception e) {}
+					if (in != null) try { in.close(); } catch (Exception e) {}
 				}
 			} 
 		} catch (Exception e) {
-			log.error("Failed to read service discovery file from disk. Checking environment...");
+			log.error("Failed to read service discovery file from disk. Checking environment...", e);
+		} finally {
+			if (capabilitiesStream != null) try {capabilitiesStream.close();} catch (Exception e){}
 		}
 	}
 	

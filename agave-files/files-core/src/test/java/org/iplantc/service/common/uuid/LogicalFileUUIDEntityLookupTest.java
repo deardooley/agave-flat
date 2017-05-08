@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public class LogicalFileUUIDEntityLookupTest extends AbstractUUIDEntityLookupTest<LogicalFile> {
 	
 	@BeforeClass

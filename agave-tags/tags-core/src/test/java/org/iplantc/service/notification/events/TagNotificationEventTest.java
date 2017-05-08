@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+@Test(groups={"integration"})
 public class TagNotificationEventTest extends AbstractTagTest
 {
 	@BeforeMethod

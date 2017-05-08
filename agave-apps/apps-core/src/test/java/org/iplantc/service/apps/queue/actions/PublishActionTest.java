@@ -12,6 +12,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"notReady", "integration"})
 public class PublishActionTest extends AbstractWorkerActionTest {
     
     private static final Logger log = Logger.getLogger(PublishActionTest.class);

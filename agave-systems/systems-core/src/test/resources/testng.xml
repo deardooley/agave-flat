@@ -1,34 +1,40 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="Agave Systems Services Core" verbose="1" thread-count="1" parallel="false">
+<suite name="Agave systems-core" verbose="1" thread-count="1" parallel="none">
     <groups>
         <run>
             <exclude name="broken"/>
             <exclude name="notReady"/>
         </run>
     </groups>
-	<test name="systems">
+	<test name="systems-core">
 		<packages>
+		    <package name="org.iplantc.service.remote" />
+		    <package name="org.iplantc.service.remote.gsissh" />
+		    <package name="org.iplantc.service.remote.ssh" />
+		    
+		    <package name="org.iplantc.service.systems" />
+		    <package name="org.iplantc.service.systems.crypt" />
+		    <package name="org.iplantc.service.systems.dao" />
 			<package name="org.iplantc.service.systems.model" />
-			<package name="org.iplantc.service.systems.crypt" />
-			<package name="org.iplantc.service.systems.dao" />
+			<package name="org.iplantc.service.systems.events" />
 			<package name="org.iplantc.service.systems.manager" />
-		</packages>
-	</test>
-	<test name="transfers">
-		<packages>
-			<package name="org.iplantc.service.transfer.model" />
-			<package name="org.iplantc.service.transfer.dao" />
-			<package name="org.iplantc.service.transfer.manager" />
+			<package name="org.iplantc.service.systems.migrations" />
+			<package name="org.iplantc.service.systems.model" />
+			<package name="org.iplantc.service.systems.search" />
+			<package name="org.iplantc.service.systems.util" />
+			
+			<package name="org.iplantc.service.transfer.azure" />
 			<package name="org.iplantc.service.transfer.ftp" />
 			<package name="org.iplantc.service.transfer.gridftp" />
+			<package name="org.iplantc.service.transfer.http" />
 			<package name="org.iplantc.service.transfer.irods" />
+			<package name="org.iplantc.service.transfer.irods4" />
+			<package name="org.iplantc.service.transfer.local" />
+			<package name="org.iplantc.service.transfer.operations" />
+			<package name="org.iplantc.service.transfer.performance" />
+			<package name="org.iplantc.service.transfer.s3" />
 			<package name="org.iplantc.service.transfer.sftp" />
-		</packages>
-	</test>
-	<test name="remote">
-		<packages>
-			<package name="org.iplantc.service.remote" />
 		</packages>
 	</test>
 </suite>

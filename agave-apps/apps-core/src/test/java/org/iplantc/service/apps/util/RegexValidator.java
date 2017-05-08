@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 
 import com.stevesoft.pat.Regex;
 
+@Test(groups={"unit"})
 public class RegexValidator
 {
 

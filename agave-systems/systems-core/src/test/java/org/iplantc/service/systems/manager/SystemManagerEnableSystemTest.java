@@ -22,6 +22,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class SystemManagerEnableSystemTest extends SystemsModelTestCommon 
 {	
 	private SystemManager manager = new SystemManager();

@@ -1,6 +1,3 @@
-/**
- *
- */
 package org.iplantc.service.io.resources;
 
 import static org.iplantc.service.io.model.enumerations.FileOperationType.COPY;
@@ -18,7 +15,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -158,17 +154,19 @@ public class FileManagementResource extends AbstractFileResource
     	
 		} 
     	catch (ResourceException e) {
+    		log.error(e.getMessage(), e);
     		try {remoteDataClient.disconnect();} catch (Exception e1) {}
     		setStatus(e.getStatus());
     		getResponse().setEntity(new AgaveErrorRepresentation(e.getMessage()));
     		throw e;
     	}
     	catch (Throwable e) {
+    		String msg = "Unexpected error while processing this request";
+    		log.error(msg, e);
     		try {remoteDataClient.disconnect();} catch (Exception e1) {}
 		   	setStatus(Status.SERVER_ERROR_INTERNAL);
-	   		getResponse().setEntity(new AgaveErrorRepresentation("Unexpected error while processing this request"));
-	   		throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-				   "Unexpected error while processing this request",e);
+	   		getResponse().setEntity(new AgaveErrorRepresentation(msg));
+	   		throw new ResourceException(Status.SERVER_ERROR_INTERNAL, msg, e);
     	}
     }
     
@@ -186,8 +184,9 @@ public class FileManagementResource extends AbstractFileResource
     		}
     		return owner;
 		} catch (IOException e) {
-			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-					"Invalid file path " + path, e);
+			String msg = "Invalid file path " + path;
+			log.error(msg, e);
+			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, msg, e);
 		}
 	}
 
@@ -202,13 +201,12 @@ public class FileManagementResource extends AbstractFileResource
     		String originalPath = getRequest().getOriginalRef().toUri().getPath();
 			return PathResolver.resolve(owner, originalPath);
 		} catch (Exception e) {
-			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-					"Invalid file path " + path, e);
+			String msg = "Invalid file path " + path;
+			log.error(msg, e);
+			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, msg, e);
 		}
 	}
     
-    
-
 	/**
      * Fetches a {@link RemoteDataClient} for the requested system and authenticates
      * for use in the remainder of this session.
@@ -235,17 +233,20 @@ public class FileManagementResource extends AbstractFileResource
     			return rdc;
 	        }
     		else {
+    			String msg = "No system found to satisfy the request.";
+    			log.error(msg);
     			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-    					"No system found to satisfy the request.", 
-    					new SystemUnknownException());
+    						                msg, new SystemUnknownException());
     		}
 		} 
 		catch (RemoteDataException e) {
-        	throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-					"Failed to connect to the remote system. "+ e.getMessage(), e);
+			String msg = "Failed to connect to the remote system. "+ e.getMessage();
+			log.error(msg, e);
+        	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, msg, e);
 		} catch (RemoteCredentialException | IOException e) {
-			throw new ResourceException(Status.SERVER_ERROR_BAD_GATEWAY,
-					"Failed to authenticate to the remote system. " + e.getMessage(), e);
+			String msg = "Failed to authenticate to the remote system. " + e.getMessage();
+			log.error(msg, e);
+			throw new ResourceException(Status.SERVER_ERROR_BAD_GATEWAY, msg, e);
 		}
     }
 
@@ -263,9 +264,10 @@ public class FileManagementResource extends AbstractFileResource
             	system = systemDao.findUserSystemBySystemId(username, systemId);
             	
             	if (system == null) {
+            		String msg = "No system found for user with id " + systemId;
+            		log.error(msg);
             		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-							"No system found for user with id " + systemId,
-							new SystemUnknownException());
+							                    msg, new SystemUnknownException());
             	}
             } 
             else { 
@@ -273,33 +275,38 @@ public class FileManagementResource extends AbstractFileResource
             	system = sysManager.getUserDefaultStorageSystem(username);
             	
             	if (system == null) {
+            		String msg = "No default storage system found. Please register a system " +
+							     "and set it as your default.";
+            		log.error(msg);
             		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-							"No default storage system found. Please register a system " +
-							"and set it as your default.",
-							new SystemUnknownException());
+							                    msg, new SystemUnknownException());
             	}
             }
             
             if (!system.isAvailable()) {
+            	String msg = "System " + systemId + " is not currently available.";
+            	log.error(msg);
             	throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-						"System " + systemId + " is not currently available.",
-						new SystemUnavailableException());
+					                    	msg, new SystemUnavailableException());
             }
             else if (system.getStatus() != SystemStatusType.UP) {
+            	String msg = "System " + systemId + " is " + system.getStatus().name();
+            	log.error(msg);
             	throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-            			"System " + systemId + " is " + system.getStatus().name(),
-            			new SystemUnavailableException());
+            			                    msg, new SystemUnavailableException());
             }
             
             return system;
         }
 		catch (ResourceException e) {
+			log.error(e.getMessage(), e);
 			throw e;
 		}
         catch (Exception e) {
+        	String msg = "Failed to fetch user system";
+        	log.error(msg, e);
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-            		"Failed to fetch user system", 
-            		new SystemException());
+            		                    msg, new SystemException());
         }
 	}
 
@@ -317,11 +324,14 @@ public class FileManagementResource extends AbstractFileResource
 			// make sure the resource they are looking for is available.
 	        if (remoteDataClient == null) {
 	        	if (StringUtils.isEmpty(systemId)) {
-	        		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-	        				"No default storage system found. Please register a system and set it as your default. ");
+	        		String msg = 
+	        			"No default storage system found. Please register a system and set it as your default. ";
+	        		log.error(msg);
+	        		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, msg);
 	        	} else {
-	        		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-	        				"No system found for user with system id " + systemId);
+	        		String msg = "No system found for user with system id " + systemId;
+	        		log.error(msg);
+	        		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, msg);
 	        	}
 	        }
 	
@@ -332,7 +342,9 @@ public class FileManagementResource extends AbstractFileResource
 					owner = PathResolver.getOwner(originalPath);
 				}
 			} catch (Exception e) {
-				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "Invalid file path", e);
+				String msg = "Invalid file path";
+				log.error(msg, e);
+				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, msg, e);
 			}
 
 		
@@ -359,13 +371,14 @@ public class FileManagementResource extends AbstractFileResource
 						LogicalFileDao.removeSubtree(logicalFile);
                     }
 
-                    throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-    						"File/folder does not exist");
+                    String msg = "File/folder does not exist";
+                    log.error(msg);
+                    throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, msg);
 
                 } else if (logicalFile.isDirectory()) { // return file listing
-
-                	throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-                			"Directory downloads not supported");
+                	String msg = "Directory downloads not supported";
+                	log.error(msg);
+                	throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED, msg);
                 } else {
                     // file exists on the file system, so make sure we have
                     // a logical file for it if not, add one
@@ -373,18 +386,23 @@ public class FileManagementResource extends AbstractFileResource
     				
                     try {
                         if (!pm.canRead(remoteDataClient.resolvePath(path))) {
-                        	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-                        			"User does not have access to view the requested resource");
+                        	String msg = "User does not have access to view the requested resource";
+                        	log.error(msg);
+                        	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, msg);
                         }
                     } catch (PermissionException e) {
-                    	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-                    			"Failed to retrieve permissions for " + path + ", " + e.getMessage());
+                    	String msg = "Failed to retrieve permissions for " + path + ", " + e.getMessage();
+                    	log.error(msg, e);
+                    	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, msg);
                     }
 
                     if (ranges.size() > 0) {
                         Range range = ranges.get(0);
 
                         if (range.getSize() < 0 && range.getSize() != -1) {
+                			String msg = "Requested Range Not Satisfiable: " +
+                					     "Upper bound less than lower bound";
+                			log.error(msg);
                         	throw new ResourceException(
                         			new Status(416, "Requested Range Not Satisfiable",
                         					"Upper bound less than lower bound",
@@ -393,6 +411,9 @@ public class FileManagementResource extends AbstractFileResource
                         }
 
                         if (range.getIndex() > remoteFileInfo.getSize()) {
+                			String msg = "Requested Range Not Satisfiable: " +
+                					     "Lower bound out of range of file";
+                			log.error(msg);
                         	throw new ResourceException(
                             		new Status(416, "Requested Range Not Satisfiable",
                             				"Lower bound out of range of file",
@@ -401,6 +422,9 @@ public class FileManagementResource extends AbstractFileResource
                         }
 
                         if ((range.getIndex() + Math.abs(range.getSize())) > remoteFileInfo.getSize()) {
+                			String msg = "Requested Range Not Satisfiable: " +
+                					     "Upper bound out of range of file";
+                			log.error(msg);
                             throw new ResourceException(
                             		new Status(416, "Requested Range Not Satisfiable",
 		                            		"Upper bound out of range of file",
@@ -410,6 +434,7 @@ public class FileManagementResource extends AbstractFileResource
                     }
                 }
             } catch (ResourceException e) {
+            	log.error(e.getMessage(), e);
 				throw e;
             } catch (Exception e) {
             	log.error("Failed to fetch info for HEAD response of " + path, e);
@@ -438,10 +463,12 @@ public class FileManagementResource extends AbstractFileResource
 			return wrep;
 		}
 		catch (ResourceException e) {
+			log.error(e.getMessage(), e);
 			setStatus(e.getStatus());
 			return new AgaveErrorRepresentation(e.getMessage());
 		}
 		catch (Exception e) {
+			log.error(e.getMessage(), e);
 			throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e.getMessage(), e);
         } finally {
         	try {remoteDataClient.disconnect();} catch (Exception e) {}
@@ -463,11 +490,14 @@ public class FileManagementResource extends AbstractFileResource
 		// make sure the resource they are looking for is available.
         if (remoteDataClient == null) {
         	if (StringUtils.isEmpty(systemId)) {
-        		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-        				"No default storage system found. Please register a system and set it as your default. ");
+        		String msg = 
+        			"No default storage system found. Please register a system and set it as your default. ";
+        		log.error(msg);
+        		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, msg);
         	} else {
-        		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-        				"No system found for user with system id " + systemId);
+        		String msg = "No system found for user with system id " + systemId;
+        		log.error(msg);
+        		throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, msg); 
         	}
         }
 
@@ -478,7 +508,9 @@ public class FileManagementResource extends AbstractFileResource
 				owner = PathResolver.getOwner(originalPath);
 			}
 		} catch (Exception e) {
-			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "Invalid file path", e);
+			String msg = "Invalid file path";
+			log.error(msg);
+			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, msg, e);
 		}
 
 		try
@@ -505,16 +537,17 @@ public class FileManagementResource extends AbstractFileResource
 								getAuthenticatedUsername()));
 						LogicalFileDao.removeSubtree(logicalFile);
                     }
-
+                    
+                    String msg = "File/folder does not exist";
+                    log.error(msg);
                     throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-    						"File/folder does not exist",
-    						new FileNotFoundException());
+    				                    		msg, new FileNotFoundException());
 
                 } else if (remoteDataClient.isDirectory(path)) { // return file listing
-
+                	String msg = "Directory downloads not supported";
+                	log.error(msg);
                 	throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED,
-                			"Directory downloads not supported", 
-                			new NotImplementedException());
+                			                    msg, new NotImplementedException());
                 } else {
                 	
                 	remoteFileInfo = remoteDataClient.getFileInfo(path);
@@ -522,19 +555,24 @@ public class FileManagementResource extends AbstractFileResource
                     // a logical file for it if not, add one
                     try {
                         if (!pm.canRead(remoteDataClient.resolvePath(path))) {
+                        	String msg = "User does not have access to view the requested resource";
+                        	log.error(msg);
                         	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-                        			"User does not have access to view the requested resource",
-									new PermissionException());
+                        			                    msg, new PermissionException());
                         }
                     } catch (PermissionException e) {
-                    	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-                    			"Failed to retrieve permissions for " + path + ", " + e.getMessage(), e);
+                    	String msg = "Failed to retrieve permissions for " + path + ", " + e.getMessage();
+                    	log.error(msg, e);
+                    	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, msg, e);
                     }
 
                     if (ranges.size() > 0) {
                         Range range = ranges.get(0);
 
                         if (range.getSize() < 0 && range.getSize() != -1) {
+                        	String msg = "Requested Range Not Satisfiable: " +
+                        			     "Upper bound less than lower bound";
+                        	log.error(msg);
                         	throw new ResourceException(
                         			new Status(416, "Requested Range Not Satisfiable",
                         					"Upper bound less than lower bound",
@@ -543,6 +581,9 @@ public class FileManagementResource extends AbstractFileResource
                         }
 
                         if (range.getIndex() > remoteDataClient.length(path)) {
+                        	String msg = "Requested Range Not Satisfiable: " +
+                        			"Lower bound out of range of file";
+                        	log.error(msg);
                         	throw new ResourceException(
                             		new Status(416, "Requested Range Not Satisfiable",
                             				"Lower bound out of range of file",
@@ -551,6 +592,9 @@ public class FileManagementResource extends AbstractFileResource
                         }
 
                         if ((range.getIndex() + Math.abs(range.getSize())) > remoteDataClient.length(path)) {
+                        	String msg = "Requested Range Not Satisfiable: " +
+                        			     "Upper bound out of range of file";
+                        	log.error(msg);
                             throw new ResourceException(
                             		new Status(416, "Requested Range Not Satisfiable",
 		                            		"Upper bound out of range of file",
@@ -563,9 +607,10 @@ public class FileManagementResource extends AbstractFileResource
                     if (logicalFile == null)
                     {
                     	if (owner != null && !owner.equals(username) && !ServiceUtils.isAdmin(username)) {
+                    		String msg = "User does not have access to view the requested resource";
+                    		log.error(msg);
                         	throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-                        			"User does not have access to view the requested resource",
-									new PermissionException());
+                        			                    msg, new PermissionException());
                         }
 
                         logicalFile = new LogicalFile();
@@ -581,12 +626,13 @@ public class FileManagementResource extends AbstractFileResource
                     }
                 }
             } catch (ResourceException e) {
+            	log.error(e.getMessage(), e);
 				throw e;
             } catch (Exception e) {
-            	e.printStackTrace();
+            	String msg = "Failed to retrieve information for " + path;
+            	log.error(msg, e);
             	throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-            			"Failed to retrieve information for " + path,
-    		    		new RemoteDataException());
+            			                    msg, new RemoteDataException());
             }
 			
 			FileEventProcessor.processAndSaveContentEvent(logicalFile, new FileEvent(
@@ -648,7 +694,9 @@ public class FileManagementResource extends AbstractFileResource
 
                             // This should never happen due to earlier bounds check
                             if (skipped < this.getRange().getIndex()) {
-                                throw new IOException("Requested Range out of bounds");
+                            	String msg = "Requested Range out of bounds compared to skipped.";
+                            	log.error(msg);
+                                throw new IOException(msg);
                             }
 
 							// Define a remaining number of bytes
@@ -668,20 +716,25 @@ public class FileManagementResource extends AbstractFileResource
 
                             // This should never happen due to earlier bounds check
                             if (bytesRemaining > 0) {
-                                throw new IOException("Requested Range out of bounds");
+                            	String msg = "Requested Range out of bounds with bytes remaining.";
+                            	log.error(msg);
+                                throw new IOException(msg);
                             }
 
 						}
 						bout.flush();
                     }
                     catch (RemoteDataException e) {
+                    	log.error(e.getMessage(), e);
 						throw new IOException(e);
 					}
                     catch (IOException e) {
+                    	log.error(e.getMessage(), e);
                     	throw e;
                     }
 					catch (Exception e)
 					{
+						log.error(e.getMessage(), e);
 						throw new IOException(e);
 					}
                     finally
@@ -692,74 +745,19 @@ public class FileManagementResource extends AbstractFileResource
 					}
 				}
 
-				@SuppressWarnings("unused")
 				@Override
 				public void write(Writer writer) throws IOException {
-
-					if (true) throw new IOException("Too slow to use");
-
-					try
-                    {
-                    	// Not sure whether to set input stream to passive or not
-                    	client = system.getRemoteDataClient(internalUsername);
-                    	client.authenticate();
-						in = client.getInputStream(remotePath, false);
-
-						int bufferSize = 65536;
-						byte[] b = new byte[bufferSize];
-						int len = 0;
-						// If no range specified
-						if (this.getRange() == null) {
-							while ((len = in.read(b)) >= 0) {
-								writer.write((new String(b)).toCharArray());
-							}
-						} else {
-							// Skip all input data prior to the index point.
-							long skipped = in.skip(this.getRange().getIndex());
-
-                            // This should never happen due to earlier bounds check
-                            if (skipped < this.getRange().getIndex()) {
-                                throw new IOException("Requested Range out of bounds");
-                            }
-
-							int bytesRemaining = (int)this.getRange().getSize();
-
-							// write a buffered number of bytes until all of the requested range of data is sent
-							while (((len = in.read(b, 0, bufferSize)) >= 0) && (bytesRemaining > 0)) {
-
-								// Do not send more than the requested data
-								if (len > bytesRemaining)
-									len = bytesRemaining;
-
-								writer.write(new String(b), 0, len);
-
-								// Reduce the remaining number of bytes by len
-								bytesRemaining -= len;
-							}
-
-                            // This should never happen due to earlier bounds check
-                            if (bytesRemaining > 0) {
-                                throw new IOException("Requested Range out of bounds");
-                            }
-						}
-						writer.flush();
-						in.close();
-                    }
-                    catch (RemoteDataException e) {
-						throw new IOException(e);
-					}
-                    catch (IOException e) {
-                    	throw e;
-                    }
-					catch (Exception e)
-					{
-						throw new IOException(e);
-					}
-					finally {
-						try { in.close(); } catch (Exception e) {}
-						try { client.disconnect(); } catch (Exception e) {}
+					
+					// Removed previous dead code from this method even
+					// though there's no explanation why this interface
+					// would not perform well.
+					if (true) {
+						String msg = "write(Writer) is not supported because it's too slow.";
+						log.error(msg);
+						throw new IOException(msg);
 					}
 				}
+
 			};
 			
 			Disposition disposition = new Disposition();
@@ -782,10 +780,12 @@ public class FileManagementResource extends AbstractFileResource
 			return wrep;
 		}
 		catch (ResourceException e) {
+			log.error(e.getMessage(), e);
 			setStatus(e.getStatus());
 			return new AgaveErrorRepresentation(e.getMessage());
 		}
 		catch (Exception e) {
+			log.error(e.getMessage(), e);
             throw new ResourceException(e);
         } 
 		finally {
@@ -823,27 +823,24 @@ public class FileManagementResource extends AbstractFileResource
 			{
                 if (!remoteDataClient.doesExist(path))
                 {
+                	String msg = "Destination path " + path + " does not exist.";
+                	log.error(msg);
                 	throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
-                    		"Destination path " + path + " does not exist.", 
-                    		new FileNotFoundException("No such file or folder"));
-//                    // user must be owner to create new folders
-//                    if (!StringUtils.equals(owner, username) && !ServiceUtils.isAdmin(username)) {
-//                        throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-//                        		"User does not have access to modify the requested resource");
-//                    }
+                    		msg, new FileNotFoundException("No such file or folder"));
                 }
                 else if (!remoteDataClient.isDirectory(path)) {
+                	String msg = "Destination path " + path + " is not a directory";
+                	log.error(msg);
                     throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
-                    		"Destination path " + path + " is not a directory",
-                    		new RemoteDataException("No such directory exists."));
+                    		msg, new RemoteDataException("No such directory exists."));
                 }
-			} catch (RemoteDataException e) {
-				throw e;
-			} catch (ResourceException e) {
+			} catch (RemoteDataException | ResourceException e) {
+				log.error(e.getMessage(), e);
 				throw e;
             } catch (Exception e) {
-                throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-                		"Failed to retrieve information for " + path);
+            	String msg = "Failed to retrieve information for " + path;
+            	log.error(msg, e);
+                throw new ResourceException(Status.SERVER_ERROR_INTERNAL, msg);
             }
 			
 			List<Notification> notifications = null;
@@ -865,10 +862,10 @@ public class FileManagementResource extends AbstractFileResource
 					try {
 						items = upload.parseRequest(getRequest());
 					} catch (Exception e) {
-						log.error("Failed to parse request form",e);
+						String msg = "Failed to parse request form";
+						log.error(msg, e);
 						throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-								"Failed to parse request form",
-								new FileProcessingException());
+								                    msg, new FileProcessingException());
 					}
 
 	                String format = null;
@@ -912,8 +909,11 @@ public class FileManagementResource extends AbstractFileResource
 							if (transform == null) {
 								if (format.equalsIgnoreCase("raw"))
 									format = "raw";
-								else
-									throw new TransformException("Format " + format + " is not recognized");
+								else {
+									String msg = "Format " + format + " is not recognized";
+									log.error(msg);
+									throw new TransformException(msg);
+								}
 							} else {
 								format = transform.getId();
 							}
@@ -959,16 +959,23 @@ public class FileManagementResource extends AbstractFileResource
 							LogicalFile logicalFile = null;
 				            try {
 				            	logicalFile = LogicalFileDao.findBySystemAndPath(system, remoteDataClient.resolvePath(remotePath));;
-				            } catch(Exception e) {}
+				            } catch(Exception e) {
+				            	if (log.isDebugEnabled()) {
+				            		String msg = "LogicalFileDao.findBySystemAndPath() failed, creating new logical file " +
+						                         remotePath + ".";
+								    log.debug(msg, e);
+				            	}
+				            }
 				
 				            PermissionManager pm = new PermissionManager(system, remoteDataClient, logicalFile, username);
 
 							if (logicalFile == null) {
 
 								if (!pm.canWrite(remoteDataClient.resolvePath(remotePath))) {
+									String msg = "User does not have access to modify the requested resource";
+									log.error(msg);
 									throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-											"User does not have access to modify the requested resource",
-											new PermissionException());
+									                    		msg, new PermissionException());
 								}
 
 								logicalFile = new LogicalFile();
@@ -984,9 +991,10 @@ public class FileManagementResource extends AbstractFileResource
 							} 
 							else {
 								if (!pm.canWrite(logicalFile.getPath())) {
+									String msg = "User does not have access to modify the requested resource.";
+									log.error(msg);
 									throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-											"User does not have access to modify the requested resource", 
-											new PermissionException());
+											                    msg, new PermissionException());
 								}
 								logicalFile.setSystem(system);
 								logicalFile.setInternalUsername(internalUsername);
@@ -1012,10 +1020,13 @@ public class FileManagementResource extends AbstractFileResource
 		                    return new AgaveSuccessRepresentation(logicalFile.toJsonWithNotifications(notifications));
 						} 
 						catch (ResourceException e) {
+							log.error(e.getMessage(), e);
 							throw e;
 						} 
 						catch (Exception e) {
-							throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "Invalid name " + name);
+							String msg = "Invalid name " + name;
+							log.error(msg, e);	
+							throw new ResourceException(Status.SERVER_ERROR_INTERNAL, msg);
 						}
 					}
 					// without a URL to import, look for the file to upload
@@ -1070,15 +1081,21 @@ public class FileManagementResource extends AbstractFileResource
                                     } catch(Exception e) {
                                         // Just catches an exception when the LogicalFile does not exist.
                                         // If there is no LogicalFile, one will be created below.
+                            			if (log.isDebugEnabled()) {
+                            				String msg = "LogicalFileDao.findBySystemAndPath() failed, creating new logical file " +
+                            		                 	 remotePath + ".";
+                            				log.debug(msg, e);
+                            			}
                                     }
 
                                     PermissionManager pm = new PermissionManager(system, remoteDataClient, logicalFile, username);
 
 		    						if (logicalFile == null) {
 		    							if (!pm.canWrite(remoteDataClient.resolvePath(remotePath))) {
+		    								String msg = "User does not have access to modify " + path;
+		    								log.error(msg);
 		    								throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-		    										"User does not have access to modify " + path,
-		    										new PermissionException());
+		    										                    msg, new PermissionException());
 		    							}
 
 		    							logicalFile = new LogicalFile();
@@ -1094,9 +1111,9 @@ public class FileManagementResource extends AbstractFileResource
 		    						} 
 		    						else {
 		    							if (!pm.canWrite(logicalFile.getPath())) {
+		    								String msg = "User does not have access to modify " + path;
 		    								throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-		    										"User does not have access to modify " + path,
-		    										new PermissionException());
+		    										                    msg, new PermissionException());
 		    							}
 		    							logicalFile.setSystem(system);
 										logicalFile.setInternalUsername(internalUsername);
@@ -1160,9 +1177,10 @@ public class FileManagementResource extends AbstractFileResource
 		                    else
 		                    {
 		                        // Some problem occurs, sent back a simple line of text.
+		                    	String msg = "No file uploaded";
+		                    	log.error(msg);
 		                    	throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-		                        		"No file uploaded",
-		            		    		new FileNotFoundException());
+		                        		                    msg, new FileNotFoundException());
 		                    }
 		                }
 		                catch (Exception e)
@@ -1178,7 +1196,6 @@ public class FileManagementResource extends AbstractFileResource
 	            {
 	            	// parse the form to get the job specs
 	            	JsonNode inputJson = getPostedContentAsJsonNode(input);
-//					Map<String,String> pTable = form.getValuesMap();
 
 					// enable the user to specify the input formatting. Check against our internally
 					// supported formatting
@@ -1203,8 +1220,11 @@ public class FileManagementResource extends AbstractFileResource
 							if (transform == null) {
 								if (format.equalsIgnoreCase("raw"))
 									format = "raw";
-								else
-									throw new TransformException("Format " + format + " is not recognized");
+								else {
+									String msg = "Format " + format + " is not recognized";
+									log.error(msg);
+									throw new TransformException(msg);
+								}
 							} else {
 								format = transform.getId();
 							}
@@ -1236,7 +1256,9 @@ public class FileManagementResource extends AbstractFileResource
 					if (inputJson.hasNonNull("urlToIngest")) {
 						sUri = inputJson.get("urlToIngest").asText();
 					} else {
-						throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "No valid URL specified");
+						String msg = "No valid URL specified";
+						log.error(msg);
+						throw new ResourceException(Status.SERVER_ERROR_INTERNAL, msg);
 					}
 					
 					try
@@ -1269,15 +1291,22 @@ public class FileManagementResource extends AbstractFileResource
 					
 						try {
 							logicalFile = LogicalFileDao.findBySystemAndPath(system, remoteDataClient.resolvePath(remotePath));
-						} catch(Exception e) {}
+						} catch(Exception e) {
+							if (log.isDebugEnabled()) {
+								String msg = "LogicalFileDao.findBySystemAndPath() failed, creating new logical file " +
+						                 	 remotePath + ".";
+								log.debug(msg, e);
+							}
+						}
 					  
 						PermissionManager pm = new PermissionManager(system, remoteDataClient, logicalFile, username);
 
 						if (logicalFile == null) {
 
 							if (!StringUtils.isEmpty(owner) && !owner.equals(username) && !ServiceUtils.isAdmin(username)) {
-								throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-										"User does not have access to modify " + remotePath);
+								String msg = "User does not have access to modify " + remotePath;
+								log.error(msg);
+								throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, msg);
 							}
 
 							logicalFile = new LogicalFile();
@@ -1293,8 +1322,9 @@ public class FileManagementResource extends AbstractFileResource
 							
 						} else {
 							if (!pm.canRead(logicalFile.getPath())) {
-								throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-										"User does not have access to modify " + path);
+								String msg = "User does not have access to modify " + path;
+								log.error(msg);
+								throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, msg);
 							}
 							logicalFile.setSystem(system);
 							logicalFile.setInternalUsername(internalUsername);
@@ -1323,9 +1353,11 @@ public class FileManagementResource extends AbstractFileResource
 	                    
 					} 
 					catch (ResourceException e) {
+						log.error(e.getMessage(), e);
 						throw e;
 					} 
 					catch (Exception e) {
+						log.error(e.getMessage(), e);
 						throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e.getMessage(), e);
 					} 
 					finally {
@@ -1334,16 +1366,20 @@ public class FileManagementResource extends AbstractFileResource
 	            }
 	        } else {
 	            // POST request with no entity.
-	            throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "No post entity");
+	        	String msg = "No post entity";
+	        	log.error(msg);
+	            throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, msg);
 	        }
 		}
 		catch (ResourceException e) {
+			log.error(e.getMessage(), e);
 			setStatus(e.getStatus());
 			return new AgaveErrorRepresentation(e.getMessage());
 		}
 		catch (Throwable e) {
-			 throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-					 "Error occurred while importing file.", e);
+			 String msg = "Error occurred while importing file.";
+			 log.error(msg, e);
+			 throw new ResourceException(Status.SERVER_ERROR_INTERNAL, msg, e);
 
 		} finally {
 			try {remoteDataClient.disconnect();} catch (Exception e) {}
@@ -1366,6 +1402,7 @@ public class FileManagementResource extends AbstractFileResource
 	        schedulerFactory.initialize(in);
 	    }
 	    catch (SchedulerException e) {
+	    	log.error(e.getMessage(), e);
 	        Properties props = new Properties();
 	        props.put("org.quartz.scheduler.instanceName", "AgaveFileUploadScheduler");
 	        props.put("org.quartz.threadPool.threadCount", "5");
@@ -1376,7 +1413,7 @@ public class FileManagementResource extends AbstractFileResource
 	        schedulerFactory.initialize(props);
 	    }
 	    finally {
-	        try { in.close(); } catch (Exception e) {}
+	    	if (in != null) try { in.close(); } catch (Exception e) {}
 	    }
 	    scheduler = schedulerFactory.getScheduler();
 	    return scheduler;
@@ -1399,15 +1436,22 @@ public class FileManagementResource extends AbstractFileResource
             try {
             	logicalFile = LogicalFileDao.findBySystemAndPath(system, remoteDataClient.resolvePath(path));
             }
-            catch(Exception e){}
+            catch(Exception e){
+    			if (log.isDebugEnabled()) {
+    				String msg = "LogicalFileDao.findBySystemAndPath() failed, deletion continuing for logical file " +
+    		                 	 path + ".";
+    				log.debug(msg, e);
+    			}
+            }
 
             PermissionManager pm = new PermissionManager(system, remoteDataClient, logicalFile, username);
             AgaveSuccessRepresentation representation = new AgaveSuccessRepresentation();
             if (logicalFile == null) {
                 if (!pm.canWrite(remoteDataClient.resolvePath(path))) {
+                	String msg = "User does not have permission to delete " + path;
+                	log.error(msg);
                     throw new ResourceException(Status.CLIENT_ERROR_UNAUTHORIZED, 
-                    		"User does not have permission to delete " + path,
-                    		new PermissionException());
+                    		                    msg, new PermissionException());
                 } else {
                     try {
                         remoteDataClient.delete(path);
@@ -1420,11 +1464,13 @@ public class FileManagementResource extends AbstractFileResource
                         return representation;
                     } 
                     catch (FileNotFoundException e) {
-                    	setStatus(Status.CLIENT_ERROR_NOT_FOUND, "Remote path " + path + " does not exists");
-                    	return new AgaveErrorRepresentation("Remote path " + path + " does not exists");
+                    	String msg = "Remote path " + path + " does not exist.";
+                    	log.error(msg, e);
+                    	setStatus(Status.CLIENT_ERROR_NOT_FOUND, msg);
+                    	return new AgaveErrorRepresentation(msg);
                     }
                     catch (Exception e) {
-                    	log.error("Failed to delete file agave://" + systemId + "/" + path);
+                    	log.error("Failed to delete file agave://" + systemId + "/" + path, e);
                     	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
                         		"Failed to delete " + path + " on the remote system.", e);
                         
@@ -1435,14 +1481,17 @@ public class FileManagementResource extends AbstractFileResource
                 try {
                     try {
                         if (!pm.canWrite(remoteDataClient.resolvePath(path))) {
+                        	String msg = "User does not have permission to delete " + path;
+                        	log.error(msg);
                             throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, 
-                            		"User does not have permission to delete " + path,
-                		    		new PermissionException());
+                            		                    msg, new PermissionException());
                         }
                     } 
                     catch (PermissionException e) {
+                    	String msg = "Failed to retrieve permissions for " + path;
+                    	log.error(msg, e);
                         throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, 
-                        		"Failed to retrieve permissions for " + path + ", " + e.getMessage(), e);
+                        		                    msg + ", " + e.getMessage(), e);
                     }
 
                     remoteDataClient.delete(path);
@@ -1452,8 +1501,6 @@ public class FileManagementResource extends AbstractFileResource
 							getAuthenticatedUsername()));
                     
                     LogicalFileDao.removeSubtree(logicalFile);
-                    
-                    //SharePermissionDao.removeAllPermissionsForPathSubtree(path);
                     
                     if (representation.isNaked()) {
                     	setStatus(Status.SUCCESS_NO_CONTENT);
@@ -1465,10 +1512,11 @@ public class FileManagementResource extends AbstractFileResource
                     
                 } 
                 catch (ResourceException e) {
+                	log.error(e.getMessage(), e);
                 	throw e;
                 }
                 catch (Throwable e) {
-                	log.error("File deletion failed " + e.getMessage());
+                	log.error("File deletion failed: " + e.getMessage(), e);
                 	throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
                 			"File deletion failed", e);
                     
@@ -1476,13 +1524,13 @@ public class FileManagementResource extends AbstractFileResource
             }
         } 
 		catch(ResourceException e) {
+			log.error(e.getMessage(), e);
 			throw e;
-//			setStatus(new Status(e.getStatus(), e.getMessage()));
-//			return new AgaveErrorRepresentation(e.getMessage());
 		}
 		catch (Exception e) {
-            throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-            		"Failed to retrieve information for " + path, e);
+			String msg = "Failed to retrieve information for " + path;
+			log.error(msg, e);
+            throw new ResourceException(Status.SERVER_ERROR_INTERNAL, msg, e);
 //            }
 
         } finally {
@@ -1509,6 +1557,7 @@ public class FileManagementResource extends AbstractFileResource
 			try {
 				absolutePath = remoteDataClient.resolvePath(path);
 			} catch (FileNotFoundException e) {
+				log.error(e.getMessage(), e);
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, 
 						e.getMessage(), e);
 			}
@@ -1524,36 +1573,42 @@ public class FileManagementResource extends AbstractFileResource
 					operation = FileOperationType.valueOfIgnoreCase(jsonInput.get("action").asText());
 				}
 				else {
+					String msg = "Please provide a file action to perform";
+					log.error(msg);
 					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
-							"Please provide a file action to perform",
-							new TaskException());
+							                    msg, new TaskException());
 				}
 			} 
 			catch(ResourceException e) {
+				log.error(e.getMessage(), e);
 				throw e;
 			}
 			catch (Exception e) {
-				throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED, 
-						"Action " + operation + " not supported", e);
+				String msg = "Action " + operation + " not supported";
+				log.error(msg, e);
+				throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED, msg, e);
 			}
 			
 			// make sure the user has permissions to do what they want to do
 			try {
 				if (operation == COPY) {
 					if (!pm.canRead(absolutePath)) {
+						String msg = "User does not have access to copy the requested path " + path;
+						log.error(msg);
 						throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-								"User does not have access to copy the requested path " + path,
-					    		new PermissionException());
+								                    msg, new PermissionException());
 					}
 				}
 				else if (!pm.canWrite(absolutePath)) {
+					String msg = "User does not have access to modify the requested path " + path;
+					log.error(msg);
 					throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-							"User does not have access to modify the requested path " + path,
-				    		new PermissionException());
+							                    msg, new PermissionException());
 				}
 			} catch (PermissionException e) {
-				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-						"Failed to retrieve permissions for " + path + ", " + e.getMessage(), e);
+				String msg = "Failed to retrieve permissions for " + path + ", " + e.getMessage();
+				log.error(msg, e);
+				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, msg, e);
 			}
 
 			try
@@ -1571,8 +1626,6 @@ public class FileManagementResource extends AbstractFileResource
 					logicalFile.setStatus(StagingTaskStatus.STAGING_COMPLETED);
 				}
 				
-				String message = "";
-
 				if (operation == MKDIR)
 				{
 					return doMkdirOperation(jsonInput, logicalFile, pm);
@@ -1591,26 +1644,32 @@ public class FileManagementResource extends AbstractFileResource
 				}
 				else
 				{
-					throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED, "Action " + operation + " not supported");
+					String msg = "Action " + operation + " not supported";
+					log.error(msg);
+					throw new ResourceException(Status.SERVER_ERROR_NOT_IMPLEMENTED, msg);
 				}				
 			} 
 			catch (FileNotFoundException e) {
+				log.error(e.getMessage(), e);
 				throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND,
 						AgaveStringUtils.convertWhitespace(e.getMessage()), e);
 			} 
             catch (RemoteDataSyntaxException e) {
+            	log.error(e.getMessage(), e);
                 throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
                         AgaveStringUtils.convertWhitespace(e.getMessage()), e);
             } 
 			catch (ResourceException e) {
+				log.error(e.getMessage(), e);
 				throw e;
 			} 
 			catch (RemoteDataException e) {
+				log.error(e.getMessage(), e);
 				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
 				        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
 			} 
 			catch (Exception e) {
-				log.error("Error performing file operation",e);
+				log.error("Error performing file operation", e);
 				throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
 						"File operation failed " + 
 						        AgaveStringUtils.convertWhitespace(e.getMessage()), e);
@@ -1656,10 +1715,11 @@ public class FileManagementResource extends AbstractFileResource
 		}
 		
 		if (StringUtils.isEmpty(newName)) {
+			String msg = "No 'path' value provided. Please provide the new name of "
+				        	+ "the file or folder in the 'path' attribute.";
+			log.error(msg);
 			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-		    		"No 'path' value provided. Please provide the new name of "
-							+ "the file or folder in the 'path' attribute.",
-				    		new RemoteDataException());
+		    		                    msg, new RemoteDataException());
 		}
 
 		String newPath = path;
@@ -1668,7 +1728,9 @@ public class FileManagementResource extends AbstractFileResource
 		}
 
 		if (StringUtils.isEmpty(newPath) || newPath.equals("/")) {
-			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "No path specified.");
+			String msg = "No path specified.";
+			log.error(msg);
+			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, msg);
 		} 
 		else {
 			String currentTargetDirectory = org.codehaus.plexus.util.FileUtils.getPath(newPath);
@@ -1681,15 +1743,17 @@ public class FileManagementResource extends AbstractFileResource
 
 		// do they have permission to write to this new folder
 		if (!pm.canWrite(remoteDataClient.resolvePath(newPath))) {
+			String msg = "User does not have access to rename the requested resource";
+			log.error(msg);
 			throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-		    		"User does not have access to rename the requested resource",
-		    		new PermissionException());
+		    		                    msg, new PermissionException());
 		}
 		
 		if (remoteDataClient.doesExist(newPath)) {
+			String msg = "A File or folder at " + newPath + " already exists";
+			log.error(msg);
 			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-					"A File or folder at " + newPath + " already exists",
-		    		new RemoteDataException());
+					                    msg, new RemoteDataException());
 		}
 
 		// move is essentially just a rename on the same system
@@ -1703,46 +1767,57 @@ public class FileManagementResource extends AbstractFileResource
 			try {
 				remoteDataClient.setOwnerPermission(pemUser, newPath, true);
 			} catch (Exception e) {
-				log.error(e.getMessage(), e);
 				message = "Rename was successful, but unable to mirror permissions for user " +
 						pemUser + " on new directory " + path;
+				log.error(message, e);
 			}
 		}
 
 		// now keep the logical file up to date
-		logicalFile.setPath(remoteDataClient.resolvePath(newPath));
-		logicalFile.setName(FilenameUtils.getName(newPath));
-		logicalFile.addContentEvent(new FileEvent(FileEventType.RENAME, 
+		try {
+			logicalFile.setPath(remoteDataClient.resolvePath(newPath));
+			logicalFile.setName(FilenameUtils.getName(newPath));
+			logicalFile.addContentEvent(new FileEvent(FileEventType.RENAME, 
 				"Renamed by " + getAuthenticatedUsername() + " from " + path + " to " + newPath, 
 				getAuthenticatedUsername()));
-		LogicalFileDao.persist(logicalFile);
-//					LogicalFileDao.moveSubtreePath(absolutePath, logicalFile.getSystem().getId(), remoteDataClient.resolvePath(newPath), logicalFile.getSystem().getId());
+			LogicalFileDao.persist(logicalFile);
+		} catch (Exception e) {
+			String msg = "Unable to update renamed logical file " + newPath + ".";
+			log.error(msg);
+			throw e;
+		}
 
 		if (logicalFile.isDirectory())
 		{
-			// we can delete any children under the destination root since they could
-			// not actually exist if the rename operation worked.
-			for (LogicalFile child: LogicalFileDao.findChildren(logicalFile.getPath(), system.getId())) {
-				child.addContentEvent(new FileEvent(FileEventType.DELETED, 
+			try {
+				// we can delete any children under the destination root since they could
+				// not actually exist if the rename operation worked.
+				for (LogicalFile child: LogicalFileDao.findChildren(logicalFile.getPath(), system.getId())) {
+					child.addContentEvent(new FileEvent(FileEventType.DELETED, 
 						"Detected that file item was deleted by an outside source"
 						+ " as part of a rename operation on " + getPublicLink(system, path), 
 						getAuthenticatedUsername()));
-				LogicalFileDao.remove(child);
-			}
+					LogicalFileDao.remove(child);
+				}
 
-			// we also need to replicate any children that were not copied over before
-			List<LogicalFile> renamedChildren =
+				// we also need to replicate any children that were not copied over before
+				List<LogicalFile> renamedChildren =
 					LogicalFileDao.findChildren(logicalFile.getPath(), system.getId());
 
-			for (LogicalFile child: renamedChildren) {
-				child.setPath(StringUtils.replaceOnce(child.getPath(), absolutePath, logicalFile.getPath()));
-				child.setLastUpdated(new DateTime().toDate());
-				LogicalFileDao.persist(child);
-				child.addContentEvent(new FileEvent(FileEventType.MOVED, 
+				for (LogicalFile child: renamedChildren) {
+					child.setPath(StringUtils.replaceOnce(child.getPath(), absolutePath, logicalFile.getPath()));
+					child.setLastUpdated(new DateTime().toDate());
+					LogicalFileDao.persist(child);
+					child.addContentEvent(new FileEvent(FileEventType.MOVED, 
 						"File item moved from " + child.getPublicLink() +
 						" as part of a rename operation on " + logicalFile.getPublicLink(), 
 						getAuthenticatedUsername()));
-				LogicalFileDao.persist(child);
+					LogicalFileDao.persist(child);
+				}
+			} catch (Exception e) {
+				String msg = "Unable to update descendents fo logical directory " + logicalFile.getPath() + ".";
+				log.error(msg);
+				throw e;
 			}
 		}
 		
@@ -1780,22 +1855,25 @@ public class FileManagementResource extends AbstractFileResource
 		
 		// do they have permission to write to this new folder
 		if (!pm.canWrite(remoteDataClient.resolvePath(destPath))) {
+			String msg = "User does not have access to move data to " + destPath;
+			log.error(msg);
 			throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-		    		"User does not have access to move data to " + destPath,
-		    		new PermissionException());
+		    		                    msg, new PermissionException());
 		}
 
 		// support overwriting, they need to be aware of what is and is not there
 		if (remoteDataClient.doesExist(destPath))
 		{
 			if (remoteDataClient.isDirectory(path) && remoteDataClient.isFile(destPath)) {
+				String msg = "File at " + destPath + " already exists";
+				log.error(msg);
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
-		        		"File at " + destPath + " already exists",
-			    		new RemoteDataException());
+		        		                    msg, new RemoteDataException());
 			} else if (remoteDataClient.isFile(path) && remoteDataClient.isDirectory(destPath)) {
+				String msg = "Folder at " + destPath + " already exists";
+				log.error(msg);
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
-		        		"Folder at " + destPath + " already exists",
-			    		new RemoteDataException());
+		        		                    msg, new RemoteDataException());
 			}
 		}
 
@@ -1804,6 +1882,7 @@ public class FileManagementResource extends AbstractFileResource
 			remoteDataClient.doRename(path, destPath);
 		} catch (RemoteDataException e) {
 			if (e.getMessage().contains("Destination already exists")) {
+				log.error(e.getMessage(), e);
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, e.getMessage(), e);
 			}
 		}
@@ -1817,12 +1896,9 @@ public class FileManagementResource extends AbstractFileResource
 			try {
 				remoteDataClient.setOwnerPermission(pemUser, destPath, true);
 			} catch (Exception e) {
-				log.error(e.getMessage(), e);
 				message = "Move was successful, but unable to mirror permissions for user " +
 						pemUser + " on new directory " + path;
-//							getResponse().setEntity(new IplantErrorRepresentation(message));
-//				            throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST);
-//				            return;
+				log.error(message, e);
 			}
 		}
 
@@ -1830,7 +1906,13 @@ public class FileManagementResource extends AbstractFileResource
 		LogicalFile destLogicalFile = null;
 		try {
 			destLogicalFile = LogicalFileDao.findBySystemAndPath(system, remoteDataClient.resolvePath(destPath));
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			if (log.isDebugEnabled()) {
+				String msg = "LogicalFileDao.findBySystemAndPath() failed, cloning destination logical file " +
+		                 	 destPath + ".";
+				log.debug(msg, e);
+			}
+		}
 
 		String sourceUrl = logicalFile.getPublicLink();
 		String destUrl = null;
@@ -1838,80 +1920,100 @@ public class FileManagementResource extends AbstractFileResource
 		// no logical file for destination, this is an add or update
 		if (destLogicalFile == null)
 		{
-			destLogicalFile = logicalFile.clone();
-			destLogicalFile.setSourceUri(logicalFile.getPublicLink());
-			destLogicalFile.setPath(remoteDataClient.resolvePath(destPath));
-			destLogicalFile.setName(FilenameUtils.getName(destLogicalFile.getPath()));
-			destLogicalFile.setSystem(logicalFile.getSystem());
-			destLogicalFile.setOwner(username);
-			destLogicalFile.setInternalUsername(internalUsername);
-			destLogicalFile.setLastUpdated(new DateTime().toDate());
+			try {
+				destLogicalFile = logicalFile.clone();
+				destLogicalFile.setSourceUri(logicalFile.getPublicLink());
+				destLogicalFile.setPath(remoteDataClient.resolvePath(destPath));
+				destLogicalFile.setName(FilenameUtils.getName(destLogicalFile.getPath()));
+				destLogicalFile.setSystem(logicalFile.getSystem());
+				destLogicalFile.setOwner(username);
+				destLogicalFile.setInternalUsername(internalUsername);
+				destLogicalFile.setLastUpdated(new DateTime().toDate());
 			
-			// set the resulting url of the destination for use in events
-			destUrl = destLogicalFile.getPublicLink();
+				// set the resulting url of the destination for use in events
+				destUrl = destLogicalFile.getPublicLink();
 			
-			// fire event before record update so the notification event references the source record
-			logicalFile.addContentEvent(new FileEvent(FileEventType.MOVED, 
+				// fire event before record update so the notification event references the source record
+				logicalFile.addContentEvent(new FileEvent(FileEventType.MOVED, 
 					"Moved from " + sourceUrl + " to " + destUrl, 
 					getAuthenticatedUsername()));
 			
-			// now update source path and name to reference the new location. This will
-			// carry the history with it.
-			logicalFile.setPath(remoteDataClient.resolvePath(destPath));
-			logicalFile.setName(FilenameUtils.getName(logicalFile.getPath()));
-			logicalFile.setLastUpdated(new DateTime().toDate());
+				// now update source path and name to reference the new location. This will
+				// carry the history with it.
+				logicalFile.setPath(remoteDataClient.resolvePath(destPath));
+				logicalFile.setName(FilenameUtils.getName(logicalFile.getPath()));
+				logicalFile.setLastUpdated(new DateTime().toDate());
 			
-			LogicalFileDao.persist(logicalFile);
+				LogicalFileDao.persist(logicalFile);
+			} catch (Exception e) {
+				String msg = "Unable to record cloned logical file " + destLogicalFile.getPath() + ".";
+				log.error(msg, e);
+				throw e;
+			}
 		}
 		else
 		{
-			destLogicalFile.setName(FilenameUtils.getName(destLogicalFile.getPath()));
+			try {
+				destLogicalFile.setName(FilenameUtils.getName(destLogicalFile.getPath()));
 			
-			// set the resulting url of the destination for use in events
-			destUrl = destLogicalFile.getPublicLink();
+				// set the resulting url of the destination for use in events
+				destUrl = destLogicalFile.getPublicLink();
 			
-			destLogicalFile.addContentEvent(new FileEvent(FileEventType.OVERWRITTEN, 
+				destLogicalFile.addContentEvent(new FileEvent(FileEventType.OVERWRITTEN, 
 					"Overwritten by a move from " + logicalFile.getPublicLink() + 
 					" to " + destLogicalFile.getPublicLink(), 
 					getAuthenticatedUsername()));
-			LogicalFileDao.persist(destLogicalFile);
+				LogicalFileDao.persist(destLogicalFile);
+			} catch (Exception e) {
+				String msg = "Unable to record logical file " + destLogicalFile.getPath() + ".";
+				log.error(msg, e);
+				throw e;
+			}
 		}
 
 		if (logicalFile.isDirectory())
 		{
-			// we also need to replicate any children that were not copied over before
-			List<LogicalFile> nonOverlappingChildren =
+			try {
+				// we also need to replicate any children that were not copied over before
+				List<LogicalFile> nonOverlappingChildren =
 					LogicalFileDao.findNonOverlappingChildren(logicalFile.getPath(),
-															system.getId(),
-															destLogicalFile.getPath(),
-															system.getId());
+															  system.getId(),
+															  destLogicalFile.getPath(),
+															  system.getId());
 
-			for (LogicalFile child: nonOverlappingChildren) {
-				// capture the original url to the child
-				String sourceChildUrl = child.getPublicLink();
+				for (LogicalFile child: nonOverlappingChildren) {
+					// capture the original url to the child
+					String sourceChildUrl = child.getPublicLink();
 				
-				// update the path and timestamp
-				child.setPath(StringUtils.replaceOnce(child.getPath(), logicalFile.getPath(), destLogicalFile.getPath()));
-				child.setLastUpdated(new DateTime().toDate());
+					// update the path and timestamp
+					child.setPath(StringUtils.replaceOnce(child.getPath(), logicalFile.getPath(), destLogicalFile.getPath()));
+					child.setLastUpdated(new DateTime().toDate());
 				
-				// add event
-				child.addContentEvent(new FileEvent(FileEventType.MOVED, 
+					// add event
+					child.addContentEvent(new FileEvent(FileEventType.MOVED, 
 						"File item moved from " + sourceChildUrl + " to " + child.getPublicLink(), 
 						getAuthenticatedUsername()));
 				
-				// update afterwards so the event has the original child path 
-				LogicalFileDao.persist(child);
-			}
-
-			// now that the file item is moved over, we need to alert the children that the file has been copied
-			for (LogicalFile child: LogicalFileDao.findChildren(destLogicalFile.getPath(), system.getId())) {
-				if (!nonOverlappingChildren.contains(child))
-				{
-					child.addContentEvent(new FileEvent(FileEventType.OVERWRITTEN, "Possibly overwritten as "
-							+ "part of file item move from " + StringUtils.replace(child.getPublicLink(), destUrl, sourceUrl) + " to " + child.getPublicLink(), 
-							getAuthenticatedUsername()));
+					// update afterwards so the event has the original child path 
 					LogicalFileDao.persist(child);
 				}
+
+				// now that the file item is moved over, we need to alert the children that the file has been copied
+				for (LogicalFile child: LogicalFileDao.findChildren(destLogicalFile.getPath(), system.getId())) {
+					if (!nonOverlappingChildren.contains(child))
+					{
+						child.addContentEvent(new FileEvent(FileEventType.OVERWRITTEN, 
+							"Possibly overwritten as part of file item move from " + 
+							  StringUtils.replace(child.getPublicLink(), destUrl, sourceUrl) + 
+							  " to " + child.getPublicLink(), 
+							getAuthenticatedUsername()));
+						LogicalFileDao.persist(child);
+					}
+				}
+			} catch (Exception e) {
+				String msg = "Processing failure for logical directory " + logicalFile.getPath() + ".";
+				log.error(msg, e);
+				throw e;
 			}
 		}
 		return new AgaveSuccessRepresentation(message, logicalFile.toJSON());
@@ -1945,11 +2047,12 @@ public class FileManagementResource extends AbstractFileResource
 			}
 			
 			if (StringUtils.isEmpty(dirPath)) {
+				String msg = "No path value provided. Please provide the path of "
+						+ "the new directory to create. Paths may be absolute or "
+						+ "relative to the path given in the url.";
+				log.error(msg);
 				throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-			    		"No path value provided. Please provide the path of "
-								+ "the new directory to create. Paths may be absolute or "
-								+ "relative to the path given in the url.",
-					    		new RemoteDataException());
+			    		                    msg, new RemoteDataException());
 			}
 
 			if (StringUtils.isEmpty(path)) {
@@ -1963,9 +2066,10 @@ public class FileManagementResource extends AbstractFileResource
 			}
 
 			if (!pm.canWrite(remoteDataClient.resolvePath(newdir))) {
+				String msg = "User does not have access to create the directory " + newdir;
+				log.error(msg);
 				throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-			    		"User does not have access to create the directory" + newdir,
-			    		new PermissionException());
+			    		                    msg, new PermissionException());
 			}
 			
 			String pemUser = StringUtils.isEmpty(owner) ? username : owner;
@@ -1975,9 +2079,9 @@ public class FileManagementResource extends AbstractFileResource
 					message = "Directory " + newdir + " already exists";
 				} else {
 					message = "A file already exists at " + newdir;
+					log.error(message);
 					throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, 
-							message,
-				    		new RemoteDataException());
+							message, new RemoteDataException());
 				}
 			} 
 			else {
@@ -1986,15 +2090,22 @@ public class FileManagementResource extends AbstractFileResource
 					dirCreated = true;
 				} 
 				else {
+					String msg = "Failed to create directory " + newdir;
+					log.error(msg);
 			        throw new ResourceException(Status.SERVER_ERROR_INTERNAL,
-			        		"Failed to create directory " + newdir,
-				    		new RemoteDataException());
+			        		                    msg, new RemoteDataException());
 			    }
 			}
 
 			try {
 				logicalFile = LogicalFileDao.findBySystemAndPath(system, remoteDataClient.resolvePath(newdir));
-			} catch(Exception e) {}
+			} catch(Exception e) {
+				if (log.isDebugEnabled()) {
+					String msg = "LogicalFileDao.findBySystemAndPath() failed, creating new logical directory " +
+			                     newdir + ".";
+				    log.debug(msg, e);
+				}
+			}
 
 			if (logicalFile == null) {
 				logicalFile = new LogicalFile();
@@ -2031,27 +2142,34 @@ public class FileManagementResource extends AbstractFileResource
 			}
 		}
 		catch (ResourceException e) {
+			log.error(e.getMessage(), e);
 			throw e;
 		}
 		catch (FileNotFoundException e) {
+			log.error(e.getMessage(), e);
 			throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, e);
 		} 
 		catch (HibernateException e) {
-			throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-					"An unexpected internal error occurred while processing the request. " + 
-					"If this persists, please contact your tenant administrator", e);
+			String msg = "An unexpected internal error occurred while processing the request. " + 
+					     "If this persists, please contact your tenant administrator";
+			log.error(msg, e);
+			throw new ResourceException(Status.SERVER_ERROR_INTERNAL, msg, e);
 		} 
 		catch (PermissionException e) {
+			String msg = "User does not have access to create the directory " + newdir;
+			log.error(msg, e);
 			throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN, 
-					"User does not have access to create the directory" + newdir, e);
+					                    msg, e);
 		} 
 		catch (RemoteDataException | IOException e) {
+			log.error(e.getMessage(), e);
 			throw new ResourceException(Status.SERVER_ERROR_INTERNAL, e.getMessage(), e);
 		} 
 		catch (JSONException e) {
-			throw new ResourceException(Status.SERVER_ERROR_INTERNAL, 
-					"An unexpected internal error occurred while formatting the response message. " + 
-					"If this persists, please contact your tenant administrator", e);
+			String msg = "An unexpected internal error occurred while formatting the response message. " + 
+					     "If this persists, please contact your tenant administrator";
+			log.error(msg, e);
+			throw new ResourceException(Status.SERVER_ERROR_INTERNAL, msg, e);
 		}
 	}
 
@@ -2081,20 +2199,23 @@ public class FileManagementResource extends AbstractFileResource
 		if (jsonInput.has("path")) {
 			destPath = jsonInput.get("path").asText();
 		} else {
+			String msg = "Please specify a destination location";
+			log.error(msg);
 			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-		    		"Please specify a destination location",
-		    		new RemoteDataException());
+		    		                    msg, new RemoteDataException());
 		}
 
 		if (!pm.canWrite(remoteDataClient.resolvePath(destPath))) {
+			String msg = "User does not have access to copy data to " + destPath;
+			log.error(msg);
 			throw new ResourceException(Status.CLIENT_ERROR_FORBIDDEN,
-		    		"User does not have access to copy data to " + destPath, 
-		    		new FileNotFoundException());
+		    		                    msg, new FileNotFoundException());
 		}
 		else if (destPath.equalsIgnoreCase(path)) {
+			String msg = "Source and destination locations cannot be the same.";
+			log.error(msg);
 			throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST,
-		    		"Source and destination locations cannot be the same.",
-		    		new RemoteDataException());
+		    		                    msg, new RemoteDataException());
 		}
 
 		boolean append = false;
@@ -2117,9 +2238,9 @@ public class FileManagementResource extends AbstractFileResource
 			try {
 				remoteDataClient.setOwnerPermission(pemUser, destPath, true);
 			} catch (Exception e) {
-				log.error(e.getMessage(), e);
 				message = "Rename was successful, but unable to mirror permissions for user " +
-						pemUser + " on new directory " + path;
+						  pemUser + " on new directory " + path;
+				log.error(message + ": " + e.getMessage(), e);
 			}
 		}
 
@@ -2131,22 +2252,34 @@ public class FileManagementResource extends AbstractFileResource
 
 			try {
 				copiedLogicalFile = LogicalFileDao.findBySystemAndPath(system, remoteDataClient.resolvePath(destPath));
-			} catch(Exception e) {}
+			} catch(Exception e) {
+				if (log.isDebugEnabled()) {
+					String msg = "LogicalFileDao.findBySystemAndPath() failed, cloning copied logical file " +
+			                     destPath + ".";
+					log.debug(msg, e);
+				}
+			}
 
 			if (copiedLogicalFile == null) {
-				copiedLogicalFile = logicalFile.clone();
-				copiedLogicalFile.setSourceUri(logicalFile.getPublicLink());
-				copiedLogicalFile.setPath(remoteDataClient.resolvePath(destPath));
-				copiedLogicalFile.setSystem(system);
-				copiedLogicalFile.setName(FilenameUtils.getName(copiedLogicalFile.getPath()));
-				copiedLogicalFile.setOwner(StringUtils.isEmpty(owner) ? username : owner);
-		        copiedLogicalFile.setInternalUsername(internalUsername);
-				copiedLogicalFile.setLastUpdated(new DateTime().toDate());
-				LogicalFileDao.persist(copiedLogicalFile);
-				copiedLogicalFile.addContentEvent(new FileEvent(FileEventType.CREATED, 
+				try {
+					copiedLogicalFile = logicalFile.clone();
+					copiedLogicalFile.setSourceUri(logicalFile.getPublicLink());
+					copiedLogicalFile.setPath(remoteDataClient.resolvePath(destPath));
+					copiedLogicalFile.setSystem(system);
+					copiedLogicalFile.setName(FilenameUtils.getName(copiedLogicalFile.getPath()));
+					copiedLogicalFile.setOwner(StringUtils.isEmpty(owner) ? username : owner);
+					copiedLogicalFile.setInternalUsername(internalUsername);
+					copiedLogicalFile.setLastUpdated(new DateTime().toDate());
+					LogicalFileDao.persist(copiedLogicalFile);
+					copiedLogicalFile.addContentEvent(new FileEvent(FileEventType.CREATED, 
 						"File item copied from " + logicalFile.getPublicLink(), 
 						getAuthenticatedUsername()));
-				LogicalFileDao.persist(copiedLogicalFile);
+					LogicalFileDao.persist(copiedLogicalFile);
+				} catch (Exception e) {
+					String msg = "Unable to save cloned logical file " + destPath + ".";
+					log.error(msg, e);
+					throw e;
+				}
 			}
 		}
 
@@ -2154,37 +2287,34 @@ public class FileManagementResource extends AbstractFileResource
 		// operation. That could flood the notification queue and spam people.
 		if (logicalFile.isDirectory())
 		{
-			// we also need to replicate any children that were not copied over before
-			List<LogicalFile> nonOverlappingChildren =
+			try {
+				// we also need to replicate any children that were not copied over before
+				List<LogicalFile> nonOverlappingChildren =
 					LogicalFileDao.findNonOverlappingChildren(logicalFile.getPath(),
 															system.getId(),
 															copiedLogicalFile.getPath(),
 															system.getId());
 
-			for (LogicalFile child: nonOverlappingChildren)
-			{
-				LogicalFile copiedChild = child.clone();
-				copiedChild.setSourceUri(child.getPublicLink());
-				copiedChild.setPath(StringUtils.replaceOnce(child.getPath(), logicalFile.getPath(), copiedLogicalFile.getPath()));
-				copiedChild.setSystem(child.getSystem());
-				copiedChild.setOwner(child.getOwner());
-				copiedChild.setInternalUsername(internalUsername);
-				copiedChild.setLastUpdated(new DateTime().toDate());
-				LogicalFileDao.persist(copiedChild);
-				copiedChild.addContentEvent(new FileEvent(FileEventType.CREATED, 
+				for (LogicalFile child: nonOverlappingChildren)
+				{
+					LogicalFile copiedChild = child.clone();
+					copiedChild.setSourceUri(child.getPublicLink());
+					copiedChild.setPath(StringUtils.replaceOnce(child.getPath(), logicalFile.getPath(), copiedLogicalFile.getPath()));
+					copiedChild.setSystem(child.getSystem());
+					copiedChild.setOwner(child.getOwner());
+					copiedChild.setInternalUsername(internalUsername);
+					copiedChild.setLastUpdated(new DateTime().toDate());
+					LogicalFileDao.persist(copiedChild);
+					copiedChild.addContentEvent(new FileEvent(FileEventType.CREATED, 
 						"File item copied from " + child.getPublicLink(), 
 						getAuthenticatedUsername()));
-				LogicalFileDao.persist(copiedChild);
+					LogicalFileDao.persist(copiedChild);
+				}
+			} catch (Exception e) {
+				String msg = "Unable to clone non-overlapping children of " + logicalFile.getPath() + ".";
+				log.error(msg, e);
+				throw e;
 			}
-
-			// now that the file is copied over, we need to alert the children that the file has been copied
-//			for (LogicalFile child: LogicalFileDao.findChildren(copiedLogicalFile.getPath(), system.getId())) {
-//				child.addContentEvent(new FileEvent(FileEventType.OVERWRITTEN, 
-//						"Possibly overwritten as "
-//						+ "part of file item copied from " + copiedLogicalFile.getPublicLink(), 
-//						getAuthenticatedUsername()));
-//				LogicalFileDao.persist(child);
-//			}
 		}
 		return new AgaveSuccessRepresentation(message, copiedLogicalFile.toJSON());
 	}

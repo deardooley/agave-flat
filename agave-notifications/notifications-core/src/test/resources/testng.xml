@@ -1,35 +1,28 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
   
-<suite name="iPlant Notification Service" verbose="5" parallel="false">
+<suite name="Agave notifications-core" verbose="5" parallel="none">
   <groups>
     <run>
         <exclude name="broken"/>
         <exclude name="notReady"/>
     </run>
   </groups>
-  <test name="model" >
-  	<packages>
-        <package name="org.iplantc.service.notification.model" />
-    </packages>
-  </test>
-  <test name="dao" >
-  	<packages>
-        <package name="org.iplantc.service.notification.dao" />
-    </packages>
-  </test>
-  <!-- <test name="clients" >
-  	<packages>
-        <package name="org.iplantc.service.notification.email.clients" />
-    </packages>
-  </test> -->
-  <test name="events" >
-  	<packages>
-        <package name="org.iplantc.service.notification.events" />
-    </packages>
-  </test>
-  <test name="queue" >
-  	<packages>
-        <package name="org.iplantc.service.notification.queue" />
-    </packages>
+  <test name="notifications-core" >
+        <packages>
+            <package name="org.iplantc.service.notification" /> 
+            <package name="org.iplantc.service.notification.dao" /> 
+            <package name="org.iplantc.service.notification.events" />
+            <package name="org.iplantc.service.notification.model" />
+            <package name="org.iplantc.service.notification.model.enumerations" />
+            <package name="org.iplantc.service.notification.providers" />
+            <package name="org.iplantc.service.notification.providers.email" />
+            <package name="org.iplantc.service.notification.providers.email.clients" />
+            <package name="org.iplantc.service.notification.providers.http" />
+            <package name="org.iplantc.service.notification.providers.http.clients" />
+            <package name="org.iplantc.service.notification.providers.realtime" />
+            <package name="org.iplantc.service.notification.providers.realtime.clients" />
+            <package name="org.iplantc.service.notification.queue" />
+            <package name="org.iplantc.service.notification.search" />
+        </packages>
   </test>
 </suite>

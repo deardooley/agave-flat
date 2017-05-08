@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"isdirectory"})
+@Test(singleThreaded=true, groups= {"isdirectory","integration"})
 public class IsDirectoryOperationTest extends BaseRemoteDataClientOperationTest {
 
     private static final Logger log = Logger.getLogger(IsDirectoryOperationTest.class);

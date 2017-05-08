@@ -29,6 +29,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public abstract class AbstractPermissionManagerTest extends BaseTestCase
 {
 	private SystemDao dao = new SystemDao();

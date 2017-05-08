@@ -3,27 +3,24 @@
  */
 package org.iplantc.service.jobs;
 
+import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
-import org.ietf.jgss.GSSCredential;
+import org.apache.log4j.Logger;
 
 /**
  * @author dooley
  * 
  */
 public class Settings {
+	private static final Logger log = Logger.getLogger(Settings.class);
+	
 	private static final String PROPERTY_FILE = "service.properties";
 	
 	private static Properties					props			= new Properties();
-
-	private static Map<String, GSSCredential>	userProxies		= Collections
-																		.synchronizedMap(new HashMap<String, GSSCredential>());
 
 	/* Trusted user settings */
 	public static List<String> 					TRUSTED_USERS = new ArrayList<String>();
@@ -284,15 +281,21 @@ public class Settings {
 	public static String getDedicatedTenantIdFromServiceProperties()
 	{
 		Properties props = new Properties();
+		InputStream stream = null;
 		try
 		{
-			props.load(Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE));
+			stream = Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE);
+			props.load(stream);
 			
 			return (String)props.get("iplant.dedicated.tenant.id");
 		}
 		catch (Exception e)
 		{
+			log.warn("Unable to load " + PROPERTY_FILE + ".");
 			return null;
+		}
+		finally {
+			if (stream != null) try {stream.close();} catch (Exception e){}
 		}
 	}
 	
@@ -306,15 +309,21 @@ public class Settings {
 	public static boolean isDrainingQueuesEnabled()
 	{
 		Properties props = new Properties();
+		InputStream stream = null;
 		try
 		{
-			props.load(Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE));
+			stream = Settings.class.getClassLoader().getResourceAsStream(PROPERTY_FILE);
+			props.load(stream);
 			
 			return Boolean.parseBoolean(props.getProperty("iplant.drain.all.queues", "false"));
 		}
 		catch (Exception e)
 		{
+			log.warn("Unable to load " + PROPERTY_FILE + ".");
 			return false;
+		}
+		finally {
+			if (stream != null) try {stream.close();} catch (Exception e) {}
 		}
 	}
 

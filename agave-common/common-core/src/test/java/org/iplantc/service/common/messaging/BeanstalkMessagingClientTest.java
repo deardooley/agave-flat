@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 import com.surftools.BeanstalkClient.Job;
 import com.surftools.BeanstalkClientImpl.ClientImpl;
 
+@Test(groups={"integration"})
 public class BeanstalkMessagingClientTest {
 
 	public static String TEST_EXCHANGE_TOPIC = "test.exchange.topic";

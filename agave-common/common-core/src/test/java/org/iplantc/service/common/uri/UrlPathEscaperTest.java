@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
+@Test(groups={"unit"})
 public class UrlPathEscaperTest {
 
 	@DataProvider

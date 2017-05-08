@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"proxy"})
+@Test(singleThreaded=true, groups= {"proxy","integration"})
 public class IsThirdPartyTransferSupportedOperationTest extends BaseRemoteDataClientOperationTest {
 
     public IsThirdPartyTransferSupportedOperationTest(String systemJsonFilePath,

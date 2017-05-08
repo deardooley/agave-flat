@@ -1,6 +1,5 @@
 package org.iplantc.service.apps.model;
 
-import java.util.Calendar;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -27,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-
+@Test(groups={"integration"})
 public class GSoftwareTest  extends GModelTestCommon {
     //public Settings settings = new Settings();
     public Software software;

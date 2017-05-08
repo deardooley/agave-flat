@@ -1,8 +1,6 @@
 package org.iplantc.service.jobs.util;
 
-import static org.iplantc.service.jobs.model.enumerations.JobStatusType.FINISHED;
 import static org.iplantc.service.jobs.model.enumerations.JobStatusType.PAUSED;
-import static org.iplantc.service.jobs.model.enumerations.JobStatusType.RUNNING;
 import static org.iplantc.service.jobs.model.enumerations.JobStatusType.STOPPED;
 
 import java.net.URI;
@@ -11,13 +9,10 @@ import java.util.List;
 
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
-import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.common.persistence.TenancyHelper;
 import org.iplantc.service.jobs.dao.JobDao;
-import org.iplantc.service.jobs.managers.JobPermissionManager;
 import org.iplantc.service.jobs.model.Job;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
-import org.iplantc.service.jobs.model.enumerations.PermissionType;
 import org.iplantc.service.jobs.submission.AbstractJobSubmissionTest;
 import org.iplantc.service.systems.Settings;
 import org.iplantc.service.systems.model.RemoteSystem;
@@ -28,7 +23,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(groups={"broken"})
+@Test(groups={"broken", "integration"})
 public class ApiUriUtilTest extends AbstractJobSubmissionTest
 {
 	public static final String SYSTEM_SHARED_USER = "testshareuser";

@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
  * Reduced test harness for http client tests.
  */
 
-@Test(groups= {"http","filesystem"})
+@Test(groups= {"http","filesystem","integration"})
 public class HTTPClientTest extends BaseTransferTestCase 
 {
 	private URI httpUri = null;

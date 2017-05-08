@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class MaverickSSHTunnelSubmissionClientTest extends
 		AbstractRemoteSubmissionClientTest {
 

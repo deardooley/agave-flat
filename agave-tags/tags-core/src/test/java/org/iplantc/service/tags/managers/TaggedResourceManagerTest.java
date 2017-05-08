@@ -2,6 +2,7 @@ package org.iplantc.service.tags.managers;
 
 import org.testng.annotations.Test;
 
+@Test(groups={"notReady", "unit"})
 public class TaggedResourceManagerTest {
 
   @Test

@@ -28,7 +28,9 @@ import org.iplantc.service.notification.model.enumerations.NotificationStatusTyp
 import org.quartz.Scheduler;
 import org.quartz.SimpleTrigger;
 import org.testng.Assert;
+import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class AbstractNotificationTest {
 
 	protected static final String TEST_USER = "ipcservices";

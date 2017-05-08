@@ -25,6 +25,7 @@ import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.StorageSystem;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.testng.annotations.Test;
 
 /**
  * Created with IntelliJ IDEA.
@@ -33,6 +34,7 @@ import org.json.JSONObject;
  * Time: 8:24 AM
  * To change this template use File | Settings | File Templates.
  */
+@Test(groups={"integration"})
 public class DomainSetup extends AbstractDaoTest
 {
 	private static final String SOFTWARE_OWNER =       "api_sample_user";       // default software owner if none given

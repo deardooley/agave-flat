@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(groups= {"sftp","sftp-sshkeys-tunnel", "filesystem", "broken"})
+@Test(groups= {"sftp", "sftp-sshkeys-tunnel", "filesystem", "broken", "integration" })
 public class SftpSshKeysTunnelRemoteDataClientTest extends SftpPasswordRemoteDataClientTest {
 
 	/* (non-Javadoc)

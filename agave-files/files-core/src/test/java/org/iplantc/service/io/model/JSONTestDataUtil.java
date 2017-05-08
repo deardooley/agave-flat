@@ -72,7 +72,7 @@ public class JSONTestDataUtil {
 	    	return new JSONObject(json);
     	} 
     	finally {
-    		try { in.close(); } catch (Exception e) {}
+    		if (in != null) try { in.close(); } catch (Exception e) {}
     	}
     }
 

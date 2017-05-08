@@ -9,6 +9,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class EmailClientTest {
 
     private static final String TO_NAME = "Unit Test User";

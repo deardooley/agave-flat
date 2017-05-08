@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"permissions.irods4.password"})
+@Test(singleThreaded=true, groups= {"permissions.irods4.password","integration"})
 public class Irods4RemoteDataClientPermissionProviderTest extends IrodsRemoteDataClientPermissionProviderTest 
 {
     /* (non-Javadoc)

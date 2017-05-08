@@ -19,12 +19,14 @@ import org.iplantc.service.systems.model.StorageConfig;
 import org.iplantc.service.systems.model.StorageSystem;
 import org.json.JSONObject;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * @author dooley
  *
  */
-public class BaseTransferTestCase {
+@Test(groups={"integration"})
+public abstract class BaseTransferTestCase {
 
 	public static final String SYSTEM_USER = "testuser";
 	public static final String SHARED_SYSTEM_USER = "testshareuser";

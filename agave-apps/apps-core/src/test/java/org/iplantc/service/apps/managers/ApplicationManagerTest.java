@@ -8,13 +8,11 @@ import java.util.List;
 
 import org.iplantc.service.apps.dao.AbstractDaoTest;
 import org.iplantc.service.apps.dao.SoftwareDao;
-import org.iplantc.service.apps.exceptions.SoftwareResourceException;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwarePermission;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -22,6 +20,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"integration"})
 public class ApplicationManagerTest extends AbstractDaoTest 
 {
 	private Software privateSoftware;

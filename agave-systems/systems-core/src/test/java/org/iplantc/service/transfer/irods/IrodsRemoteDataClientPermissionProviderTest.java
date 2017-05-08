@@ -6,7 +6,6 @@ package org.iplantc.service.transfer.irods;
 import java.io.IOException;
 import java.lang.reflect.Method;
 
-import org.apache.commons.io.FilenameUtils;
 import org.iplantc.service.transfer.RemoteDataClientPermissionProviderTest;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
 import org.json.JSONException;
@@ -21,7 +20,7 @@ import org.testng.annotations.Test;
  * @author dooley
  *
  */
-@Test(singleThreaded=true, groups= {"permissions.irods.password", "broken"})
+@Test(singleThreaded=true, groups= {"permissions.irods.password", "broken","integration"})
 public class IrodsRemoteDataClientPermissionProviderTest extends
 		RemoteDataClientPermissionProviderTest {
 

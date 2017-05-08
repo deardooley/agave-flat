@@ -2,17 +2,13 @@ package org.iplantc.service.jobs.submission;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwareInput;
 import org.iplantc.service.apps.model.SoftwareParameter;
-import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.model.JSONTestDataUtil;
 import org.iplantc.service.jobs.model.Job;
@@ -23,15 +19,11 @@ import org.iplantc.service.jobs.queue.MonitoringWatch;
 import org.iplantc.service.jobs.queue.StagingWatch;
 import org.iplantc.service.jobs.queue.SubmissionWatch;
 import org.iplantc.service.systems.dao.SystemDao;
-import org.iplantc.service.systems.exceptions.SystemArgumentException;
-import org.iplantc.service.systems.exceptions.SystemException;
 import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.StorageSystem;
 import org.iplantc.service.systems.model.enumerations.RemoteSystemType;
 import org.iplantc.service.transfer.RemoteDataClient;
-import org.iplantc.service.transfer.RemoteDataClientFactory;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -40,7 +32,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -48,6 +39,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * Tests end to end integration of a job submission by manually pushing
  * through each stage of each queue.
  */
+@Test(groups={"integration"})
 public class CondorSubmissionTest extends AbstractJobSubmissionTest
 {
 	private SystemManager systemManager = new SystemManager();

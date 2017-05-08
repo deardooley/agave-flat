@@ -13,6 +13,7 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
 
+@Test(groups={"notReady", "integration"})
 public class RabbitMQMessagingClientTest {
 
 	public static String TEST_EXCHANGE_TOPIC = "test.exchange.topic";

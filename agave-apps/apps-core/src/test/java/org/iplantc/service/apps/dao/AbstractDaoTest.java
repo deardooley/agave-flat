@@ -3,19 +3,17 @@
  */
 package org.iplantc.service.apps.dao;
 
-import static org.iplantc.service.apps.model.JSONTestDataUtil.*;
+import static org.iplantc.service.apps.model.JSONTestDataUtil.TEST_EXECUTION_SYSTEM_FILE;
+import static org.iplantc.service.apps.model.JSONTestDataUtil.TEST_OWNER;
+import static org.iplantc.service.apps.model.JSONTestDataUtil.TEST_SOFTWARE_SYSTEM_FILE;
+import static org.iplantc.service.apps.model.JSONTestDataUtil.TEST_STORAGE_SYSTEM_FILE;
 
-import java.util.List;
-
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
-import org.iplantc.service.apps.exceptions.SoftwareException;
 import org.iplantc.service.apps.model.JSONTestDataUtil;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.model.ExecutionSystem;
-import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.StorageSystem;
 import org.json.JSONObject;
 import org.testng.annotations.AfterClass;

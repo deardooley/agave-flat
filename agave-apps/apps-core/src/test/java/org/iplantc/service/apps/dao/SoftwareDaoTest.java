@@ -8,191 +8,190 @@ import org.iplantc.service.apps.model.Software;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
-import org.testng.annotations.Test;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
+@Test(groups={"integration"})
 public class SoftwareDaoTest extends AbstractDaoTest {
-//	@Test(dataProvider = "dp")
-//	public void f(Integer n, String s) {
-//	}
-//
-//	@DataProvider
-//	public Object[][] dp() {
-//		return new Object[][] { new Object[] { 1, "a" },
-//				new Object[] { 2, "b" }, };
-//	}
-//
-//	@BeforeClass
-//	public void beforeClass() {
-//	}
-//
-//	@AfterClass
-//	public void afterClass() {
-//	}
-//
-//	@Test
-//	public void delete() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void findMatchingStringMapSearchTermObjectboolean() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void findMatchingStringMapSearchTermObjectintintboolean() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getLong() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getString() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getActiveJobsForSoftware() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getActiveUserJobsForSoftware() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllboolean() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAll() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllByAttribute() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllBySemanticName() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllBySystemId() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllByTag() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllPrivate() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllPrivateString() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllPrivateByName() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllPublic() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllPublicString() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getAllPublicByName() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getByName() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getMaxRevisionForPublicSoftware() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getMaxVersionForSoftwareName() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getPreviousVersionsOfPublshedSoftware() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getSession() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getSoftwareByNameAndVersion() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getSoftwareByUniqueName() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getUserAppsStringboolean() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getUserAppsStringbooleanintint() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getUserAppsByAttribute() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void getUserAppsBySystemId() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void merge() {
-//		throw new RuntimeException("Test not implemented");
-//	}
-//
-//	@Test
-//	public void persist() {
-//		throw new RuntimeException("Test not implemented");
-//	}
+	@Test(dataProvider = "dp")
+	public void f(Integer n, String s) {
+	}
+
+	@DataProvider
+	public Object[][] dp() {
+		return new Object[][] { new Object[] { 1, "a" },
+				new Object[] { 2, "b" }, };
+	}
+
+	@BeforeClass
+	public void beforeClass() {
+	}
+
+	@AfterClass
+	public void afterClass() {
+	}
+
+	@Test
+	public void delete() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void findMatchingStringMapSearchTermObjectboolean() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void findMatchingStringMapSearchTermObjectintintboolean() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getLong() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getString() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getActiveJobsForSoftware() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getActiveUserJobsForSoftware() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllboolean() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAll() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllByAttribute() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllBySemanticName() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllBySystemId() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllByTag() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllPrivate() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllPrivateString() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllPrivateByName() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllPublic() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllPublicString() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getAllPublicByName() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getByName() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getMaxRevisionForPublicSoftware() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getMaxVersionForSoftwareName() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getPreviousVersionsOfPublshedSoftware() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getSession() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getSoftwareByNameAndVersion() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getSoftwareByUniqueName() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getUserAppsStringboolean() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getUserAppsStringbooleanintint() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getUserAppsByAttribute() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void getUserAppsBySystemId() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void merge() {
+		throw new RuntimeException("Test not implemented");
+	}
+
+	@Test
+	public void persist() {
+		throw new RuntimeException("Test not implemented");
+	}
 
 	@Test
 	public void replace() throws SoftwareException, JSONException, IOException {

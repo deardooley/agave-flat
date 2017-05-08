@@ -9,6 +9,7 @@ import org.testng.annotations.*;
  * @author mkyong
  *
  */
+@Test(groups={"unit"})
 public class IPAddressValidatorTest {
 
 	private IPAddressValidator ipAddressValidator;

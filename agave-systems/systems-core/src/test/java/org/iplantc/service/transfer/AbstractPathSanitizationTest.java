@@ -20,7 +20,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(groups={"broken"})
+@Test(groups={"broken","integration"})
 public abstract class AbstractPathSanitizationTest extends BaseTransferTestCase {
     
     private static final Logger log = Logger.getLogger(AbstractPathSanitizationTest.class);

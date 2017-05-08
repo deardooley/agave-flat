@@ -1,7 +1,9 @@
 package org.iplantc.service.uuid;
 
+import org.testng.annotations.Test;
 
-public class AbstractUuidTest {
+@Test(groups={"integration"})
+public abstract class AbstractUuidTest {
 
 	
 }

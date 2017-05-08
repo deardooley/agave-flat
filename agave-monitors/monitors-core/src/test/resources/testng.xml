@@ -1,40 +1,21 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
   
-<suite name="iPlant Monitor Service" verbose="5" parallel="false" thread-count="1">
+<suite name="Agave monitors-core" verbose="5" parallel="none" thread-count="1">
   <groups>
     <run>
         <exclude name="broken"/>
         <exclude name="notReady"/>
     </run>
   </groups>
-  <test name="model" >
-  	<packages>
-        <package name="org.iplantc.service.monitor.model" />
-    </packages>
-  </test>
-  <test name="dao" >
-  	<classes>
-        <class name="org.iplantc.service.monitor.dao.MonitorDaoTest" />
-    </classes>
-  </test>
-  <test name="checkDao" >
-  	<classes>
-        <class name="org.iplantc.service.monitor.dao.MonitorCheckDaoTest" />
-    </classes>
-  </test>
-  <test name="manager" >
-  	<packages>
-        <package name="org.iplantc.service.monitor.manager" />
-    </packages>
-  </test>
-  <test name="queue" >
-  	<packages>
-        <package name="org.iplantc.service.monitor.queue" />
-    </packages>
-  </test>
-  <test name="events" >
-  	<packages>
-        <package name="org.iplantc.service.monitor.events" />
-    </packages>
+  <test name="monitors-core" >
+         <packages>
+            <package name="org.iplantc.service.monitor" /> 
+            <package name="org.iplantc.service.monitor.dao" />
+            <package name="org.iplantc.service.monitor.manager" />
+            <package name="org.iplantc.service.monitor.model" />
+            <package name="org.iplantc.service.monitor.queue" />
+            <package name="org.iplantc.service.notification" />
+            <package name="org.iplantc.service.notification.events" />
+        </packages>
   </test>
 </suite>

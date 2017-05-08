@@ -1,6 +1,6 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="iPlant Monitor Service API" verbose="2" parallel="false"
+<suite name="Agave tags-api" verbose="2" parallel="none"
 	thread-count="1">
 	<groups>
 		<run>
@@ -8,7 +8,7 @@
 			<exclude name="notReady" />
 		</run>
 	</groups>
-	<test name="monitor resources">
+	<test name="tags-api">
 		<packages>
 			<package name="org.iplantc.service.tags.resources.impl" />
 		</packages>

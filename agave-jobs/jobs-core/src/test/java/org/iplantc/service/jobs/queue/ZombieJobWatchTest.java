@@ -24,7 +24,6 @@ import org.iplantc.service.systems.manager.SystemManager;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.RemoteSystem;
 import org.iplantc.service.systems.model.StorageSystem;
-import org.iplantc.service.transfer.RemoteDataClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
@@ -36,7 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-@Test(groups={"broken"})
+@Test(groups={"broken", "integration"})
 public class ZombieJobWatchTest extends AbstractJobSubmissionTest {
 
 	protected static String LOCAL_TXT_FILE = "src/test/resources/transfer/test_upload.txt";

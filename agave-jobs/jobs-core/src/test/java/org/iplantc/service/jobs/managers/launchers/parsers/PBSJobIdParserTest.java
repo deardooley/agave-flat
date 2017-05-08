@@ -9,6 +9,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Test(groups={"unit"})
 public class PBSJobIdParserTest {
 
 	@DataProvider
@@ -22,7 +23,7 @@ public class PBSJobIdParserTest {
 		};
 	}
 	
-	@Test(dataProvider = "getJobIdProvider")
+	@Test(dataProvider = "getJobIdProvider", groups={"broken"})
 	public void getJobId(String schedulerOutput, String expectedJobId) 
 	throws RemoteJobIDParsingException, JobException, SchedulerException 
 	{

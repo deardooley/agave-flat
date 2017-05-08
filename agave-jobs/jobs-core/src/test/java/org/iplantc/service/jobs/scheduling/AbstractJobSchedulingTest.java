@@ -41,11 +41,13 @@ import org.json.JSONObject;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@Test(groups={"integration"})
 public class AbstractJobSchedulingTest extends AbstractDaoTest 
 {
     private static final Logger log = Logger.getLogger(AbstractJobSchedulingTest.class);

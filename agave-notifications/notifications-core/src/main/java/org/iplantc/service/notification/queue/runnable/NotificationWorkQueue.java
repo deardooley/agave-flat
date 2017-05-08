@@ -185,7 +185,7 @@ public class NotificationWorkQueue {
 	        return properties;
 	    } 
 	    finally {
-	        try { in.close(); } catch (Exception e) {}
+	        if (in != null) try { in.close(); } catch (Exception e) {}
 	    }
 	}
 	

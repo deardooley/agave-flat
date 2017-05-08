@@ -3,13 +3,9 @@
  */
 package org.iplantc.service.transfer.performance;
 
-import static org.iplantc.service.systems.model.enumerations.StorageProtocolType.*;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedInputStream;
 
@@ -32,6 +28,7 @@ import com.google.common.io.Files;
  * @author dooley
  *
  */
+@Test(groups={"integration"})
 public abstract class AbstractPerformanceTest extends SystemsModelTestCommon {
 
 	private SystemDao dao;
