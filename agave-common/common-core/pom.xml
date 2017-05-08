@@ -121,11 +121,30 @@
 			<version>${hibernate-entitymanager.version}</version>
 			<exclusions>
 				<exclusion>
-					<artifactId>javassist</artifactId>
-					<groupId>org.javassist</groupId>
+					<artifactId>hibernate-core</artifactId>
+					<groupId>org.hibernate</groupId>
 				</exclusion>
+                <exclusion>
+                    <artifactId>javassist</artifactId>
+                    <groupId>org.javassist</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>javassist</artifactId>
+                    <groupId>javassist</groupId>
+                </exclusion>
 			</exclusions>
 		</dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate-entitymanager.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>javassist</artifactId>
+                    <groupId>org.javassist</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>

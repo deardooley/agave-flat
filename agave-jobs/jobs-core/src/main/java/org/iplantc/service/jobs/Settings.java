@@ -47,10 +47,6 @@ public class Settings {
 	public static String 						MAILLOGIN;    
     public static String 						MAILPASSWORD;
     
-	/* Data service settings */
-//	public static String						ARCHIVE_DIRECTORY;
-//	public static String						WORK_DIRECTORY;
-
 	/* Iplant API service endpoints */
 	public static String						IPLANT_APPS_SERVICE;
 	public static String						IPLANT_IO_SERVICE;
@@ -65,13 +61,9 @@ public class Settings {
 	/* Job service settings */
 	public static boolean						DEBUG;
 	public static String						DEBUG_USERNAME;
-//	public static String						DEFAULT_SERIAL_SYSTEM;
-//	public static String						DEFAULT_PARALLEL_SYSTEM;
 	public static String[]						BLACKLIST_COMMANDS;
 	public static String[]						BLACKLIST_FILES;
-	//public static String						BLACKLIST_REPLACEMENT_TEXT;
 
-//	public static int							REFRESH_RATE	= 0;
 	public static int							MAX_SUBMISSION_TASKS;
 	public static int							MAX_STAGING_TASKS;
 	public static int							MAX_ARCHIVE_TASKS;
@@ -82,27 +74,11 @@ public class Settings {
 
 	public static String						IRODS_USERNAME;
 	public static String						IRODS_PASSWORD;
-//	public static String						IRODS_HOST;
-//	public static int							IRODS_PORT;
-//	public static String						IRODS_ZONE;
-//	public static String						IRODS_STAGING_DIRECTORY;
-//	public static String						IRODS_DEFAULT_RESOURCE;
-//	public static int							IRODS_REFRESH_RATE;	// how often to check the irods connection info
 	public static String						PUBLIC_USER_USERNAME;
 	public static String						WORLD_USER_USERNAME;
-//	public static String						IRODS_HEARTBEAT;
-
-//	public static String						XSEDE_IIS_PROFILE_SERVICE_URL;
-//	public static String						TERAGRID_IIS_CTSS_SERVICE_URL;
-//	public static String						TERAGRID_IIS_RDR_SERVICE_URL;
-//	public static String						TERAGRID_IIS_OUTAGE_SERVICE_URL;
-//	public static String						TERAGRID_OUTAGE_SERVICE_URL;
-//	public static String						TERAGRID_IIS_KIT_SERVICE_URL;
-//	public static int							TERAGRID_REFRESH_RATE;
 
 	public static int 							MAX_SUBMISSION_RETRIES;
 
-//	public static String 						IPLANT_CHARGE_NUMBER;
     public static Integer 						DEFAULT_PAGE_SIZE;
     public static String 						IPLANT_DOCS;
 
@@ -141,42 +117,46 @@ public class Settings {
 		IPLANT_LDAP_URL = (String) props.get("iplant.ldap.url");
 
 		IPLANT_LDAP_BASE_DN = (String) props.get("iplant.ldap.base.dn");
-//
-//		ARCHIVE_DIRECTORY = (String) props.get("iplant.archive.path");
-//
-//		WORK_DIRECTORY = (String) props.get("iplant.work.path");
-		
-//		IPLANT_CHARGE_NUMBER = (String) props.get("iplant.charge.number");
-//		
+
 		IPLANT_APPS_SERVICE = (String) props.get("iplant.app.service");
-		if (!IPLANT_APPS_SERVICE.endsWith("/")) IPLANT_APPS_SERVICE += "/";
+		if (IPLANT_APPS_SERVICE != null)
+			if (!IPLANT_APPS_SERVICE.endsWith("/")) IPLANT_APPS_SERVICE += "/";
 		
 		IPLANT_IO_SERVICE = (String) props.get("iplant.io.service");
-		if (!IPLANT_IO_SERVICE.endsWith("/")) IPLANT_IO_SERVICE += "/";
+		if (IPLANT_IO_SERVICE != null)
+			if (!IPLANT_IO_SERVICE.endsWith("/")) IPLANT_IO_SERVICE += "/";
 		
 		IPLANT_JOB_SERVICE = (String) props.get("iplant.job.service");
-		if (!IPLANT_JOB_SERVICE.endsWith("/")) IPLANT_JOB_SERVICE += "/";
+		if (IPLANT_JOB_SERVICE != null)
+			if (!IPLANT_JOB_SERVICE.endsWith("/")) IPLANT_JOB_SERVICE += "/";
 
 		IPLANT_PROFILE_SERVICE = (String) props.get("iplant.profile.service");
-		if (!IPLANT_PROFILE_SERVICE.endsWith("/")) IPLANT_PROFILE_SERVICE += "/";
+		if (IPLANT_PROFILE_SERVICE != null)
+			if (!IPLANT_PROFILE_SERVICE.endsWith("/")) IPLANT_PROFILE_SERVICE += "/";
 
 		IPLANT_ATMOSPHERE_SERVICE = (String) props.get("iplant.atmosphere.service");
-		if (!IPLANT_ATMOSPHERE_SERVICE.endsWith("/")) IPLANT_ATMOSPHERE_SERVICE += "/";
+		if (IPLANT_ATMOSPHERE_SERVICE != null)
+			if (!IPLANT_ATMOSPHERE_SERVICE.endsWith("/")) IPLANT_ATMOSPHERE_SERVICE += "/";
 		
 		IPLANT_LOG_SERVICE = (String) props.get("iplant.log.service");
-		if (!IPLANT_LOG_SERVICE.endsWith("/")) IPLANT_LOG_SERVICE += "/";
+		if (IPLANT_LOG_SERVICE != null)
+			if (!IPLANT_LOG_SERVICE.endsWith("/")) IPLANT_LOG_SERVICE += "/";
 		
 		IPLANT_SYSTEM_SERVICE = (String) props.get("iplant.system.service");
-		if (!IPLANT_SYSTEM_SERVICE.endsWith("/")) IPLANT_SYSTEM_SERVICE += "/";
+		if (IPLANT_SYSTEM_SERVICE != null)
+			if (!IPLANT_SYSTEM_SERVICE.endsWith("/")) IPLANT_SYSTEM_SERVICE += "/";
 		
 		IPLANT_NOTIFICATION_SERVICE = (String) props.get("iplant.notification.service");
-		if (!IPLANT_NOTIFICATION_SERVICE.endsWith("/")) IPLANT_NOTIFICATION_SERVICE += "/";
+		if (IPLANT_NOTIFICATION_SERVICE != null)
+			if (!IPLANT_NOTIFICATION_SERVICE.endsWith("/")) IPLANT_NOTIFICATION_SERVICE += "/";
 		
 		IPLANT_METADATA_SERVICE = (String) props.get("iplant.metadata.service");
-		if (!IPLANT_METADATA_SERVICE.endsWith("/")) IPLANT_METADATA_SERVICE += "/";
+		if (IPLANT_METADATA_SERVICE != null)
+			if (!IPLANT_METADATA_SERVICE.endsWith("/")) IPLANT_METADATA_SERVICE += "/";
 		
 		IPLANT_DOCS = (String) props.get("iplant.service.documentation");
-		if (!IPLANT_DOCS.endsWith("/")) IPLANT_DOCS += "/";
+		if (IPLANT_DOCS != null)
+			if (!IPLANT_DOCS.endsWith("/")) IPLANT_DOCS += "/";
 		
 		DEBUG = Boolean.valueOf((String) props.get("iplant.debug.mode"));
 
@@ -219,38 +199,42 @@ public class Settings {
 		
 		LOCAL_SYSTEM_ID = (String) props.getProperty("iplant.local.system.id");
 		
-		MAX_SUBMISSION_TASKS = Integer.valueOf((String) props
-				.getProperty("iplant.max.submission.tasks", "0"));
+		try {MAX_SUBMISSION_TASKS = Integer.valueOf(props.getProperty("iplant.max.submission.tasks", "0"));}
+			catch (Exception e) {
+        		log.error("Failure loading setting iplant.max.submission.tasks.", e);
+        		MAX_SUBMISSION_TASKS = 0;
+			}
 
-		MAX_STAGING_TASKS = Integer.valueOf((String) props
-				.getProperty("iplant.max.staging.tasks", "0"));
+		try {MAX_STAGING_TASKS = Integer.valueOf(props.getProperty("iplant.max.staging.tasks", "0"));}
+		catch (Exception e) {
+    		log.error("Failure loading setting iplant.max.staging.tasks.", e);
+    		MAX_STAGING_TASKS = 0;
+		}
 
-		MAX_ARCHIVE_TASKS = Integer.valueOf((String) props
-				.getProperty("iplant.max.archive.tasks", "0"));
+		try {MAX_ARCHIVE_TASKS = Integer.valueOf(props.getProperty("iplant.max.archive.tasks", "0"));}
+		catch (Exception e) {
+    		log.error("Failure loading setting iplant.max.archive.tasks.", e);
+    		MAX_ARCHIVE_TASKS = 0;
+		}
 		
-		MAX_SUBMISSION_RETRIES = Integer.valueOf((String) props
-				.getProperty("iplant.max.submission.retries", "0"));
+    	try {MAX_SUBMISSION_RETRIES = Integer.valueOf(props.getProperty("iplant.max.submission.retries", "0"));}
+		catch (Exception e) {
+    		log.error("Failure loading setting iplant.max.submission.retries.", e);
+    		MAX_SUBMISSION_RETRIES = 0;
+		}
 		
-		MAX_MONITORING_TASKS = Integer.valueOf((String) props
-				.getProperty("iplant.max.monitoring.tasks", "0"));
+		try {MAX_MONITORING_TASKS = Integer.valueOf(props.getProperty("iplant.max.monitoring.tasks", "0"));}
+		catch (Exception e) {
+    		log.error("Failure loading setting iplant.max.monitoring.tasks.", e);
+    		MAX_MONITORING_TASKS = 0;
+		}
 		
-		ENABLE_ZOMBIE_CLEANUP = Boolean.valueOf((String) props
-				.getProperty("iplant.enable.zombie.cleanup", "false"));
-		
-//		String maxUserJobs = (String) props.get("iplant.max.user.jobs.per.system");
-//		try {
-//			MAX_USER_JOBS_PER_SYSTEM = Integer.parseInt(maxUserJobs);
-//		} catch (Exception e) {
-//			MAX_USER_JOBS_PER_SYSTEM = Integer.MAX_VALUE;
-//		}
-		
-//		String maxUserTransfers = (String) props.get("iplant.max.user.concurrent.transfers");
-//		try {
-//			MAX_USER_CONCURRENT_TRANSFERS = Integer.parseInt(maxUserTransfers);
-//		} catch (Exception e) {
-//			MAX_USER_CONCURRENT_TRANSFERS = Integer.MAX_VALUE;
-//		}
-		
+		try {ENABLE_ZOMBIE_CLEANUP = Boolean.valueOf(props.getProperty("iplant.enable.zombie.cleanup", "false"));}
+		catch (Exception e) {
+    		log.error("Failure loading setting iplant.enable.zombie.cleanup.", e);
+    		ENABLE_ZOMBIE_CLEANUP = false;
+		}
+				
 		if (blacklistFiles != null && blacklistFiles.contains(",")) {
 			BLACKLIST_FILES = StringUtils.split(blacklistFiles, ',');
 		} else {
@@ -269,7 +253,12 @@ public class Settings {
 
 		WORLD_USER_USERNAME = (String) props.get("iplant.world.user");
 		
-		DEFAULT_PAGE_SIZE = Integer.parseInt((String) props.getProperty("iplant.default.page.size", "25"));
+		try {DEFAULT_PAGE_SIZE = Integer.parseInt((String) props.getProperty("iplant.default.page.size", "25"));}
+		catch (Exception e) {
+    		log.error("Failure loading setting iplant.default.page.size.", e);
+    		DEFAULT_PAGE_SIZE = 25;
+		}
+
 	}
 
 	
