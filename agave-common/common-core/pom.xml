@@ -115,6 +115,13 @@
 		</dependency>
 
 		<!-- Hibernate -->
+		<!-- The ancient version of hibernate (3.6.10) that we use brings in an equally ancient -->
+		<!-- version of javassist (3.12.0), which does not work well with Java 8 and clashes    -->
+		<!-- with a later version of javassist dragged in by reflections.  We need to exclude   -->
+		<!-- javassist from Hibernate entitymanager and Hibernate core and use only the one     --> 
+		<!-- from reflections.  Note the different group ids used for javassist.  Use lots of   -->
+		<!-- complex software, get lots of complex interactions.                                -->
+		<!--                                                                                    -->
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-entitymanager</artifactId>

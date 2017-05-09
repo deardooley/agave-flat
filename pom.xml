@@ -137,6 +137,7 @@
 	    <!-- PLUGIN Versions (in alphabetical order) -->
 	    <buildnumber-maven-plugin.version>1.3</buildnumber-maven-plugin.version>
         <docker-maven-plugin.version>0.4.13</docker-maven-plugin.version>
+        <duplicate-finder-maven-plugin.version>1.2.1</duplicate-finder-maven-plugin.version>
 	    <exec-maven-plugin.versionRange>[1.3.2,)</exec-maven-plugin.versionRange>
 	    <flyway-maven-plugin.version>4.0</flyway-maven-plugin.version>
 	    <flyway-maven-plugin.versionRange>[4.0,)</flyway-maven-plugin.versionRange>
@@ -236,6 +237,25 @@
 
 	<build>
 		<plugins>
+		    <!-- This plugin can be used find duplicate classes on the classpath of each -->
+		    <!-- subproject.  Adding the "check" goal below runs this plugin.  A better  -->
+		    <!-- approach is to run the following command from the top-level Agave       -->
+		    <!-- directory:  mvn duplicate-finder:check.  Run mvn duplicate-finder:help  -->
+		    <!-- for more information.                                                   -->
+		    <!--                                                                         -->  
+		    <!-- Also see https://github.com/basepom/duplicate-finder-maven-plugin/wiki  -->
+		    <plugin>
+                <groupId>org.basepom.maven</groupId>
+                <artifactId>duplicate-finder-maven-plugin</artifactId>
+                <version>${duplicate-finder-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <phase>verify</phase>
+                        <goals></goals>
+                    </execution>
+                </executions>
+		    </plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>buildnumber-maven-plugin</artifactId>
