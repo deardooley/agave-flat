@@ -331,7 +331,7 @@ public class FileIndexingResource extends AbstractFileResource {
 		
 			              		child = new LogicalFile();
 			              		child.setNativeFormat(remoteFileInfo.isFile() ? LogicalFile.RAW : LogicalFile.DIRECTORY);
-			              		child.setPath(absPath + childFileName);
+			              		child.setPath(remoteDataClient.resolvePath(path + "/" + childFileName));
 		                		child.setName(childFileName);
 		                		child.setSystem(remoteSystem);
 		                		child.setStatus(StagingTaskStatus.STAGING_COMPLETED);
