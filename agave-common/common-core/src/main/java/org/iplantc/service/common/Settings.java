@@ -105,6 +105,7 @@ public class Settings
     public static String 		IPLANT_REACTOR_SERVICE;
     public static String 		IPLANT_ABACO_SERVICE;
     public static String 		IPLANT_REPOSITORY_SERVICE;
+    public static String		IPLANT_UUID_SERVICE;
     
     /* iPlant dependent services */
     public static String        QUERY_URL;
@@ -321,6 +322,7 @@ public class Settings
         IPLANT_REACTOR_SERVICE     	= Settings.getSantizedServiceUrl(props, "iplant.reactors.service", "https://public.agaveapi.co/reactors/v2");
         IPLANT_REPOSITORY_SERVICE   = Settings.getSantizedServiceUrl(props, "iplant.repositories.service", "https://public.agaveapi.co/repositories/v2");
         IPLANT_ABACO_SERVICE     	= Settings.getSantizedServiceUrl(props, "iplant.abaco.service", "https://public.agaveapi.co/abaco/v2");
+        IPLANT_UUID_SERVICE     	= Settings.getSantizedServiceUrl(props, "iplant.uuid.service", "https://public.agaveapi.co/uuids/v2");
         
         NOTIFICATION_QUEUE = (String) props.getProperty("iplant.notification.service.queue", "prod.notifications.queue");
 		NOTIFICATION_TOPIC = (String) props.getProperty("iplant.notification.service.topic", "prod.notifications.queue");

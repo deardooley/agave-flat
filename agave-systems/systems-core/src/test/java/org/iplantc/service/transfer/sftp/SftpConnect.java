@@ -35,6 +35,7 @@ import org.apache.log4j.lf5.util.StreamUtils;
 import com.sshtools.publickey.ConsoleKnownHostsKeyVerification;
 import com.sshtools.publickey.SshPrivateKeyFile;
 import com.sshtools.publickey.SshPrivateKeyFileFactory;
+import com.sshtools.sftp.FileTransferProgress;
 import com.sshtools.sftp.SftpClient;
 import com.sshtools.ssh.PublicKeyAuthentication;
 import com.sshtools.ssh.SshAuthentication;

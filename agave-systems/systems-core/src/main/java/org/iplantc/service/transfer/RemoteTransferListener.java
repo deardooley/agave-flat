@@ -216,6 +216,7 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 	public void started(long bytesTotal, String remoteFile)
 	{
 		if (StringUtils.isEmpty(firstRemoteFilepath)) {
+			System.out.println("Starting transfer of " + remoteFile);
 			firstRemoteFilepath = remoteFile;
 		}
 		

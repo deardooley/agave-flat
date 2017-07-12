@@ -950,7 +950,8 @@ public class MaverickSFTP implements RemoteDataClient
 		}
 		catch (SftpStatusException e) {
 			if (e.getMessage().toLowerCase().contains("no such file")) {
-				throw new FileNotFoundException("No such file or directory");
+				e.printStackTrace();
+				throw new FileNotFoundException(remotepath + ": No such file or directory");
 			} else {
 				throw new RemoteDataException("Failed to retrieve information about " + remotepath, e);
 			}
@@ -1647,7 +1648,8 @@ public class MaverickSFTP implements RemoteDataClient
 					" does not exist or the user does not have permission to view it.");
 			}
 		} 
-		return StringUtils.stripEnd(path," ");
+//		return StringUtils.stripEnd(path," ");
+		return path;
 	}
 
 	@Override

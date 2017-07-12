@@ -1,10 +1,16 @@
 package org.iplantc.service.transfer.performance;
 
+import java.io.File;
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
+import org.apache.log4j.Logger;
 import org.codehaus.plexus.util.FileUtils;
 import org.iplantc.service.common.exceptions.PermissionException;
 import org.iplantc.service.systems.exceptions.RemoteCredentialException;
@@ -19,6 +25,7 @@ import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.iplantc.service.transfer.exceptions.TransferException;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.TransferStatusType;
+import org.iplantc.service.transfer.sftp.MaverickSFTP;
 import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -28,9 +35,14 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import com.sshtools.logging.Log;
+
 @Test(groups= {"transfer","performance"})
 public class URLCopyTest extends BaseTransferTestCase
 {
+	
+	private static final Logger log = Logger.getLogger(URLCopyTest.class);
+	
 	protected static String LOCAL_DIR = "src/test/resources/transfer";
 	protected static String LOCAL_DOWNLOAD_DIR = "src/test/resources/download";
 	protected static String LOCAL_TXT_FILE = "src/test/resources/transfer/test_upload.txt";
@@ -104,6 +116,54 @@ public class URLCopyTest extends BaseTransferTestCase
     	client.mkdirs("");
     	
     	return client;
+	}
+	
+	@Test
+	public void copyDeepTree()
+	throws Exception
+	{
+		RemoteDataClient srcClient = null;
+		RemoteDataClient destClient = null;
+		
+		try 
+		{
+			srcClient = getRemoteDataClientFromSystemJson(StorageProtocolType.SFTP);
+			((MaverickSFTP)srcClient).updateSystemRoots("/home/testuser", "/");
+			srcClient.authenticate();
+			
+			destClient = getRemoteDataClientFromSystemJson(StorageProtocolType.LOCAL);
+			destClient.authenticate();
+			
+			URLCopy urlCopy = new URLCopy(srcClient, destClient);
+			
+			TransferTask task = new TransferTask(
+					srcClient.getUriForPath("deep_tree").toString(), 
+					destClient.getUriForPath(DEST_DIRNAME).toString(),
+					SYSTEM_USER, null, null);
+			
+			TransferTaskDao.persist(task);
+			
+			urlCopy.copy("deep_tree", DEST_DIRNAME, task);
+			
+			srcClient.get("deep_tree.manifest", DEST_DIRNAME + "/deep_tree.manifest");
+			Path p = FileSystems.getDefault().getPath(DEST_DIRNAME + "/deep_tree.manifest");
+			
+			List<String> remoteFileList = Files.readAllLines(p, Charset.forName("UTF-8"));
+			for(String remoteFilePath: remoteFileList) {
+				log.debug(remoteFilePath);
+				Assert.assertTrue(new File(DEST_DIRNAME + "/" + remoteFilePath).exists(), "File was not copied locally.");
+			}
+//			destClient.authenticate();
+//			Assert.assertTrue(destClient.doesExist(DEST_DIRNAME), 
+//					"Failed to copy test file to dest system");
+		}
+		catch (Exception e) {
+			Assert.fail("Unsaved transferTask should throw a TransferException", e);
+		}
+		finally {
+			try { srcClient.disconnect(); } catch (Exception e) {}
+			try { destClient.disconnect(); } catch (Exception e) {}
+		}
 	}
 	
 	@Test(dataProvider="copyProvider")

@@ -263,7 +263,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 			String resolvedstartupScript = resolveStartupScriptMacros(getExecutionSystem().getStartupScript());
 			
 			if (resolvedstartupScript != null) {
-				startupScriptCommand = String.format("printf \"[%%s] %%b\\n\" $(date '+%%Y-%%m-%%dT%%H:%%M:%%S%%z') \"$(source %s 2>&1)\" >> %s/.agave.log ",
+				startupScriptCommand = String.format("printf \"[%%s]\" $(date '+%%Y-%%m-%%dT%%H:%%M:%%S%%z') && source %s 2>&1 >> %s/.agave.log ",
 						resolvedstartupScript,
 						absoluteRemoteWorkPath);
 			}
@@ -275,7 +275,7 @@ public abstract class AbstractJobLauncher implements JobLauncher
 		}
 		return startupScriptCommand;
 	}
-	
+	 
 //	/**
 //	 * Returns the name of the 
 //	 * @param apiUsername
