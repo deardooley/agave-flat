@@ -31,6 +31,7 @@ import org.iplantc.service.transfer.exceptions.RemoteDataException;
 import org.iplantc.service.transfer.exceptions.RemoteDataSyntaxException;
 import org.iplantc.service.transfer.exceptions.TransferException;
 import org.iplantc.service.transfer.gridftp.GridFTP;
+import org.iplantc.service.transfer.irods4.IRODS4;
 import org.iplantc.service.transfer.local.Local;
 import org.iplantc.service.transfer.model.Range;
 import org.iplantc.service.transfer.model.TransferTask;
@@ -812,10 +813,13 @@ public class URLCopy
 	private void proxyTransfer(String srcPath, String destPath, RemoteTransferListener listener) 
 	throws RemoteDataException, IOException, TransferException, ClosedByInterruptException
 	{
-		InputStream in = null;
-		BufferedInputStream bis = null;
-		BufferedOutputStream bos = null;
-		OutputStream out = null;
+		// The "b" in the variable names means "buffered".
+		RemoteInputStream<?> in = null;
+		InputStream  bis = null;
+		RemoteOutputStream<?> out = null;
+		OutputStream bos = null;
+		
+
 		long bytesSoFar = 0;
 		try
 		{
@@ -829,18 +833,24 @@ public class URLCopy
 
 			long totalSize = sourceClient.length(srcPath);
 			
+			// Buffer the input stream only if it's not already buffered. 
 			in = getInputStream(sourceClient, srcPath);
-			bis = new BufferedInputStream(in);
+			if (in.isBuffered()) bis = in;
+			 else bis = new BufferedInputStream(in);
+
 			checkCancelled(listener);
 			
+			// Buffer the output stream only if it's not already buffered. 
 			out = getOutputStream(destClient, destPath);
-			bos = new BufferedOutputStream(out);
+			if (out.isBuffered()) bos = out;
+			 else bos = new BufferedOutputStream(out);
 			
 			checkCancelled(listener);
 			
 			int length = 0;
 			long callbackTime = System.currentTimeMillis();
 			int bufferSize = Math.min(sourceClient.getMaxBufferSize(), destClient.getMaxBufferSize());
+			
 			byte[] b = new byte[bufferSize];
 			
 			listener.started(totalSize, srcPath);
@@ -1077,15 +1087,16 @@ public class URLCopy
 	        throw new RemoteDataException("Transfer listener cannot be null");
 	    } 
 	    
-	    InputStream in = null;
-	    BufferedInputStream bis = null;
+	    // The "b" in the variable names means "buffered".
+	    RemoteInputStream<?> in = null;
+	    InputStream bis = null;
         
-	    InputStream originalIn = null;
-        BufferedInputStream originalBis = null;
+	    RemoteInputStream<?> originalIn = null;
+        InputStream originalBis = null;
         
-        BufferedOutputStream bos = null;
-        OutputStream out = null;
-        
+        RemoteOutputStream<?> out = null;
+        OutputStream bos = null;
+
         long bytesSoFar = 0;
         try
         {
@@ -1106,16 +1117,22 @@ public class URLCopy
                 totalSize = sourceClient.length(srcPath) - srcRangeOffset;
             }
             
+			// Buffer the input stream only if it's not already buffered. 
             in = getInputStream(sourceClient, srcPath);
             in.skip(srcRangeOffset);
-            bis = new BufferedInputStream(in);
+            if (in.isBuffered()) bis = in;
+            else bis = new BufferedInputStream(in);
             
+            // Buffer the original input stream only if it's not already buffered.
             originalIn = getInputStream(destClient, destPath);
-            originalBis = new BufferedInputStream(originalIn);
+            if (originalIn.isBuffered()) originalBis = originalIn;
+            else originalBis = new BufferedInputStream(originalIn);
             
             String tmpFilename = destPath + ".tmp-" + System.currentTimeMillis();
             out = getOutputStream(destClient, tmpFilename);
-            bos = new BufferedOutputStream(out);
+            if (out.isBuffered()) bos = out;
+            else bos = new BufferedOutputStream(out);
+
             
             checkCancelled(listener);
             
@@ -1346,7 +1363,7 @@ public class URLCopy
 	 * @throws IOException
 	 * @throws RemoteDataException
 	 */
-	private OutputStream getOutputStream(RemoteDataClient client, String destPath) 
+	private RemoteOutputStream<?> getOutputStream(RemoteDataClient client, String destPath) 
 	throws IOException, RemoteDataException 
 	{
 		try 
@@ -1375,7 +1392,7 @@ public class URLCopy
 	 * @throws IOException
 	 * @throws RemoteDataException
 	 */
-	private InputStream getInputStream(RemoteDataClient client, String srcPath) throws IOException, RemoteDataException
+	private RemoteInputStream<?> getInputStream(RemoteDataClient client, String srcPath) throws IOException, RemoteDataException
 	{
 		try 
 		{

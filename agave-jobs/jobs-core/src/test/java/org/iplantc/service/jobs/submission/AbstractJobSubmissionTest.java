@@ -1,6 +1,7 @@
 package org.iplantc.service.jobs.submission;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,6 +10,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hibernate.HibernateException;
@@ -20,6 +22,7 @@ import org.iplantc.service.apps.model.SoftwareInput;
 import org.iplantc.service.apps.model.SoftwareParameter;
 import org.iplantc.service.common.persistence.HibernateUtil;
 import org.iplantc.service.common.persistence.TenancyHelper;
+import org.iplantc.service.io.util.GrepUtil;
 import org.iplantc.service.jobs.dao.JobDao;
 import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.JobProcessingException;
@@ -55,6 +58,7 @@ import org.testng.annotations.BeforeClass;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.io.Files;
 
 public class AbstractJobSubmissionTest {
 
@@ -874,7 +878,7 @@ public class AbstractJobSubmissionTest {
 		String exceptionMsg = message;
 		
 		SubmissionAction submissionAction = new SubmissionAction(job);
-		
+		InputStream in = null;
 		try
         {
 //		    job.setArchivePath(job.getOwner() + "/archive/jobs/job-" + job.getUuid() + "-" + Slug.toSlug(job.getName()));
@@ -895,6 +899,15 @@ public class AbstractJobSubmissionTest {
                         "Job should only submit once when it does not fail during submission");
                 Assert.assertNotNull(job.getSubmitTime(),
                     "Job submit time was not updated during job submission");
+                RemoteSystem system = JobManager.getJobExecutionSystem(job);
+                
+                in = system.getRemoteDataClient().getInputStream(job.getOutputPath() + "/.agave.log", false);
+                List<String> jobLogs = IOUtils.readLines(in);
+                
+                Assert.assertFalse(jobLogs.isEmpty(), "Agave log file should not be empty.");
+                
+                Assert.assertFalse(jobLogs.get(0).contains("error"), "Submission was not written to job log");
+                
             } else {
                 Assert.assertNull(job.getLocalJobId(),
                         "Local job id should be null if submission fails");
@@ -910,6 +923,7 @@ public class AbstractJobSubmissionTest {
 		}
 		finally {
 		    job = submissionAction.getJob();
+		    try { in.close(); }catch(Exception e) {}
 		}
 		
         System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + actuallyThrewException);
@@ -978,6 +992,104 @@ public class AbstractJobSubmissionTest {
 		
 	}
 	
+	protected Job genericRemoteJobLogTestCase(Job job, String regex, boolean shouldMatch, String message) 
+	{
+		SubmissionAction submissionAction = new SubmissionAction(job);
+		RemoteSystem executionSystem = null;
+		RemoteDataClient remoteClient = null;
+		
+		try
+        {
+			executionSystem = JobManager.getJobExecutionSystem(job);
+			remoteClient = executionSystem.getRemoteDataClient();
+			String command = submissionAction.getJobLauncher().getStartupScriptCommand(job.getWorkPath());
+			List<String> response = org.iplantc.service.common.Settings.fork(command);
+			
+			submissionAction.run();
+			
+			do {
+				// sleep for 2 seconds giving the job time to complete
+				Thread.sleep(2000);
+			}
+			while (remoteClient.doesExist(job.getWorkPath() + "/.agave.pid"));
+            
+			GrepUtil grep = new GrepUtil(regex);
+			
+			boolean found = grep.grep(remoteClient, job.getWorkPath() + "/.agave.log");
+			
+            Assert.assertEquals(found, shouldMatch, message);
+        }
+        catch (Exception e)
+		{
+			Assert.fail("Checking remote logs should not throw an exception", e);
+		}
+		finally {
+		    try { remoteClient.disconnect();; }catch(Exception e) {}
+		}
+		
+		return job;
+		
+	}
+	
+//	/**
+//     * Generic submission test used by all the methods testing job submission is some
+//     * form or fashion.
+//     * 
+//     * @param job
+//     * @param message
+//     * @param shouldThrowException
+//     */
+//	protected Job genericRemoteSubmissionTestCase(Job job, JobStatusType expectedStatus, String message, boolean shouldThrowException) 
+//	{
+//		boolean actuallyThrewException = false;
+//		String exceptionMsg = message;
+//		
+//		SubmissionAction submissionAction = new SubmissionAction(job);
+//		
+//		try
+//        {
+////		    job.setArchivePath(job.getOwner() + "/archive/jobs/job-" + job.getUuid() + "-" + Slug.toSlug(job.getName()));
+////		    
+////			JobDao.persist(job);
+////			
+//			submissionAction.run();
+//            
+//            job = submissionAction.getJob();
+//			
+//            Assert.assertEquals(job.getStatus(), expectedStatus,
+//                    "Job status did not match " + expectedStatus + " after submission");
+//            if (expectedStatus == JobStatusType.RUNNING || 
+//                    expectedStatus == JobStatusType.QUEUED ) {
+//                Assert.assertNotNull(submissionAction.getJob().getLocalJobId(),
+//                        "Local job id was not obtained during submission");
+//                Assert.assertTrue(job.getRetries() == 0,
+//                        "Job should only submit once when it does not fail during submission");
+//                Assert.assertNotNull(job.getSubmitTime(),
+//                    "Job submit time was not updated during job submission");
+//            } else {
+//                Assert.assertNull(job.getLocalJobId(),
+//                        "Local job id should be null if submission fails");
+//                Assert.assertNull(job.getSubmitTime(),
+//                    "Job submit time should not be updated if the job did not submit.");
+//            }
+//        }
+//        catch (Exception e)
+//		{
+//			actuallyThrewException = true;
+//            exceptionMsg = "Error placing job into queue on " + job.getSystem() + ": " + message;
+//            if (actuallyThrewException != shouldThrowException) e.printStackTrace();
+//		}
+//		finally {
+//		    job = submissionAction.getJob();
+//		}
+//		
+//        System.out.println(" exception thrown?  expected " + shouldThrowException + " actual " + actuallyThrewException);
+//		Assert.assertTrue(actuallyThrewException == shouldThrowException, exceptionMsg);
+//		
+//		return job;
+//		
+//	}
+//	
 	/**
 	 * Updates the given name value pair in the form and returns a copy of the updated form.
 	 * 

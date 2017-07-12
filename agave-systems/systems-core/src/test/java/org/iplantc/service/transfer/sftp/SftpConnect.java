@@ -30,21 +30,19 @@ import java.net.Socket;
 import java.net.SocketAddress;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.lf5.util.StreamUtils;
 
+import com.maverick.ssh.PublicKeyAuthentication;
+import com.maverick.ssh.SshAuthentication;
+import com.maverick.ssh.SshClient;
+import com.maverick.ssh.SshConnector;
+import com.maverick.ssh.components.SshKeyPair;
+import com.maverick.ssh2.Ssh2Client;
+import com.maverick.ssh2.Ssh2Context;
+import com.maverick.ssh2.Ssh2PublicKeyAuthentication;
 import com.sshtools.publickey.ConsoleKnownHostsKeyVerification;
 import com.sshtools.publickey.SshPrivateKeyFile;
 import com.sshtools.publickey.SshPrivateKeyFileFactory;
-import com.sshtools.sftp.FileTransferProgress;
 import com.sshtools.sftp.SftpClient;
-import com.sshtools.ssh.PublicKeyAuthentication;
-import com.sshtools.ssh.SshAuthentication;
-import com.sshtools.ssh.SshClient;
-import com.sshtools.ssh.SshConnector;
-import com.sshtools.ssh.components.SshKeyPair;
-import com.sshtools.ssh2.Ssh2Client;
-import com.sshtools.ssh2.Ssh2Context;
-import com.sshtools.ssh2.Ssh2PublicKeyAuthentication;
 
 /**
  * This example demonstrates the connection process connecting to an SSH2 server
@@ -53,8 +51,8 @@ import com.sshtools.ssh2.Ssh2PublicKeyAuthentication;
  * @author Lee David Painter
  */
 public class SftpConnect {
-	public static int ITERATIONS = 2;
-	public static int BOCK_COUNT = 50000;
+	public static int ITERATIONS = 10;
+	public static int BOCK_COUNT = 500;
 	
 	public static void calculateTime(long uend, long ustart, long dend, long dstart, long length) {
 		long ue = uend - ustart;
@@ -89,7 +87,7 @@ public class SftpConnect {
 
 		try {
 			System.out.print("Hostname: ");
-			String hostname = "dtn01.prod.agaveapi.co";
+			String hostname = "129.114.6.121";
 //			hostname = reader.readLine();
 
 //			int idx = hostname.indexOf(':');
@@ -110,7 +108,7 @@ public class SftpConnect {
 //				username = System.getProperty("user.name");
 //			System.out.println("Connecting to " + hostname);
 
-			String	username = System.getProperty("user.name");
+			String	username = "rodeo";//System.getProperty("user.name");
 			System.out.println("Connecting to " + hostname);
 			
 			String privateKey = FileUtils.readFileToString(new File(System.getProperty("user.home") + "/.ssh/id_rsa"));
@@ -125,9 +123,9 @@ public class SftpConnect {
 
 			// Lets do some host key verification
 
-			con.getContext().setHostKeyVerification(
+			con.getContext(2).setHostKeyVerification(
 					new ConsoleKnownHostsKeyVerification());
-			con.getContext().setPreferredPublicKey(
+			((Ssh2Context) con.getContext(2)).setPreferredPublicKey(
 					Ssh2Context.PUBLIC_KEY_SSHDSS);
 
 			/**

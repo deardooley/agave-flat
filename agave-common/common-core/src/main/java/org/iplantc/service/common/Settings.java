@@ -297,7 +297,7 @@ public class Settings
         
         TACC_MYPROXY_SERVER = (String)props.get("iplant.myproxy.server");
         
-        TACC_MYPROXY_PORT = Integer.valueOf((String)props.getProperty("iplant.myproxy.port", "7512"));
+        TACC_MYPROXY_PORT = NumberUtils.toInt((String)props.getProperty("iplant.myproxy.port", "7512"), 7512);
         
         IPLANT_APP_SERVICE          = Settings.getSantizedServiceUrl(props, "iplant.app.service", "https://public.agaveapi.co/apps/v2");        
         IPLANT_AUTH_SERVICE         = Settings.getSantizedServiceUrl(props, "iplant.auth.service", "https://public.agaveapi.co/auth/v2");
@@ -334,7 +334,7 @@ public class Settings
         MESSAGING_SERVICE_USERNAME = (String)props.get("iplant.messaging.username");
         MESSAGING_SERVICE_PASSWORD = (String)props.get("iplant.messaging.password");
         MESSAGING_SERVICE_HOST = (String)props.get("iplant.messaging.host");
-        MESSAGING_SERVICE_PORT = Integer.valueOf((String)props.get("iplant.messaging.port"));
+        MESSAGING_SERVICE_PORT = NumberUtils.toInt((String)props.getProperty("iplant.messaging.port", "11300"), 11300);
         
         FILES_ENCODING_QUEUE = (String) props.getProperty("iplant.files.service.encoding.queue", "encoding.prod.files.queue");
         FILES_ENCODING_TOPIC = (String) props.getProperty("iplant.files.service.encoding.topic", "encoding.prod.files.topic");

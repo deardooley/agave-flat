@@ -1,0 +1,41 @@
+###############################################################
+# logio log aggregation
+#
+# These are the services providing log aggregation across 
+# the core science apis logging to disk or to stdout
+#
+# Production deployments should leverage a dedicated fluentd
+# server on each host that can be consumed by a logio harvester 
+# or fed into another aggregation service such as a Splunk 
+# Forwarder.
+###############################################################
+
+##############################################################
+#  Development Stack of Logging Services
+#############################################################
+
+# harvester listening to the docker daemon
+logio-docker-harvester:
+  image: gerchardon/docker-logio
+  links:
+   - logio:logio
+  volumes:
+   - /var/run/docker.sock:/var/run/docker.sock
+  command: -h logio -n docker
+  privileged: true
+  
+# harvester listing to file on disk
+logio-api-harvester:
+  image: temal/logio-harvester
+  links:
+   - logio:logio
+  volumes:
+    - ./config:/home/logio/.log.io
+    - ./logs:/var/log/splunk
+  
+# logio server and webapp     
+logio:
+  image: 'temal/logio-server'
+  ports:
+    - 28777:28777
+    - 28778:28778

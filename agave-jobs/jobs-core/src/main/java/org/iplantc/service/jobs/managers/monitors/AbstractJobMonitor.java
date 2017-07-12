@@ -208,7 +208,7 @@ public abstract class AbstractJobMonitor implements JobMonitor {
 //				startupScriptCommand = String.format("echo $(source %s 2>&1) >> %s/.agave.log ; ",
 //					resolvedstartupScript,
 //					remoteDataClient.resolvePath(job.getWorkPath()));
-				startupScriptCommand = String.format("echo $(source %s 2>&1) >> /dev/null ; ",
+				startupScriptCommand = String.format("source %s 2>&1 >> /dev/null ; ",
 						resolvedstartupScript);
 			}
 		}
@@ -216,8 +216,10 @@ public abstract class AbstractJobMonitor implements JobMonitor {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.iplantc.service.jobs.managers.monitors.JobMonitor#getStatus()
+	 * @see org.iplantc.service.jobs.managers.monitors.JobMonitor#getJobQueryCommand()
 	 */
 	@Override
-	public abstract Job monitor() throws RemoteJobMonitoringException, SystemUnavailableException, ClosedByInterruptException;
+	public String getJobQueryCommand() throws SystemUnavailableException {
+		return getExecutionSystem().getScheduler().getBatchQueryCommand() + " " + job.getLocalJobId();
+	}
 }

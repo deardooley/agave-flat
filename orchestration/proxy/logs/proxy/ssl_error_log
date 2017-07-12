@@ -1,0 +1,8 @@
+[Tue Dec 13 04:57:46.851959 2016] [ssl:info] [pid 25] AH01914: Configuring server api.example.com:443 for SSL protocol
+[Tue Dec 13 04:57:46.853421 2016] [ssl:warn] [pid 25] AH01906: api.example.com:443:0 server certificate is a CA certificate (BasicConstraints: CA == TRUE !?)
+[Tue Dec 13 04:57:46.853578 2016] [ssl:warn] [pid 25] AH01909: api.example.com:443:0 server certificate does NOT include an ID which matches the server name
+[Tue Dec 13 04:57:46.853682 2016] [ssl:info] [pid 25] AH02568: Certificate and private key api.example.com:443:0 configured from /etc/ssl/apache2/server.pem and /etc/ssl/apache2/server.key
+[Tue Dec 13 04:58:07.937458 2016] [ssl:info] [pid 25] AH01914: Configuring server api.example.com:443 for SSL protocol
+[Tue Dec 13 04:58:07.937742 2016] [ssl:warn] [pid 25] AH01906: api.example.com:443:0 server certificate is a CA certificate (BasicConstraints: CA == TRUE !?)
+[Tue Dec 13 04:58:07.937795 2016] [ssl:warn] [pid 25] AH01909: api.example.com:443:0 server certificate does NOT include an ID which matches the server name
+[Tue Dec 13 04:58:07.937868 2016] [ssl:info] [pid 25] AH02568: Certificate and private key api.example.com:443:0 configured from /etc/ssl/apache2/server.pem and /etc/ssl/apache2/server.key

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.channels.ClosedByInterruptException;
 
+import org.apache.commons.lang.StringUtils;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.apps.model.SoftwareInput;
 import org.iplantc.service.apps.model.SoftwareParameter;
@@ -182,5 +183,14 @@ public interface JobLauncher
 	 * @param job the job to set
 	 */
 	public void setJob(Job job);
+
+	/**
+	 * Generates the command to source the {@link ExecutionSystem#getStartupScript()} and log the 
+	 * response to the {@code .agave.log} file in the job work directory.
+	 * @return the properly escaped command to be run on the remote system.
+	 * @throws SystemUnavailableException
+	 */
+	public abstract String getStartupScriptCommand(String absoluteRemoteWorkPath)
+			throws SystemUnavailableException;
 
 }

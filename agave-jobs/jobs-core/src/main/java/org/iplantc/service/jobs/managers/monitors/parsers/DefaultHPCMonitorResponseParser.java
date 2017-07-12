@@ -58,7 +58,7 @@ public class DefaultHPCMonitorResponseParser implements JobMonitorResponseParser
 //					}
 //				}
 		
-		return false;
+		return true;
 		
 //		throw new RemoteJobMonitorResponseParsingException("No response from server when checking for process id");
 	}

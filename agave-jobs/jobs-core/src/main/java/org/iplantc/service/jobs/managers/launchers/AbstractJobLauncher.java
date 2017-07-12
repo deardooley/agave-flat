@@ -251,19 +251,19 @@ public abstract class AbstractJobLauncher implements JobLauncher
 		}
 	}
 	
-	/**
-	 * Generates the command to source the {@link ExecutionSystem#getStartupScript()} and log the 
-	 * response to the {@code .agave.log} file in the job work directory.
-	 * @return the properly escaped command to be run on the remote system.
-	 * @throws SystemUnavailableException
+	
+	/* (non-Javadoc)
+	 * @see org.iplantc.service.jobs.managers.launchers.JobLauncher#getStartupScriptCommand(java.lang.String)
 	 */
+	@Override
 	public String getStartupScriptCommand(String absoluteRemoteWorkPath) throws SystemUnavailableException {
 		String startupScriptCommand = "";
 		if (!StringUtils.isEmpty(getExecutionSystem().getStartupScript())) {
 			String resolvedstartupScript = resolveStartupScriptMacros(getExecutionSystem().getStartupScript());
 			
 			if (resolvedstartupScript != null) {
-				startupScriptCommand = String.format("printf \"[%%s]\" $(date '+%%Y-%%m-%%dT%%H:%%M:%%S%%z') && source %s 2>&1 >> %s/.agave.log ",
+				startupScriptCommand = String.format("printf \"[%%s]\" $(date '+%%Y-%%m-%%dT%%H:%%M:%%S%%z') >> %s/.agave.log && source %s >&/dev/null | tee -a %s/.agave.log ",
+						absoluteRemoteWorkPath,
 						resolvedstartupScript,
 						absoluteRemoteWorkPath);
 			}

@@ -19,33 +19,19 @@ package org.iplantc.service.transfer.sftp;
  * You should have received a copy of the GNU General Public License
  * along with J2SSH Maverick.  If not, see <http://www.gnu.org/licenses/>.
  */
-import static org.mockito.Mockito.*;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.iplantc.service.common.persistence.JndiSetup;
-import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.RemoteTransferListener;
 import org.iplantc.service.transfer.dao.TransferTaskDao;
 import org.iplantc.service.transfer.model.TransferTask;
+import org.iplantc.service.transfer.sftp.MaverickSFTP;
 
-import com.sshtools.net.SocketTransport;
-import com.sshtools.publickey.ConsoleKnownHostsKeyVerification;
 import com.sshtools.sftp.SftpClient;
-import com.sshtools.sftp.SftpFile;
-import com.sshtools.sftp.SftpFileAttributes;
-import com.sshtools.ssh.PasswordAuthentication;
-import com.sshtools.ssh.SshAuthentication;
-import com.sshtools.ssh.SshClient;
-import com.sshtools.ssh.SshConnector;
-import com.sshtools.ssh2.Ssh2Client;
-import com.sshtools.ssh2.Ssh2Context;
 
 /**
  * This example demonstrates the connection process connecting to an SSH2 server

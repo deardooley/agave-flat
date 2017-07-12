@@ -320,8 +320,9 @@ public class FileIndexingResource extends AbstractFileResource {
 		            	{
 		            		RemoteFilePermission childPem = null;
 		            		LogicalFile child = null;
+		            		String childRemoteAbsolutePath = remoteDataClient.resolvePath(path + "/" + childFileInfo.getName());
 		              		try {
-		              			child=LogicalFileDao.findBySystemAndPath(remoteSystem, remoteDataClient.resolvePath(path + "/" + childFileInfo.getName()));
+		              			child=LogicalFileDao.findBySystemAndPath(remoteSystem, childRemoteAbsolutePath);
 		            		} catch(Exception e) {}
 	
 			              	String childFileName = FilenameUtils.getName(childFileInfo.getName());
@@ -331,7 +332,7 @@ public class FileIndexingResource extends AbstractFileResource {
 		
 			              		child = new LogicalFile();
 			              		child.setNativeFormat(remoteFileInfo.isFile() ? LogicalFile.RAW : LogicalFile.DIRECTORY);
-			              		child.setPath(absPath + childFileName);
+			              		child.setPath(childRemoteAbsolutePath);
 		                		child.setName(childFileName);
 		                		child.setSystem(remoteSystem);
 		                		child.setStatus(StagingTaskStatus.STAGING_COMPLETED);

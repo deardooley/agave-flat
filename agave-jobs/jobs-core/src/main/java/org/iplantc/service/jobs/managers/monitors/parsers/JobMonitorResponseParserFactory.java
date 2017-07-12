@@ -59,9 +59,11 @@ public class JobMonitorResponseParserFactory {
 				case TORQUE:
 				case CUSTOM_TORQUE:
 				case MOAB:
+					parser = new PBSHPCMonitorResponseParser();
+					break;
 				case SGE:
 				case CUSTOM_GRIDENGINE:
-					parser = new PBSHPCMonitorResponseParser();
+					parser = new GridEngineMonitorResponseParser();
 					break;
 				case SLURM:
 				case CUSTOM_SLURM:

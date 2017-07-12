@@ -50,7 +50,7 @@ public class SlurmHPCMonitorResponseParserTest {
 		_isJobRunningFailedStatusThrowsRemoteJobFailureDetectedException(schedulerOutput);
 	}
 	
-	public void _isJobRunningFailedStatusThrowsRemoteJobFailureDetectedException(String schedulerOutput) {
+	protected void _isJobRunningFailedStatusThrowsRemoteJobFailureDetectedException(String schedulerOutput) {
 
 		try {
 			SlurmHPCMonitorResponseParser parser = new SlurmHPCMonitorResponseParser();
@@ -161,7 +161,34 @@ public class SlurmHPCMonitorResponseParserTest {
 		_isJobRunning(schedulerOutput, shouldBeRunning);
 	}
 	
-	public void _isJobRunning(String schedulerOutput, boolean shouldBeRunning) 
+	protected void _isJobRunning(String schedulerOutput, boolean shouldBeRunning) 
+	throws RemoteJobIDParsingException, JobException, SchedulerException, RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException 
+	{
+		SlurmHPCMonitorResponseParser parser = new SlurmHPCMonitorResponseParser();
+		boolean running = false;
+		try {
+			running = parser.isJobRunning(schedulerOutput);
+		}
+		catch (Exception e) {}
+		
+		Assert.assertEquals(running, shouldBeRunning, "Job running state and expected state did not match");
+	}
+	
+	@DataProvider
+	protected Object[][] isJobRunningAfterUsageResponseProvider() {
+		return new Object[][] {
+				{ "", false },
+		};
+	}
+	
+	@Test(dataProvider = "isJobRunningAfterUsageResponse")
+	public void isJobRunningAfterUsageResponse(String schedulerOutput, boolean shouldBeRunning) 
+	throws RemoteJobIDParsingException, JobException, SchedulerException, RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException 
+	{
+		_isJobRunning(schedulerOutput, shouldBeRunning);
+	}
+	
+	protected void _isJobRunningAfterUsageResponse(String schedulerOutput, boolean shouldBeRunning) 
 	throws RemoteJobIDParsingException, JobException, SchedulerException, RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException 
 	{
 		SlurmHPCMonitorResponseParser parser = new SlurmHPCMonitorResponseParser();

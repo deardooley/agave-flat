@@ -28,6 +28,9 @@ public class SGEJobIdParser implements RemoteJobIdParser {
 			return matcher.group(1);
 		}
 		// otherwise, see what we can learn about the cause of the failure.
+		else if (output.contains("Unable to run job:")) {
+			throw new SchedulerException("Failed to submit job. Response from the scheduler was: " + output, new JobException());
+		}
 		else if (output.contains("You have exceeded the max job time limit.")) {
 			throw new JobException(output);
 		} 

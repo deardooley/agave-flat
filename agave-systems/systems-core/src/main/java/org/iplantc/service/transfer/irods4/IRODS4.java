@@ -555,7 +555,7 @@ public class IRODS4 implements RemoteDataClient
 
     @Override
     public int getMaxBufferSize() {
-        return MAX_BUFFER_SIZE;
+    	return MAX_BUFFER_SIZE;
     }
 
 	/* (non-Javadoc)

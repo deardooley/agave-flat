@@ -20,10 +20,9 @@ import org.irods.jargon.core.exception.JargonException;
 import org.irods.jargon.core.transfer.TransferStatus;
 import org.irods.jargon.core.transfer.TransferStatusCallbackListener;
 
-import com.sshtools.sftp.FileTransferProgress;
-
 public class RemoteTransferListener extends Observable  
-implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
+implements MarkerListener, TransferStatusCallbackListener, 
+	com.maverick.sftp.FileTransferProgress
 {	
 	private static final Logger log = Logger.getLogger(RemoteTransferListener.class);
 	
@@ -53,7 +52,7 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 	 * @param transferTask the transferTask to set
 	 * @throws InterruptedException 
 	 */
-	private synchronized void setTransferTask(TransferTask transferTask)
+	protected synchronized void setTransferTask(TransferTask transferTask)
 	{
 		try {
 //		    log.debug("Saving transfer task");
@@ -216,7 +215,7 @@ implements MarkerListener, TransferStatusCallbackListener, FileTransferProgress
 	public void started(long bytesTotal, String remoteFile)
 	{
 		if (StringUtils.isEmpty(firstRemoteFilepath)) {
-			System.out.println("Starting transfer of " + remoteFile);
+			log.debug("Starting transfer of " + remoteFile);
 			firstRemoteFilepath = remoteFile;
 		}
 		

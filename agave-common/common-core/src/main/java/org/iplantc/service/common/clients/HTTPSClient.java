@@ -360,21 +360,4 @@ public class HTTPSClient {
 		
 		return httpclient;
 	}
-
-	public static void main(String[] args)
-	{
-
-		HTTPSClient httpsTest = new HTTPSClient(
-				"https://iplant-vm.tacc.utexas.edu/auth-v1/", "",
-				"");
-		try
-		{
-			System.out.println(httpsTest.getText());
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-
 }

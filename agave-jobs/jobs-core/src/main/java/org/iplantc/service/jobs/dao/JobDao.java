@@ -584,9 +584,10 @@ public class JobDao
                 systemIds[i] = StringUtils.removeStart(systemIds[i], "!");
         }
 	    
+        Session session = null;
 		try
 		{
-			Session session = getSession();
+			session = getSession();
 			session.disableFilter("jobTenantFilter");
 //			session.clear();
 			/* we need a step function here to scale back slower...
@@ -729,7 +730,7 @@ public class JobDao
 			throw new JobException(ex);
 		}
 		finally {
-//			try { HibernateUtil.commitTransaction();} catch (Exception e) {}
+			try { session.disconnect(); } catch (Exception e) {}
 		}
 	}
 	

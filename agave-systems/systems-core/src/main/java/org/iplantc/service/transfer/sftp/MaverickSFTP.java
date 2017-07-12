@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -20,15 +19,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.iplantc.service.remote.exceptions.RemoteExecutionException;
-import org.iplantc.service.remote.ssh.MaverickSSHSubmissionClient;
-import org.iplantc.service.remote.ssh.shell.Shell;
-import org.iplantc.service.remote.ssh.shell.ShellProcess;
 import org.iplantc.service.transfer.RemoteDataClient;
 import org.iplantc.service.transfer.RemoteFileInfo;
 import org.iplantc.service.transfer.RemoteTransferListener;
@@ -39,31 +32,27 @@ import org.iplantc.service.transfer.model.RemoteFilePermission;
 import org.iplantc.service.transfer.model.TransferTask;
 import org.iplantc.service.transfer.model.enumerations.PermissionType;
 
-import com.sshtools.sftp.SftpFile;
-import com.sshtools.sftp.SftpFileAttributes;
-import com.sshtools.sftp.SftpStatusException;
-import com.sshtools.ssh.PasswordAuthentication;
-import com.sshtools.ssh.PublicKeyAuthentication;
-//import com.sshtools.ssh.Shell;
-//import com.sshtools.ssh.ShellProcess;
-import com.sshtools.ssh.SshAuthentication;
-import com.sshtools.ssh.SshClient;
-import com.sshtools.ssh.SshConnector;
-import com.sshtools.ssh.SshException;
-import com.sshtools.ssh.SshSession;
-import com.sshtools.ssh.SshTunnel;
-import com.sshtools.ssh.components.ComponentManager;
-import com.sshtools.ssh.components.SshKeyPair;
-import com.sshtools.ssh.components.jce.JCEComponentManager;
-import com.sshtools.ssh.SshClient;
-import com.sshtools.ssh2.AuthenticationProtocol;
-import com.sshtools.ssh2.KBIAuthentication;
-import com.sshtools.ssh2.KBIPrompt;
-import com.sshtools.ssh2.KBIRequestHandler;
-import com.sshtools.ssh2.Ssh2Client;
-import com.sshtools.ssh2.Ssh2Context;
-import com.sshtools.ssh2.Ssh2PublicKeyAuthentication;
-import com.sshtools.net.ForwardingClient;
+import com.maverick.sftp.SftpFile;
+import com.maverick.sftp.SftpFileAttributes;
+import com.maverick.sftp.SftpStatusException;
+import com.maverick.ssh.PasswordAuthentication;
+import com.maverick.ssh.PublicKeyAuthentication;
+import com.maverick.ssh.Shell;
+import com.maverick.ssh.ShellProcess;
+import com.maverick.ssh.SshAuthentication;
+import com.maverick.ssh.SshClient;
+import com.maverick.ssh.SshConnector;
+import com.maverick.ssh.SshException;
+import com.maverick.ssh.SshTunnel;
+import com.maverick.ssh.components.SshKeyPair;
+import com.maverick.ssh1.Ssh1Client;
+import com.maverick.ssh2.AuthenticationProtocol;
+import com.maverick.ssh2.KBIAuthentication;
+import com.maverick.ssh2.KBIPrompt;
+import com.maverick.ssh2.KBIRequestHandler;
+import com.maverick.ssh2.Ssh2Client;
+import com.maverick.ssh2.Ssh2Context;
+import com.maverick.ssh2.Ssh2PublicKeyAuthentication;
 import com.sshtools.net.SocketWrapper;
 import com.sshtools.publickey.SshPrivateKeyFile;
 import com.sshtools.publickey.SshPrivateKeyFileFactory;
@@ -81,15 +70,22 @@ public class MaverickSFTP implements RemoteDataClient
 	private static final Logger log = Logger.getLogger(MaverickSFTP.class);
 	
 	static {
-		try {
-		
-		} 
-		catch (Throwable t) {
-			log.error(t);
-		}
-		
+		com.maverick.ssh.LicenseManager.addLicense(
+				"----BEGIN 3SP LICENSE----\r\n"
+                + "Product : J2SSH Maverick\r\n"
+                + "Licensee: UT Austin\r\n"
+                + "Comments: Uncategorised Project\r\n"
+                + "Type    : Protocol License\r\n"
+                + "Created : 17-Jul-2013\r\n"
+                + "\r\n"
+                + "37872036ADA42FDBA600F3CF9CCEF4C860D05C25E5DBBB3C\r\n"
+                + "C6D2DDE3753D77E0B59ACF0D4BB95AEBB47533DC0480346B\r\n"
+                + "0C533BA21F8F45D6B29B66DE266EF9EFCF062C48EBE72E0A\r\n"
+                + "7110EE0CECDA317DE5BE4B099B6F47C28E610EBD30DEB0BE\r\n"
+                + "7A4E9163CEB49C718C799848514835C959CC92AA00051613\r\n"
+                + "E65F250C3E3442306B39A1257BC4A74BED6D4475FB30A94C\r\n"
+                + "----END 3SP LICENSE----\r\n");
 	}
-	
 	
 	private SftpClient sftpClient = null;
 	private Ssh2Client ssh2 = null;
@@ -111,7 +107,7 @@ public class MaverickSFTP implements RemoteDataClient
 	protected SshAuthentication auth;
 	private Map<String, SftpFileAttributes> fileInfoCache = new ConcurrentHashMap<String, SftpFileAttributes>();
 	
-    protected static final int MAX_BUFFER_SIZE = 32768 * 64; // 1MB
+    protected static final int MAX_BUFFER_SIZE = 500 * 1024 * 1024; // 500MB
 	
     public MaverickSFTP(String host, int port, String username, String password, String rootDir, String homeDir)
 	{
@@ -222,36 +218,33 @@ public class MaverickSFTP implements RemoteDataClient
 		}
 		
 		try
-		{   
+		{
 			/**
 			 * Create an SshConnector instance
 			 */
 			con = SshConnector.createInstance();
+			((Ssh2Context)con.getContext(2)).setPreferredKeyExchange(Ssh2Context.KEX_DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA1);
 			
-			JCEComponentManager cm = (JCEComponentManager)ComponentManager.getInstance();
-			cm.installArcFourCiphers(cm.supportedSsh2CiphersCS());
-			cm.installArcFourCiphers(cm.supportedSsh2CiphersSC());
-			
-			((Ssh2Context)con.getContext()).setPreferredKeyExchange(Ssh2Context.KEX_DIFFIE_HELLMAN_GROUP14_SHA1);
-			
-	        ((Ssh2Context)con.getContext()).setPreferredPublicKey(Ssh2Context.PUBLIC_KEY_SSHDSS);
-	        ((Ssh2Context)con.getContext()).setPublicKeyPreferredPosition(Ssh2Context.PUBLIC_KEY_ECDSA_521, 1);
+	        ((Ssh2Context)con.getContext(2)).setPreferredPublicKey(Ssh2Context.PUBLIC_KEY_SSHRSA);
+	        ((Ssh2Context)con.getContext(2)).setPublicKeyPreferredPosition(Ssh2Context.PUBLIC_KEY_SSHRSA, 1);
 	        
-	        ((Ssh2Context)con.getContext()).setPreferredCipherCS(Ssh2Context.CIPHER_ARCFOUR_256);
-	        ((Ssh2Context)con.getContext()).setCipherPreferredPositionCS(Ssh2Context.CIPHER_ARCFOUR, 1);
-	        ((Ssh2Context)con.getContext()).setCipherPreferredPositionCS(Ssh2Context.CIPHER_AES128_CTR, 1);
+	        ((Ssh2Context)con.getContext(2)).setPreferredCipherCS(Ssh2Context.CIPHER_AES256_CTR);
+	        ((Ssh2Context)con.getContext(2)).setCipherPreferredPositionCS(Ssh2Context.CIPHER_AES256_CTR, 1);
+	        ((Ssh2Context)con.getContext(2)).setCipherPreferredPositionCS(Ssh2Context.CIPHER_AES128_CTR, 2);
+	        ((Ssh2Context)con.getContext(2)).setCipherPreferredPositionCS(Ssh2Context.CIPHER_ARCFOUR_256, 3);
 	        
-	        ((Ssh2Context)con.getContext()).setPreferredCipherSC(Ssh2Context.CIPHER_ARCFOUR_256);
-	        ((Ssh2Context)con.getContext()).setCipherPreferredPositionSC(Ssh2Context.CIPHER_ARCFOUR, 1);
-	        ((Ssh2Context)con.getContext()).setCipherPreferredPositionCS(Ssh2Context.CIPHER_AES128_CTR, 1);
+	        ((Ssh2Context)con.getContext(2)).setPreferredCipherSC(Ssh2Context.CIPHER_AES256_CTR);
+	        ((Ssh2Context)con.getContext(2)).setCipherPreferredPositionSC(Ssh2Context.CIPHER_AES256_CTR, 1);
+	        ((Ssh2Context)con.getContext(2)).setCipherPreferredPositionSC(Ssh2Context.CIPHER_AES128_CTR, 2);
+	        ((Ssh2Context)con.getContext(2)).setCipherPreferredPositionCS(Ssh2Context.CIPHER_ARCFOUR_256, 3);
 	        
-	        ((Ssh2Context)con.getContext()).setPreferredMacCS(Ssh2Context.HMAC_SHA256);
-	        ((Ssh2Context)con.getContext()).setMacPreferredPositionCS(Ssh2Context.HMAC_SHA1, 1);
-	        ((Ssh2Context)con.getContext()).setMacPreferredPositionCS(Ssh2Context.HMAC_MD5, 2);
+	        ((Ssh2Context)con.getContext(2)).setPreferredMacCS(Ssh2Context.HMAC_MD5);
+	        ((Ssh2Context)con.getContext(2)).setMacPreferredPositionCS(Ssh2Context.HMAC_MD5, 1);
+	        ((Ssh2Context)con.getContext(2)).setMacPreferredPositionCS(Ssh2Context.HMAC_SHA1, 2);
 	        
-	        ((Ssh2Context)con.getContext()).setPreferredMacSC(Ssh2Context.HMAC_SHA256);
-	        ((Ssh2Context)con.getContext()).setMacPreferredPositionSC(Ssh2Context.HMAC_SHA1, 1);
-	        ((Ssh2Context)con.getContext()).setMacPreferredPositionSC(Ssh2Context.HMAC_MD5, 2);
+	        ((Ssh2Context)con.getContext(2)).setPreferredMacSC(Ssh2Context.HMAC_MD5);
+	        ((Ssh2Context)con.getContext(2)).setMacPreferredPositionSC(Ssh2Context.HMAC_MD5, 1);
+	        ((Ssh2Context)con.getContext(2)).setMacPreferredPositionSC(Ssh2Context.HMAC_SHA256, 2);
 	        
 	        /**
 			 * Connect to the host
@@ -276,21 +269,19 @@ public class MaverickSFTP implements RemoteDataClient
 			
 			t.setTcpNoDelay(true);
 			t.setPerformancePreferences(0, 1, 2);
-//			t.setSendBufferSize(MAX_BUFFER_SIZE);
-//	        t.setReceiveBufferSize(MAX_BUFFER_SIZE);
 			
-			SshClient ssh = con.connect(new com.sshtools.net.SocketWrapper(t), username);
+			SshClient ssh = con.connect(new SocketWrapper(t), username, true);
 			
 			/**
 			 * Determine the version
 			 */
-//			if (ssh instanceof Ssh1Client)
-//			{
-//				ssh.disconnect();
-//				
-//				throw new RemoteDataException(host
-//						+ " is an SSH1 server!! SFTP is not supported");
-//			}
+			if (ssh instanceof Ssh1Client)
+			{
+				ssh.disconnect();
+				
+				throw new RemoteDataException(host
+						+ " is an SSH1 server!! SFTP is not supported");
+			}
 			
 			ssh2 = (Ssh2Client) ssh;
 			
@@ -337,7 +328,7 @@ public class MaverickSFTP implements RemoteDataClient
 				/**
 				 * Authenticate the user using password authentication
 				 */
-				auth = new com.sshtools.ssh.PasswordAuthentication();
+				auth = new com.maverick.ssh.PasswordAuthentication();
 				do
 				{
 					((PasswordAuthentication)auth).setPassword(password);
@@ -439,14 +430,8 @@ public class MaverickSFTP implements RemoteDataClient
 				} else {
 					sftpClient = new SftpClient(ssh2);
 				}
-				// set only if the file size is larger than we're confortable 
-				// putting in memory. by default this is -1, which means the 
-				// entire file is read into memory on a get/put
-//				sftpClient.setBufferSize(50*MAX_BUFFER_SIZE);
-				sftpClient.setMaxAsyncRequests(256);
-				sftpClient.setBufferSize(500*1024*1024);
-				sftpClient.setTransferMode(SftpClient.MODE_BINARY);
-				
+				sftpClient.setBufferSize(MAX_BUFFER_SIZE);
+				sftpClient.setMaxAsyncRequests(100);
 			}
 			
 			return sftpClient;
@@ -950,8 +935,7 @@ public class MaverickSFTP implements RemoteDataClient
 		}
 		catch (SftpStatusException e) {
 			if (e.getMessage().toLowerCase().contains("no such file")) {
-				e.printStackTrace();
-				throw new FileNotFoundException(remotepath + ": No such file or directory");
+				throw new FileNotFoundException("No such file or directory");
 			} else {
 				throw new RemoteDataException("Failed to retrieve information about " + remotepath, e);
 			}
@@ -1051,7 +1035,7 @@ public class MaverickSFTP implements RemoteDataClient
 				throw new FileNotFoundException("No such file or directory");
 			} 
 			else if (doesExistSafe(resolvedDestPath)) {
-				throw new RemoteDataException("Destination already exists: " + newpath);
+				throw new RemoteDataSyntaxException("Destination already exists: " + newpath);
 			}
 			else {
 				throw new RemoteDataException("Failed to rename " + oldpath + " to " + newpath, e);
@@ -1108,23 +1092,23 @@ public class MaverickSFTP implements RemoteDataClient
 		try
 		{
 			if (ssh2.isAuthenticated()) 
-			{	
-//				if (useTunnel()) 
-//				{	
-//					SshTunnel tunnel = ssh2.openForwardingChannel(host, port,
-//							"127.0.0.1", 22, "127.0.0.1", 22, null, null);
-//	
-//					forwardedConnection = con.connect(tunnel, username);
-//					forwardedConnection.authenticate(auth);
-////					session = forwardedConnection.openSessionChannel();
-//					shell = new Shell(forwardedConnection);
-//				} else {
-//					// Some old SSH2 servers kill the connection after the first
-//					// session has closed and there are no other sessions started;
-//					// so to avoid this we create the first session and dont ever use it
-//					//session = ssh2.openSessionChannel();
-//					shell = new Shell(ssh2);
-//				}
+			{
+				if (useTunnel()) 
+				{	
+					SshTunnel tunnel = ssh2.openForwardingChannel(host, port,
+							"127.0.0.1", 22, "127.0.0.1", 22, null, null);
+	
+					forwardedConnection = con.connect(tunnel, username);
+					forwardedConnection.authenticate(auth);
+					//session = forwardedConnection.openSessionChannel();
+					shell = new Shell(forwardedConnection);
+				} else {
+					// Some old SSH2 servers kill the connection after the first
+					// session has closed and there are no other sessions started;
+					// so to avoid this we create the first session and dont ever use it
+					//session = ssh2.openSessionChannel();
+					shell = new Shell(ssh2);
+				}
 				
 				long remoteDestLength = length(remotesrc);
 				if (listener != null) {
@@ -1134,55 +1118,39 @@ public class MaverickSFTP implements RemoteDataClient
 				fileInfoCache.remove(resolvedDest);
                 
 				if (isDirectory(remotesrc)) {
+//				    resolvedSrc = StringUtils.replace(resolvedSrc, " ", "\\ ");
 				    resolvedSrc = StringUtils.stripEnd(resolvedSrc, "/") + "/.";
 				} 
 				
-//				String copyCommand = String.format("cp -rLf \"%s\" \"%s\"", resolvedSrc, resolvedDest);
-//				log.debug("Performing remote copy on " + host + ": " + copyCommand);
-//				ShellProcess process = shell.executeCommand(copyCommand);
-//				
-//				int r;
-//				StringBuilder builder = new StringBuilder();
-//				while((r = process.getInputStream().read()) > -1) {
-//				    builder.append((char)r);
-//				}
-//
-//				shell.exit();
-				
+//				resolvedSrc = StringUtils.replace(resolvedSrc, " ", "\\ ");
+//		        resolvedDest = StringUtils.replace(resolvedDest, " ", "\\ ");
+		        
 				String copyCommand = String.format("cp -rLf \"%s\" \"%s\"", resolvedSrc, resolvedDest);
 				log.debug("Performing remote copy on " + host + ": " + copyCommand);
+				ShellProcess process = shell.executeCommand(copyCommand);
 				
-				MaverickSSHSubmissionClient proxySubmissionClient = null;
-				String proxyResponse = null;
-				try {
-					proxySubmissionClient = new MaverickSSHSubmissionClient(getHost(), port, username,
-							password, proxyHost, proxyPort, publicKey, privateKey);
-					proxyResponse = proxySubmissionClient.runCommand(copyCommand);
-				} 
-				catch (RemoteDataException e) {
-					throw e;
+				int r;
+				StringBuilder builder = new StringBuilder();
+				while((r = process.getInputStream().read()) > -1) {
+				    builder.append((char)r);
 				}
-				catch (Exception e) {
-					throw new RemoteDataException("Failed to connect to destination server " + getHost() + ":" + port, e);
-				}
-				finally {
-					try { proxySubmissionClient.close(); } catch (Exception e) {}
-				}
+
+				shell.exit();
 				
-				if (proxyResponse.length() > 0) {
+				if (builder.length() > 0) {
 					if (listener != null) {
 						listener.failed();
 					}
-					if (StringUtils.containsIgnoreCase(proxyResponse, "No such file or directory")) {
+					if (StringUtils.containsIgnoreCase(builder.toString(), "No such file or directory")) {
 					    throw new FileNotFoundException("No such file or directory");
 					} 
-					else if (StringUtils.startsWithIgnoreCase(proxyResponse, "cp:")) {
+					else if (StringUtils.startsWithIgnoreCase(builder.toString(), "cp:")) {
 					    // We use the heuristic that a copy failure due to invalid 
 					    // user input produces a message that begins with 'cp:'.
-					    throw new RemoteDataException("Copy failure: " + proxyResponse.substring(3));
+					    throw new RemoteDataSyntaxException("Copy failure: " + builder.toString().substring(3));
 					} else {
 					    throw new RemoteDataException("Failed to perform a remote copy command on " + host + ". " + 
-					    		proxyResponse);
+					            builder.toString());
 					}
 				} else {
 					if (listener != null) {
@@ -1197,7 +1165,7 @@ public class MaverickSFTP implements RemoteDataClient
 				throw new RemoteDataException("Failed to authenticate to remote host");
 			}
 		}
-		catch(FileNotFoundException | RemoteDataException  e) {
+		catch(FileNotFoundException | RemoteDataException | RemoteDataSyntaxException e) {
 			throw e;
 		}
 		catch (Throwable t)
@@ -1284,8 +1252,6 @@ public class MaverickSFTP implements RemoteDataClient
 				throw new FileNotFoundException("No such file or directory");
 			} else if (e.getMessage().toLowerCase().contains("directory already exists")) {
 				return false;
-			} else if (e.getMessage().toLowerCase().contains("file already exists")) {
-				return false;
 			} else if (e.getMessage().toLowerCase().contains("permission denied")) {
 				throw new RemoteDataException("Cannot create directory " + resolvedPath + ": Permisison denied");
 			} else {
@@ -1348,8 +1314,6 @@ public class MaverickSFTP implements RemoteDataClient
 			if (e.getMessage().toLowerCase().contains("no such file")) {
 				throw new FileNotFoundException("No such file or directory");
 			} else if (e.getMessage().toLowerCase().contains("directory already exists")) {
-				return false;
-			} else if (e.getMessage().toLowerCase().contains("file already exists")) {
 				return false;
 			} else if (e.getMessage().toLowerCase().contains("permission denied")) {
 				throw new RemoteDataException("Cannot create directory " + resolvedPath + ": Permisison denied");
@@ -1648,8 +1612,7 @@ public class MaverickSFTP implements RemoteDataClient
 					" does not exist or the user does not have permission to view it.");
 			}
 		} 
-//		return StringUtils.stripEnd(path," ");
-		return path;
+		return StringUtils.stripEnd(path," ");
 	}
 
 	@Override

@@ -98,9 +98,10 @@ public enum SchedulerType
 			case TORQUE:
 			case CUSTOM_TORQUE:
 			case MOAB:
+				return "qstat -w | grep ";
 			case SGE:
 			case CUSTOM_GRIDENGINE:
-				return "qstat -w | grep ";
+				return "qstat -j %s 2>/dev/null || qacct -j %s 2>/dev/null";
 			case CUSTOM_CONDOR:
 			case CONDOR:
 				return "condor_q -format '%d'  JobStatus";

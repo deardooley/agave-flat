@@ -3,6 +3,7 @@ package org.iplantc.service.jobs.managers.monitors.parsers.responses;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.iplantc.service.jobs.exceptions.RemoteJobMonitorCommandSyntaxException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 import org.iplantc.service.jobs.managers.monitors.parsers.SlurmHPCMonitorResponseParser;
@@ -39,7 +40,7 @@ public class SlurmJobStatusResponseTest {
 	
 	@Test(dataProvider = "parseResponseStatusProvider")
 	public void newSlurmJobStatusResponse(String rawServerResponse, String expectedStatus) 
-	throws RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException 
+	throws RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException, RemoteJobMonitorCommandSyntaxException 
 	{
 		 SlurmJobStatusResponse jobStatusResponse = new SlurmJobStatusResponse(rawServerResponse);	
 		

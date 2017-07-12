@@ -130,8 +130,7 @@ public class SubmissionWatchTest extends AbstractJobSubmissionTest
      * @param message
      * @param shouldThrowException
      */
-	@Override
-    protected Job genericRemoteSubmissionTestCase(Job job, JobStatusType expectedStatus, String message, boolean shouldThrowException) 
+	protected Job genericRemoteSubmissionTestCase(Job job, JobStatusType expectedStatus, String message, boolean shouldThrowException) 
     {
         boolean actuallyThrewException = false;
         String exceptionMsg = message;

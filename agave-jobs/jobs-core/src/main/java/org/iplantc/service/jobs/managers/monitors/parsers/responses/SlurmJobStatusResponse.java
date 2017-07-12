@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.iplantc.service.jobs.exceptions.RemoteJobMonitorCommandSyntaxException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 
@@ -30,10 +31,11 @@ public class SlurmJobStatusResponse extends JobStatusResponse {
 	 * @param schedulerResponse
 	 * @throws RemoteJobMonitorEmptyResponseException
 	 * @throws RemoteJobMonitorResponseParsingException
+	 * @throws RemoteJobMonitorCommandSyntaxException 
 	 */
 	public SlurmJobStatusResponse(String schedulerResponse)
 			throws RemoteJobMonitorEmptyResponseException,
-			RemoteJobMonitorResponseParsingException {
+			RemoteJobMonitorResponseParsingException, RemoteJobMonitorCommandSyntaxException {
 		super(schedulerResponse);
 	}
 
@@ -56,11 +58,16 @@ public class SlurmJobStatusResponse extends JobStatusResponse {
 		if (StringUtils.isBlank(schedulerResponse)) {
 			throw new RemoteJobMonitorEmptyResponseException(
 					"Empty response received from job status check on the remote system. This is likely caused by a ");
-		} else if (!schedulerResponse.contains("|")) {
+		} 
+		else if (!schedulerResponse.contains("|")) {
 			throw new RemoteJobMonitorResponseParsingException(
 					"Unexpected fields in the response from the scheduler: "
 							+ schedulerResponse);
-		} else {
+		}
+		else if (StringUtils.contains(schedulerResponse, "sbatch: unrecognized option")) {
+			throw new RemoteJobMonitorResponseParsingException("Unable to obtain job status in the response from the scheduler: " + schedulerResponse);
+		}
+		else {
 			List<String> lines = splitResponseByLine(schedulerResponse);
 			
 			for (String line : lines) {

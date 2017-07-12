@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.ietf.jgss.GSSCredential;
 
 /**
@@ -116,8 +117,8 @@ public class Settings {
 		
 		IPLANT_MYPROXY_SERVER = (String) props.get("iplant.myproxy.server");
 
-		IPLANT_MYPROXY_PORT = Integer.valueOf((String) props
-				.get("iplant.myproxy.port"));
+		IPLANT_MYPROXY_PORT = NumberUtils.toInt((String) props
+				.getProperty("iplant.myproxy.port", "7512"), 7512);
 
 		IPLANT_LDAP_URL = (String) props.get("iplant.ldap.url");
 
@@ -178,7 +179,7 @@ public class Settings {
 
 		IRODS_HOST = (String) props.get("iplant.irods.host");
 
-		IRODS_PORT = Integer.valueOf((String) props.get("iplant.irods.port"));
+		IRODS_PORT = NumberUtils.toInt((String) props.getProperty("iplant.irods.port", "1247"), 1247);
 
 		IRODS_ZONE = (String) props.get("iplant.irods.zone");
 
@@ -194,9 +195,9 @@ public class Settings {
 
 		WORLD_USER_USERNAME = (String) props.get("iplant.world.user");
 
-		DEFAULT_PAGE_SIZE = Integer.parseInt((String) props.getProperty("iplant.default.page.size", "25"));
+		DEFAULT_PAGE_SIZE = NumberUtils.toInt((String) props.getProperty("iplant.default.page.size", "25"),25);
 		
-		MAX_REMOTE_OPERATION_TIME = Integer.parseInt((String) props.getProperty("iplant.max.remote.connection.time", "90"));
+		MAX_REMOTE_OPERATION_TIME = NumberUtils.toInt((String) props.getProperty("iplant.max.remote.connection.time", "90"), 90);
 	}
 
 }

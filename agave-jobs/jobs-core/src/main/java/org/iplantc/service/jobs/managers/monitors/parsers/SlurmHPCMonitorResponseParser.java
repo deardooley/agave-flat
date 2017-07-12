@@ -3,6 +3,7 @@ package org.iplantc.service.jobs.managers.monitors.parsers;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.iplantc.service.jobs.exceptions.RemoteJobFailureDetectedException;
+import org.iplantc.service.jobs.exceptions.RemoteJobMonitorCommandSyntaxException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 import org.iplantc.service.jobs.exceptions.RemoteJobUnknownStateException;
@@ -178,7 +179,7 @@ public class SlurmHPCMonitorResponseParser implements JobMonitorResponseParser {
 	
 	@Override
 	public boolean isJobRunning(String remoteServerRawResponse) 
-	throws RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException
+	throws RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException, RemoteJobUnrecoverableStateException, RemoteJobMonitorCommandSyntaxException
 	{
 		SlurmJobStatusResponse statusResponse = new SlurmJobStatusResponse(remoteServerRawResponse);
 		
@@ -221,28 +222,5 @@ public class SlurmHPCMonitorResponseParser implements JobMonitorResponseParser {
 		catch (IllegalArgumentException e) {
 			throw new RemoteJobUnknownStateException(statusResponse.getStatus(), "Detected job in an unknown state ");
 		}
-//		
-//		
-//		
-//		else if (StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "completed")) {
-//			return false;
-//		}
-//		else if (StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "timeout")) {
-//			return false;
-//		}
-//		else if (StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "timeout")) {
-//			return false;
-//		}
-//		else if (StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "failed")) {
-//			throw new RemoteJobFailureDetectedException("Exit code was " + statusResponse.getExitCode());
-//		}
-//		else if (StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "resizing") ||
-//				StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "running") || 
-//				StringUtils.equalsIgnoreCase(statusResponse.getStatus(), "pending")) {
-//			return true;
-//		}
-//		else {
-//			throw new RemoteJobUnknownStateException(statusResponse.getStatus(), "Detected job in an unknown state ");
-//		}
 	}
 }

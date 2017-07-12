@@ -1,0 +1,30 @@
+[Tue Dec 13 04:57:46.850942 2016] [auth_digest:notice] [pid 25] AH01757: generating secret for digest authentication ...
+[Tue Dec 13 04:57:46.851613 2016] [lbmethod_heartbeat:notice] [pid 25] AH02282: No slotmem from mod_heartmonitor
+[Tue Dec 13 04:57:46.851785 2016] [socache_shmcb:info] [pid 25] AH00830: Shared memory socache initialised
+[Tue Dec 13 04:57:46.851859 2016] [ssl:info] [pid 25] AH01887: Init: Initializing (virtual) servers for SSL
+[Tue Dec 13 04:57:46.853938 2016] [ssl:info] [pid 25] AH01876: mod_ssl/2.4.16 compiled against Server: Apache/2.4.16, Library: OpenSSL/1.0.2d
+[Tue Dec 13 04:57:46.854141 2016] [mpm_prefork:notice] [pid 25] AH00163: Apache/2.4.16 (Unix) OpenSSL/1.0.2g configured -- resuming normal operations
+[Tue Dec 13 04:57:46.854221 2016] [mpm_prefork:info] [pid 25] AH00164: Server built: Oct 15 2015 09:25:18
+[Tue Dec 13 04:57:46.854318 2016] [core:notice] [pid 25] AH00094: Command line: '/usr/sbin/httpd -D FOREGROUND'
+[Tue Dec 13 04:58:07.928186 2016] [mpm_prefork:notice] [pid 25] AH00171: Graceful restart requested, doing restart
+[Tue Dec 13 04:58:07.936625 2016] [auth_digest:notice] [pid 25] AH01757: generating secret for digest authentication ...
+[Tue Dec 13 04:58:07.937242 2016] [lbmethod_heartbeat:notice] [pid 25] AH02282: No slotmem from mod_heartmonitor
+[Tue Dec 13 04:58:07.937395 2016] [socache_shmcb:info] [pid 25] AH00830: Shared memory socache initialised
+[Tue Dec 13 04:58:07.937439 2016] [ssl:info] [pid 25] AH01887: Init: Initializing (virtual) servers for SSL
+[Tue Dec 13 04:58:07.938139 2016] [ssl:info] [pid 25] AH01876: mod_ssl/2.4.16 compiled against Server: Apache/2.4.16, Library: OpenSSL/1.0.2d
+[Tue Dec 13 04:58:07.938309 2016] [mpm_prefork:notice] [pid 25] AH00163: Apache/2.4.16 (Unix) OpenSSL/1.0.2g configured -- resuming normal operations
+[Tue Dec 13 04:58:07.938370 2016] [mpm_prefork:info] [pid 25] AH00164: Server built: Oct 15 2015 09:25:18
+[Tue Dec 13 04:58:07.939386 2016] [core:notice] [pid 25] AH00094: Command line: '/usr/sbin/httpd -D FOREGROUND'
+[Tue Dec 13 04:58:11.629735 2016] [authz_core:debug] [pid 55] mod_authz_core.c(835): [client 192.168.99.1:54562] AH01628: authorization result: granted (no directives)
+[Tue Dec 13 04:58:11.629952 2016] [charset_lite:debug] [pid 55] mod_charset_lite.c(219): [client 192.168.99.1:54562] AH01448: incomplete configuration: src unspecified, dst unspecified
+[Tue Dec 13 04:58:11.630107 2016] [proxy:debug] [pid 55] mod_proxy.c(1159): [client 192.168.99.1:54562] AH01143: Running scheme http handler (attempt 0)
+[Tue Dec 13 04:58:11.630218 2016] [proxy_ajp:debug] [pid 55] mod_proxy_ajp.c(738): [client 192.168.99.1:54562] AH00894: declining URL http://proxy.host:8080/uuids/6318814362910846490-42e65d49ffffbabc-0001-006
+[Tue Dec 13 04:58:11.630330 2016] [proxy_fcgi:debug] [pid 55] mod_proxy_fcgi.c(879): [client 192.168.99.1:54562] AH01076: url: http://proxy.host:8080/uuids/6318814362910846490-42e65d49ffffbabc-0001-006 proxyname: (null) proxyport: 0
+[Tue Dec 13 04:58:11.630432 2016] [proxy_fcgi:debug] [pid 55] mod_proxy_fcgi.c(882): [client 192.168.99.1:54562] AH01077: declining URL http://proxy.host:8080/uuids/6318814362910846490-42e65d49ffffbabc-0001-006
+[Tue Dec 13 04:58:11.630536 2016] [proxy:debug] [pid 55] proxy_util.c(2147): AH00942: HTTP: has acquired connection for (*)
+[Tue Dec 13 04:58:11.630639 2016] [proxy:debug] [pid 55] proxy_util.c(2200): [client 192.168.99.1:54562] AH00944: connecting http://proxy.host:8080/uuids/6318814362910846490-42e65d49ffffbabc-0001-006 to proxy.host:8080
+[Tue Dec 13 04:58:11.630791 2016] [proxy:debug] [pid 55] proxy_util.c(2409): [client 192.168.99.1:54562] AH00947: connected /uuids/6318814362910846490-42e65d49ffffbabc-0001-006 to proxy.host:8080
+[Tue Dec 13 04:58:11.631234 2016] [proxy:debug] [pid 55] proxy_util.c(2786): AH02824: HTTP: connection established with 192.168.99.1:8080 (*)
+[Tue Dec 13 04:58:11.631409 2016] [proxy:debug] [pid 55] proxy_util.c(2938): AH00962: HTTP: connection complete to 192.168.99.1:8080 (proxy.host)
+[Tue Dec 13 04:58:11.643328 2016] [proxy:debug] [pid 55] proxy_util.c(2162): AH00943: *: has released connection for (*)
+[Tue Dec 13 04:58:11.643611 2016] [proxy:debug] [pid 55] proxy_util.c(2879): [remote 192.168.99.1:8080] AH02642: proxy: connection shutdown

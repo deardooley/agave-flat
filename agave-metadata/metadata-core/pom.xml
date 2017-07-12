@@ -169,11 +169,23 @@
 			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
-		<!-- <dependency> <groupId>org.mongojack</groupId> <artifactId>mongojack</artifactId> 
-			<version>${mongojack.version}</version> <exclusions> <exclusion> <artifactId>persistence-api</artifactId> 
-			<groupId>javax.persistence</groupId> </exclusion> </exclusions> </dependency> -->
-		<!-- <dependency> <groupId>com.google.inject</groupId> <artifactId>guice</artifactId> 
-			<version>${guice.version}</version> <scope>test</scope> </dependency> -->
+		<dependency>
+			<groupId>org.mongojack</groupId>
+			<artifactId>mongojack</artifactId>
+			<version>${mongojack.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>persistence-api</artifactId>
+					<groupId>javax.persistence</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>${guice.version}</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>cz.jirutka.validator</groupId>
 			<artifactId>validator-collection</artifactId>

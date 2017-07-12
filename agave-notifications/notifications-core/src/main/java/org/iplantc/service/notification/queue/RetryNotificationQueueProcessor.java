@@ -91,19 +91,19 @@ public class RetryNotificationQueueProcessor implements InterruptableJob, Messag
     			log.error(message, e);
     		}
 		    
-		    try {
-				Tenant tenant = new TenantDao().findByTenantId(TenancyHelper.getCurrentTenantId());
-				if (tenant != null)
-				{   
-					EmailMessage.send(tenant.getContactName(), 
-						tenant.getContactEmail(), 
-						"Notification worker died unexpectedly", 
-						message + "\n\n" +  ExceptionUtils.getStackTrace(e),
-						"<p>" + message + "</p><pre>" + ExceptionUtils.getStackTrace(e) + "</pre></p>");
-				}
-			} catch (Throwable e1) {
-				log.error("Failed to send worker failure message to admin.",e1);
-			}
+//		    try {
+//				Tenant tenant = new TenantDao().findByTenantId(TenancyHelper.getCurrentTenantId());
+//				if (tenant != null)
+//				{   
+//					EmailMessage.send(tenant.getContactName(), 
+//						tenant.getContactEmail(), 
+//						"Notification worker died unexpectedly", 
+//						message + "\n\n" +  ExceptionUtils.getStackTrace(e),
+//						"<p>" + message + "</p><pre>" + ExceptionUtils.getStackTrace(e) + "</pre></p>");
+//				}
+//			} catch (Throwable e1) {
+//				log.error("Failed to send worker failure message to admin.",e1);
+//			}
 		}
 		finally {
 			try { messageClient.stop(); } catch (Exception e) {}

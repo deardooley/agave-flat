@@ -1,0 +1,93 @@
+{
+  nodeName: "HOSTNAME",
+  logStreams: {
+    "apim_systems_1": [
+      "/var/log/splunk/systems/access",
+      "/var/log/splunk/systems/systems-api.log"
+    ],
+    "apim_monitors_1": [
+      "/var/log/splunk/monitors/access",
+      "/var/log/splunk/monitors/monitors-api.log"
+    ],
+    "apim_tenants_1": [
+      "/var/log/splunk/tenants/access_log",
+      "/var/log/splunk/tenants/error_log",
+      "/var/log/splunk/tenants/ssl_access_log",
+      "/var/log/splunk/tenants/ssl_error_log"
+    ],
+    "apim_logging_1": [
+      "/var/log/splunk/metadata/access",
+      "/var/log/splunk/metadata/metadata-api.log"
+    ],
+    "apim_logging_1": [
+      "/var/log/splunk/logging/access_log",
+      "/var/log/splunk/logging/error_log",
+      "/var/log/splunk/logging/ssl_access_log",
+      "/var/log/splunk/logging/ssl_error_log"
+    ],
+    "apim_usage_1": [
+      "/var/log/splunk/usage/access_log",
+      "/var/log/splunk/usage/error_log",
+      "/var/log/splunk/usage/ssl_access_log",
+      "/var/log/splunk/usage/ssl_error_log"
+    ],
+    "apim_uuids_1": [
+      "/var/log/splunk/uuids/access",
+      "/var/log/splunk/uuids/uuids-api.log"
+    ],
+    "apim_postits_1": [
+      "/var/log/splunk/postits/access_log",
+      "/var/log/splunk/postits/error_log",
+      "/var/log/splunk/postits/ssl_access_log",
+      "/var/log/splunk/postits/ssl_error_log"
+    ],
+    "apim_notifications_1": [
+      "/var/log/splunk/notifications/access",
+      "/var/log/splunk/notifications/notifications-api.log"
+    ],
+    "apim_profiles_1": [
+      "/var/log/splunk/profiles/access",
+      "/var/log/splunk/profiles/profiles-api.log"
+    ],
+    "apim_transforms_1": [
+      "/var/log/splunk/transforms/access",
+      "/var/log/splunk/transforms/transforms-api.log"
+    ],
+    "apim_apps_1": [
+      "/var/log/splunk/apps/access",
+      "/var/log/splunk/apps/apps-api.log"
+    ],
+    "apim_realtime_1": [
+      "/var/log/splunk/realtime/access",
+      "/var/log/splunk/realtime/realtime-api.log"
+    ],
+    "apim_docs_1": [
+      "/var/log/splunk/docs/access_log",
+      "/var/log/splunk/docs/error_log",
+      "/var/log/splunk/docs/ssl_access_log",
+      "/var/log/splunk/docs/ssl_error_log"
+    ],
+    "apim_tags_1": [
+      "/var/log/splunk/tags/access",
+      "/var/log/splunk/tags/tags-api.log"
+    ],
+    "apim_jobs_1": [
+      "/var/log/splunk/jobs/access",
+      "/var/log/splunk/jobs/jobs-api.log"
+    ],
+    "apim_files_1": [
+      "/var/log/splunk/files/access",
+      "/var/log/splunk/files/files-api.log"
+    ],
+    "apim_proxy_1": [
+      "/var/log/splunk/proxy/access_log",
+      "/var/log/splunk/proxy/error_log",
+      "/var/log/splunk/proxy/ssl_access_log",
+      "/var/log/splunk/proxy/ssl_error_log"
+    ]
+  },
+  server: {
+    host: 'logio',
+    port: 28777
+  }
+}

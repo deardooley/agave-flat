@@ -21,13 +21,13 @@ public class AgaveJargonProperties implements JargonProperties {
 	private int irodsParallelSocketTimeout = 0;
 	private int internalInputStreamBufferSize = 0;//8338608;
 	private int internalOutputStreamBufferSize = 0;//8338608;
-	private int internalCacheBufferSize = 65535;
+	private int internalCacheBufferSize = 0;
 	private int sendInputStreamBufferSize = 0;//8338608;
 	private int localFileOutputStreamBufferSize = 0;
 	private int localFileInputStreamBufferSize = 0;
 	private int putBufferSize = 4194304;
 	private int getBufferSize = 4194304;
-	private int inputToOutputCopyBufferByteSize = 65536;
+	private int inputToOutputCopyBufferByteSize = 1048576;
 	private String encoding = "UTF-8";
 	private boolean instrument = false;
 	private boolean reconnect = true;

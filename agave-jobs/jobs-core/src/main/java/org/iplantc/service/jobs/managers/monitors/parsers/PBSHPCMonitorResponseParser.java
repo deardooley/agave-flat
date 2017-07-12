@@ -100,7 +100,7 @@ public class PBSHPCMonitorResponseParser implements JobMonitorResponseParser {
 						return PBSStatusType.isActiveStatus(tokens.get(9)); 
 					}
 					catch (Throwable e) {
-						throw new RemoteJobMonitorResponseParsingException("Unexpected fiels in the response from the scheduler: " + result);
+						throw new RemoteJobMonitorResponseParsingException("Unexpected fields in the response from the scheduler: " + result);
 					}
 				}
 				// in case the response is customized, we check for the next to last token, which 
@@ -112,7 +112,7 @@ public class PBSHPCMonitorResponseParser implements JobMonitorResponseParser {
 								return PBSStatusType.isActiveStatus(tokens.get(9)); 
 							}
 							catch (Throwable e) {
-								throw new RemoteJobMonitorResponseParsingException("Unexpected fiels in the response from the scheduler: " + result);
+								throw new RemoteJobMonitorResponseParsingException("Unexpected fields in the response from the scheduler: " + result);
 							}
 						}
 					}

@@ -35,8 +35,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.sshtools.logging.Log;
-
 @Test(groups= {"transfer","performance"})
 public class URLCopyTest extends BaseTransferTestCase
 {

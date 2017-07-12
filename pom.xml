@@ -199,6 +199,7 @@
 	    <log4j.version>1.2.17</log4j.version>
 	    <mail.version>1.4.6</mail.version>
 	    <maverick.version>1.6.3</maverick.version>
+	    <maverick.version>1.6.3</maverick.version>
 	    <mongo-java-driver.version>2.14.1</mongo-java-driver.version>
 	    <mongojack.version>2.6.0</mongojack.version>
 	    <mysql-connector-java.version>5.1.38</mysql-connector-java.version>

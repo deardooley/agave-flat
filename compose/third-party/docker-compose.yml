@@ -142,23 +142,6 @@ services:
       - "traefik.enable=false"
     networks:
       - realtime
-
-  ##############################################################
-  # Fluentd
-  ##############################################################
-  
-  fluentd: 
-    image: fluent/fluentd
-    hostname: fluentd.example.com
-    restart: on-failure
-    ports:
-      - 24224:24224
-    volumes:
-      - ../logs/fluentd:/fluentd/log
-    labels:
-      - "traefik.enable=false"
-    networks:
-      - default
       
 networks:
   services: 

@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.iplantc.service.transfer.AbstractPathResolutionTests;
 import org.iplantc.service.transfer.RemoteDataClient;
+import org.iplantc.service.transfer.sftp.MaverickSFTP;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.annotations.Test;

@@ -21,6 +21,7 @@ import org.quartz.JobExecutionContext;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.surftools.BeanstalkClient.BeanstalkException;
 
 /**
  * Class to watch for monitor messages coming across the message queue. Despite being 
@@ -73,18 +74,33 @@ public class MonitorQueueListener implements org.quartz.Job
 //		}
 		catch (Throwable e) {
 			log.error("Monitor messaging client failed unexpectedly." + (message == null ? "" : message.getMessage()));
-			try {
-				Tenant tenant = new TenantDao().findByTenantId(TenancyHelper.getCurrentTenantId());
-				String body = "Monitor worker on " + ServiceUtils.getLocalIP() + " died unexpectedly.";
-				EmailMessage.send(tenant.getContactName(), 
-					tenant.getContactEmail(), 
-					"Monitor worker died unexpectedly", 
-					body + "\n\n" +  ExceptionUtils.getStackTrace(e),
-                    "<p>" + body + "</p><pre>" + ExceptionUtils.getStackTrace(e) + "</pre></p>");
-				
-			} catch (Throwable e1) {
-				log.error("Failed to send worker failure message to admin.",e1);
-			}
+			String msg;
+		    if (e instanceof BeanstalkException && e.getMessage().contains("Connection refused")) 
+		    {
+		    	msg = "A Monitor worker on " + ServiceUtils.getLocalIP() 
+                        + " is unable to connect to the " + Settings.MESSAGING_SERVICE_PROVIDER + " message queue at " 
+                        + Settings.MESSAGING_SERVICE_HOST + ":" + Settings.MESSAGING_SERVICE_PORT 
+                        + ". Pending messages will remained queued until the queue is available again";
+		        log.error(msg, e);
+            } 
+		    else 
+		    { 
+		    	msg = "A monitoring worker on " + ServiceUtils.getLocalIP() + " died unexpectedly. "
+		                + (message == null ? "" : "Pending message was \n" + message.getMessage());
+    			log.error(msg, e);
+    		}
+//			try {
+//				String body = "Monitor worker on " + ServiceUtils.getLocalIP() + " died unexpectedly.";
+//				Tenant tenant = new TenantDao().findByTenantId(TenancyHelper.getCurrentTenantId());
+//				EmailMessage.send(tenant.getContactName(), 
+//					tenant.getContactEmail(), 
+//					"Monitor worker died unexpectedly", 
+//					body + "\n\n" +  ExceptionUtils.getStackTrace(e),
+//                    "<p>" + body + "</p><pre>" + ExceptionUtils.getStackTrace(e) + "</pre></p>");
+//				
+//			} catch (Throwable e1) {
+//				log.error("Failed to send worker failure message to admin.",e1);
+//			}
 		}
 		finally {
 			try { messageClient.stop(); } catch (Exception e) {}

@@ -2,8 +2,11 @@ package org.iplantc.service.jobs.managers.monitors.parsers.responses;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.iplantc.service.jobs.exceptions.RemoteJobMonitorCommandSyntaxException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 
@@ -24,10 +27,12 @@ public abstract class JobStatusResponse {
 	 * @param schedulerResponse
 	 * @throws RemoteJobMonitorEmptyResponseException
 	 * @throws RemoteJobMonitorResponseParsingException
+	 * @throws RemoteJobMonitorCommandSyntaxException 
 	 */
 	public JobStatusResponse(String schedulerResponse)
-			throws RemoteJobMonitorEmptyResponseException,
-			RemoteJobMonitorResponseParsingException {
+	throws RemoteJobMonitorEmptyResponseException, RemoteJobMonitorResponseParsingException, 
+			RemoteJobMonitorCommandSyntaxException 
+	{
 		List<String> tokens = parseResponse(schedulerResponse);
 		setJobId(tokens.get(0));
 		setStatus(tokens.get(1));
@@ -45,10 +50,13 @@ public abstract class JobStatusResponse {
 	 *            the raw response from the scheduler. Should be in
 	 *            {@code <job_id>|<state>|<exit_code>|} format.
 	 * @return list of tokens in the response.
+	 * @throws RemoteJobMonitorResponseParsingException
+	 * @throws RemoteJobMonitorEmptyResponseException
+	 * @throws RemoteJobMonitorCommandSyntaxException 
 	 */
 	public abstract List<String> parseResponse(String schedulerResponse)
-			throws RemoteJobMonitorEmptyResponseException,
-			RemoteJobMonitorResponseParsingException;
+	throws RemoteJobMonitorEmptyResponseException,
+			RemoteJobMonitorResponseParsingException, RemoteJobMonitorCommandSyntaxException;
 
 	/**
 	 * @return the jobId
@@ -94,5 +102,24 @@ public abstract class JobStatusResponse {
 	public void setExitCode(String exitCode) {
 		this.exitCode = exitCode;
 	}
-
+	
+	/**
+	 * @return true if the response was blank, ie. null, empty, or only spaces
+	 */
+	public boolean isBlankResponse() {
+		return StringUtils.isBlank(getStatus());
+	}
+	
+	/**
+	 * Checks the value of {@link #exitCode} for a success status. Depending
+	 * on the scheduler, this could be a delimited value representing the
+	 * value of the current and parent task (ie. 0.0), or a simple integer 
+	 * value from a process exit code.
+	 * 
+	 * @return true if the remote process exited with code 0, 1 otherwise
+	 */
+	public boolean isSuccessExitCode() {
+		return (NumberUtils.isNumber(getExitCode()) && 
+				NumberUtils.toInt(getExitCode()) == 0);
+	}
 }

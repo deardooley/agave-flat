@@ -1,0 +1,130 @@
+swagger: '2.0'
+info:
+  title: Agave Tenants API
+  description: This is a basic tenant lookup api.
+  version: 0.1.0
+host: public.agaveapi.co
+schemes:
+  - https
+basePath: /
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  '/tenants/v2':
+    get:
+      operationId: listTenants
+      summary: List all active tenants
+      description: Lists all active tenants publicly available 
+      tags:
+        - Tenants
+      parameters:
+        - 
+          $ref: '#/parameters/filter'
+        - 
+          $ref: '#/parameters/naked'
+        - 
+          $ref: '#/parameters/limit'
+        - 
+          $ref: '#/parameters/offset'
+      responses:
+        '200':
+          description: An single UUID
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Tenant'
+        '400':
+          description: 'Bad request, usually due to invalid resource type in the response query.'
+        '403':
+          description: You do not have sufficient permissions to the tagged resources.
+        default:
+          description: Unexpected error
+          
+  '/tenants/v2/{codeOrUuid}':
+    get:
+      operationId: getTenantDetails
+      summary: Resolve Tenant Details
+      description: Returns information about the tenant with the given code or uuid
+      tags:
+        - Tenants
+      parameters:
+        - name: codeOrUuid
+          in: path
+          description: Unique tenant code or id of the tenant
+          required: true
+          type: string
+        - 
+          $ref: '#/parameters/filter'
+        - 
+          $ref: '#/parameters/naked'
+      responses:
+        '200':
+          description: Tenant details
+          schema:
+            "$ref": "#/definitions/Tenant"
+        '403':
+          description: You do not have sufficient permissions to view the resource corresponding to this uuid.
+        '404':
+          description: Not found
+        default:
+          description: Unexpected error
+
+          
+definitions:
+  Tenant:
+    description: Tenant organization details
+    type: object
+    properties:
+      id:
+        description: uuid of the tenant
+        type: string
+      name:
+        description: human readable name of the tenant organization
+        type: string
+      baseUrl:
+        description: The base url for all tenant requests. This should always be SSL enabled. 
+        type: string
+      code:
+        description: The code by which this tenant is known, eg. agave.prod
+        type: string
+      created:
+        description: When the tenant was created in ISO8601 format
+        type: string
+        format: date-time
+      lastUpdated:
+        description: When the tenant was last updated in ISO8601 format
+        type: string
+        format: date-time
+      contact:
+        $ref: '#/definitions/TenantContact'
+  TenantContact:
+    description: Tenant contact information
+    type: object
+    properties:
+      name:
+        description: Full name of the contact
+        type: string
+      email:
+        description: The base url for all tenant requests. This should always be SSL enabled. 
+        type: string
+      url:
+        description: The code by which this tenant is known, eg. agave.prod
+        type: string
+      type:
+        description: The type of contact this user represents.
+        type: string
+        enum:
+          - admin
+          - support
+          - education
+          - media
+          - training
+          - security
+      primary:
+        description: Whether the contact is the primary contact for the tenant.
+        type: boolean
+      contact:
+        $ref: '#/definitions/TenantContact'
+  

@@ -23,6 +23,7 @@ public enum JobEventType {
 	QUEUED("Job successfully placed into queue"), 
 	RUNNING("Job started running"), 
 	
+	BAD_QUERY_COMMAND_SYNTAX("The command used to check the job status was not recognized by the scheduler."),
 	EMPTY_STATUS_RESPONSE("An empty response was received from the remote execution system when querying for job status"),
 	REMOTE_STATUS_CHANGE("The status of the job on the remote system was changed by an external process."),
 	UNKNOWN_TERMINATION("The job experienced an unknown termination event and is no longer running on the remote system."),

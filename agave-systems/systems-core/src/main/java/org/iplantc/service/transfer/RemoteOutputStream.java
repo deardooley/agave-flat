@@ -3,6 +3,8 @@
  */
 package org.iplantc.service.transfer;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -46,5 +48,16 @@ public abstract class RemoteOutputStream<T> extends OutputStream {
     public void write(int b) throws IOException {
     	throw new IOException("Not implemented.");
     }
+    
+    /** Allow users of subclasses to determine if the
+     * stream is already wrapped inside buffered stream.
+     * 
+     * @return true if the stream buffers output, false otherwise.
+     */
+    public boolean isBuffered()
+    {
+    	return output instanceof BufferedOutputStream;
+    }
+
 
 }

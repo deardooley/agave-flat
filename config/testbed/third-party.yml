@@ -268,7 +268,13 @@ pushpin:
 #  labels:
 #    - "traefik.enable=false"
 
-logs:
+
+###############################################################
+## Logio - realtime log aggregation, no history
+###############################################################
+
+# harvester listening to the docker daemon
+logio-docker-harvester:
   image: gerchardon/docker-logio
   links:
    - logio:logio
@@ -276,8 +282,9 @@ logs:
    - /var/run/docker.sock:/var/run/docker.sock
   command: -h logio -n docker
   privileged: true
+      
 logio:
   image: temal/logio-server
   ports:
    - 28777:28777
-   - 28778:28778
+   - 28778:2877

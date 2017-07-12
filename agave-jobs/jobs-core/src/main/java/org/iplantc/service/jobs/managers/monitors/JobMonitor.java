@@ -77,4 +77,10 @@ public interface JobMonitor {
 	throws RemoteDataException, IOException, AuthenticationException, 
 		SystemUnavailableException, RemoteCredentialException;
 
+	/**
+	 * Creates the appropriate command to query the job status on the remote {@link ExecutionSystem} 
+	 * @return the command string to be invoked by a {@link RemoteSubmissionClient}
+	 * @throws SystemUnavailableException
+	 */
+	public String getJobQueryCommand() throws SystemUnavailableException;
 }

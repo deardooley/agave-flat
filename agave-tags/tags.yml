@@ -3,12 +3,40 @@ info:
   title: Agave Tagging API
   description: This is the definition of a tagging api you used to create loose associations between API resources.
   version: 0.1.0
-host: agave-mock-tags-api.getsandbox.com
+host: public.agaveapi.co
 schemes:
-  - http
+  - https
 basePath: /
+consumes:
+  - application/json
 produces:
   - application/json
+securityDefinitions:
+  agaveImplicit:
+    type: oauth2
+    authorizationUrl: 'http://agave.iplantc.org/authorization'
+    flow: implicit
+    scopes:
+      PRODUCTION: catchall scope for all core apis
+  agaveApplication:
+    type: oauth2
+    tokenUrl: 'http://agave.iplantc.org/token'
+    flow: application
+    scopes:
+      PRODUCTION: catchall scope for all core apis
+  agavePassword:
+    type: oauth2
+    tokenUrl: 'http://agave.iplantc.org/token'
+    flow: password
+    scopes:
+      PRODUCTION: catchall scope for all core apis
+security:
+  - agaveImplicit:
+      - PRODUCTION
+  - agaveApplication:
+      - PRODUCTION
+  - agavePassword:
+      - PRODUCTION
 paths:
   /tags/v2:
     get:
@@ -76,13 +104,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     post:
       operationId: addTag
       summary: Creat a new tag
@@ -122,13 +143,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
   '/tags/v2/{tagId}':
     get:
       operationId: getTagDetails
@@ -165,13 +179,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     put:
       operationId: updateTag
       summary: Update tag
@@ -216,13 +223,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     delete:
       operationId: deleteTag
       summary: Delete tag
@@ -256,13 +256,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
   '/tags/v2/{tagId}/history':
     get:
       operationId: listTagHistory
@@ -313,13 +306,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
   '/tags/v2/{tagId}/resources':
     get:
       operationId: listTagResources
@@ -370,13 +356,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     post:
       operationId: addTagResource
       summary: Add resources to tag
@@ -422,13 +401,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     delete:
       operationId: clearTagResources
       summary: Clear all tagged resources
@@ -462,13 +434,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
   '/tags/v2/{tagId}/resources/{uuid}':
     get:
       operationId: getTaggedResource
@@ -510,13 +475,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     put:
       operationId: updateTagResource
       summary: Add resource to tag
@@ -565,13 +523,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     delete:
       operationId: removeTagResource
       summary: Remove resource from tag
@@ -610,13 +561,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
   '/tags/v2/{tagId}/pems':
     get:
       operationId: listTagPermissions
@@ -667,13 +611,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     post:
       operationId: updateTagPermission
       summary: Grant permission
@@ -718,13 +655,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     delete:
       operationId: clearTagPermissions
       summary: Clear tag permissions
@@ -754,13 +684,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
   '/tags/v2/{tagId}/pems/{username}':
     get:
       operationId: getTagPermissionForUser
@@ -804,13 +727,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     post:
       operationId: updateTagPermissionForUser
       summary: Update user permission on tag
@@ -860,13 +776,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
     delete:
       operationId: deleteTagPermissionForUser
       summary: Remove user tag permission
@@ -905,32 +814,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-      security:
-        - agaveImplicit:
-            - PRODUCTION
-        - agaveApplication:
-            - PRODUCTION
-        - agavePassword:
-            - PRODUCTION
-securityDefinitions:
-  agaveImplicit:
-    type: oauth2
-    authorizationUrl: 'http://agave.iplantc.org/authorization'
-    flow: implicit
-    scopes:
-      PRODUCTION: catchall scope for all core apis
-  agaveApplication:
-    type: oauth2
-    tokenUrl: 'http://agave.iplantc.org/token'
-    flow: application
-    scopes:
-      PRODUCTION: catchall scope for all core apis
-  agavePassword:
-    type: oauth2
-    tokenUrl: 'http://agave.iplantc.org/token'
-    flow: password
-    scopes:
-      PRODUCTION: catchall scope for all core apis
 definitions:
   TagSummary:
     description: Tag object without resource list
@@ -994,26 +877,6 @@ definitions:
       id:
         description: unique identifier of the event
         type: string
-  PermissionGrant:
-    description: An individual permission grant given to a principal on a resource
-    type: object
-    properties:
-      id:
-        description: The unique id of this permission
-        type: string
-      grant:
-        description: The permission given with this grant
-        type: string
-        enum:
-          - READ
-          - WRITE
-          - SHARE
-          - PUBLISH
-          - OWNER
-          - NONE
-      lastUpdated:
-        description: The date the permission was last updated
-        format: date-time
   Permission:
     description: A generic permission applied to any resource in the API
     type: object
@@ -1024,11 +887,16 @@ definitions:
       internalUsername:
         description: The internal user associated with this permission
         type: string
-      grants:
+      permission:
         description: The permissions granted to the user
-        type: array
-        items:
-          $ref: '#/definitions/PermissionGrant'
+        type: string
+        enum:
+          - READ
+          - WRITE
+          - SHARE
+          - PUBLISH
+          - OWNER
+          - NONE
       created:
         description: The date the permission was created
         type: string
@@ -1041,15 +909,4 @@ definitions:
         type: string
     required:
       - username
-      - grants
-  Error:
-    description: Generic error response
-    type: object
-    properties:
-      code:
-        type: integer
-        format: int32
-      message:
-        type: string
-      fields:
-        type: string
+      - permission

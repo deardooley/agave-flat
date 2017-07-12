@@ -18,14 +18,6 @@ import org.jclouds.blobstore.domain.BlobMetadata;
 import org.jclouds.blobstore.domain.StorageMetadata;
 import org.jclouds.blobstore.domain.StorageType;
 
-import com.sshtools.sftp.SftpFile;
-import com.sshtools.sftp.SftpFileAttributes;
-
-//import com.sshtools.j2ssh.sftp.FileAttributes;
-//import com.sshtools.j2ssh.sftp.SftpFile;
-//import com.trilead.ssh2.SFTPv3DirectoryEntry;
-//import com.trilead.ssh2.SFTPv3FileAttributes;
-
 /**
  * Represents the properties of a remote file
  * such as size, name, modification date and time, etc.
@@ -268,7 +260,8 @@ public class RemoteFileInfo implements Comparable<RemoteFileInfo> {
 //    	this.mode = sftpEntry.attributes.permissions;
 //    }
     
-    public RemoteFileInfo(String filename, SftpFileAttributes sftpEntry)
+    
+    public RemoteFileInfo(String filename, com.maverick.sftp.SftpFileAttributes sftpEntry)
     {
     	this.name = filename;
     	this.owner = UNKNOWN_STRING;
@@ -287,7 +280,7 @@ public class RemoteFileInfo implements Comparable<RemoteFileInfo> {
     	this.mode = sftpEntry.getPermissions().intValue();
     }
     
-    public RemoteFileInfo(SftpFile file) throws RemoteDataException
+    public RemoteFileInfo(com.maverick.sftp.SftpFile file) throws RemoteDataException
 	{
     	this.name = file.getFilename();
     	this.owner = UNKNOWN_STRING;

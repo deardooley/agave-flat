@@ -7,7 +7,7 @@ import java.io.InputStream;
 import org.iplantc.service.transfer.RemoteInputStream;
 import org.iplantc.service.transfer.exceptions.RemoteDataException;
 
-import com.sshtools.sftp.SftpStatusException;
+import com.maverick.sftp.SftpStatusException;
 import com.sshtools.sftp.SftpClient;
 
 public class MaverickSFTPInputStream extends RemoteInputStream<MaverickSFTP> {

@@ -1,0 +1,62 @@
+version: "2"
+
+services:
+
+  prometheus:
+    build: ../prom
+    image: 127.0.0.1:5000/prom
+    ports:
+      - "9090:9090"
+    networks:
+      - thirdparty
+
+  node:
+    image: prom/node-exporter
+    command: -collector.procfs /host/proc -collector.sysfs /host/proc -collector.filesystem.ignored-mount-points "^(sys|proc|dev|host|etc)($$|/)"
+    deploy:
+      mode: global
+    volumes:
+      - "/proc:/host/proc"
+      - "/sys:/host/sys"
+      - "/:/rootfs"
+  
+  mysqld:
+    image: prom/mysqld-exporter
+    command: -collect.perf_schema.tablelocks -collect.info_schema.tables.databases "*" -collect.info_schema.tablestats true -collect.info_schema.userstats 1 -collect.binlog_size true  
+    deploy:
+      mode: global
+    environment:
+      - "DATA_SOURCE_NAME=agaveuser:password@mysql:3306/agavecore"
+    volumes:
+      - "/proc:/host/proc"
+      - "/sys:/host/sys"
+      - "/:/rootfs"
+    networks:
+      - thirdparty
+         
+#  mongodb:
+#    image: prom/node-exporter
+#    command: -collector.procfs /host/proc -collector.sysfs /host/proc -collector.filesystem.ignored-mount-points "^(sys|proc|dev|host|etc)($$|/)"
+#    deploy:
+#      mode: global
+#    volumes:
+#      - "/proc:/host/proc"
+#      - "/sys:/host/sys"
+#      - "/:/rootfs"
+#    networks:
+#      - thirdparty
+      
+  cadvisor:
+    image: google/cadvisor
+    deploy:
+      mode: global
+    volumes:
+      - "/:/rootfs"
+      - "/var/run:/var/run"
+      - "/sys:/sys"
+      - "/var/lib/docker:/var/lib/docker"
+      
+networks:
+  thirdparty:
+    external:
+      name: thirdparty_services

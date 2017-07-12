@@ -185,7 +185,7 @@ public abstract class AbstractJobLauncherMacroResolutionTest extends AbstractJob
 		when(job.getUpdateToken()).thenReturn(UUID.randomUUID().toString());
 		CLILauncher launcher = new CLILauncher(job);
 		String resolvedWrapperCode = launcher.resolveRuntimeNotificationMacros(wrapperTemplate);
-		System.out.println(resolvedWrapperCode);
+		
 		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \""+expectedEvent+"\""), "Empty user event name should write default custom user event name");
 	}
 	
@@ -214,7 +214,7 @@ public abstract class AbstractJobLauncherMacroResolutionTest extends AbstractJob
 		when(job.getUpdateToken()).thenReturn(UUID.randomUUID().toString());
 		CLILauncher launcher = new CLILauncher(job);
 		String resolvedWrapperCode = launcher.resolveRuntimeNotificationMacros(wrapperTemplate);
-//		System.out.println(resolvedWrapperCode);
+
 		for (String uniqueName: new HashSet<String>(expectedValues)) {
 			String expectedString = String.format("echo '  \"%s\": \"'$(printf %%q \"$%s\")'\",' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
 //			String expectedString = String.format("echo '  \"%s\": '$(printf %%q \"$%s\")'\",\\\n' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
@@ -254,7 +254,7 @@ public abstract class AbstractJobLauncherMacroResolutionTest extends AbstractJob
 		when(job.getUpdateToken()).thenReturn(UUID.randomUUID().toString());
 		CLILauncher launcher = new CLILauncher(job);
 		String resolvedWrapperCode = launcher.resolveRuntimeNotificationMacros(wrapperTemplate);
-		System.out.println(resolvedWrapperCode);
+		
 		Assert.assertTrue(resolvedWrapperCode.contains("\"CUSTOM_USER_JOB_EVENT_NAME\": \""+expectedEvent+"\""), "Empty user event name should write default custom user event name");
 	}
 	
@@ -289,7 +289,7 @@ public abstract class AbstractJobLauncherMacroResolutionTest extends AbstractJob
 		when(job.getUpdateToken()).thenReturn(UUID.randomUUID().toString());
 		CLILauncher launcher = new CLILauncher(job);
 		String resolvedWrapperCode = launcher.resolveRuntimeNotificationMacros(wrapperTemplate);
-		System.out.println(resolvedWrapperCode);
+		
 		for (String uniqueName: new HashSet<String>(expectedValues)) {
 			String expectedString = String.format("echo '  \"%s\": \"'$(printf %%q \"$%s\")'\",' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
 //			String expectedString = String.format("echo '  \"%s\": '$(printf %%q \"$%s\")'\",\\\n' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
@@ -315,7 +315,7 @@ public abstract class AbstractJobLauncherMacroResolutionTest extends AbstractJob
 		when(job.getUpdateToken()).thenReturn(UUID.randomUUID().toString());
 		CLILauncher launcher = new CLILauncher(job);
 		String resolvedWrapperCode = launcher.resolveRuntimeNotificationMacros(wrapperTemplate);
-		System.out.println(resolvedWrapperCode);
+		
 		for (String uniqueName: new HashSet<String>(expectedValues)) {
 			String expectedString = String.format("echo '  \"%s\": \"'$(printf %%q \"$%s\")'\",' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);
 //			String expectedString = String.format("echo '  \"%s\": '$(printf %%q \"$%s\")'\",\\\n' >> \"$AGAVE_CALLBACK_FILE\"\n", uniqueName, uniqueName);

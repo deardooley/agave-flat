@@ -2,8 +2,8 @@ package org.iplantc.service.jobs.managers.monitors;
 
 import java.nio.channels.ClosedByInterruptException;
 import java.util.Date;
+import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.StaleObjectStateException;
@@ -11,7 +11,9 @@ import org.hibernate.UnresolvableObjectException;
 import org.iplantc.service.apps.dao.SoftwareDao;
 import org.iplantc.service.apps.model.Software;
 import org.iplantc.service.jobs.Settings;
+import org.iplantc.service.jobs.exceptions.JobException;
 import org.iplantc.service.jobs.exceptions.RemoteJobFailureDetectedException;
+import org.iplantc.service.jobs.exceptions.RemoteJobMonitorCommandSyntaxException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorEmptyResponseException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitorResponseParsingException;
 import org.iplantc.service.jobs.exceptions.RemoteJobMonitoringException;
@@ -26,11 +28,9 @@ import org.iplantc.service.jobs.model.JobEvent;
 import org.iplantc.service.jobs.model.enumerations.JobEventType;
 import org.iplantc.service.jobs.model.enumerations.JobStatusType;
 import org.iplantc.service.remote.RemoteSubmissionClient;
-import org.iplantc.service.systems.dao.SystemDao;
 import org.iplantc.service.systems.exceptions.SystemUnavailableException;
 import org.iplantc.service.systems.model.ExecutionSystem;
 import org.iplantc.service.systems.model.enumerations.LoginProtocolType;
-import org.iplantc.service.systems.model.enumerations.SystemStatusType;
 import org.joda.time.DateTime;
 
 /**
@@ -44,6 +44,9 @@ import org.joda.time.DateTime;
 public class HPCMonitor extends AbstractJobMonitor {
 	private static final Logger log = Logger.getLogger(HPCMonitor.class);
 	
+	private static final ConcurrentHashMap<String, JobMonitorRequestPreferences> jobRequestPreferences 
+		= new ConcurrentHashMap<String, JobMonitorRequestPreferences>();
+    
 	public HPCMonitor(Job job)
 	{
 		super(job);
@@ -94,47 +97,14 @@ public class HPCMonitor extends AbstractJobMonitor {
                     
                     String startupScriptCommand = getStartupScriptCommand();
 					
-					String queryCommand = startupScriptCommand + system.getScheduler().getBatchQueryCommand() + " " + job.getLocalJobId();
+                    String batchQueryCommand = getJobQueryCommand();
+                    
+					String queryCommand = startupScriptCommand + batchQueryCommand;
 					
-					String result = null;
-					try
-					{
-						log.debug("Forking command " + queryCommand + " on " + 
-								remoteSubmissionClient.getHost() + ":" + remoteSubmissionClient.getPort() +
-								" for job " + job.getUuid());
-						
-						result = remoteSubmissionClient.runCommand(queryCommand);
-						
-						// if the response was empty, the job could be done, but the scheduler could only 
-						// recognize numeric job ids. Let's try again with just the numeric part
-						if (StringUtils.isEmpty(result)) {
-							String numericJobId = job.getNumericLocalJobId();
-							
-							if (StringUtils.isNotEmpty(numericJobId)) {
-								log.debug("Empty response found when checking remote execution system of agave job " 
-										+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
-										+ ". Attempting to recheck with just the numeric job id " + numericJobId);
-								queryCommand = system.getScheduler().getBatchQueryCommand() + " " + numericJobId;
-								
-								result = remoteSubmissionClient.runCommand(queryCommand);
-							}
-							else {
-								log.debug("Empty response found when checking remote execution system of agave job " 
-										+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
-										+ ". No numeric job id found in the batch job id for remtoe system. "
-										+ "No further attempt will be made.");
-							}
-						}
-						
-						log.debug("Response for job " + job.getUuid() + " monitoring command was: " + result);
-					}
-					catch (Throwable e) {
-					    this.job = JobManager.updateStatus(job, job.getStatus());
-						throw new RemoteJobMonitoringException("Failed to run job status query on " + system.getSystemId(), e);
-					}
+					String result = runMonitoringCommand(remoteSubmissionClient, system, queryCommand);
 					
 					JobMonitorResponseParser responseParser = JobMonitorResponseParserFactory.getInstance(job);
-					// TODO: we need to actively pull the job state on teh remote machine and sync up here. 
+					// TODO: we need to actively pull the job state on the remote machine and sync up here. 
 					try {
 						// this isn't really a check for running, but rather not failed.
 						if (!responseParser.isJobRunning(result)) {
@@ -174,6 +144,13 @@ public class HPCMonitor extends AbstractJobMonitor {
                             
 						    this.job = JobManager.updateStatus(job, job.getStatus(), job.getErrorMessage());
 						}
+					}
+					catch (RemoteJobMonitorCommandSyntaxException e) {
+						JobEvent event = new JobEvent(JobEventType.BAD_QUERY_COMMAND_SYNTAX.name(), 
+								JobEventType.BAD_QUERY_COMMAND_SYNTAX.getDescription(), job.getOwner());
+						event.setJob(job);
+						JobEventProcessor eventProcessor = new JobEventProcessor(event);
+						eventProcessor.process();
 					}
 					// if the response was empty, raise an event so anyone who cares to investigate can do so
 					catch (RemoteJobMonitorEmptyResponseException e) {
@@ -278,6 +255,57 @@ public class HPCMonitor extends AbstractJobMonitor {
 		finally {
 			try { remoteSubmissionClient.close(); } catch (Exception e) {}
 		}
+	}
+
+	/**
+	 * @param remoteSubmissionClient
+	 * @param system
+	 * @param queryCommand
+	 * @return
+	 * @throws JobException
+	 * @throws RemoteJobMonitoringException
+	 */
+	public String runMonitoringCommand(
+			RemoteSubmissionClient remoteSubmissionClient,
+			ExecutionSystem system, String queryCommand) throws JobException,
+			RemoteJobMonitoringException {
+		String result = null;
+		try
+		{
+			log.debug("Forking command " + queryCommand + " on " + 
+					remoteSubmissionClient.getHost() + ":" + remoteSubmissionClient.getPort() +
+					" for job " + job.getUuid());
+			
+			result = remoteSubmissionClient.runCommand(queryCommand);
+			
+			// if the response was empty, the job could be done, but the scheduler could only 
+			// recognize numeric job ids. Let's try again with just the numeric part
+			if (StringUtils.isEmpty(result)) {
+				String numericJobId = job.getNumericLocalJobId();
+				
+				if (StringUtils.isNotEmpty(numericJobId)) {
+					log.debug("Empty response found when checking remote execution system of agave job " 
+							+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
+							+ ". Attempting to recheck with just the numeric job id " + numericJobId);
+					queryCommand = system.getScheduler().getBatchQueryCommand() + " " + numericJobId;
+					
+					result = remoteSubmissionClient.runCommand(queryCommand);
+				}
+				else {
+					log.debug("Empty response found when checking remote execution system of agave job " 
+							+ job.getUuid() + " for local batch job id "+ job.getLocalJobId() 
+							+ ". No numeric job id found in the batch job id for remtoe system. "
+							+ "No further attempt will be made.");
+				}
+			}
+			
+			log.debug("Response for job " + job.getUuid() + " monitoring command was: " + result);
+		}
+		catch (Throwable e) {
+		    this.job = JobManager.updateStatus(job, job.getStatus());
+			throw new RemoteJobMonitoringException("Failed to run job status query on " + system.getSystemId(), e);
+		}
+		return result;
 	}
 
 }
