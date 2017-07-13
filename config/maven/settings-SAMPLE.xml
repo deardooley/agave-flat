@@ -318,6 +318,16 @@
 
 				<foundation.service.auth>${foundation.base.url}/auth/v2</foundation.service.auth>
 
+				<!-- ************************ Stats service ************************ -->
+
+				<foundation.service.stats>${foundation.base.url}/stats/v2/</foundation.service.stats>
+				<foundation.service.stats.statusio.id></foundation.service.stats.statusio.id>
+				<foundation.service.stats.freegeoip.url>https://freegeoip.net</foundation.service.stats.freegeoip.url>
+				<foundation.service.stats.pingdom.username></foundation.service.stats.pingdom.username>
+				<foundation.service.stats.pingdom.password></foundation.service.stats.pingdom.password>
+				<foundation.service.stats.pingdom.token></foundation.service.stats.pingdom.token>
+				<foundation.service.stats.redis.host>redis</foundation.service.stats.redis.host>
+				<foundation.service.stats.redis.port>6379</foundation.service.stats.redis.port>
 
 				<!-- ************************ Logging service ************************ -->
 
@@ -463,8 +473,8 @@
 				<!-- ************************ Tags service ********************* -->
 
 				<foundation.service.tags>${foundation.base.url}/tags/v2</foundation.service.tags>
-				
-				
+
+
 				<!-- ************************ Transforms service ********************* -->
 
 				<foundation.service.transforms>${foundation.base.url}/transforms/v2</foundation.service.transforms>
@@ -486,12 +496,12 @@
 				<foundation.service.transfers.jetty.ajp.port>13092</foundation.service.transfers.jetty.ajp.port>
 				<foundation.service.transfers.max.relay.size>2</foundation.service.transfers.max.relay.size>
 				<foundation.service.transfers.allow.relays>true</foundation.service.transfers.allow.relays>
-				
+
 				<!-- ************************ UUIDs service ********************** -->
 
 				<foundation.service.uuids>${foundation.base.url}/uuids/v2</foundation.service.uuids>
-				
-				
+
+
 			</properties>
 		</profile>
 	</profiles>
